@@ -148,7 +148,7 @@ function enable_arm_pmu() {
 
     # Check if the make and make install commands were successful
     if [ "$make_status" -ne 0 ] || [ "$make_install_status" -ne 0 ]; then
-        echo -e "\nPMU build failed, please check the system and try again\n"
+        echo -e "\n[ERROR] - PMU build failed, please check the system and try again\n"
         exit 1
     fi
 
@@ -368,7 +368,7 @@ function get_test_options() {
     while true; do
 
         # Prompt the user for their response and read it in
-        read -p "Do you intend to compare the results against other machines [y/n]? - " response_1
+        read -p "Do you wish to assign a custom Machine-ID to the performance results? [y/n] - " response_1
 
         # Determine what action to take based on the user's response
         case $response_1 in
@@ -451,7 +451,7 @@ function setup_test_suite() {
     fi
 
     # Set the Liboqs test/bin directory path
-    liboqs_test_path="$liboqs_path/build/tests/"
+    liboqs_test_path="$liboqs_path/build/tests"
 
     # Set the filepaths for the Liboqs speed test binaries
     kem_speed_bin="$liboqs_test_path/speed_kem"
@@ -461,16 +461,17 @@ function setup_test_suite() {
     kem_mem_bin="$liboqs_test_path/test_kem_mem"
     sig_mem_bin="$liboqs_test_path/test_sig_mem"
 
-    # Ensure the Liboqs binaries are present and executable
+    # Define the Liboqs test binaries to be checked
     test_bins=("$kem_speed_bin" "$sig_speed_bin" "$kem_mem_bin" "$sig_mem_bin")
 
+    # Ensure the Liboqs binaries are present and executable
     for test_binary in "${test_bins[@]}"; do
 
         if [ ! -f "$test_binary" ]; then
-            echo -e "\n\n!!! Liboqs test binaries - ($test_binary) not present, please verify build !!!"
+            echo -e "\n[ERROR] - Liboqs test binaries - ($test_binary) not present, please verify build"
             exit 1
         elif [ ! -x "$test_binary" ]; then
-            echo -e "\n\n!!! Liboqs test binaries - ($test_binary) not executable, please verify binary permissions !!!"
+            echo -e "\n[ERROR] - Liboqs test binaries - ($test_binary) not executable, please verify binary permissions"
             exit 1
         fi
 
@@ -641,7 +642,7 @@ function main() {
         echo -e "\nParsing results...\n"
 
         # Call the result parsing script to parse the results
-        python3 "$parsing_scripts/parse_results" --parse-mode="liboqs"  --machine-id="$machine_num" --total-runs=$number_of_runs
+        python3 "$parsing_scripts/parse_results.py" --parse-mode="liboqs"  --machine-id="$machine_num" --total-runs=$number_of_runs
         exit_status=$?
 
         # Ensure that the parsing script completed successfully

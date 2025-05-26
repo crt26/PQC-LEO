@@ -530,7 +530,7 @@ function get_machine_num() {
     while true; do
 
         # Get the machine-ID from the user
-        read -p "What machine-ID would you like to assign to these results? - " user_response
+        read -p "What Machine-ID would you like to assign to these results? - " user_response
         
         # Check that the input from the user is a valid integer and store it
         case "$user_response" in
@@ -590,7 +590,7 @@ function handle_machine_id_clash() {
             2)
 
                 # Get a new machine-ID that will assigned to the results instead
-                echo -e "Assigning new Machine-ID for test results"
+                echo -e "\nAssigning new Machine-ID for test results"
                 get_machine_num
 
                 # Set the results directory paths based on the newly assigned machine-ID
@@ -648,55 +648,6 @@ function configure_results_dir() {
         done
 
     fi
-
-}
-
-#-------------------------------------------------------------------------------------------------------------------------------
-function get_test_comparison_choice() {
-    # Function for getting the user choice on whether the test results will be compared to other machine results
-
-    # Prompt the user for their choice until a valid response is given
-    while true; do
-
-        # Outputting the test comparison options to the user and reading in the user response
-        echo -e "\nPlease select on of the following test comparison options"
-        echo "1-This test will not be used in result-parsing with other machines"
-        echo "2-This machine will be used in result-parsing with other machine results"
-
-        # Read in the user's response
-        read -p "Enter your choice (1-2): " usr_test_option
-
-        # Determine the action based on the user's response
-        case $usr_test_option in
-
-            1)
-
-                # Set the default machine-ID and configure the results directory
-                echo -e "\nTest will not be parsed with other machine data\n"
-                export MACHINE_NUM="1"
-                configure_results_dir
-                break
-                ;;
-
-            2)
-
-                # Set the user specified Machine-ID and configure the results directory
-                echo -e "\nTest will will be parsed with other machine data\n"
-                get_machine_num
-                configure_results_dir
-                export MACHINE_NUM="$MACHINE_NUM"
-                break
-                ;;
-
-            *)
-
-                # Output to the user that the input is invalid
-                echo "Invalid option, please select valid option value (1-2)"
-                ;;
-
-        esac
-
-    done
 
 }
 
@@ -779,8 +730,26 @@ function configure_test_options {
     # If test machine is client, get the TLS handshake and speed test lengths from user
     if [ $machine_type == "Client" ]; then
 
-        # Get the machine-ID for the results if comparing to other machine results
-        get_test_comparison_choice
+        # Ask the user if they wish to assign a machine-ID to the performance results
+        echo -e "\nSetting test results ID:\n"
+        get_user_yes_no "Do you wish to assign a custom Machine-ID to the performance results?"
+
+        # Determine whether to assign a custom machine-ID or not based on the user response
+        if [ $user_y_n_response -eq 1 ]; then
+
+            # Get the machine-ID from the user and configure the results directory
+            get_machine_num
+            configure_results_dir
+            export MACHINE_NUM="$MACHINE_NUM"
+
+        else
+
+            # Set the machine-ID to the default value and configure the results directory
+            echo -e "\nUsing default Machine-ID (1) for test results\n"
+            configure_results_dir
+            export MACHINE_NUM="1"
+
+        fi
 
         # Prompt the user for the TLS test length until a valid response is given
         while true; do
@@ -940,7 +909,7 @@ function run_tests() {
             echo -e "\nParsing results...\n"
 
             # Call the result parsing script to parse the results
-            python3 "$parsing_scripts/parse_results" --parse-mode="oqs-provider" --machine-id="$machine_num" --total-runs="$NUM_RUN"
+            python3 "$parsing_scripts/parse_results.py" --parse-mode="oqs-provider" --machine-id="$machine_num" --total-runs="$NUM_RUN"
             exit_status=$?
 
             # Ensure that the parsing script completed successfully
