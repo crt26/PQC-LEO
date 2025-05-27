@@ -155,14 +155,27 @@ def get_test_opts(root_dir):
 def main():
     """Main function which controls the parsing scripts for Liboqs and OQS-Provider testing results"""
 
-    # Parse any command line arguments passed to the script
-    args = handle_args()
-
     # Setup the base environment for the script
     root_dir = setup_base_env()
 
     # Determine which method is being used to the run the script
-    if len (sys.argv) == 1:
+    if len (sys.argv) > 1:
+
+        # Parse the command line arguments provided to the script
+        args = handle_args()
+
+        # Determine which parsing mode to use and get the test options
+        if args.parse_mode == "liboqs":
+            print("Parsing Liboqs results")
+            liboqs_test_opts = [args.machine_id, args.total_runs, root_dir]
+            parse_liboqs(liboqs_test_opts)
+        
+        elif args.parse_mode == "oqs-provider":
+            print("Parsing OQS-Provider results")
+            oqs_provider_test_opts = [args.machine_id, args.total_runs, root_dir]
+            parse_oqs_provider(oqs_provider_test_opts)
+
+    else:
 
         # Get the parsing mode from the user
         user_parse_mode = get_mode_selection()
@@ -215,19 +228,6 @@ def main():
         else:
             print(f"[ERROR] - Invalid value in the parsing mode variable - {user_parse_mode}")
             sys.exit(1)
-
-    else:
-
-        # Determine which parsing mode to use and get the test options
-        if args.parse_mode == "liboqs":
-            print("Parsing Liboqs results")
-            liboqs_test_opts = [args.machine_id, args.total_runs, root_dir]
-            parse_liboqs(liboqs_test_opts)
-        
-        elif args.parse_mode == "oqs-provider":
-            print("Parsing OQS-Provider results")
-            oqs_provider_test_opts = [args.machine_id, args.total_runs, root_dir]
-            parse_oqs_provider(oqs_provider_test_opts)
 
     # Output the parsing completed message to the terminal
     print(f"\nResults processing complete, parsed results can be found in the results folder at the repo root")
