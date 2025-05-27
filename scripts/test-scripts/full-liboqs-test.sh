@@ -648,7 +648,7 @@ function main() {
         # Ensure that the parsing script completed successfully
         if [ $exit_status -eq 0 ]; then
             echo -e "\nParsed results can be found in the following directory:"
-            echo "$test_data_dir/results/oqs-provider/machine-$machine_num"
+            echo "$test_data_dir/results/liboqs/machine-$machine_num"
         else
             echo -e "\n[WARNING] - Result parsing failed, manual calling of parsing script is now required\n"
         fi 
