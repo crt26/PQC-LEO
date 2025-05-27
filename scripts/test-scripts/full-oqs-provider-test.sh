@@ -909,23 +909,21 @@ function run_tests() {
             echo -e "\nParsing results...\n"
 
             # Call the result parsing script to parse the results
-            python3 "$parsing_scripts/parse_results.py" --parse-mode="oqs-provider" --machine-id="$machine_num" --total-runs="$NUM_RUN"
+            python3 "$parsing_scripts/parse_results.py" --parse-mode="oqs-provider" --machine-id="$MACHINE_NUM" --total-runs="$NUM_RUN"
             exit_status=$?
 
             # Ensure that the parsing script completed successfully
-            if [ $exit_status -ne 0 ]; then
-                echo -e "\n[ERROR] - Result parsing failed, manual calling of parsing script is now required\n"
-                exit 1
+            if [ $exit_status -eq 0 ]; then
+                echo -e "\nParsed results can be found in the following directory:"
+                echo "$test_data_dir/results/oqs-provider/machine-$MACHINE_NUM"
+            else
+                echo -e "\n[WARNING] - Result parsing failed, manual calling of parsing script is now required\n"
             fi
-
-            # Output the location of the parsed results to the user
-            echo -e "\nParsed results can be found in the following directory:"
-            echo "$test_data_dir/results/oqs-provider/machine-$machine_num"
 
         elif [ $parse_results -eq 0 ]; then
 
             # Output the complete message with the test results path to the user
-            echo -e "All performance testing complete, the unparsed results for Machine-ID ($machine_num) can be found in:"
+            echo -e "All performance testing complete, the unparsed results for Machine-ID ($MACHINE_NUM) can be found in:"
             echo "Results Dir Path - $MACHINE_RESULTS_PATH"
             
         else
