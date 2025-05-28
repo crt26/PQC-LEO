@@ -5,7 +5,7 @@ SPDX-License-Identifier: MIT
 OQS-Provider result parsing script for PQC TLS performance benchmarking.  
 Parses raw TLS handshake and OpenSSL speed test outputs produced by the automated OQS-Provider test suite,  
 structures the results into clean CSV files, and computes averaged metrics using the results_averager module.  
-This script is called by the central parse_results.py controller and supports multi-machine, multi-run setups.
+This script is called by the central parse_results.py controller and supports single-machine, multi-run setups.
 """
 
 #-----------------------------------------------------------------------------------------------------------

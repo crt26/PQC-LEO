@@ -3,10 +3,9 @@ Copyright (c) 2023-2025 Callum Turino
 SPDX-License-Identifier: MIT
 
 Liboqs result parsing script for PQC performance benchmarking.  
-Parses raw memory and CPU speed results produced by the automated Liboqs test suite, processes them into
+Parses raw memory and CPU speed results produced by the automated Liboqs test suite, processes them into  
 clean, structured CSV files, and computes averaged results using the results_averager module.  
-This script is called by the central parse_results.py controller and supports multi-machine, multi-run setups.
-
+This script is called by the central parse_results.py controller and supports single-machine, multi-run setups.
 """
 
 #-----------------------------------------------------------------------------------------------------------

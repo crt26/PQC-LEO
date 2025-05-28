@@ -3,10 +3,11 @@ Copyright (c) 2023-2025 Callum Turino
 SPDX-License-Identifier: MIT
 
 Controller script for parsing PQC performance results produced by the Liboqs and OQS-Provider testing tools.
-It allows the user to select whether to parse Liboqs, OQS-Provider, or both result sets, and interactively
-collects the test parameters (e.g., number of machines and runs) used during benchmarking. The script then 
-invokes the appropriate parsing modules and outputs cleaned, formatted CSV files to the results directory 
-at the project root.
+It allows the user to parse Liboqs, OQS-Provider, or both result sets by either supplying parameters via command-line
+arguments or using an interactive prompt. The script collects the required test parameters (e.g., Machine-ID and number
+of test runs), invokes the appropriate parsing modules, and outputs cleaned, formatted CSV files to the results directory
+at the project root. Parsing is supported only on Linux systems and depends on the presence of the original algorithm list files
+used for testing.
 """
 
 #-----------------------------------------------------------------------------------------------------------

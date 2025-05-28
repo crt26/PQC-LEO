@@ -57,11 +57,28 @@ Enter the number of test runs required:
 You can then enter a valid integer value to specify the total number of test runs. However, it is important to note that a higher number of runs will significantly increase testing time, especially if the tool is being used on a more constrained device. This feature allows for sufficient gathering of data to perform average calculations, which is vital if conducting research into the performance of PQC algorithms.
 
 ## Outputted Results
-After testing has completed, performance results are stored in the newly created `test-data/up-results/liboqs/machine-x` directory. This directory stores all of the unparsed results from the automated testing tools.
+After testing completes, raw performance results are saved to the following directory:
 
-These results are not yet ready for interpretation or graphing. To convert them into structured CSV files suitable for analysis, refer to the **Parsing Results** section of the main [README](../../README.md) file.
+`test-data/up-results/liboqs/machine-x`
 
-For a detailed description of the Liboqs performance metrics that this project can gather, what they mean, and how this project scripts structure the un-parsed and parsed data, please refer to the [Performance Metrics Guide](../performance-metrics-guide.md).
+Where `machine-x` refers to the assigned Machine-ID. If no ID was specified, the default ID of 1 is used.
+
+By default, the Liboqs testing script will automatically trigger the parsing system upon completion. It passes the Machine-ID and total number of test runs to the parsing tool, which then processes the raw output into structured CSV files.
+
+These parsed results are saved in:
+
+`test-data/results/liboqs/machine-x`
+
+To skip automatic parsing and retain only the raw test output, pass the `--disable-result-parsing` flag when launching the test script:
+
+```
+./full-liboqs-test.sh --disable-result-parsing
+```
+
+For complete details on parsing functionality and a breakdown of the collected Liboqs performance metrics, refer to the following documentation:
+
+- [Parsing Performance Results Usage Guide](../performance-results/parsing-scripts-usage-guide.md)
+- [Performance Metrics Guide](../performance-results/performance-metrics-guide.md)
 
 ## Useful External Documentation
 - [Liboqs Webpage](https://openquantumsafe.org/liboqs/)
