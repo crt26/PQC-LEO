@@ -16,20 +16,16 @@ import sys
 import shutil
 from results_averager import LiboqsResultAverager
 
-# Declare the global variables
-alg_operations = {'kem_operations': ["keygen", "encaps", "decaps"], 'sig_operations': ["keypair", "sign", "verify"]}
-kem_algs = []
-sig_algs = []
-dir_paths = {}
-num_runs = 0
-
 #-----------------------------------------------------------------------------------------------------------
 def setup_parse_env(root_dir):
     """ Function for setting up the environment for the Liboqs parsing script. 
         The function will set the various directory paths, read in the algorithm 
         lists and set the root directories. """
 
-    global kem_algs, sig_algs, dir_paths
+    # Declare the algorithm list and directory paths dict variables
+    kem_algs = []
+    sig_algs = []
+    dir_paths = {}
 
     # Ensure the root_dir path is correct before continuing
     if not os.path.isfile(os.path.join(root_dir, ".pqc_eval_dir_marker.tmp")):
@@ -55,8 +51,12 @@ def setup_parse_env(root_dir):
         for line in alg_file:
             sig_algs.append(line.strip())
 
+
+    # Return the algorithm lists and directory paths
+    return kem_algs, sig_algs, dir_paths
+
 #-----------------------------------------------------------------------------------------------------------
-def handle_results_dir_creation(machine_id):
+def handle_results_dir_creation(machine_id, dir_paths):
     """ Function for handling the presence of older parsed results, 
         ensuring that the user is aware of the old results and can choose 
         how to handle them before the parsing continues. """
@@ -149,7 +149,7 @@ def get_peak(mem_file, peak_metrics):
                     return peak_metrics
 
 #-----------------------------------------------------------------------------------------------------------
-def pre_speed_processing():
+def pre_speed_processing(dir_paths, num_runs):
     """ Function for preparing the speed up-result data to 
         by removing system information in the file, allowing for
         further processing in the script. """
@@ -205,7 +205,7 @@ def pre_speed_processing():
         sig_pre_speed_df.to_csv(speed_dest_dir, index=False, sep="|")
 
 #-----------------------------------------------------------------------------------------------------------
-def speed_processing():
+def speed_processing(dir_paths, num_runs, kem_algs, sig_algs):
     """ Function for processing the Liboqs CPU speed up-results and 
         exporting the data into a clean CSV format """
 
@@ -255,7 +255,7 @@ def speed_processing():
         temp_df.to_csv(filename_sig, index=False)
 
 #-----------------------------------------------------------------------------------------------------------
-def memory_processing():
+def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
     """ Function for taking in the memory up-results, processing,
         and outputting the results into a CSV format """
 
@@ -357,12 +357,13 @@ def memory_processing():
         mem_results_df.to_csv(sig_filepath, index=False)
 
 #-----------------------------------------------------------------------------------------------------------
-def process_tests(machine_id):
+def process_tests(machine_id, num_runs, dir_paths, kem_algs, sig_algs):
     """ Function for parsing the results for a single or multiple machines 
         and stores them as csv files. Once up-results are processed
         averages are calculated for the results """
     
-    global dir_paths
+    # Declare the algorithm operations dictionary
+    alg_operations = {'kem_operations': ["keygen", "encaps", "decaps"], 'sig_operations': ["keypair", "sign", "verify"]}
 
     # Create an instance of the Liboqs average generator class before processing results
     liboqs_avg = LiboqsResultAverager(dir_paths, kem_algs, sig_algs, num_runs, alg_operations)
@@ -375,12 +376,12 @@ def process_tests(machine_id):
     dir_paths['raw_speed_dir'] = os.path.join(dir_paths['up_results'], f"machine-{str(machine_id)}", "raw-speed-results")
 
     # Create the required directories and handling any clashes with previously parsed results
-    handle_results_dir_creation(machine_id)
+    handle_results_dir_creation(machine_id, dir_paths)
 
     # Parse the up-results for the specified Machine-ID
-    pre_speed_processing()
-    speed_processing()
-    memory_processing()
+    pre_speed_processing(dir_paths, num_runs)
+    speed_processing(dir_paths, num_runs, kem_algs, sig_algs)
+    memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations)
 
     # Call the average generation methods for memory and CPU performance results
     liboqs_avg.avg_mem()
@@ -392,14 +393,14 @@ def parse_liboqs(test_opts):
         is called from the main parsing control script and will call the necessary functions to parse the results """
 
     # Get the test options
-    global num_runs
     machine_id = test_opts[0]
     num_runs = test_opts[1]
+    root_dir = test_opts[2]
 
     # Setup the script environment
     print(f"\nPreparing to Parse Liboqs Results:\n")
-    setup_parse_env(test_opts[2])
+    kem_algs, sig_algs, dir_paths = setup_parse_env(root_dir)
 
     # Process the results
     print("Parsing results... ")
-    process_tests(machine_id)
+    process_tests(machine_id, num_runs, dir_paths, kem_algs, sig_algs)

@@ -15,24 +15,14 @@ import sys
 import shutil
 from results_averager import OqsProviderResultAverager
 
-# Declare the global variables
-dir_paths = {}
-algs_dict = {}
-pqc_type_vars = {}
-speed_type_vars = {}
-speed_sig_algs = []
-speed_kem_algs = []
-speed_headers = []
-col_headers = {}
-num_runs = 0
-
 #-----------------------------------------------------------------------------------------------------------
 def setup_parse_env(root_dir):
     """ Function for setting up the environment for the OQS-Provider TLS parsing script. The function
         will set the various directory paths, read in the algorithm lists, set the root directories 
         and set the column headers for the CSV files that will be outputted. """
 
-    global dir_paths, col_headers, algs_dict, pqc_type_vars, speed_type_vars, speed_headers
+    # Define the central paths dictionary that will be used by the various methods and functions
+    dir_paths = {}
 
     # Ensure the root_dir path is correct before continuing
     if not os.path.isfile(os.path.join(root_dir, ".pqc_eval_dir_marker.tmp")):
@@ -97,8 +87,10 @@ def setup_parse_env(root_dir):
     # Empty the alg_list_files dict as no longer needed
     alg_list_files = None
 
+    return dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers
+
 #-----------------------------------------------------------------------------------------------------------
-def handle_results_dir_creation(machine_id):
+def handle_results_dir_creation(machine_id, dir_paths):
     """ Function for handling the presence of older parsed results, ensuring that the user
         is aware of the old results and can choose how to handle them before the parsing continues. """
 
@@ -237,7 +229,7 @@ def get_metrics(current_row, test_filepath, get_reuse_metrics):
     return current_row
 
 #-----------------------------------------------------------------------------------------------------------
-def pqc_based_pre_processing(current_run, type_index):
+def pqc_based_pre_processing(current_run, type_index, pqc_type_vars, col_headers, algs_dict, dir_paths):
     """ Function for pre-processing PQC and PQC-Hybrid TLS results for the current run. This function
         will loop through the sig/kem combinations and extract the metrics for each combination. This creates the 
         full base results for the current run which can later be separated into individual CSV files for each sig/kem combo """
@@ -281,7 +273,7 @@ def pqc_based_pre_processing(current_run, type_index):
     sig_metrics_df.to_csv(output_filepath,index=False)
 
 #-----------------------------------------------------------------------------------------------------------
-def pqc_based_processing(current_run):
+def pqc_based_processing(current_run, dir_paths, algs_dict, pqc_type_vars, col_headers):
     """ Function for parsing both PQC and PQC-Hybrid TLS results for the current run. The function will
         process the results and output the full base results for the current run and then separate the
         results into individual CSV files for each sig/kem combo. This will be done for both PQC and PQC-Hybrid. """
@@ -290,7 +282,7 @@ def pqc_based_processing(current_run):
     for type_index in range (0,2):
 
         # Perform pre-processing for the current test type
-        pqc_based_pre_processing(current_run, type_index)
+        pqc_based_pre_processing(current_run, type_index, pqc_type_vars, col_headers, algs_dict, dir_paths)
 
         # Set the base results filename and path based on current run
         pqc_base_filename = f"{pqc_type_vars['type_prefix'][type_index]}-base-results-run-{current_run}.csv"
@@ -316,7 +308,7 @@ def pqc_based_processing(current_run):
             current_sig_df.to_csv(output_filepath, index=False)
 
 #-----------------------------------------------------------------------------------------------------------
-def classic_based_processing(current_run):
+def classic_based_processing(current_run, dir_paths, algs_dict, col_headers):
     """ Function for processing results from classic cipher TLS handshake testing """
 
     # Set the up-results directory path and create the dataframe used in test processing
@@ -372,7 +364,7 @@ def tls_speed_drop_last(data_cells):
     return data_cells
 
 #-----------------------------------------------------------------------------------------------------------
-def get_speed_metrics(speed_filepath, alg_type):
+def get_speed_metrics(speed_filepath, alg_type, speed_headers):
     """ Function for extracting the speed metrics from the raw OpenSSL s_speed tool with OQS-Provider output file 
         for the current algorithm type (kem or sig) """
 
@@ -414,7 +406,7 @@ def get_speed_metrics(speed_filepath, alg_type):
     return speed_metrics_df
 
 #-----------------------------------------------------------------------------------------------------------
-def speed_processing(current_run):
+def speed_processing(current_run, dir_paths, speed_headers):
     """ Function for processing OpenSSL s_speed with OQS_Provider metrics for both PQC and PQC-Hybrid algorithms
        for the current run """
 
@@ -432,14 +424,14 @@ def speed_processing(current_run):
 
             # Set the up-results filepath and pull metrics from the raw file
             speed_filepath = os.path.join(dir_list[0], f"{pqc_fileprefix}-{alg_type}-{str(current_run)}.txt")
-            speed_metrics_df = get_speed_metrics(speed_filepath, alg_type)
+            speed_metrics_df = get_speed_metrics(speed_filepath, alg_type, speed_headers)
 
             # Output the speed metrics csv for the current test type and algorithm
             output_filepath = os.path.join(dir_list[1], f"{pqc_fileprefix}-{alg_type}-{str(current_run)}.csv")
             speed_metrics_df.to_csv(output_filepath, index=False)
 
 #-----------------------------------------------------------------------------------------------------------
-def output_processing():
+def output_processing(num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers):
     """ Function for processing the outputs of the 
         s_time and s_speed TLS benchmarking tests for the current machine """
     
@@ -457,16 +449,14 @@ def output_processing():
 
     # Loop through the runs and call result processing functions
     for current_run in range(1, num_runs+1):
-        pqc_based_processing(current_run)
-        classic_based_processing(current_run)
-        speed_processing(current_run)
+        pqc_based_processing(current_run, dir_paths, algs_dict, pqc_type_vars, col_headers)
+        classic_based_processing(current_run, dir_paths, algs_dict, col_headers)
+        speed_processing(current_run, dir_paths, speed_headers)
 
 #-----------------------------------------------------------------------------------------------------------
-def process_tests(machine_id, algs_dict):
+def process_tests(machine_id, num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers):
     """ Function for controlling the parsing scripts for the OQS-Provider TLS testing up-result files
         and calling average  calculation scripts """
-    
-    global dir_paths, pqc_type_vars
 
     # Create an instance of the OQS-Provider average generator class before processing results
     oqs_provider_avg = None
@@ -492,10 +482,10 @@ def process_tests(machine_id, algs_dict):
     })
 
     # Create the results directory for current machine and handle Machine-ID clashes
-    handle_results_dir_creation(machine_id)
+    handle_results_dir_creation(machine_id, dir_paths)
 
     # Call the processing function and the average calculation methods for the current machine
-    output_processing()
+    output_processing(num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers)
     oqs_provider_avg.gen_pqc_avgs()
     oqs_provider_avg.gen_classic_avgs()
     oqs_provider_avg.gen_speed_avgs(speed_headers)
@@ -506,14 +496,22 @@ def parse_oqs_provider(test_opts):
         is called from the main parsing control script and will call the necessary functions to parse the results """
 
     # Get test options and set test parameter vars
-    global num_runs
     machine_id = test_opts[0]
     num_runs = test_opts[1]
+    root_dir = test_opts[2]
 
     # Setup script environment
     print(f"\nPreparing to Parse OQS-Provider Results:\n")
-    setup_parse_env(test_opts[2])
+    dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers = setup_parse_env(root_dir)
 
     # Process the OQS-Provider results
     print("Parsing results... ")
-    process_tests(machine_id, algs_dict)
+    process_tests(
+        machine_id,
+        num_runs,
+        dir_paths,
+        algs_dict,
+        pqc_type_vars,
+        col_headers,
+        speed_headers
+    )
