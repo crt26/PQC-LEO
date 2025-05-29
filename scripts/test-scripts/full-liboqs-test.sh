@@ -462,7 +462,7 @@ function setup_test_suite() {
         if [ $user_y_n_response -eq 0 ]; then
 
             # Output to the user that the parsed results will not be replaced
-            echo -e "[NOTICE] - Keeping existing parsed results, manual parsing is now required"
+            echo -e "[NOTICE] - Keeping existing parsed results, manual parsing is now required\n"
             sleep 2
 
             # Set the automatic result parsing flag to disabled
