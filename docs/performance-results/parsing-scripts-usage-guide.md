@@ -67,13 +67,14 @@ Command-line mode can also be executed manually, as seen in the example below:
 python3 parse_results.py --parse-mode=liboqs --machine-id=2 --total-runs=10
 ```
 
-All three arguments are required. The table below outlines each:
+The table below outlines each of the accepted commands and which are required for operation:
 
-| **Argument**            | **Description**                                                          |
-|-------------------------|--------------------------------------------------------------------------|
-| `--parse-mode=<string>` | Parsing mode: must be either `liboqs` or `oqs-provider`.                 |
-| `--machine-id=<int>`    | Machine-ID assigned during testing. Must be a positive integer.          |
-| `--total-runs=<int>`    | Number of test runs to parse. Must be a positive integer greater than 0. |
+| **Argument**            | **Description**                                                                        | **Required Flag (*)** |
+|-------------------------|----------------------------------------------------------------------------------------|-----------------------|
+| `--parse-mode=<string>` | Must be either liboqs or oqs-provider. both is not allowed here.                       | *                     |
+| `--machine-id=<int>`    | Machine-ID used during testing (positive integer).                                     | *                     |
+| `--total-runs=<int>`    | Number of test runs (must be > 0).                                                     | *                     |
+| `--replace-old-results` | Optional flag to force overwrite of any existing results for the specified Machine-ID. |                       |
 
 This mode is suited for automated workflows or environments where manual input is not practical.
 

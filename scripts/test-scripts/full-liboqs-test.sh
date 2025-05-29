@@ -267,6 +267,7 @@ function set_result_paths() {
 
     # Set the results directory paths based on assigned machine-ID for these results
     machine_results_path="$test_data_dir/up-results/liboqs/machine-$machine_num"
+    parsed_results_path="$test_data_dir/results/liboqs/machine-$machine_num"
     machine_speed_results="$machine_results_path/raw-speed-results"
     machine_mem_results="$machine_results_path/mem-results"
     kem_mem_results="$machine_mem_results/kem-mem-metrics"
@@ -450,6 +451,36 @@ function setup_test_suite() {
 
     fi
 
+    # Check if Parsed results already exist for the Machine-ID
+    if [ -d "$parsed_results_path" ]; then
+
+        # Output to the user that the parsed results already exist
+        echo -e "[WARNING] - Parsed results already exist for Machine-ID ($machine_num)"
+        get_user_yes_no "Would you like to replace the existing parsed results?"
+
+        # Determine the next action based on the user's response
+        if [ $user_y_n_response -eq 0 ]; then
+
+            # Output to the user that the parsed results will not be replaced
+            echo -e "[NOTICE] - Keeping existing parsed results, manual parsing is now required"
+            sleep 2
+
+            # Set the automatic result parsing flag to disabled
+            parse_results=0
+
+        elif [ $user_y_n_response -eq 1 ]; then
+
+            # Output to the user that the parsed results will be replaced
+            echo -e "[NOTICE] - Existing Parsed Results for Machine-ID ($machine_num) will be replaced\n"
+            sleep 2
+
+            # Set the automatic result parsing flag to enabled
+            replace_old_results=1
+            
+        fi
+
+    fi
+
     # Set the Liboqs test/bin directory path
     liboqs_test_path="$liboqs_path/build/tests"
 
@@ -613,37 +644,34 @@ function mem_tests() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
-function main() {
-    # Main function for controlling the automated Liboqs PQC computational performance testing
+function handle_result_parsing() {
+    # Function for handling automatic result parsing based on user-defined flags. Calls the parsing script with 
+    # the correct arguments, including the replace flag if set, and verifies whether parsing completed successfully.
 
-    # Output the welcome message to the terminal
-    echo "###########################################################"
-    echo "PQC-Evaluation-Tools - Automated Liboqs Performance Testing"
-    echo -e "###########################################################\n"
-
-    # Set the default result parsing flag to enabled
-    parse_results=1
-
-    # Setup the base environment and testing suite setup
-    setup_base_env
-    setup_test_suite
-
-    # Perform the Liboqs speed and memory performance tests
-    speed_tests
-    mem_tests
-
-    # Output the testing complete message to the user
-    echo -e "All performance testing complete"
-
-    # Parse the results if the flag is set to enabled
+    # Check if the automatic result parsing flag is set to enabled
     if [ $parse_results -eq 1 ]; then
 
-        # Output the parsing message to the user
-        echo -e "\nParsing results...\n"
+        # Call the automatic parsing script based on if old results need to be replaced
+        if [ $replace_old_results -eq 0 ]; then
 
-        # Call the result parsing script to parse the results
-        python3 "$parsing_scripts/parse_results.py" --parse-mode="liboqs"  --machine-id="$machine_num" --total-runs=$number_of_runs
-        exit_status=$?
+            # Call the result parsing script to parse the results with replace flag not set
+            python3 "$parsing_scripts/parse_results.py" \
+                --parse-mode="liboqs"  \
+                --machine-id="$machine_num" \
+                --total-runs=$number_of_runs
+            exit_status=$?
+
+        else
+
+            # Call the result parsing script to parse the results with replace flag set
+            python3 "$parsing_scripts/parse_results.py" \
+                --parse-mode="liboqs"  \
+                --machine-id="$machine_num" \
+                --total-runs=$number_of_runs \
+                --replace-old-results
+            exit_status=$?
+
+        fi
 
         # Ensure that the parsing script completed successfully
         if [ $exit_status -eq 0 ]; then
@@ -664,6 +692,35 @@ function main() {
         exit 1
             
     fi
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
+function main() {
+    # Main function for controlling the automated Liboqs PQC computational performance testing
+
+    # Output the welcome message to the terminal
+    echo "###########################################################"
+    echo "PQC-Evaluation-Tools - Automated Liboqs Performance Testing"
+    echo -e "###########################################################\n"
+
+    # Set the default automatic result parsing flags
+    parse_results=1
+    replace_old_results=0
+
+    # Setup the base environment and testing suite setup
+    setup_base_env
+    setup_test_suite
+
+    # Perform the Liboqs speed and memory performance tests
+    speed_tests
+    mem_tests
+
+    # Output the testing complete message to the user
+    echo -e "All performance testing complete"
+
+    # Handle the automatic result parsing based on the user input flags
+    handle_result_parsing
 
 }
 main

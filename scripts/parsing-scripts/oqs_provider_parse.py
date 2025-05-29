@@ -8,14 +8,15 @@ structures the results into clean CSV files, and computes averaged metrics using
 This script is called by the central parse_results.py controller and supports single-machine, multi-run setups.
 """
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 import pandas as pd
 import os
 import sys
 import shutil
+import time
 from results_averager import OqsProviderResultAverager
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def setup_parse_env(root_dir):
     """ Function for setting up the environment for the OQS-Provider TLS parsing script. The function
         will set the various directory paths, read in the algorithm lists, set the root directories 
@@ -89,67 +90,84 @@ def setup_parse_env(root_dir):
 
     return dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers
 
-#-----------------------------------------------------------------------------------------------------------
-def handle_results_dir_creation(machine_id, dir_paths):
+#------------------------------------------------------------------------------------------------------------------------------
+def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
     """ Function for handling the presence of older parsed results, ensuring that the user
         is aware of the old results and can choose how to handle them before the parsing continues. """
 
     # Check if there are any old parsed results for current Machine-ID and handle any clashes
     if os.path.exists(dir_paths["mach_results_dir"]):
 
-        # Output the warning message to the terminal
-        print(f"There are already parsed OQS-Provider testing results present for Machine-ID ({machine_id})\n")
+        # Determine if the user needs prompted to handle the old results or if the --replace-old-results flag is set
+        if replace_old_results:
 
-        # Get the decision from user on how to handle old results before parsing continues
-        while True:
+            # Output the warning message about the old results
+            print(f"[NOTICE] - The --replace-old-results flag has been set, replacing the old results for Machine-ID ({machine_id})\n")
+            time.sleep(2)
 
-            # Output the potential options and handle user choice
-            print(f"\nFrom the following options, choose how would you like to handle the old OQS-Provider results:\n")
-            print("Option 1 - Replace old parsed results with new ones")
-            print("Option 2 - Exit parsing programme to move old results and rerun after (if you choose this option, please move the entire folder not just its contents)")
-            print("Option 3 - Make parsing script programme wait until you have move files before continuing")
-            user_choice = input("Enter option (1/2/3): ")
+            # Replace all old results and create a new empty directory to store the parsed results
+            print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...")
+            shutil.rmtree(dir_paths["results_dir"], f"machine-{machine_id}")
 
-            if user_choice == "1":
+            # Create the new directories for parsed results
+            os.makedirs(dir_paths["mach_handshake_dir"])
+            os.makedirs(dir_paths["mach_speed_results_dir"])
+        
+        else:
 
-                # Replace all old results and create a new empty directory to store the parsed results
-                print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...")
-                shutil.rmtree(dir_paths["results_dir"], f"machine-{machine_id}")
-                print("Old results removed")
+            # Output the warning message to the terminal
+            print(f"[WARNING] - There are already parsed OQS-Provider testing results present for Machine-ID ({machine_id})\n")
 
-                os.makedirs(dir_paths["mach_handshake_dir"])
-                os.makedirs(dir_paths["mach_speed_results_dir"])
-                break
+            # Get the decision from user on how to handle old results before parsing continues
+            while True:
 
-            elif user_choice == "2":
+                # Output the potential options and handle user choice
+                print(f"From the following options, choose how would you like to handle the old OQS-Provider results:\n")
+                print("Option 1 - Replace old parsed results with new ones")
+                print("Option 2 - Exit parsing programme to move old results and rerun after (if you choose this option, please move the entire folder not just its contents)")
+                print("Option 3 - Make parsing script programme wait until you have move files before continuing")
+                user_choice = input("Enter option: ")
 
-                # Exit the script to allow the user to move old results before retrying
-                print("Exiting parsing script...")
-                exit()
+                if user_choice == "1":
 
-            elif user_choice == "3":
+                    # Replace all old results and create a new empty directory to store the parsed results
+                    print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...")
+                    shutil.rmtree(dir_paths["results_dir"], f"machine-{machine_id}")
 
-                # Halting script until old results have been moved for current Machine-ID
-                while True:
+                    # Create the new directories for parsed results
+                    os.makedirs(dir_paths["mach_handshake_dir"])
+                    os.makedirs(dir_paths["mach_speed_results_dir"])
+                    break
 
-                    input(f"Halting parsing script so old parsed results for Machine-ID ({machine_id}) can be moved, press enter to continue")
+                elif user_choice == "2":
 
-                    # Checking if old results have been moved before continuing
-                    if os.path.exists(dir_paths["mach_results_dir"]):
-                        print(f"Old parsed results for Machine-ID ({machine_id}) still present!!!\n")
+                    # Exit the script to allow the user to move old results before retrying
+                    print("Exiting parsing script...")
+                    exit()
 
-                    else:
-                        print("Old results have been moved, now continuing with parsing script")
-                        os.makedirs(dir_paths["mach_handshake_dir"])
-                        os.makedirs(dir_paths["mach_speed_results_dir"])
-                        break
-                
-                break
+                elif user_choice == "3":
 
-            else:
-                
-				# Output the warning message if the user input is not valid
-                print("Incorrect value, please select (1/2/3)")
+                    # Halting script until old results have been moved for current Machine-ID
+                    while True:
+
+                        input(f"Halting parsing script so old parsed results for Machine-ID ({machine_id}) can be moved, press enter to continue")
+
+                        # Checking if old results have been moved before continuing
+                        if os.path.exists(dir_paths["mach_results_dir"]):
+                            print(f"Old parsed results for Machine-ID ({machine_id}) still present!!!\n")
+
+                        else:
+                            print("Old results have been moved, now continuing with parsing script")
+                            os.makedirs(dir_paths["mach_handshake_dir"])
+                            os.makedirs(dir_paths["mach_speed_results_dir"])
+                            break
+                    
+                    break
+
+                else:
+                    
+                    # Output the warning message if the user input is not valid
+                    print("Incorrect value, please select (1/2/3)")
 
     else:
         
@@ -157,7 +175,7 @@ def handle_results_dir_creation(machine_id, dir_paths):
         os.makedirs(dir_paths["mach_handshake_dir"])
         os.makedirs(dir_paths["mach_speed_results_dir"])
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def get_metrics(current_row, test_filepath, get_reuse_metrics):
     """ Helper function for pulling the current sig/kem metrics from 
         the supplied OQS-Provider s_time output file. """
@@ -228,7 +246,7 @@ def get_metrics(current_row, test_filepath, get_reuse_metrics):
 
     return current_row
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def pqc_based_pre_processing(current_run, type_index, pqc_type_vars, col_headers, algs_dict, dir_paths):
     """ Function for pre-processing PQC and PQC-Hybrid TLS results for the current run. This function
         will loop through the sig/kem combinations and extract the metrics for each combination. This creates the 
@@ -272,7 +290,7 @@ def pqc_based_pre_processing(current_run, type_index, pqc_type_vars, col_headers
     output_filepath = os.path.join(dir_paths[pqc_type_vars["base_type"][type_index]], base_out_filename)
     sig_metrics_df.to_csv(output_filepath,index=False)
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def pqc_based_processing(current_run, dir_paths, algs_dict, pqc_type_vars, col_headers):
     """ Function for parsing both PQC and PQC-Hybrid TLS results for the current run. The function will
         process the results and output the full base results for the current run and then separate the
@@ -307,7 +325,7 @@ def pqc_based_processing(current_run, dir_paths, algs_dict, pqc_type_vars, col_h
             output_filepath = os.path.join(sig_path, output_filename)
             current_sig_df.to_csv(output_filepath, index=False)
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def classic_based_processing(current_run, dir_paths, algs_dict, col_headers):
     """ Function for processing results from classic cipher TLS handshake testing """
 
@@ -350,7 +368,7 @@ def classic_based_processing(current_run, dir_paths, algs_dict, col_headers):
     output_filepath = os.path.join(dir_paths['classic_handshake_results'], cipher_out_filename)
     cipher_metrics_df.to_csv(output_filepath, index=False)
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def tls_speed_drop_last(data_cells):
     """ Helper function for removing unwanted characters from 
         metric values during the tls-speed results parsing """
@@ -363,7 +381,7 @@ def tls_speed_drop_last(data_cells):
 
     return data_cells
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def get_speed_metrics(speed_filepath, alg_type, speed_headers):
     """ Function for extracting the speed metrics from the raw OpenSSL s_speed tool with OQS-Provider output file 
         for the current algorithm type (kem or sig) """
@@ -405,7 +423,7 @@ def get_speed_metrics(speed_filepath, alg_type, speed_headers):
 
     return speed_metrics_df
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def speed_processing(current_run, dir_paths, speed_headers):
     """ Function for processing OpenSSL s_speed with OQS_Provider metrics for both PQC and PQC-Hybrid algorithms
        for the current run """
@@ -430,7 +448,7 @@ def speed_processing(current_run, dir_paths, speed_headers):
             output_filepath = os.path.join(dir_list[1], f"{pqc_fileprefix}-{alg_type}-{str(current_run)}.csv")
             speed_metrics_df.to_csv(output_filepath, index=False)
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def output_processing(num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers):
     """ Function for processing the outputs of the 
         s_time and s_speed TLS benchmarking tests for the current machine """
@@ -453,8 +471,8 @@ def output_processing(num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers
         classic_based_processing(current_run, dir_paths, algs_dict, col_headers)
         speed_processing(current_run, dir_paths, speed_headers)
 
-#-----------------------------------------------------------------------------------------------------------
-def process_tests(machine_id, num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers):
+#------------------------------------------------------------------------------------------------------------------------------
+def process_tests(machine_id, num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers, replace_old_results):
     """ Function for controlling the parsing scripts for the OQS-Provider TLS testing up-result files
         and calling average  calculation scripts """
 
@@ -482,7 +500,7 @@ def process_tests(machine_id, num_runs, dir_paths, algs_dict, pqc_type_vars, col
     })
 
     # Create the results directory for current machine and handle Machine-ID clashes
-    handle_results_dir_creation(machine_id, dir_paths)
+    handle_results_dir_creation(machine_id, dir_paths, replace_old_results)
 
     # Call the processing function and the average calculation methods for the current machine
     output_processing(num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers)
@@ -490,8 +508,8 @@ def process_tests(machine_id, num_runs, dir_paths, algs_dict, pqc_type_vars, col
     oqs_provider_avg.gen_classic_avgs()
     oqs_provider_avg.gen_speed_avgs(speed_headers)
 
-#-----------------------------------------------------------------------------------------------------------
-def parse_oqs_provider(test_opts):
+#------------------------------------------------------------------------------------------------------------------------------
+def parse_oqs_provider(test_opts, replace_old_results):
     """ Main function for controlling the parsing of the OQS-Provider TLS handshake and speed results. This function
         is called from the main parsing control script and will call the necessary functions to parse the results """
 
@@ -505,7 +523,7 @@ def parse_oqs_provider(test_opts):
     dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers = setup_parse_env(root_dir)
 
     # Process the OQS-Provider results
-    print("Parsing results... ")
+    print(f"Parsing results...\n")
     process_tests(
         machine_id,
         num_runs,
@@ -513,5 +531,6 @@ def parse_oqs_provider(test_opts):
         algs_dict,
         pqc_type_vars,
         col_headers,
-        speed_headers
+        speed_headers,
+        replace_old_results
     )

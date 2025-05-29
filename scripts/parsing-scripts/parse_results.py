@@ -10,14 +10,14 @@ at the project root. Parsing is supported only on Linux systems and depends on t
 used for testing.
 """
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 from liboqs_parse import parse_liboqs
 from oqs_provider_parse import parse_oqs_provider
 import os
 import sys
 import argparse
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def handle_args():
     """ Function for handling the command line arguments passed to the script. The function uses the argparse
         library to define the expected arguments and their types. The function returns the parsed arguments if valid. """
@@ -27,6 +27,7 @@ def handle_args():
     parser.add_argument('--parse-mode', type=str, help='The parsing mode to be used (liboqs or oqs-provider)')
     parser.add_argument('--machine-id', type=int, help='The Machine-ID of the results to be parsed')
     parser.add_argument('--total-runs', type=int, help='The number of test runs to be parsed')
+    parser.add_argument("--replace-old-results", action="store_true", help="Replace old results for the passed Machine-ID if this flag is set")
     
     # Parse the command line arguments
     try:
@@ -67,7 +68,7 @@ def handle_args():
     # Return the parsed arguments
     return args
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def setup_base_env():
     """ Function for setting up the global environment variables for the test suite. The function establishes
         the root path by determining the path of the script and recursively moving up the directory tree until
@@ -94,7 +95,7 @@ def setup_base_env():
             print("Root directory path file not present, please ensure the path is correct and try again.")
             sys.exit(1)
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def get_mode_selection():
     """ Helper function for getting the mode selection from the user if the interactive method of calling the script 
         is used. The function outputs the available options to the user and returns the selected option. """
@@ -125,7 +126,7 @@ def get_mode_selection():
         else:
             print(["Invalid option, please select a valid option value (1-4)"])
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def get_test_opts(root_dir):
     """ Helper function for getting the test parameters used in during the automated testing, which includes 
         the number of runs and number of machines tested. """
@@ -160,12 +161,15 @@ def get_test_opts(root_dir):
     test_opts = [machine_num, total_runs, root_dir]
     return test_opts
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def main():
     """Main function which controls the parsing scripts for Liboqs and OQS-Provider testing results"""
 
     # Setup the base environment for the script
     root_dir = setup_base_env()
+
+    # Set the default value for the replace_old_results variable
+    replace_old_results = False
 
     # Determine which method is being used to the run the script
     if len (sys.argv) > 1:
@@ -173,16 +177,22 @@ def main():
         # Parse the command line arguments provided to the script
         args = handle_args()
 
+        # Determine if existing results should be replaced
+        if args.replace_old_results:
+            replace_old_results = True
+        else:
+            replace_old_results = False
+
         # Determine which parsing mode to use and get the test options
         if args.parse_mode == "liboqs":
             print("Parsing Liboqs results")
             liboqs_test_opts = [args.machine_id, args.total_runs, root_dir]
-            parse_liboqs(liboqs_test_opts)
+            parse_liboqs(liboqs_test_opts, replace_old_results)
         
         elif args.parse_mode == "oqs-provider":
             print("Parsing OQS-Provider results")
             oqs_provider_test_opts = [args.machine_id, args.total_runs, root_dir]
-            parse_oqs_provider(oqs_provider_test_opts)
+            parse_oqs_provider(oqs_provider_test_opts, replace_old_results)
 
     else:
 
@@ -200,7 +210,7 @@ def main():
             liboqs_test_opts = get_test_opts(root_dir)
 
             # Call the parsing script for Liboqs results
-            parse_liboqs(liboqs_test_opts)
+            parse_liboqs(liboqs_test_opts, replace_old_results)
         
         elif user_parse_mode == '2':
 
@@ -212,7 +222,7 @@ def main():
             oqs_provider_test_opts = get_test_opts(root_dir)
 
             # Call the parsing script for OQS-Provider TLS results
-            parse_oqs_provider(oqs_provider_test_opts)
+            parse_oqs_provider(oqs_provider_test_opts, replace_old_results)
 
         elif user_parse_mode == '3':
 
@@ -227,11 +237,11 @@ def main():
             oqs_provider_test_opts = get_test_opts(root_dir)
             
             # Parse the Liboqs results
-            parse_liboqs(liboqs_test_opts)
+            parse_liboqs(liboqs_test_opts, replace_old_results)
             print("\nLiboqs Parsing complete\n")
 
             # Parse the OQS-Provider Results
-            parse_oqs_provider(oqs_provider_test_opts)
+            parse_oqs_provider(oqs_provider_test_opts, replace_old_results)
             print("\nOQS-Provider Parsing complete\n")
 
         else:
@@ -239,9 +249,10 @@ def main():
             sys.exit(1)
 
     # Output the parsing completed message to the terminal
-    print(f"\nResults processing complete, parsed results can be found in the results folder at the repo root")
+    print(f"\nResults processing complete, parsed results can be found in the following directory:")
+    print(f"{os.path.join(root_dir, "test-data", "results")}")
 
-#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 """Main boiler plate"""
 if __name__ == "__main__":
     main()

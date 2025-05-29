@@ -649,6 +649,39 @@ function configure_results_dir() {
 
     fi
 
+    # Set the parsed results directory path based on the decided machine-ID
+    parsed_results_path="$test_data_dir/results/oqs-provider/machine-$MACHINE_NUM"
+
+    # Check if Parsed results already exist for the Machine-ID
+    if [ -d "$parsed_results_path" ]; then
+
+        # Output to the user that the parsed results already exist
+        echo -e "[WARNING] - Parsed results already exist for Machine-ID ($machine_num)"
+        get_user_yes_no "Would you like to replace the existing parsed results?"
+
+        # Determine the next action based on the user's response
+        if [ $user_y_n_response -eq 0 ]; then
+
+            # Output to the user that the parsed results will not be replaced
+            echo -e "[NOTICE] - Keeping existing parsed results, manual parsing is now required"
+            sleep 2
+
+            # Set the automatic result parsing flag to disabled
+            parse_results=0
+
+        elif [ $user_y_n_response -eq 1 ]; then
+
+            # Output to the user that the parsed results will be replaced
+            echo -e "[NOTICE] - Existing Parsed Results for Machine-ID ($machine_num) will be replaced\n"
+            sleep 2
+
+            # Set the automatic result parsing flag to enabled
+            replace_old_results=1
+            
+        fi
+
+    fi
+
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
@@ -910,38 +943,63 @@ function run_tests() {
             exit 1
         fi
 
-        # Parse the results if the flag is set to enabled
-        if [ $parse_results -eq 1 ]; then
+        # Set the parsing checks needed as this is the client machine
+        parsing_check_needed=1
 
-            # Output the parsing message to the user
-            echo -e "\nParsing results...\n"
-
-            # Call the result parsing script to parse the results
-            python3 "$parsing_scripts/parse_results.py" --parse-mode="oqs-provider" --machine-id="$MACHINE_NUM" --total-runs="$NUM_RUN"
-            exit_status=$?
-
-            # Ensure that the parsing script completed successfully
-            if [ $exit_status -eq 0 ]; then
-                echo -e "\nParsed results can be found in the following directory:"
-                echo "$test_data_dir/results/oqs-provider/machine-$MACHINE_NUM"
-            else
-                echo -e "\n[WARNING] - Result parsing failed, manual calling of parsing script is now required\n"
-            fi
-
-        elif [ $parse_results -eq 0 ]; then
-
-            # Output the complete message with the test results path to the user
-            echo -e "All performance testing complete, the unparsed results for Machine-ID ($MACHINE_NUM) can be found in:"
-            echo "Results Dir Path - $MACHINE_RESULTS_PATH"
-            
-        else
-            echo -e "\n[ERROR] - parse_results flag not set correctly, manual calling of parsing script is now required\n"
-            exit 1
-            
-        fi
-    
     fi
 
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
+function handle_result_parsing() {
+    # Function for handling automatic result parsing based on user-defined flags. Calls the parsing script with 
+    # the correct arguments, including the replace flag if set, and verifies whether parsing completed successfully.
+
+    # Parse the results if the flag is set to enabled
+    if [ $parse_results -eq 1 ]; then
+
+        # Call the automatic parsing script based on if old results need to be replaced
+        if [ $replace_old_results -eq 0 ]; then
+
+            # Call the result parsing script to parse the results with replace flag not set
+            python3 "$parsing_scripts/parse_results.py" \
+                --parse-mode="oqs-provider"  \
+                --machine-id="$machine_num" \
+                --total-runs=$number_of_runs
+            exit_status=$?
+
+        else
+
+            # Call the result parsing script to parse the results with replace flag set
+            python3 "$parsing_scripts/parse_results.py" \
+                --parse-mode="oqs-provider"  \
+                --machine-id="$machine_num" \
+                --total-runs=$number_of_runs \
+                --replace-old-results
+            exit_status=$?
+
+        fi
+
+        # Ensure that the parsing script completed successfully
+        if [ $exit_status -eq 0 ]; then
+            echo -e "\nParsed results can be found in the following directory:"
+            echo "$test_data_dir/results/oqs-provider/machine-$MACHINE_NUM"
+        else
+            echo -e "\n[WARNING] - Result parsing failed, manual calling of parsing script is now required\n"
+        fi
+
+    elif [ $parse_results -eq 0 ]; then
+
+        # Output the complete message with the test results path to the user
+        echo -e "All performance testing complete, the unparsed results for Machine-ID ($MACHINE_NUM) can be found in:"
+        echo "Results Dir Path - $MACHINE_RESULTS_PATH"
+        
+    else
+        echo -e "\n[ERROR] - parse_results flag not set correctly, manual calling of parsing script is now required\n"
+        exit 1
+        
+    fi
+    
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
@@ -956,7 +1014,9 @@ function main() {
     # Set the default global flag variables
     custom_control_time_flag="False"
     disable_control_sleep="False"
+    parsing_check_needed=0
     parse_results=1
+    replace_old_results=0
 
     # Set the default TCP port values
     server_control_port="25000"
@@ -974,6 +1034,11 @@ function main() {
     # Get the test options and perform the PQC TLS tests 
     configure_test_options
     run_tests
+
+    # Handle automatic result parsing if the client machine
+    if [ "$parsing_check_needed" -eq 1 ]; then
+        handle_result_parsing
+    fi
 
     # Clean the environment before exiting the script
     clean_environment

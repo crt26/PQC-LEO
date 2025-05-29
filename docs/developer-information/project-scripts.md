@@ -136,7 +136,7 @@ When called, the utility script accepts the following arguments:
 The Liboqs PQC performance testing utilises a single bash script to conduct the automated benchmarking. This script performs CPU speed testing and memory usage profiling for supported KEM and digital signature algorithms. It is designed to be run interactively, prompting the user for test parameters such as the machine ID and number of test iterations.
 
 ### full-liboqs-test.sh
-This script performs fully automated CPU and memory performance benchmarking of the algorithms included in the Liboqs library. It runs speed tests using Liboqs' built-in benchmarking binaries and uses Valgrind with the massif tool to capture detailed memory usage metrics for each cryptographic operation. The results are stored in dedicated directories, organised by machine ID, and can be parsed later using the project's parsing tools.
+This script performs fully automated CPU and memory performance benchmarking of the algorithms included in the Liboqs library. It runs speed tests using Liboqs' built-in benchmarking binaries and uses Valgrind with the massif tool to capture detailed memory usage metrics for each cryptographic operation. The results are stored in dedicated directories, organised by machine ID.
 
 The script handles:
 
@@ -237,13 +237,14 @@ Command-Line Mode:
 python3 parse_results.py --parse-mode=liboqs --machine-id=2 --total-runs=10
 ```
 
-If using the command line mode, all three arguments are required. The table below outlines each:
+The table below outlines each of the accepted commands and which are required for operation:
 
-| **Argument**            | **Description**                                                          |
-|-------------------------|--------------------------------------------------------------------------|
-| `--parse-mode=<string>` | Parsing mode: must be either `liboqs` or `oqs-provider`.                 |
-| `--machine-id=<int>`    | Machine-ID assigned during testing. Must be a positive integer.          |
-| `--total-runs=<int>`    | Number of test runs to parse. Must be a positive integer greater than 0. |
+| **Argument**            | **Description**                                                                        | **Required Flag (*)** |
+|-------------------------|----------------------------------------------------------------------------------------|-----------------------|
+| `--parse-mode=<string>` | Must be either liboqs or oqs-provider. both is not allowed here.                       | *                     |
+| `--machine-id=<int>`    | Machine-ID used during testing (positive integer).                                     | *                     |
+| `--total-runs=<int>`    | Number of test runs (must be > 0).                                                     | *                     |
+| `--replace-old-results` | Optional flag to force overwrite of any existing results for the specified Machine-ID. |                       |
 
 **Note:** The command-line mode does not support parsing both result types in one call. Use interactive mode to combine parsing of Liboqs and OQS-Provider data in a single session.
 

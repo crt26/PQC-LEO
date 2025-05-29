@@ -16,7 +16,7 @@ Accepted arguments:
     4 - Parse ALGORITHMS.md in OQS-Provider source to count supported algorithms
 """
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 import os
 import subprocess
 import sys
@@ -32,7 +32,7 @@ oqs_provider_path = ""
 openssl_lib_dir = ""
 oqs_provider_src_dir = ""
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def output_help_message():
     """ Helper function for outputting the help message to the user when the --help flag is present 
         or when incorrect arguments are passed """
@@ -46,7 +46,7 @@ def output_help_message():
     print("4        Parse the ALGORITHMS.md file of the OQS-Provider library to get the total number of algorithms supported")
     print("--help   Output the help message to the user")
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def setup_base_env():
     """ Function for setting up the global environment variables for the test suite. This includes determining the root directory 
         by tracing the script's location, and configuring paths for libraries, test data, and temporary files. """
@@ -104,7 +104,7 @@ def setup_base_env():
     else:
         os.mkdir(alg_list_dir)
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def write_to_file(alg_list, file_name):
     """ Helper function to write the algorithms to a specified text file. The function 
         takes the algorithm list and filename as arguments. """
@@ -114,7 +114,7 @@ def write_to_file(alg_list, file_name):
         for alg in alg_list:
             f.write(f"{alg}\n")
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def liboqs_extract_algs(output_str):
     """ Helper function to extract the algorithms from the output string of the liboqs test binaries. 
         The function parses the output string to identify and extract algorithm names. """
@@ -149,7 +149,7 @@ def liboqs_extract_algs(output_str):
 
     return extracted_algs
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def get_liboqs_algs():
     """ Function to get the algorithms supported by the Liboqs library. The function will run the test
         binaries with no arguments to trigger the help output which will contain the algorithms supported. """
@@ -194,7 +194,7 @@ def get_liboqs_algs():
             print(f"[ERROR] - Test binary '{bin}' not found.")
             return
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def oqs_provider_extract_algs(test_type, provider_type, output_str):
     """ Helper function to extract the algorithms from the output string of the OpenSSL binary. The binary is passed 
         the algorithm type and the OQS-Provider flags so that it prints out the algorithms supported for that type in OQS-Provider. """
@@ -278,7 +278,7 @@ def oqs_provider_extract_algs(test_type, provider_type, output_str):
 
     return algs, hybrid_algs
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def get_tls_pqc_algs():
     """ Function to get the PQC and Hybrid-PQC algorithms supported by 
         the OQS-Provider library for the TLS benchmarking. """
@@ -341,7 +341,7 @@ def get_tls_pqc_algs():
         write_to_file(speed_algs, speed_list_file)
         write_to_file(speed_hybrid_algs, speed_hybrid_alg_list_file)
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def set_tls_classic_algs():
     """ Function to set the classic algorithm lists for the TLS benchmarking. The classic algorithms are not subject 
         to change, so they can be set in the script and then outputted to text files for the benchmarking and parsing scripts. """
@@ -359,7 +359,7 @@ def set_tls_classic_algs():
     write_to_file(classic_kems, kem_list_file)
     write_to_file(classic_sigs, sig_list_file)
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def parse_oqs_provider_algorithms_md():
     """ Function for parsing the ALGORITHMS.md file of the OQS-Provider library to extract the total number of algorithms supported
         This is only called when all algorithms are selected to be enabled by the main setup.sh script, as the OpenSSL speed.c source
@@ -422,7 +422,7 @@ def parse_oqs_provider_algorithms_md():
     print(f"Total number of Algorithms: {len(main_algs)}")
     sys.exit(0)
     
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def main():
     """ Main function for controlling the utility script. The function will determine which algorithms 
         are required based on the argument passed to the script. """
@@ -510,7 +510,7 @@ def main():
         print("Invalid number of arguments passed to the utility script, please check the code of the setup.sh script, or if you are running this script manually, ensure you are passing the correct number of arguments")
         sys.exit(1)
 
-#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 """Main boiler plate"""
 if __name__ == "__main__":
     main()
