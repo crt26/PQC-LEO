@@ -35,14 +35,14 @@ When executed, the testing tool will provide various testing parameter options b
 ### Configuring Testing Parameters
 Before testing begins, the script will prompt you to configure a few testing parameters which includes:
 
-- Whether the results should be compared with other machines and Assigning Machine-ID
+- Whether the results should have a custom Machine-ID assigned to them.
 - The number of times each test should be run to allow for more accurate average calculation.
 
 #### Machine Comparison Option <!-- omit from toc -->
 The first testing option is:
 
 ```
-Do you intend to compare the results against other machines [y/n]?
+Do you wish to assign a custom Machine-ID to the performance results? [y/n]?
 ```
 
 Selecting `y` (yes) enables multi-machine result comparison. The script will prompt you to assign a machine ID to the results, which the Python parsing scripts use to organise and differentiate data from different systems. This is useful when comparing performance across devices or architectures. Responding  `n` (no) to this option will assign a default value of `1` to the outputted machine results upon test completion.

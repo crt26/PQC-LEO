@@ -143,11 +143,19 @@ def get_test_opts(root_dir):
     
     # Get the total number of test runs from the user
     while True:
+
         try:
-            total_runs = int(input("Enter the number test runs - "))
-            break
+            # Prompt the user for the total of test runs
+            total_runs = int(input("Enter the number of test runs performed - "))
+
+            # Check if the total runs is more than 0
+            if total_runs < 1:
+                print("Invalid Input - Please enter a number greater than 0!")
+            else:
+                break
+            
         except ValueError:
-            print("Invalid Input - Please enter a number!")
+            print("Invalid Input - Please enter a valid number!")
     
     test_opts = [machine_num, total_runs, root_dir]
     return test_opts

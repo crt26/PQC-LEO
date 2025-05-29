@@ -530,7 +530,7 @@ function get_machine_num() {
     while true; do
 
         # Get the machine-ID from the user
-        read -p "What Machine-ID would you like to assign to these results? - " user_response
+        read -p "What Machine-ID would you like to assign to these results?: " user_response
         
         # Check that the input from the user is a valid integer and store it
         case "$user_response" in
@@ -564,7 +564,7 @@ function handle_machine_id_clash() {
     while true; do
 
         # Output the choices for handling the clash to the user
-        echo -e "There are already results stored for Machine-ID ($MACHINE_NUM), would you like to:"
+        echo -e "[WARNING] - There are already results stored for Machine-ID ($MACHINE_NUM), would you like to:"
         echo -e "1 - Replace old results and keep same Machine-ID"
         echo -e "2 - Assign a different machine ID"
 
@@ -711,27 +711,11 @@ function configure_test_options {
 
     done
 
-    # Prompt the user for the number of test runs until a valid response is given
-    while true; do
-
-        # Prompt the user for their response and read it in
-        read -p "Enter the number of test runs required: " user_run_num
-
-        # Check if the input is a valid integer and export it to the environment if valid
-        if [[ $user_run_num =~ ^[1-9][0-9]*$ ]]; then
-            export NUM_RUN="$user_run_num"
-            break
-        else
-            echo -e "Invalid input. Please enter a valid integer above 0.\n"
-        fi
-    
-    done
-
     # If test machine is client, get the TLS handshake and speed test lengths from user
     if [ $machine_type == "Client" ]; then
 
         # Ask the user if they wish to assign a machine-ID to the performance results
-        echo -e "\nSetting test results ID:\n"
+        echo -e "\n=== Setting test results Machine-ID ===\n"
         get_user_yes_no "Do you wish to assign a custom Machine-ID to the performance results?"
 
         # Determine whether to assign a custom machine-ID or not based on the user response
@@ -750,6 +734,9 @@ function configure_test_options {
             export MACHINE_NUM="1"
 
         fi
+
+        # Output the test parameters message to the user
+        echo -e "=== Setting test parameters for the TLS Handshake and Speed tests ===\n"
 
         # Prompt the user for the TLS test length until a valid response is given
         while true; do
@@ -784,6 +771,27 @@ function configure_test_options {
         done
 
     fi
+
+    # Prompt the user for the number of test runs until a valid response is given
+    while true; do
+
+        # Output task to terminal only if server
+        if [ $machine_type == "Server" ]; then
+            echo -e "\n=== Setting Test Parameters ===\n"
+        fi
+
+        # Prompt the user for their response and read it in
+        read -p "Enter the number of test runs required: " user_run_num
+
+        # Check if the input is a valid integer and export it to the environment if valid
+        if [[ $user_run_num =~ ^[1-9][0-9]*$ ]]; then
+            export NUM_RUN="$user_run_num"
+            break
+        else
+            echo -e "Invalid input. Please enter a valid integer above 0.\n"
+        fi
+    
+    done
 
 }
 
@@ -827,7 +835,7 @@ function run_tests() {
     while true; do
 
         # Prompt the user for their response and read it in
-        echo -e "\nConfigure IP Parameters:"
+        echo -e "\n=== Configure IP Parameters ===\n"
         read -p "Please enter the $ip_request_string machine's IP address: " usr_ip_input
 
         # Format the user ip input by removing trailing spaces

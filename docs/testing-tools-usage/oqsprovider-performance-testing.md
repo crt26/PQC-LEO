@@ -78,11 +78,10 @@ Upon executing the script, the testing tool will prompt you to enter the paramet
 The testing tool will prompt you to enter the parameters for the test. These parameters include:
 
 - Machine type (server or client)
-- Machine Comparison Option
-- Machine Results ID (if comparison option selected)
-- Number of test runs to be performed
+- Whether the results should have a custom Machine-ID assigned to them (if machine is client)
 - Duration of each TLS handshake tests (if machine is client) **†**
 - Duration of TLS speed tests (if machine is client) **††**
+- Number of test runs to be performed
 - IP address of the other machine (use 127.0.0.1 for single-machine testing)
 
 **†** Defines the duration (in seconds) the OpenSSL `s_time` tool will use for each handshake test window. The client will attempt as many TLS handshakes as possible for each algorithm combination during this period.
