@@ -250,7 +250,7 @@ def main():
 
     # Output the parsing completed message to the terminal
     print(f"\nResults processing complete, parsed results can be found in the following directory:")
-    print(f"{os.path.join(root_dir, "test-data", "results")}")
+    print(f"{os.path.join(root_dir, 'test-data', 'results')}")
 
 #------------------------------------------------------------------------------------------------------------------------------
 """Main boiler plate"""
