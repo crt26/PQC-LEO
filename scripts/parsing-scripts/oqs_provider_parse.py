@@ -38,6 +38,10 @@ def setup_parse_env(root_dir):
         'sig_algs': [],
         "hybrid_kem_algs": [],
         "hybrid_sig_algs": [],
+        "speed_kem_algs": [],
+        "speed_sig_algs": [],
+        "hybrid_speed_kem_algs": [],
+        "hybrid_speed_sig_algs": [],
         'classic_algs': ["RSA_2048", "RSA_3072", "RSA_4096", "prime256v1", "secp384r1", "secp521r1"], 
         'ciphers': ["TLS_AES_256_GCM_SHA384", "TLS_CHACHA20_POLY1305_SHA256", "TLS_AES_128_GCM_SHA256"]
     }
@@ -76,7 +80,11 @@ def setup_parse_env(root_dir):
         "kem_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-kem-algs.txt"),
         "sig_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-sig-algs.txt"),
         "hybrid_kem_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-hybr-kem-algs.txt"),
-        "hybrid_sig_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-hybr-sig-algs.txt")
+        "hybrid_sig_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-hybr-sig-algs.txt"),
+        "speed_kem_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-speed-kem-algs.txt"),
+        "speed_sig_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-speed-sig-algs.txt"),
+        "hybrid_speed_kem_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-speed-hybr-kem-algs.txt"),
+        "hybrid_speed_sig_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-speed-hybr-sig-algs.txt"),
     }
 
     # Pull the algorithm names from the alg-lists files and create the relevant alg lists
@@ -106,7 +114,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
             time.sleep(2)
 
             # Replace all old results and create a new empty directory to store the parsed results
-            print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...")
+            print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...\n")
             shutil.rmtree(dir_paths["results_dir"], f"machine-{machine_id}")
 
             # Create the new directories for parsed results
@@ -131,7 +139,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
                 if user_choice == "1":
 
                     # Replace all old results and create a new empty directory to store the parsed results
-                    print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...")
+                    print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...\n")
                     shutil.rmtree(dir_paths["results_dir"], f"machine-{machine_id}")
 
                     # Create the new directories for parsed results
@@ -251,6 +259,21 @@ def pqc_based_pre_processing(current_run, type_index, pqc_type_vars, col_headers
     """ Function for pre-processing PQC and PQC-Hybrid TLS results for the current run. This function
         will loop through the sig/kem combinations and extract the metrics for each combination. This creates the 
         full base results for the current run which can later be separated into individual CSV files for each sig/kem combo """
+    
+    # Check if the stored up-results matches the number of algorithms in the alg list files only if run 1
+    if current_run == 1:
+
+        # Determine the number of expected and actual result files in the up-results directory
+        up_results_dir = pqc_type_vars["up_results_path"][type_index]
+        expected_files = len(algs_dict[pqc_type_vars["sig_alg_type"][type_index]]) * len(algs_dict[pqc_type_vars["kem_alg_type"][type_index]])
+        actual_files = [file for file in os.listdir(up_results_dir) if file.startswith("tls-handshake-1-") and file.endswith(".txt")]
+
+        # Ensure that the up-results directory for current PQC type and run contains the correct number of files
+        if expected_files != len(actual_files):
+            print(f"\n[ERROR] - Mismatch in expected file count for {pqc_type_vars['type_prefix'][type_index].upper()} TLS Handshake results.")
+            print(f"Please ensure the alg-list files have the same algorithms used in the testing, the setup process may need to be re-run")
+            print(f"If that is the case, please ensure to copy the up-results directory to a safe location before re-running the setup script")
+            sys.exit(1)
 
     # Declare the dataframe used in pre-processing
     sig_metrics_df = pd.DataFrame(columns=col_headers['pqc_based_headers'])
@@ -284,7 +307,7 @@ def pqc_based_pre_processing(current_run, type_index, pqc_type_vars, col_headers
             new_row_df = pd.DataFrame([current_row], columns=col_headers['pqc_based_headers'])
             sig_metrics_df = pd.concat([sig_metrics_df, new_row_df], ignore_index=True)
             current_row.clear()
-        
+
     # Output the full base PQC TLS metrics for the current run
     base_out_filename = f"{pqc_type_vars['type_prefix'][type_index]}-base-results-run-{current_run}.csv"
     output_filepath = os.path.join(dir_paths[pqc_type_vars["base_type"][type_index]], base_out_filename)
@@ -424,7 +447,7 @@ def get_speed_metrics(speed_filepath, alg_type, speed_headers):
     return speed_metrics_df
 
 #------------------------------------------------------------------------------------------------------------------------------
-def speed_processing(current_run, dir_paths, speed_headers):
+def speed_processing(current_run, dir_paths, speed_headers, algs_dict):
     """ Function for processing OpenSSL s_speed with OQS_Provider metrics for both PQC and PQC-Hybrid algorithms
        for the current run """
 
@@ -443,6 +466,16 @@ def speed_processing(current_run, dir_paths, speed_headers):
             # Set the up-results filepath and pull metrics from the raw file
             speed_filepath = os.path.join(dir_list[0], f"{pqc_fileprefix}-{alg_type}-{str(current_run)}.txt")
             speed_metrics_df = get_speed_metrics(speed_filepath, alg_type, speed_headers)
+
+            # Set the alg list dict key based on the current test and algorithm type
+            alg_list_key = f"speed_{alg_type}_algs" if test_type == "pqc" else f"hybrid_speed_{alg_type}_algs"
+
+            # Check if the number of speed metrics matches the expected number of algorithms
+            if len(speed_metrics_df) != len(algs_dict[alg_list_key]):
+                print(f"\n[ERROR] - Mismatch in expected entry count for {test_type.upper()} {alg_type.upper()} TLS Speed results.")
+                print(f"Please ensure the alg-list files have the same algorithms used in the testing, the setup process may need to be re-run")
+                print(f"If that is the case, please ensure to copy the up-results directory to a safe location before re-running the setup script")
+                sys.exit(1)
 
             # Output the speed metrics csv for the current test type and algorithm
             output_filepath = os.path.join(dir_list[1], f"{pqc_fileprefix}-{alg_type}-{str(current_run)}.csv")
@@ -469,7 +502,7 @@ def output_processing(num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers
     for current_run in range(1, num_runs+1):
         pqc_based_processing(current_run, dir_paths, algs_dict, pqc_type_vars, col_headers)
         classic_based_processing(current_run, dir_paths, algs_dict, col_headers)
-        speed_processing(current_run, dir_paths, speed_headers)
+        speed_processing(current_run, dir_paths, speed_headers, algs_dict)
 
 #------------------------------------------------------------------------------------------------------------------------------
 def process_tests(machine_id, num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers, replace_old_results):
@@ -498,6 +531,11 @@ def process_tests(machine_id, num_runs, dir_paths, algs_dict, pqc_type_vars, col
             os.path.join(dir_paths['mach_up_results_dir'], "handshake-results", "hybrid")
         ], 
     })
+
+    # Ensure that the machine's up-results directory exists before continuing
+    if not os.path.exists(dir_paths['mach_up_results_dir']):
+        print(f"[ERROR] - Machine-ID ({machine_id}) up-results directory does not exist, please ensure the up-results directory is present before continuing")
+        sys.exit(1)
 
     # Create the results directory for current machine and handle Machine-ID clashes
     handle_results_dir_creation(machine_id, dir_paths, replace_old_results)

@@ -238,18 +238,18 @@ def main():
             
             # Parse the Liboqs results
             parse_liboqs(liboqs_test_opts, replace_old_results)
-            print("\nLiboqs Parsing complete\n")
+            print("Liboqs Parsing complete\n")
 
             # Parse the OQS-Provider Results
             parse_oqs_provider(oqs_provider_test_opts, replace_old_results)
-            print("\nOQS-Provider Parsing complete\n")
+            print("OQS-Provider Parsing complete\n")
 
         else:
             print(f"[ERROR] - Invalid value in the parsing mode variable - {user_parse_mode}")
             sys.exit(1)
 
     # Output the parsing completed message to the terminal
-    print(f"\nResults processing complete, parsed results can be found in the following directory:")
+    print(f"Results processing complete, parsed results can be found in the following directory:")
     print(f"{os.path.join(root_dir, 'test-data', 'results')}")
 
 #------------------------------------------------------------------------------------------------------------------------------

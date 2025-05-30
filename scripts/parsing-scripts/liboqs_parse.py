@@ -73,7 +73,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
             time.sleep(2)
 
             # Remove the old results directory automatically for current Machine-ID
-            print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...")
+            print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...\n")
             shutil.rmtree(dir_paths["results_dir"], f"machine-{machine_id}")
 
             # Create the new directories for parsed results
@@ -98,7 +98,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
                 if user_choice == "1":
 
                     # Replace all old results and create a new empty directory to store the parsed results
-                    print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...")
+                    print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...\n")
                     shutil.rmtree(dir_paths["results_dir"], f"machine-{machine_id}")
 
                     # Create the new directories for parsed results
@@ -141,6 +141,20 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
         # No old parsed results for current machine-id found, so creating new directories 
         os.makedirs(dir_paths["type_speed_dir"])
         os.makedirs(dir_paths["type_mem_dir"])
+
+#------------------------------------------------------------------------------------------------------------------------------
+def check_data_mismatch(df_len, alg_list_len, context):
+    """ Helper function for detecting if there is a mismatch between the 
+        number of algorithms in the alg-list and the number of algorithms in the 
+        dataframe. If there is a mismatch, the function will output an error message
+        and exit the script. """
+    
+    # Check if the dataframe length is not equal to the number of algorithms in the alg-list
+    if df_len != (alg_list_len * 3):
+        print(f"\n[ERROR] - There is a mismatch between the number of algorithms in the alg-list file and the data being parsed for {context}")
+        print(f"Please ensure the alg-list files have the same algorithms used in the testing, the setup process may need to be re-run")
+        print(f"If that is the case, please ensure to copy the up-results directory to a safe location before re-running the setup script")
+        sys.exit(1)
 
 #------------------------------------------------------------------------------------------------------------------------------
 def get_peak(mem_file, peak_metrics):
@@ -249,6 +263,9 @@ def speed_processing(dir_paths, num_runs, kem_algs, sig_algs):
         temp_df = temp_df.loc[~temp_df['Operation'].str.strip().isin(kem_algs)]
         temp_df = temp_df.apply(lambda col: col.str.strip() if col.dtype == 'object' else col)
 
+        # Check if there is a mismatch between the number of algorithms in the alg-list and the dataframe
+        check_data_mismatch(len(temp_df), len(kem_algs), "KEM Speed Results")
+
         # Insert the new algorithm column and output the formatted csv
         temp_df.insert(0, "Algorithm", new_col_kem)
         filename_kem = kem_prefix + str(file_count) + ".csv"
@@ -265,6 +282,9 @@ def speed_processing(dir_paths, num_runs, kem_algs, sig_algs):
         temp_df.columns = [col.strip() for col in temp_df.columns]
         temp_df = temp_df.loc[~temp_df['Operation'].str.strip().isin(sig_algs)]
         temp_df = temp_df.apply(lambda col: col.str.strip() if col.dtype == 'object' else col)
+
+        # Check if there is a mismatch between the number of algorithms in the alg-list and the dataframe
+        check_data_mismatch(len(temp_df), len(sig_algs), "Sig Speed Results")
 
         # Insert the new algorithm column and output the formatted csv
         temp_df.insert(0, 'Algorithm', new_col_sig)
@@ -330,10 +350,16 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
                     print(f"error - {e}")
                     print(f"Filename {kem_up_filename}\n")
                     
+        # Check if there is a mismatch between the number of algorithms in the alg-list and the dataframe
+        check_data_mismatch(len(mem_results_df), len(kem_algs), "KEM Memory Results")
+        
         # Output the KEM csv file for this run
         kem_filename = "kem-mem-metrics-" + str(run_count) + ".csv"
         kem_filepath = os.path.join(dir_paths["type_mem_dir"], kem_filename)
         mem_results_df.to_csv(kem_filepath, index=False)
+
+        # Reinitialise the memory results dataframe for the next algorithm
+        mem_results_df = pd.DataFrame(columns=fieldnames)
 
         # Loop through the digital signature algorithms
         for sig_alg in sig_algs:
@@ -370,6 +396,9 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
                     print(f"error - {e}")
                     print(f"Filename {sig_up_filename}\n")
 
+        # # Check if there is a mismatch between the number of algorithms in the alg-list and the dataframe
+        check_data_mismatch(len(mem_results_df), len(sig_algs), "Sig Memory Results")
+
         # Output the digital signature csv file for this run
         sig_filename = "sig-mem-metrics-" + str(run_count) + ".csv"
         sig_filepath = os.path.join(dir_paths["type_mem_dir"], sig_filename)
@@ -393,6 +422,11 @@ def process_tests(machine_id, num_runs, dir_paths, kem_algs, sig_algs, replace_o
     dir_paths['type_speed_dir'] = os.path.join(dir_paths['results_dir'], f"machine-{str(machine_id)}", "speed-results")
     dir_paths['type_mem_dir'] = os.path.join(dir_paths['results_dir'], f"machine-{str(machine_id)}", "mem-results")
     dir_paths['raw_speed_dir'] = os.path.join(dir_paths['up_results'], f"machine-{str(machine_id)}", "raw-speed-results")
+
+    # Ensure that the machine's up-results directory exists before continuing
+    if not os.path.exists(dir_paths['up_results']):
+        print(f"[ERROR] - Machine-ID ({machine_id}) up-results directory does not exist, please ensure the up-results directory is present before continuing")
+        sys.exit(1)
 
     # Create the required directories and handling any clashes with previously parsed results
     handle_results_dir_creation(machine_id, dir_paths, replace_old_results)
