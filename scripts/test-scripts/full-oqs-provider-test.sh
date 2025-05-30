@@ -58,6 +58,7 @@ function output_help_message() {
     echo "  --s-server-port=<PORT>             Set the OpenSSL S_Server port           (1024-65535)"
     echo "  --control-sleep-time=<TIME>        Set the control sleep time in seconds   (integer or float)"
     echo "  --disable-control-sleep            Disable the control signal sleep time"
+    echo "  --disable-result-parsing           Disable the result parsing for the test suite."
     echo "  --help                             Display the help message"
 
 }
@@ -171,6 +172,25 @@ function parse_args {
                 shift
                 ;;
 
+            --disable-result-parsing)
+
+                # Output the warning message to the user
+                echo -e "\n[WARNING] - Result parsing disabled, results will require to be parsed manually\n"
+
+                # Confirm with the user if they wish to proceed with the parsing disabled
+                get_user_yes_no "Are you sure you want to continue with result parsing disabled?"
+
+                # Determine the next action based on the user's response
+                if [ $user_y_n_response -eq 0 ]; then
+                    echo "[NOTICE] - Continuing with result parsing disabled"
+                    parse_results=0
+                else
+                    echo "[NOTICE] - Continuing with result parsing enabled"
+                    parse_results=1
+                fi
+
+                shift
+                ;;
 
             *)
 
@@ -344,6 +364,7 @@ function setup_base_env() {
     test_data_dir="$root_dir/test-data"
     test_scripts_path="$root_dir/scripts/test-scripts"
     util_scripts="$root_dir/scripts/utility-scripts"
+    parsing_scripts="$root_dir/scripts/parsing-scripts"
 
     # Declare the global library directory path variables
     openssl_path="$libs_dir/openssl_3.5.0"
@@ -509,7 +530,7 @@ function get_machine_num() {
     while true; do
 
         # Get the machine-ID from the user
-        read -p "What machine-ID would you like to assign to these results? - " user_response
+        read -p "What Machine-ID would you like to assign to these results?: " user_response
         
         # Check that the input from the user is a valid integer and store it
         case "$user_response" in
@@ -543,7 +564,7 @@ function handle_machine_id_clash() {
     while true; do
 
         # Output the choices for handling the clash to the user
-        echo -e "There are already results stored for Machine-ID ($MACHINE_NUM), would you like to:"
+        echo -e "[WARNING] - There are already results stored for Machine-ID ($MACHINE_NUM), would you like to:"
         echo -e "1 - Replace old results and keep same Machine-ID"
         echo -e "2 - Assign a different machine ID"
 
@@ -569,7 +590,7 @@ function handle_machine_id_clash() {
             2)
 
                 # Get a new machine-ID that will assigned to the results instead
-                echo -e "Assigning new Machine-ID for test results"
+                echo -e "\nAssigning new Machine-ID for test results"
                 get_machine_num
 
                 # Set the results directory paths based on the newly assigned machine-ID
@@ -628,54 +649,38 @@ function configure_results_dir() {
 
     fi
 
-}
+    # Set the parsed results directory path based on the decided machine-ID
+    parsed_results_path="$test_data_dir/results/oqs-provider/machine-$MACHINE_NUM"
 
-#-------------------------------------------------------------------------------------------------------------------------------
-function get_test_comparison_choice() {
-    # Function for getting the user choice on whether the test results will be compared to other machine results
+    # Check if Parsed results already exist for the Machine-ID
+    if [ -d "$parsed_results_path" ]; then
 
-    # Prompt the user for their choice until a valid response is given
-    while true; do
+        # Output to the user that the parsed results already exist
+        echo -e "[WARNING] - Parsed results already exist for Machine-ID ($MACHINE_NUM)"
+        get_user_yes_no "Would you like to replace the existing parsed results?"
 
-        # Outputting the test comparison options to the user and reading in the user response
-        echo -e "\nPlease select on of the following test comparison options"
-        echo "1-This test will not be used in result-parsing with other machines"
-        echo "2-This machine will be used in result-parsing with other machine results"
+        # Determine the next action based on the user's response
+        if [ $user_y_n_response -eq 0 ]; then
 
-        # Read in the user's response
-        read -p "Enter your choice (1-2): " usr_test_option
+            # Output to the user that the parsed results will not be replaced
+            echo -e "[NOTICE] - Keeping existing parsed results, manual parsing is now required\n"
+            sleep 2
 
-        # Determine the action based on the user's response
-        case $usr_test_option in
+            # Set the automatic result parsing flag to disabled
+            parse_results=0
 
-            1)
+        elif [ $user_y_n_response -eq 1 ]; then
 
-                # Set the default machine-ID and configure the results directory
-                echo -e "\nTest will not be parsed with other machine data\n"
-                export MACHINE_NUM="1"
-                configure_results_dir
-                break
-                ;;
+            # Output to the user that the parsed results will be replaced
+            echo -e "[NOTICE] - Existing Parsed Results for Machine-ID ($MACHINE_NUM) will be replaced\n"
+            sleep 2
 
-            2)
+            # Set the automatic result parsing flag to enabled
+            replace_old_results=1
+            
+        fi
 
-                # Set the user specified Machine-ID and configure the results directory
-                echo -e "\nTest will will be parsed with other machine data\n"
-                get_machine_num
-                configure_results_dir
-                export MACHINE_NUM="$MACHINE_NUM"
-                break
-                ;;
-
-            *)
-
-                # Output to the user that the input is invalid
-                echo "Invalid option, please select valid option value (1-2)"
-                ;;
-
-        esac
-
-    done
+    fi
 
 }
 
@@ -739,27 +744,32 @@ function configure_test_options {
 
     done
 
-    # Prompt the user for the number of test runs until a valid response is given
-    while true; do
-
-        # Prompt the user for their response and read it in
-        read -p "Enter the number of test runs required: " user_run_num
-
-        # Check if the input is a valid integer and export it to the environment if valid
-        if [[ $user_run_num =~ ^[1-9][0-9]*$ ]]; then
-            export NUM_RUN="$user_run_num"
-            break
-        else
-            echo -e "Invalid input. Please enter a valid integer above 0.\n"
-        fi
-    
-    done
-
     # If test machine is client, get the TLS handshake and speed test lengths from user
     if [ $machine_type == "Client" ]; then
 
-        # Get the machine-ID for the results if comparing to other machine results
-        get_test_comparison_choice
+        # Ask the user if they wish to assign a machine-ID to the performance results
+        echo -e "\n=== Setting test results Machine-ID ===\n"
+        get_user_yes_no "Do you wish to assign a custom Machine-ID to the performance results?"
+
+        # Determine whether to assign a custom machine-ID or not based on the user response
+        if [ $user_y_n_response -eq 1 ]; then
+
+            # Get the machine-ID from the user and configure the results directory
+            get_machine_num
+            configure_results_dir
+            export MACHINE_NUM="$MACHINE_NUM"
+
+        else
+
+            # Set the machine-ID to the default value and configure the results directory
+            echo -e "\nUsing default Machine-ID (1) for test results\n"
+            configure_results_dir
+            export MACHINE_NUM="1"
+
+        fi
+
+        # Output the test parameters message to the user
+        echo -e "=== Setting test parameters for the TLS Handshake and Speed tests ===\n"
 
         # Prompt the user for the TLS test length until a valid response is given
         while true; do
@@ -794,6 +804,27 @@ function configure_test_options {
         done
 
     fi
+
+    # Prompt the user for the number of test runs until a valid response is given
+    while true; do
+
+        # Output task to terminal only if server
+        if [ $machine_type == "Server" ]; then
+            echo -e "\n=== Setting Test Parameters ===\n"
+        fi
+
+        # Prompt the user for their response and read it in
+        read -p "Enter the number of test runs required: " user_run_num
+
+        # Check if the input is a valid integer and export it to the environment if valid
+        if [[ $user_run_num =~ ^[1-9][0-9]*$ ]]; then
+            export NUM_RUN="$user_run_num"
+            break
+        else
+            echo -e "Invalid input. Please enter a valid integer above 0.\n"
+        fi
+    
+    done
 
 }
 
@@ -837,7 +868,7 @@ function run_tests() {
     while true; do
 
         # Prompt the user for their response and read it in
-        echo -e "\nConfigure IP Parameters:"
+        echo -e "\n=== Configure IP Parameters ===\n"
         read -p "Please enter the $ip_request_string machine's IP address: " usr_ip_input
 
         # Format the user ip input by removing trailing spaces
@@ -911,7 +942,62 @@ function run_tests() {
             echo "[ERROR] - TLS speed test failed."
             exit 1
         fi
-    
+
+        # Set the parsing checks needed as this is the client machine
+        parsing_check_needed=1
+
+    fi
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
+function handle_result_parsing() {
+    # Function for handling automatic result parsing based on user-defined flags. Calls the parsing script with 
+    # the correct arguments, including the replace flag if set, and verifies whether parsing completed successfully.
+
+    # Parse the results if the flag is set to enabled
+    if [ $parse_results -eq 1 ]; then
+
+        # Call the automatic parsing script based on if old results need to be replaced
+        if [ $replace_old_results -eq 0 ]; then
+
+            # Call the result parsing script to parse the results with replace flag not set
+            python3 "$parsing_scripts/parse_results.py" \
+                --parse-mode="oqs-provider"  \
+                --machine-id="$MACHINE_NUM" \
+                --total-runs=$NUM_RUN
+            exit_status=$?
+
+        else
+
+            # Call the result parsing script to parse the results with replace flag set
+            python3 "$parsing_scripts/parse_results.py" \
+                --parse-mode="oqs-provider"  \
+                --machine-id="$MACHINE_NUM" \
+                --total-runs=$NUM_RUN \
+                --replace-old-results
+            exit_status=$?
+
+        fi
+
+        # Ensure that the parsing script completed successfully
+        if [ $exit_status -eq 0 ]; then
+            echo -e "\nParsed results can be found in the following directory:"
+            echo "$test_data_dir/results/oqs-provider/machine-$MACHINE_NUM"
+        else
+            echo -e "\n[WARNING] - Result parsing failed, manual calling of parsing script is now required\n"
+        fi
+
+    elif [ $parse_results -eq 0 ]; then
+
+        # Output the complete message with the test results path to the user
+        echo -e "All performance testing complete, the unparsed results for Machine-ID ($MACHINE_NUM) can be found in:"
+        echo "Results Dir Path - $MACHINE_RESULTS_PATH"
+        
+    else
+        echo -e "\n[ERROR] - parse_results flag not set correctly, manual calling of parsing script is now required\n"
+        exit 1
+        
     fi
 
 }
@@ -928,6 +1014,9 @@ function main() {
     # Set the default global flag variables
     custom_control_time_flag="False"
     disable_control_sleep="False"
+    parsing_check_needed=0
+    parse_results=1
+    replace_old_results=0
 
     # Set the default TCP port values
     server_control_port="25000"
@@ -945,6 +1034,11 @@ function main() {
     # Get the test options and perform the PQC TLS tests 
     configure_test_options
     run_tests
+
+    # Handle automatic result parsing if the client machine
+    if [ "$parsing_check_needed" -eq 1 ]; then
+        handle_result_parsing
+    fi
 
     # Clean the environment before exiting the script
     clean_environment

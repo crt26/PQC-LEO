@@ -136,7 +136,7 @@ When called, the utility script accepts the following arguments:
 The Liboqs PQC performance testing utilises a single bash script to conduct the automated benchmarking. This script performs CPU speed testing and memory usage profiling for supported KEM and digital signature algorithms. It is designed to be run interactively, prompting the user for test parameters such as the machine ID and number of test iterations.
 
 ### full-liboqs-test.sh
-This script performs fully automated CPU and memory performance benchmarking of the algorithms included in the Liboqs library. It runs speed tests using Liboqs' built-in benchmarking binaries and uses Valgrind with the massif tool to capture detailed memory usage metrics for each cryptographic operation. The results are stored in dedicated directories, organised by machine ID, and can be parsed later using the project's parsing tools.
+This script performs fully automated CPU and memory performance benchmarking of the algorithms included in the Liboqs library. It runs speed tests using Liboqs' built-in benchmarking binaries and uses Valgrind with the massif tool to capture detailed memory usage metrics for each cryptographic operation. The results are stored in dedicated directories, organised by machine ID.
 
 The script handles:
 
@@ -202,24 +202,51 @@ Various Python files included in the `scripts/parsing-scripts` directory provide
 - parse_results.py
 - liboqs_parse.py
 - oqs_provider_parse.py
-- results_averager.py 
+- results_averager.py
 
-Unlike the other scripts within the repositories, this functionality can be performed in either Linux or Windows environments, assuming all required dependencies are present on the system. For further information on required dependencies, please refer to the **Parsing Script Usage** section in the main [README](../../README.md) file.
+These scripts support both automated invocation (triggered by the automated test scripts) and manual execution via terminal input or command-line flags. Parsing is currently **supported only on Linux systems**. Windows environments are not supported due to the inability to create the necessary environment needed for parsing the raw performance results.
 
-While several scripts are utilised for the result parsing process, only the `parse_results.py` is intended to be called manually. The main parsing script calls the remaining scripts depending on which parameters the user supplies to the script when prompted.
+By default, parsing is triggered automatically at the end of each test run. The test scripts pass the necessary parameters (Machine-ID, number of runs, and test type) directly to the parsing system.
 
-Please refer to the [Performance Metrics Guide](../performance-metrics-guide.md) for a detailed description of the performance metrics that this project can gather, what they mean, and how these scripts structure the un-parsed and parsed data.
+While several scripts are utilised for the result parsing process, only the `parse_results.py` is intended to be called. The main parsing script calls the remaining scripts depending on which parameters the user supplies to the script when prompted.
+
+For full documentation on how the parsing system works, including usage instructions and a breakdown of the performance metrics collected, please refer to the following documentation:
+
+- [Parsing Performance Results Usage Guide](../performance-results/parsing-scripts-usage-guide.md)
+- [Performance Metrics Guide](../performance-results/performance-metrics-guide.md)
 
 ### parse_results.py
-This script acts as the main controller for the result-parsing processes. When called, the script will prompt the user for the various testing parameters such as:
+This script acts as the main controller for the result-parsing processes. It supports two modes of operation:
 
-- Which type of testing was performed
-- How many machines were tested (facilitating the comparison between varying machine types)
-- How many runs of testing were conducted on each of those machines
+- **Interactive Mode:** Prompts the user to select a result type (liboqs, oqs-provider, or both) and to enter parsing parameters such as Machine-ID and number of test runs.
+- **Command-Line Mode:** Accepts the same parameters via flags. This mode is used by the automated test scripts and can also be called manually for scripting purposes.
 
-After gathering these parameters, the script will call the relevant sub-scripts to process the unparsed results in the `test-data/up-results` directory. The final output will store the parsed results in CSV format for the various tests performed, which can be found in the `test-data/results` directory.
+In both modes, the script identifies the relevant raw test results located in the `test-data/up-results` directory and invokes the appropriate parsing routines to generate structured CSV output. The results are then saved to the `test-data/results directory`, organised by test type and Machine-ID.
 
-**It is important to note** that if parsing results from multiple machines, the current limitations of the script require the same number of test runs to be performed. This will be addressed in future versions of the scripts. If parsing results from multiple machines where the types of tests conducted and the number of test runs do not match, it is best to perform the parsing of the data separately. Manual renaming can then be performed to fit the desired naming scheme.  
+**Usage Examples:**
+
+Interactive Mode:
+
+```
+python3 parse_results.py
+```
+
+Command-Line Mode:
+
+```
+python3 parse_results.py --parse-mode=liboqs --machine-id=2 --total-runs=10
+```
+
+The table below outlines each of the accepted commands and which are required for operation:
+
+| **Argument**            | **Description**                                                                        | **Required Flag (*)** |
+|-------------------------|----------------------------------------------------------------------------------------|-----------------------|
+| `--parse-mode=<string>` | Must be either liboqs or oqs-provider. both is not allowed here.                       | *                     |
+| `--machine-id=<int>`    | Machine-ID used during testing (positive integer).                                     | *                     |
+| `--total-runs=<int>`    | Number of test runs (must be > 0).                                                     | *                     |
+| `--replace-old-results` | Optional flag to force overwrite of any existing results for the specified Machine-ID. |                       |
+
+**Note:** The command-line mode does not support parsing both result types in one call. Use interactive mode to combine parsing of Liboqs and OQS-Provider data in a single session.
 
 ### liboqs_parse.py
 This script contains functions for parsing un-parsed Liboqs benchmarking data, transforming unstructured speed and memory test data into clean, structured CSV files. It processes CPU performance results and memory usage metrics for each algorithm and operation across multiple test runs and machines. This script is **not to be called manually** and is only invoked by the `parse_results.py` script.

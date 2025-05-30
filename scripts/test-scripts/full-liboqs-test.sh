@@ -10,6 +10,106 @@
 # directories based on the assigned machine number.
 
 #-------------------------------------------------------------------------------------------------------------------------------
+function get_user_yes_no() {
+    # Helper function for getting a yes or no response from the user for a given question regarding the setup process. The function
+    # will return 0 for yes and 1 for no which can be checked by the calling function.
+
+    # Set the local user prompt variable to what was passed to the function
+    local user_prompt="$1"
+
+    # Get the user input for the yes or no question
+    while true; do
+
+        # Output the question to the user and get their response
+        read -p "$user_prompt (y/n): " user_input
+
+        # Check the user input is valid and set the user response variable
+        case $user_input in
+
+            [Yy]* )
+                user_y_n_response=1
+                return 0
+                ;;
+
+            [Nn]* )
+                user_y_n_response=0
+                return 1
+                ;;
+
+            * )
+                echo -e "Please answer y or n\n"
+                ;;
+
+        esac
+
+    done
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
+function output_help_message() {
+    # Helper function for outputting the help message to the user when the --help flag is present or when incorrect arguments are passed.
+
+    # Output the supported options and their usage to the user
+    echo "Usage: setup.sh [options]"
+    echo "Options:"
+    echo "  --disable-result-parsing       Disable the result parsing for the test suite."
+    echo "  --help                         Display this help message."
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
+function parse_args() {
+    # Function for parsing the command line arguments passed to the script. Based on the detected arguments, the function will 
+    # set the relevant global flags that are used throughout the setup process.
+
+    # Check if the help flag is passed at any position in the command line arguments
+    if [[ "$*" =~ --help ]]; then
+        output_help_message
+        exit 0
+    fi
+
+    # Loop through the passed command line arguments and check for the supported options
+    while [[ $# -gt 0 ]]; do
+
+        # Check if the argument is a valid option, then shift to the next argument
+        case "$1" in
+
+            --disable-result-parsing)
+
+                # Output the warning message to the user
+                echo -e "\n[WARNING] - Result parsing disabled, results will require to be parsed manually\n"
+
+                # Confirm with the user if they wish to proceed with the parsing disabled
+                get_user_yes_no "Are you sure you want to continue with result parsing disabled?"
+
+                # Determine the next action based on the user's response
+                if [ $user_y_n_response -eq 0 ]; then
+                    echo "[NOTICE] - Continuing with result parsing disabled"
+                    parse_results=0
+                else
+                    echo "[NOTICE] - Continuing with result parsing enabled"
+                    parse_results=1
+                fi
+
+                shift
+                ;;
+
+            *)
+
+                # Output an error message if an unknown option is passed
+                echo "[ERROR] - Unknown option: $1"
+                output_help_message
+                exit 1
+                ;;
+
+        esac
+
+    done
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
 function enable_arm_pmu() {
     # Function for enabling the ARM PMU and allowing it to be used in user space. The function will also check if the system is a Raspberry-Pi
     # and install the Pi kernel headers if they are not already installed. The function will then enable the PMU and set the enabled_pmu flag.
@@ -48,7 +148,7 @@ function enable_arm_pmu() {
 
     # Check if the make and make install commands were successful
     if [ "$make_status" -ne 0 ] || [ "$make_install_status" -ne 0 ]; then
-        echo -e "\nPMU build failed, please check the system and try again\n"
+        echo -e "\n[ERROR] - PMU build failed, please check the system and try again\n"
         exit 1
     fi
 
@@ -132,6 +232,7 @@ function setup_base_env() {
     tmp_dir="$root_dir/tmp"
     test_data_dir="$root_dir/test-data"
     test_scripts_path="$root_dir/scripts/test-scripts"
+    parsing_scripts="$root_dir/scripts/parsing-scripts"
 
     # Check if the system is ARM based and if PMU checks are required
     if [[ "$(uname -m)" = arm* || "$(uname -m)" == aarch* ]]; then
@@ -166,6 +267,7 @@ function set_result_paths() {
 
     # Set the results directory paths based on assigned machine-ID for these results
     machine_results_path="$test_data_dir/up-results/liboqs/machine-$machine_num"
+    parsed_results_path="$test_data_dir/results/liboqs/machine-$machine_num"
     machine_speed_results="$machine_results_path/raw-speed-results"
     machine_mem_results="$machine_results_path/mem-results"
     kem_mem_results="$machine_mem_results/kem-mem-metrics"
@@ -267,7 +369,7 @@ function get_test_options() {
     while true; do
 
         # Prompt the user for their response and read it in
-        read -p "Do you intend to compare the results against other machines [y/n]? - " response_1
+        read -p "Do you wish to assign a custom Machine-ID to the performance results? [y/n] - " response_1
 
         # Determine what action to take based on the user's response
         case $response_1 in
@@ -349,8 +451,38 @@ function setup_test_suite() {
 
     fi
 
+    # Check if Parsed results already exist for the Machine-ID
+    if [ -d "$parsed_results_path" ]; then
+
+        # Output to the user that the parsed results already exist
+        echo -e "[WARNING] - Parsed results already exist for Machine-ID ($machine_num)"
+        get_user_yes_no "Would you like to replace the existing parsed results?"
+
+        # Determine the next action based on the user's response
+        if [ $user_y_n_response -eq 0 ]; then
+
+            # Output to the user that the parsed results will not be replaced
+            echo -e "[NOTICE] - Keeping existing parsed results, manual parsing is now required\n"
+            sleep 2
+
+            # Set the automatic result parsing flag to disabled
+            parse_results=0
+
+        elif [ $user_y_n_response -eq 1 ]; then
+
+            # Output to the user that the parsed results will be replaced
+            echo -e "[NOTICE] - Existing Parsed Results for Machine-ID ($machine_num) will be replaced\n"
+            sleep 2
+
+            # Set the automatic result parsing flag to enabled
+            replace_old_results=1
+            
+        fi
+
+    fi
+
     # Set the Liboqs test/bin directory path
-    liboqs_test_path="$liboqs_path/build/tests/"
+    liboqs_test_path="$liboqs_path/build/tests"
 
     # Set the filepaths for the Liboqs speed test binaries
     kem_speed_bin="$liboqs_test_path/speed_kem"
@@ -360,16 +492,17 @@ function setup_test_suite() {
     kem_mem_bin="$liboqs_test_path/test_kem_mem"
     sig_mem_bin="$liboqs_test_path/test_sig_mem"
 
-    # Ensure the Liboqs binaries are present and executable
+    # Define the Liboqs test binaries to be checked
     test_bins=("$kem_speed_bin" "$sig_speed_bin" "$kem_mem_bin" "$sig_mem_bin")
 
+    # Ensure the Liboqs binaries are present and executable
     for test_binary in "${test_bins[@]}"; do
 
         if [ ! -f "$test_binary" ]; then
-            echo -e "\n\n!!! Liboqs test binaries - ($test_binary) not present, please verify build !!!"
+            echo -e "\n[ERROR] - Liboqs test binaries - ($test_binary) not present, please verify build"
             exit 1
         elif [ ! -x "$test_binary" ]; then
-            echo -e "\n\n!!! Liboqs test binaries - ($test_binary) not executable, please verify binary permissions !!!"
+            echo -e "\n[ERROR] - Liboqs test binaries - ($test_binary) not executable, please verify binary permissions"
             exit 1
         fi
 
@@ -511,6 +644,58 @@ function mem_tests() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
+function handle_result_parsing() {
+    # Function for handling automatic result parsing based on user-defined flags. Calls the parsing script with 
+    # the correct arguments, including the replace flag if set, and verifies whether parsing completed successfully.
+
+    # Check if the automatic result parsing flag is set to enabled
+    if [ $parse_results -eq 1 ]; then
+
+        # Call the automatic parsing script based on if old results need to be replaced
+        if [ $replace_old_results -eq 0 ]; then
+
+            # Call the result parsing script to parse the results with replace flag not set
+            python3 "$parsing_scripts/parse_results.py" \
+                --parse-mode="liboqs"  \
+                --machine-id="$machine_num" \
+                --total-runs=$number_of_runs
+            exit_status=$?
+
+        else
+
+            # Call the result parsing script to parse the results with replace flag set
+            python3 "$parsing_scripts/parse_results.py" \
+                --parse-mode="liboqs"  \
+                --machine-id="$machine_num" \
+                --total-runs=$number_of_runs \
+                --replace-old-results
+            exit_status=$?
+
+        fi
+
+        # Ensure that the parsing script completed successfully
+        if [ $exit_status -eq 0 ]; then
+            echo -e "\nParsed results can be found in the following directory:"
+            echo "$test_data_dir/results/liboqs/machine-$machine_num"
+        else
+            echo -e "\n[WARNING] - Result parsing failed, manual calling of parsing script is now required\n"
+        fi 
+
+    elif [ $parse_results -eq 0 ]; then
+
+        # Output the complete message with the test results path to the user
+        echo -e "All performance testing complete, the unparsed results for Machine-ID ($machine_num) can be found in:"
+        echo "Results Dir Path - $machine_results_path"
+        
+    else
+        echo -e "\n[ERROR] - parse_results flag not set correctly, manual calling of parsing script is now required\n"
+        exit 1
+            
+    fi
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
 function main() {
     # Main function for controlling the automated Liboqs PQC computational performance testing
 
@@ -518,6 +703,10 @@ function main() {
     echo "###########################################################"
     echo "PQC-Evaluation-Tools - Automated Liboqs Performance Testing"
     echo -e "###########################################################\n"
+
+    # Set the default automatic result parsing flags
+    parse_results=1
+    replace_old_results=0
 
     # Setup the base environment and testing suite setup
     setup_base_env
@@ -527,9 +716,11 @@ function main() {
     speed_tests
     mem_tests
 
-    # Output the complete message with the test results path to the user
-    echo -e "All performance testing complete, the unparsed results for Machine-ID ($machine_num) can be found in:"
-    echo "Results Dir Path - $machine_results_path"
+    # Output the testing complete message to the user
+    echo -e "All performance testing complete"
+
+    # Handle the automatic result parsing based on the user input flags
+    handle_result_parsing
 
 }
 main

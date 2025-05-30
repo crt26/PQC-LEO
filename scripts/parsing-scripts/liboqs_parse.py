@@ -3,34 +3,30 @@ Copyright (c) 2023-2025 Callum Turino
 SPDX-License-Identifier: MIT
 
 Liboqs result parsing script for PQC performance benchmarking.  
-Parses raw memory and CPU speed results produced by the automated Liboqs test suite, processes them into
+Parses raw memory and CPU speed results produced by the automated Liboqs test suite, processes them into  
 clean, structured CSV files, and computes averaged results using the results_averager module.  
-This script is called by the central parse_results.py controller and supports multi-machine, multi-run setups.
-
+This script is called by the central parse_results.py controller and supports single-machine, multi-run setups.
 """
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 import pandas as pd
 import re
 import os
 import sys
 import shutil
+import time
 from results_averager import LiboqsResultAverager
 
-# Declare the global variables
-alg_operations = {'kem_operations': ["keygen", "encaps", "decaps"], 'sig_operations': ["keypair", "sign", "verify"]}
-kem_algs = []
-sig_algs = []
-dir_paths = {}
-num_runs = 0
-
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
 def setup_parse_env(root_dir):
     """ Function for setting up the environment for the Liboqs parsing script. 
         The function will set the various directory paths, read in the algorithm 
         lists and set the root directories. """
 
-    global kem_algs, sig_algs, dir_paths
+    # Declare the algorithm list and directory paths dict variables
+    kem_algs = []
+    sig_algs = []
+    dir_paths = {}
 
     # Ensure the root_dir path is correct before continuing
     if not os.path.isfile(os.path.join(root_dir, ".pqc_eval_dir_marker.tmp")):
@@ -56,8 +52,12 @@ def setup_parse_env(root_dir):
         for line in alg_file:
             sig_algs.append(line.strip())
 
-#-----------------------------------------------------------------------------------------------------------
-def handle_results_dir_creation(machine_num):
+
+    # Return the algorithm lists and directory paths
+    return kem_algs, sig_algs, dir_paths
+
+#------------------------------------------------------------------------------------------------------------------------------
+def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
     """ Function for handling the presence of older parsed results, 
         ensuring that the user is aware of the old results and can choose 
         how to handle them before the parsing continues. """
@@ -65,59 +65,76 @@ def handle_results_dir_creation(machine_num):
     # Check if there are any old parsed results for current Machine-ID and handle any clashes
     if os.path.exists(dir_paths["type_mem_dir"]) or os.path.exists(dir_paths["type_speed_dir"]):
 
-        # Output the warning message to the terminal
-        print(f"There are already parsed Liboqs testing results present for Machine-ID ({machine_num})\n")
+        # Determine if the user needs prompted to handle the old results or if the --replace-old-results flag is set
+        if replace_old_results:
 
-        # Get the decision from user on how to handle old results before parsing continues
-        while True:
+            # Output the warning message about the old results
+            print(f"[NOTICE] - The --replace-old-results flag has been set, replacing the old results for Machine-ID ({machine_id})\n")
+            time.sleep(2)
 
-            # Output the potential options and handle user choice
-            print(f"\nFrom the following options, choose how would you like to handle the old Liboqs results:\n")
-            print("Option 1 - Replace old parsed results with new ones")
-            print("Option 2 - Exit parsing programme to move old results and rerun after (if you choose this option, please move the entire folder not just its contents)")
-            print("Option 3 - Make parsing script programme wait until you have move files before continuing")
-            user_choice = input("Enter option (1/2/3): ")
+            # Remove the old results directory automatically for current Machine-ID
+            print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...\n")
+            shutil.rmtree(dir_paths["results_dir"], f"machine-{machine_id}")
 
-            if user_choice == "1":
+            # Create the new directories for parsed results
+            os.makedirs(dir_paths["type_speed_dir"])
+            os.makedirs(dir_paths["type_mem_dir"])
+        
+        else:
 
-                # Replace all old results and create a new empty directory to store the parsed results
-                print(f"Removing old results directory for Machine-ID ({machine_num}) before continuing...")
-                shutil.rmtree(dir_paths["results_dir"], f"machine-{machine_num}")
-                print("Old results removed")
+            # Output the warning message to the terminal
+            print(f"[WARNING] - There are already parsed Liboqs testing results present for Machine-ID ({machine_id})\n")
 
-                os.makedirs(dir_paths["type_speed_dir"])
-                os.makedirs(dir_paths["type_mem_dir"])
-                break
+            # Get the decision from user on how to handle old results before parsing continues
+            while True:
 
-            elif user_choice == "2":
+                # Output the potential options and handle user choice
+                print(f"From the following options, choose how would you like to handle the old Liboqs results:\n")
+                print("Option 1 - Replace old parsed results with new ones")
+                print("Option 2 - Exit parsing programme to move old results and rerun after (if you choose this option, please move the entire folder not just its contents)")
+                print("Option 3 - Make parsing script programme wait until you have move files before continuing")
+                user_choice = input("Enter option: ")
 
-                # Exit the script to allow the user to move old results before retrying
-                print("Exiting parsing script...")
-                exit()
+                if user_choice == "1":
 
-            elif user_choice == "3":
+                    # Replace all old results and create a new empty directory to store the parsed results
+                    print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...\n")
+                    shutil.rmtree(dir_paths["results_dir"], f"machine-{machine_id}")
 
-                # Halt the script until the old results have been moved for current Machine-ID
-                while True:
+                    # Create the new directories for parsed results
+                    os.makedirs(dir_paths["type_speed_dir"])
+                    os.makedirs(dir_paths["type_mem_dir"])
+                    break
 
-                    input(f"Halting parsing script so old parsed results for Machine-ID ({machine_num}) can be moved, press enter to continue")
+                elif user_choice == "2":
 
-                    # Check if the old results have been moved before continuing
-                    if os.path.exists(dir_paths["type_mem_dir"]) or os.path.exists(dir_paths["type_speed_dir"]):
-                        print(f"Old parsed results for Machine-ID ({machine_num}) still present!!!\n")
+                    # Exit the script to allow the user to move old results before retrying
+                    print("Exiting parsing script...")
+                    exit()
 
-                    else:
-                        print("Old results have been moved, now continuing with parsing script")
-                        os.makedirs(dir_paths["type_speed_dir"])
-                        os.makedirs(dir_paths["type_mem_dir"])
-                        break
-                
-                break
+                elif user_choice == "3":
 
-            else:
+                    # Halt the script until the old results have been moved for current Machine-ID
+                    while True:
 
-                # Output warning message if the user input is not valid
-                print("Incorrect value, please select (1/2/3)")
+                        input(f"Halting parsing script so old parsed results for Machine-ID ({machine_id}) can be moved, press enter to continue")
+
+                        # Check if the old results have been moved before continuing
+                        if os.path.exists(dir_paths["type_mem_dir"]) or os.path.exists(dir_paths["type_speed_dir"]):
+                            print(f"Old parsed results for Machine-ID ({machine_id}) still present!!!\n")
+
+                        else:
+                            print("Old results have been moved, now continuing with parsing script")
+                            os.makedirs(dir_paths["type_speed_dir"])
+                            os.makedirs(dir_paths["type_mem_dir"])
+                            break
+                    
+                    break
+
+                else:
+
+                    # Output warning message if the user input is not valid
+                    print("Incorrect value, please select (1/2/3)")
 
     else:
 
@@ -125,7 +142,21 @@ def handle_results_dir_creation(machine_num):
         os.makedirs(dir_paths["type_speed_dir"])
         os.makedirs(dir_paths["type_mem_dir"])
 
-#-----------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------
+def check_data_mismatch(df_len, alg_list_len, context):
+    """ Helper function for detecting if there is a mismatch between the 
+        number of algorithms in the alg-list and the number of algorithms in the 
+        dataframe. If there is a mismatch, the function will output an error message
+        and exit the script. """
+    
+    # Check if the dataframe length is not equal to the number of algorithms in the alg-list
+    if df_len != (alg_list_len * 3):
+        print(f"\n[ERROR] - There is a mismatch between the number of algorithms in the alg-list file and the data being parsed for {context}")
+        print(f"Please ensure the alg-list files have the same algorithms used in the testing, the setup process may need to be re-run")
+        print(f"If that is the case, please ensure to copy the up-results directory to a safe location before re-running the setup script")
+        sys.exit(1)
+
+#------------------------------------------------------------------------------------------------------------------------------
 def get_peak(mem_file, peak_metrics):
     """ Helper function for taking the passed massif.out file and getting 
         the peak memory metrics, returning the values to continue
@@ -149,8 +180,8 @@ def get_peak(mem_file, peak_metrics):
                     del peak_metrics[0]
                     return peak_metrics
 
-#-----------------------------------------------------------------------------------------------------------
-def pre_speed_processing():
+#------------------------------------------------------------------------------------------------------------------------------
+def pre_speed_processing(dir_paths, num_runs):
     """ Function for preparing the speed up-result data to 
         by removing system information in the file, allowing for
         further processing in the script. """
@@ -205,8 +236,8 @@ def pre_speed_processing():
         speed_dest_dir = os.path.join(dir_paths["up_speed_dir"], sig_pre_filename)
         sig_pre_speed_df.to_csv(speed_dest_dir, index=False, sep="|")
 
-#-----------------------------------------------------------------------------------------------------------
-def speed_processing():
+#------------------------------------------------------------------------------------------------------------------------------
+def speed_processing(dir_paths, num_runs, kem_algs, sig_algs):
     """ Function for processing the Liboqs CPU speed up-results and 
         exporting the data into a clean CSV format """
 
@@ -232,6 +263,9 @@ def speed_processing():
         temp_df = temp_df.loc[~temp_df['Operation'].str.strip().isin(kem_algs)]
         temp_df = temp_df.apply(lambda col: col.str.strip() if col.dtype == 'object' else col)
 
+        # Check if there is a mismatch between the number of algorithms in the alg-list and the dataframe
+        check_data_mismatch(len(temp_df), len(kem_algs), "KEM Speed Results")
+
         # Insert the new algorithm column and output the formatted csv
         temp_df.insert(0, "Algorithm", new_col_kem)
         filename_kem = kem_prefix + str(file_count) + ".csv"
@@ -249,20 +283,24 @@ def speed_processing():
         temp_df = temp_df.loc[~temp_df['Operation'].str.strip().isin(sig_algs)]
         temp_df = temp_df.apply(lambda col: col.str.strip() if col.dtype == 'object' else col)
 
+        # Check if there is a mismatch between the number of algorithms in the alg-list and the dataframe
+        check_data_mismatch(len(temp_df), len(sig_algs), "Sig Speed Results")
+
         # Insert the new algorithm column and output the formatted csv
         temp_df.insert(0, 'Algorithm', new_col_sig)
         filename_sig = sig_prefix + str(file_count) + ".csv"
         filename_sig = os.path.join(dir_paths['type_speed_dir'], filename_sig)
         temp_df.to_csv(filename_sig, index=False)
 
-#-----------------------------------------------------------------------------------------------------------
-def memory_processing():
+#------------------------------------------------------------------------------------------------------------------------------
+def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
     """ Function for taking in the memory up-results, processing,
         and outputting the results into a CSV format """
 
     # Set the un-parsed memory results directory variables
     kem_up_dir = os.path.join(dir_paths["up_mem_dir"], "kem-mem-metrics")
     sig_up_dir = os.path.join(dir_paths["up_mem_dir"], "sig-mem-metrics")
+
 
     # Declare the list variables used in memory processing
     new_row = []
@@ -312,10 +350,16 @@ def memory_processing():
                     print(f"error - {e}")
                     print(f"Filename {kem_up_filename}\n")
                     
+        # Check if there is a mismatch between the number of algorithms in the alg-list and the dataframe
+        check_data_mismatch(len(mem_results_df), len(kem_algs), "KEM Memory Results")
+        
         # Output the KEM csv file for this run
         kem_filename = "kem-mem-metrics-" + str(run_count) + ".csv"
         kem_filepath = os.path.join(dir_paths["type_mem_dir"], kem_filename)
         mem_results_df.to_csv(kem_filepath, index=False)
+
+        # Reinitialise the memory results dataframe for the next algorithm
+        mem_results_df = pd.DataFrame(columns=fieldnames)
 
         # Loop through the digital signature algorithms
         for sig_alg in sig_algs:
@@ -352,58 +396,64 @@ def memory_processing():
                     print(f"error - {e}")
                     print(f"Filename {sig_up_filename}\n")
 
+        # # Check if there is a mismatch between the number of algorithms in the alg-list and the dataframe
+        check_data_mismatch(len(mem_results_df), len(sig_algs), "Sig Memory Results")
+
         # Output the digital signature csv file for this run
         sig_filename = "sig-mem-metrics-" + str(run_count) + ".csv"
         sig_filepath = os.path.join(dir_paths["type_mem_dir"], sig_filename)
         mem_results_df.to_csv(sig_filepath, index=False)
 
-#-----------------------------------------------------------------------------------------------------------
-def process_tests(num_machines):
+#------------------------------------------------------------------------------------------------------------------------------
+def process_tests(machine_id, num_runs, dir_paths, kem_algs, sig_algs, replace_old_results):
     """ Function for parsing the results for a single or multiple machines 
         and stores them as csv files. Once up-results are processed
         averages are calculated for the results """
     
-    global dir_paths
+    # Declare the algorithm operations dictionary
+    alg_operations = {'kem_operations': ["keygen", "encaps", "decaps"], 'sig_operations': ["keypair", "sign", "verify"]}
 
     # Create an instance of the Liboqs average generator class before processing results
     liboqs_avg = LiboqsResultAverager(dir_paths, kem_algs, sig_algs, num_runs, alg_operations)
 
-    # Process the results for the machine/s
-    for machine_num in range(1, num_machines+1):
-        
-        # Set the unparsed-directory paths in the central paths dictionary
-        dir_paths['up_speed_dir'] = os.path.join(dir_paths['up_results'], f"machine-{str(machine_num)}", "speed-results")
-        dir_paths['up_mem_dir'] = os.path.join(dir_paths['up_results'], f"machine-{str(machine_num)}", "mem-results")
-        dir_paths['type_speed_dir'] = os.path.join(dir_paths['results_dir'], f"machine-{str(machine_num)}", "speed-results")
-        dir_paths['type_mem_dir'] = os.path.join(dir_paths['results_dir'], f"machine-{str(machine_num)}", "mem-results")
-        dir_paths['raw_speed_dir'] = os.path.join(dir_paths['up_results'], f"machine-{str(machine_num)}", "raw-speed-results")
+    # Set the unparsed-directory paths in the central paths dictionary
+    dir_paths['up_speed_dir'] = os.path.join(dir_paths['up_results'], f"machine-{str(machine_id)}", "speed-results")
+    dir_paths['up_mem_dir'] = os.path.join(dir_paths['up_results'], f"machine-{str(machine_id)}", "mem-results")
+    dir_paths['type_speed_dir'] = os.path.join(dir_paths['results_dir'], f"machine-{str(machine_id)}", "speed-results")
+    dir_paths['type_mem_dir'] = os.path.join(dir_paths['results_dir'], f"machine-{str(machine_id)}", "mem-results")
+    dir_paths['raw_speed_dir'] = os.path.join(dir_paths['up_results'], f"machine-{str(machine_id)}", "raw-speed-results")
 
-        # Create the required directories and handling any clashes with previously parsed results
-        handle_results_dir_creation(machine_num)
+    # Ensure that the machine's up-results directory exists before continuing
+    if not os.path.exists(dir_paths['up_results']):
+        print(f"[ERROR] - Machine-ID ({machine_id}) up-results directory does not exist, please ensure the up-results directory is present before continuing")
+        sys.exit(1)
 
-        # Parse the up-results for Liboqs testing
-        pre_speed_processing()
-        speed_processing()
-        memory_processing()
+    # Create the required directories and handling any clashes with previously parsed results
+    handle_results_dir_creation(machine_id, dir_paths, replace_old_results)
 
-        # Call the average generation methods for memory and CPU performance results
-        liboqs_avg.avg_mem()
-        liboqs_avg.avg_speed()
+    # Parse the up-results for the specified Machine-ID
+    pre_speed_processing(dir_paths, num_runs)
+    speed_processing(dir_paths, num_runs, kem_algs, sig_algs)
+    memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations)
 
-#-----------------------------------------------------------------------------------------------------------
-def parse_liboqs(test_opts):
+    # Call the average generation methods for memory and CPU performance results
+    liboqs_avg.avg_mem()
+    liboqs_avg.avg_speed()
+
+#------------------------------------------------------------------------------------------------------------------------------
+def parse_liboqs(test_opts, replace_old_results):
     """ Entrypoint for controlling the parsing of the Liboqs benchmarking results. This function
         is called from the main parsing control script and will call the necessary functions to parse the results """
 
     # Get the test options
-    global num_runs
-    num_machines = test_opts[0]
+    machine_id = test_opts[0]
     num_runs = test_opts[1]
+    root_dir = test_opts[2]
 
     # Setup the script environment
     print(f"\nPreparing to Parse Liboqs Results:\n")
-    setup_parse_env(test_opts[2])
+    kem_algs, sig_algs, dir_paths = setup_parse_env(root_dir)
 
     # Process the results
-    print("Parsing results... ")
-    process_tests(num_machines)
+    print(f"Parsing results...\n")
+    process_tests(machine_id, num_runs, dir_paths, kem_algs, sig_algs, replace_old_results)

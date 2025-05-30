@@ -49,10 +49,6 @@ For details on the project's development and upcoming features, see the project'
   - [OQS-Provider TLS Performance Testing](#oqs-provider-tls-performance-testing)
   - [Testing Output Files](#testing-output-files)
 - [Parsing Test Results](#parsing-test-results)
-  - [Parsing Overview](#parsing-overview)
-  - [Current Limitations](#current-limitations)
-  - [Parsing Script Usage](#parsing-script-usage)
-  - [Parsed Results Output](#parsed-results-output)
 - [Additional Documentation](#additional-documentation)
   - [Project Wiki Page](#project-wiki-page)
 - [Licence](#licence)
@@ -206,35 +202,21 @@ After the testing has been completed, unparsed results will be stored in the `te
 Where `machine-x` refers to the machine ID assigned at the beginning of the test. This ID is used to organise output when running tests across multiple machines.
 
 ## Parsing Test Results
+By default, test results are automatically parsed at the end of each testing script. This generates structured CSV output files based on the type of performance testing conducted.
 
-### Parsing Overview
-The results generated from the automated tests can be parsed into structured CSV files using the `parse_results.py` script, located in the `scripts/parsing-scripts` directory. This script provides three methods in which to parse the results:
+Parsed results will be stored in the following directories depending on which testing was performed:
 
-- Only Liboqs testing data
-- Only OQS-Provider TLS testing data
-- Both Liboqs and OQS-Provider testing data
+- `test-data/results/liboqs/machine-x`
+- `test-data/results/oqs-provider/machine-x`
 
-If parsing results for multiple machine-IDs, please ensure that all relevant test results are located in the `test-data/up-results` directory before running the script. When executing the script, you will be prompted to enter the testing parameters, such as the number of machines tested and the number of testing runs conducted in each testing category **†**.
+Where `machine-x` is the Machine-ID number assigned to the results when executing the testing scripts. If no custom Machine-ID is assigned, the default ID of 1 will be set for the results.
 
-### Current Limitations
-The parsing functionality is currently limited to being ran under the following circumstances:
+If needed, automatic parsing can be disabled when calling the testing scripts by passing a flag. This then facilitates the manual calling of the Python parsing scripts.
 
-- An setup testing environment which contains the algorithm list files that were used to gather the un-parsed results
-- If parsing results from multiple machines, the tests being ran using the same parameters/algorithms lists
+For complete details on parsing functionality and a breakdown of the collected performance metrics, refer to the following documentation:
 
-Future work will improve the parsing functionality to remove this limitation and make it easier to generate the parsed results.
-
-### Parsing Script Usage
-The parsing script can be executed on both Linux and Windows systems. To run it, use the following command (depending on your system's Python alias):
-
-```
-python parse_results.py
-```
-
-### Parsed Results Output
-Once parsing is complete, the parsed results will be stored in the newly created `test-data/results` directory. This includes CSV files containing the detailed test results and automatically calculated averages for each test category. These files are ready for further analysis or can be imported into graphing tools for visualisation.
-
-Please refer to the [Performance Metrics Guide](docs/performance-metrics-guide.md) for a detailed description of the performance metrics that this project can gather, what they mean, and how these scripts structure the un-parsed and parsed data.
+- [Parsing Performance Results Usage Guide](docs/performance-results/parsing-scripts-usage-guide.md)
+- [Performance Metrics Guide](docs/performance-results/performance-metrics-guide.md)
 
 ## Additional Documentation
 
@@ -245,7 +227,8 @@ Please refer to the [Performance Metrics Guide](docs/performance-metrics-guide.m
 - [Supported Algorithms](docs/supported-algorithms.md)
 - [Project Scripts](docs/developer-information/project-scripts.md)
 - [Repository Structure](docs/developer-information/repository-directory-structure.md)
-- [Performance Metrics Guide](docs/performance-metrics-guide.md)
+- [Parsing Performance Results Usage Guide](docs/performance-results/parsing-scripts-usage-guide.md)
+- [Performance Metrics Guide](docs/performance-results/performance-metrics-guide.md)
 - [Project Disclaimer](./DISCLAIMER.md)
 
 ### Project Wiki Page

@@ -78,11 +78,10 @@ Upon executing the script, the testing tool will prompt you to enter the paramet
 The testing tool will prompt you to enter the parameters for the test. These parameters include:
 
 - Machine type (server or client)
-- Machine Comparison Option
-- Machine Results ID (if comparison option selected)
-- Number of test runs to be performed
+- Whether the results should have a custom Machine-ID assigned to them (if machine is client)
 - Duration of each TLS handshake tests (if machine is client) **†**
 - Duration of TLS speed tests (if machine is client) **††**
+- Number of test runs to be performed
 - IP address of the other machine (use 127.0.0.1 for single-machine testing)
 
 **†** Defines the duration (in seconds) the OpenSSL `s_time` tool will use for each handshake test window. The client will attempt as many TLS handshakes as possible for each algorithm combination during this period.
@@ -136,13 +135,30 @@ When two machines are used for testing that are connected over a physical/virtua
 4. Begin testing and allow the script to complete
 
 ## Outputted Results
-After the testing has completed, all the unparsed results will be stored in the `test-data/up-results/ops-provider/machine-x` directory. This directory contains the TLS handshake performance and cryptographic speed test results for PQC, Hybrid-PQC, and classic ciphersuites. Results are organised by the `machine-ID` assigned during the testing setup.
+After testing completes, raw performance results are saved to the following directory:
 
-These raw output files are not yet ready for interpretation or graph generation. To parse the data into a format that can be used for further analysis, please refer to the **Parsing Results** section in the main `README` file.
+`test-data/up-results/oqs-provider/machine-x`
 
-For a detailed description of the OQS-Provider TLS performance metrics that this project can gather, what they mean, and how this project scripts structure the un-parsed and parsed data, please refer to the [Performance Metrics Guide](../performance-metrics-guide.md).
+Where `machine-x` refers to the assigned Machine-ID. If no ID was specified, the default ID of 1 is used.
+
+By default, the OQS-Provider testing script will automatically trigger the parsing process. It supplies the required parameters (Machine-ID and total test runs) to the parsing tool, which then generates structured CSV outputs for analysis.
+
+These parsed results are saved in:
+
+`test-data/results/oqs-provider/machine-x`
 
 > **Note:** When using multiple machines for testing, the results will only be stored on the client machine, not the server machine.
+
+To disable automatic parsing and preserve only the raw results, pass the `--disable-result-parsing` flag when launching the test script:
+
+```
+./full-oqs-provider-test.sh --disable-result-parsing
+```
+
+For complete details on parsing functionality and a breakdown of the collected PQC TLS performance metrics, refer to the following documentation:
+
+- [Parsing Performance Results Usage Guide](../performance-results/parsing-scripts-usage-guide.md)
+- [Performance Metrics Guide](../performance-results/performance-metrics-guide.md)
 
 ## Advanced Testing Customisation
 The automated PQC TLS benchmarking tool allows users to customise specific parameters used in the testing automation process. This is particularly useful when adapting the tool to restricted networks, virtual machines, or specific performance testing conditions.
