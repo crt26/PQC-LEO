@@ -656,7 +656,7 @@ function configure_results_dir() {
     if [ -d "$parsed_results_path" ]; then
 
         # Output to the user that the parsed results already exist
-        echo -e "[WARNING] - Parsed results already exist for Machine-ID ($machine_num)"
+        echo -e "[WARNING] - Parsed results already exist for Machine-ID ($MACHINE_NUM)"
         get_user_yes_no "Would you like to replace the existing parsed results?"
 
         # Determine the next action based on the user's response
@@ -672,7 +672,7 @@ function configure_results_dir() {
         elif [ $user_y_n_response -eq 1 ]; then
 
             # Output to the user that the parsed results will be replaced
-            echo -e "[NOTICE] - Existing Parsed Results for Machine-ID ($machine_num) will be replaced\n"
+            echo -e "[NOTICE] - Existing Parsed Results for Machine-ID ($MACHINE_NUM) will be replaced\n"
             sleep 2
 
             # Set the automatic result parsing flag to enabled
@@ -964,8 +964,8 @@ function handle_result_parsing() {
             # Call the result parsing script to parse the results with replace flag not set
             python3 "$parsing_scripts/parse_results.py" \
                 --parse-mode="oqs-provider"  \
-                --machine-id="$machine_num" \
-                --total-runs=$number_of_runs
+                --machine-id="$MACHINE_NUM" \
+                --total-runs=$NUM_RUN
             exit_status=$?
 
         else
@@ -973,8 +973,8 @@ function handle_result_parsing() {
             # Call the result parsing script to parse the results with replace flag set
             python3 "$parsing_scripts/parse_results.py" \
                 --parse-mode="oqs-provider"  \
-                --machine-id="$machine_num" \
-                --total-runs=$number_of_runs \
+                --machine-id="$MACHINE_NUM" \
+                --total-runs=$NUM_RUN \
                 --replace-old-results
             exit_status=$?
 
