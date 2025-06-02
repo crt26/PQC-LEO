@@ -15,7 +15,7 @@ import os
 import sys
 import shutil
 import time
-from results_averager import LiboqsResultAverager
+from internal_scripts.results_averager import LiboqsResultAverager
 
 #------------------------------------------------------------------------------------------------------------------------------
 def setup_parse_env(root_dir):

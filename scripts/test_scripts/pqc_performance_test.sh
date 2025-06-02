@@ -234,6 +234,9 @@ function setup_base_env() {
     test_scripts_path="$root_dir/scripts/test_scripts"
     parsing_scripts="$root_dir/scripts/parsing_scripts"
 
+    # Declare the internal test script path variables
+    result_parser_script="$parsing_scripts/parse_results.py"
+
     # Check if the system is ARM based and if PMU checks are required
     if [[ "$(uname -m)" = arm* || "$(uname -m)" == aarch* ]]; then
 
@@ -655,7 +658,7 @@ function handle_result_parsing() {
         if [ $replace_old_results -eq 0 ]; then
 
             # Call the result parsing script to parse the results with replace flag not set
-            python3 "$parsing_scripts/parse_results.py" \
+            python3 "$result_parser_script" \
                 --parse-mode="liboqs"  \
                 --machine-id="$machine_num" \
                 --total-runs=$number_of_runs
@@ -664,7 +667,7 @@ function handle_result_parsing() {
         else
 
             # Call the result parsing script to parse the results with replace flag set
-            python3 "$parsing_scripts/parse_results.py" \
+            python3 "$result_parser_script" \
                 --parse-mode="liboqs"  \
                 --machine-id="$machine_num" \
                 --total-runs=$number_of_runs \
@@ -676,7 +679,7 @@ function handle_result_parsing() {
         # Ensure that the parsing script completed successfully
         if [ $exit_status -eq 0 ]; then
             echo -e "\nParsed results can be found in the following directory:"
-            echo "$test_data_dir/results/liboqs/machine-$machine_num"
+            echo "$test_data_dir/results/liboqs/machine_$machine_num"
         else
             echo -e "\n[WARNING] - Result parsing failed, manual calling of parsing script is now required\n"
         fi 

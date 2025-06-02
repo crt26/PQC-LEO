@@ -366,6 +366,12 @@ function setup_base_env() {
     util_scripts="$root_dir/scripts/utility_scripts"
     parsing_scripts="$root_dir/scripts/parsing_scripts"
 
+    # Declare the project scripts path variables
+    tls_handshake_server="$test_scripts_path/internal_scripts/tls_handshake_test_server.sh"
+    tls_handshake_client="$test_scripts_path/internal_scripts/tls_handshake_test_client.sh"
+    tls_speed="$test_scripts_path/internal_scripts/tls_speed_test.sh"
+    result_parser_script="$parsing_scripts/parse_results.py"
+
     # Declare the global library directory path variables
     openssl_path="$libs_dir/openssl_3.5.0"
     oqs_provider_path="$libs_dir/oqs_provider"
@@ -909,7 +915,7 @@ function run_tests() {
         export CLIENT_IP="$machine_ip"
 
         # Call the server machine test script
-        $test_scripts_path/oqsprovider-test-server.sh
+        $tls_handshake_server
         exit_code=$?
 
         # Ensure that the server test script completed successfully
@@ -924,7 +930,7 @@ function run_tests() {
         export SERVER_IP="$machine_ip"
         
         # Call the server machine test script
-        $test_scripts_path/oqsprovider-test-client.sh
+        $tls_handshake_client
         exit_code=$?
 
         # Ensure that the client test script completed successfully
@@ -934,7 +940,7 @@ function run_tests() {
         fi
 
         # Call the TLS speed test script
-        $test_scripts_path/oqsprovider-test-speed.sh
+        $tls_speed
         exit_code=$?
 
         # Ensure that the speed test script completed successfully
@@ -962,7 +968,7 @@ function handle_result_parsing() {
         if [ $replace_old_results -eq 0 ]; then
 
             # Call the result parsing script to parse the results with replace flag not set
-            python3 "$parsing_scripts/parse_results.py" \
+            python3 "$result_parser_script" \
                 --parse-mode="oqs-provider"  \
                 --machine-id="$MACHINE_NUM" \
                 --total-runs=$NUM_RUN
@@ -971,7 +977,7 @@ function handle_result_parsing() {
         else
 
             # Call the result parsing script to parse the results with replace flag set
-            python3 "$parsing_scripts/parse_results.py" \
+            python3 "$result_parser_script" \
                 --parse-mode="oqs-provider"  \
                 --machine-id="$MACHINE_NUM" \
                 --total-runs=$NUM_RUN \

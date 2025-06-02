@@ -345,7 +345,7 @@ function main() {
     setup_base_env
 
     # Modify the OpenSSL conf file to temporarily remove the default groups configuration
-    if ! "$util_scripts/configure-openssl-cnf.sh" 1; then
+    if ! "$util_scripts/configure_openssl_cnf.sh" 1; then
         echo "[ERROR] - Failed to modify OpenSSL configuration."
         exit 1
     fi
@@ -369,7 +369,7 @@ function main() {
     hybrid_pqc_keygen
 
     # Restore the OpenSSL conf file to have configuration needed for testing scripts
-    if ! "$util_scripts/configure-openssl-cnf.sh" 2; then
+    if ! "$util_scripts/configure_openssl-cnf.sh" 2; then
         echo "[ERROR] - Failed to modify OpenSSL configuration."
         exit 1
     fi

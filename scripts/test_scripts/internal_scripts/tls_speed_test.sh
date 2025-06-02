@@ -186,7 +186,7 @@ function tls_speed_test_entrypoint() {
     echo -e "##########################"
 
     # Modify the OpenSSL conf file to temporarily remove the default groups configuration
-    if ! "$util_scripts/configure-openssl-cnf.sh" 1; then
+    if ! "$util_scripts/configure_openssl_cnf.sh" 1; then
         echo "[ERROR] - Failed to modify OpenSSL configuration."
         exit 1
     fi
@@ -195,7 +195,7 @@ function tls_speed_test_entrypoint() {
     tls_speed_test
 
     # Restore the OpenSSL conf file to have the configuration needed for the testing scripts
-    if ! "$util_scripts/configure-openssl-cnf.sh" 2; then
+    if ! "$util_scripts/configure_openssl_cnf.sh" 2; then
         echo "[ERROR] - Failed to modify OpenSSL configuration."
         exit 1
     fi

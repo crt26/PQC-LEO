@@ -11,8 +11,8 @@ used for testing.
 """
 
 #------------------------------------------------------------------------------------------------------------------------------
-from liboqs_parse import parse_liboqs
-from oqs_provider_parse import parse_oqs_provider
+from internal_scripts.performance_data_parse import parse_liboqs
+from internal_scripts.tls_performance_data_parse import parse_oqs_provider
 import os
 import sys
 import argparse
