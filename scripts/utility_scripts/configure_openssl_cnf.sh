@@ -133,13 +133,13 @@ function setup_base_env() {
     # Declare the main directory path variables based on the project's root dir
     libs_dir="$root_dir/lib"
     tmp_dir="$root_dir/tmp"
-    test_data_dir="$root_dir/test-data"
-    test_scripts_path="$root_dir/scripts/test-scripts"
+    test_data_dir="$root_dir/test_data"
+    test_scripts_path="$root_dir/scripts/test_scripts"
 
     # Declare the global library directory path variables
     openssl_path="$libs_dir/openssl_3.5.0"
     liboqs_path="$libs_dir/liboqs"
-    oqs_provider_path="$libs_dir/oqs-provider"
+    oqs_provider_path="$libs_dir/oqs_provider"
 
     # Ensure that the OpenSSL library is present before proceeding
     if [ ! -d "$openssl_path" ]; then

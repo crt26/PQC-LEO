@@ -72,19 +72,19 @@ def setup_parse_env(root_dir):
 
     # Set the test results directory paths in the central paths dictionary
     dir_paths['root_dir'] = root_dir
-    dir_paths['results_dir'] = os.path.join(root_dir, "test-data", "results", "oqs-provider")
-    dir_paths['up_results'] = os.path.join(root_dir, "test-data", "up-results", "oqs-provider")
+    dir_paths['results_dir'] = os.path.join(root_dir, "test_data", "results", "oqs_provider")
+    dir_paths['up_results'] = os.path.join(root_dir, "test_data", "up_results", "oqs_provider")
 
     # Set the alg-list filenames for the various PQC test types (PQC and PQC-Hybrid)
     alg_list_files = {
-        "kem_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-kem-algs.txt"),
-        "sig_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-sig-algs.txt"),
-        "hybrid_kem_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-hybr-kem-algs.txt"),
-        "hybrid_sig_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-hybr-sig-algs.txt"),
-        "speed_kem_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-speed-kem-algs.txt"),
-        "speed_sig_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-speed-sig-algs.txt"),
-        "hybrid_speed_kem_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-speed-hybr-kem-algs.txt"),
-        "hybrid_speed_sig_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-speed-hybr-sig-algs.txt"),
+        "kem_algs": os.path.join(root_dir, "test_data", "alg_lists", "tls_kem_algs.txt"),
+        "sig_algs": os.path.join(root_dir, "test_data", "alg_lists", "tls_sig_algs.txt"),
+        "hybrid_kem_algs": os.path.join(root_dir, "test_data", "alg_lists", "tls_hybr_kem_algs.txt"),
+        "hybrid_sig_algs": os.path.join(root_dir, "test_data", "alg_lists", "tls_hybr_sig_algs.txt"),
+        "speed_kem_algs": os.path.join(root_dir, "test_data", "alg_lists", "tls_speed_kem_algs.txt"),
+        "speed_sig_algs": os.path.join(root_dir, "test_data", "alg_lists", "tls_speed_sig_algs.txt"),
+        "hybrid_speed_kem_algs": os.path.join(root_dir, "test_data", "alg_lists", "tls_speed_hybr_kem_algs.txt"),
+        "hybrid_speed_sig_algs": os.path.join(root_dir, "test_data", "alg_lists", "tls_speed_hybr_sig_algs.txt"),
     }
 
     # Pull the algorithm names from the alg-lists files and create the relevant alg lists
@@ -115,7 +115,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
 
             # Replace all old results and create a new empty directory to store the parsed results
             print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...\n")
-            shutil.rmtree(dir_paths["results_dir"], f"machine-{machine_id}")
+            shutil.rmtree(dir_paths["results_dir"], f"machine_{machine_id}")
 
             # Create the new directories for parsed results
             os.makedirs(dir_paths["mach_handshake_dir"])
@@ -140,7 +140,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
 
                     # Replace all old results and create a new empty directory to store the parsed results
                     print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...\n")
-                    shutil.rmtree(dir_paths["results_dir"], f"machine-{machine_id}")
+                    shutil.rmtree(dir_paths["results_dir"], f"machine_{machine_id}")
 
                     # Create the new directories for parsed results
                     os.makedirs(dir_paths["mach_handshake_dir"])
@@ -266,7 +266,7 @@ def pqc_based_pre_processing(current_run, type_index, pqc_type_vars, col_headers
         # Determine the number of expected and actual result files in the up-results directory
         up_results_dir = pqc_type_vars["up_results_path"][type_index]
         expected_files = len(algs_dict[pqc_type_vars["sig_alg_type"][type_index]]) * len(algs_dict[pqc_type_vars["kem_alg_type"][type_index]])
-        actual_files = [file for file in os.listdir(up_results_dir) if file.startswith("tls-handshake-1-") and file.endswith(".txt")]
+        actual_files = [file for file in os.listdir(up_results_dir) if file.startswith("tls_handshake_1_") and file.endswith(".txt")]
 
         # Ensure that the up-results directory for current PQC type and run contains the correct number of files
         if expected_files != len(actual_files):
@@ -285,7 +285,7 @@ def pqc_based_pre_processing(current_run, type_index, pqc_type_vars, col_headers
         for kem in algs_dict[pqc_type_vars["kem_alg_type"][type_index]]:
 
             # Set the filename and path
-            filename = f"tls-handshake-{current_run}-{sig}-{kem}.txt"
+            filename = f"tls_handshake_{current_run}_{sig}_{kem}.txt"
             test_filepath = os.path.join(pqc_type_vars["up_results_path"][type_index], filename)
             
             # Get the session id first use metrics for the current KEM
@@ -309,7 +309,7 @@ def pqc_based_pre_processing(current_run, type_index, pqc_type_vars, col_headers
             current_row.clear()
 
     # Output the full base PQC TLS metrics for the current run
-    base_out_filename = f"{pqc_type_vars['type_prefix'][type_index]}-base-results-run-{current_run}.csv"
+    base_out_filename = f"{pqc_type_vars['type_prefix'][type_index]}_base_results_run_{current_run}.csv"
     output_filepath = os.path.join(dir_paths[pqc_type_vars["base_type"][type_index]], base_out_filename)
     sig_metrics_df.to_csv(output_filepath,index=False)
 
@@ -326,7 +326,7 @@ def pqc_based_processing(current_run, dir_paths, algs_dict, pqc_type_vars, col_h
         pqc_based_pre_processing(current_run, type_index, pqc_type_vars, col_headers, algs_dict, dir_paths)
 
         # Set the base results filename and path based on current run
-        pqc_base_filename = f"{pqc_type_vars['type_prefix'][type_index]}-base-results-run-{current_run}.csv"
+        pqc_base_filename = f"{pqc_type_vars['type_prefix'][type_index]}_base_results_run_{current_run}.csv"
         pqc_base_filepath = os.path.join(dir_paths[pqc_type_vars["base_type"][type_index]], pqc_base_filename)
 
         # Create the storage directory and files for separated sig/kem combo results
@@ -344,7 +344,7 @@ def pqc_based_processing(current_run, dir_paths, algs_dict, pqc_type_vars, col_h
             current_sig_df = base_df[base_df["Signing Algorithm"].str.contains(sig)]
 
             # Output the current sig filtered df to csv
-            output_filename = f"tls-handshake-{sig}-run-{current_run}.csv"
+            output_filename = f"tls_handshake_{sig}_run_{current_run}.csv"
             output_filepath = os.path.join(sig_path, output_filename)
             current_sig_df.to_csv(output_filepath, index=False)
 
@@ -363,7 +363,7 @@ def classic_based_processing(current_run, dir_paths, algs_dict, col_headers):
         for alg in algs_dict['classic_algs']:
 
             # Set the filename and path
-            filename = f"tls-handshake-classic-{current_run}-{cipher}-{alg}.txt"
+            filename = f"tls_handshake_classic_{current_run}_{cipher}_{alg}.txt"
             test_filepath = os.path.join(classic_up_results_dir, filename)
             
             # Get the session id first use metrics for the current signature
@@ -387,7 +387,7 @@ def classic_based_processing(current_run, dir_paths, algs_dict, col_headers):
             current_row.clear()
 
     # Output the full base Classic TLS metrics for current run
-    cipher_out_filename = f"classic-results-run-{current_run}.csv"
+    cipher_out_filename = f"classic_results_run_{current_run}.csv"
     output_filepath = os.path.join(dir_paths['classic_handshake_results'], cipher_out_filename)
     cipher_metrics_df.to_csv(output_filepath, index=False)
 
@@ -458,13 +458,13 @@ def speed_processing(current_run, dir_paths, speed_headers, algs_dict):
     for test_type, dir_list in dir_paths['speed_types_dirs'].items():
 
         # Set the file prefix depending on the current test type
-        pqc_fileprefix = "tls-speed" if test_type == "pqc" else "tls-speed-hybrid"
+        pqc_fileprefix = "tls_speed" if test_type == "pqc" else "tls_speed_hybrid"
 
         # Process both the KEM and signature results for the current test type
         for alg_type in alg_types:
 
             # Set the up-results filepath and pull metrics from the raw file
-            speed_filepath = os.path.join(dir_list[0], f"{pqc_fileprefix}-{alg_type}-{str(current_run)}.txt")
+            speed_filepath = os.path.join(dir_list[0], f"{pqc_fileprefix}_{alg_type}_{str(current_run)}.txt")
             speed_metrics_df = get_speed_metrics(speed_filepath, alg_type, speed_headers)
 
             # Set the alg list dict key based on the current test and algorithm type
@@ -490,8 +490,8 @@ def output_processing(num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers
     dir_paths['pqc_handshake_results'] = os.path.join(dir_paths['mach_handshake_dir'], "pqc")
     dir_paths['classic_handshake_results'] = os.path.join(dir_paths['mach_handshake_dir'], "classic")
     dir_paths['hybrid_handshake_results'] = os.path.join(dir_paths['mach_handshake_dir'], "hybrid")
-    dir_paths['pqc_base_results'] = os.path.join(dir_paths['pqc_handshake_results'], "base-results")
-    dir_paths['hybrid_base_results'] = os.path.join(dir_paths['hybrid_handshake_results'], "base-results")
+    dir_paths['pqc_base_results'] = os.path.join(dir_paths['pqc_handshake_results'], "base_results")
+    dir_paths['hybrid_base_results'] = os.path.join(dir_paths['hybrid_handshake_results'], "base_results")
 
     # Set the base-results files directories for the different test types
     os.makedirs(dir_paths['pqc_base_results'])
@@ -514,11 +514,11 @@ def process_tests(machine_id, num_runs, dir_paths, algs_dict, pqc_type_vars, col
     oqs_provider_avg = OqsProviderResultAverager(dir_paths, num_runs, algs_dict, pqc_type_vars, col_headers)
 
     # Set the machine's results directories paths in the central paths dictionary
-    dir_paths['mach_results_dir'] = os.path.join(dir_paths['results_dir'], f"machine-{str(machine_id)}")
-    dir_paths['mach_up_results_dir'] = os.path.join(dir_paths['up_results'], f"machine-{str(machine_id)}")
-    dir_paths['mach_handshake_dir']  = os.path.join(dir_paths['results_dir'], f"machine-{str(machine_id)}", "handshake-results")
-    dir_paths['mach_up_speed_dir'] = os.path.join(dir_paths['up_results'], f"machine-{str(machine_id)}", "speed-results")
-    dir_paths['mach_speed_results_dir'] = os.path.join(dir_paths['results_dir'], f"machine-{str(machine_id)}", "speed-results")
+    dir_paths['mach_results_dir'] = os.path.join(dir_paths['results_dir'], f"machine_{str(machine_id)}")
+    dir_paths['mach_up_results_dir'] = os.path.join(dir_paths['up_results'], f"machine_{str(machine_id)}")
+    dir_paths['mach_handshake_dir']  = os.path.join(dir_paths['results_dir'], f"machine_{str(machine_id)}", "handshake_results")
+    dir_paths['mach_up_speed_dir'] = os.path.join(dir_paths['up_results'], f"machine_{str(machine_id)}", "speed_results")
+    dir_paths['mach_speed_results_dir'] = os.path.join(dir_paths['results_dir'], f"machine_{str(machine_id)}", "speed_results")
     dir_paths['speed_types_dirs'] = {
         "pqc": [os.path.join(dir_paths['mach_up_speed_dir'], "pqc"), os.path.join(dir_paths['mach_speed_results_dir'])], 
         "hybrid": [os.path.join(dir_paths['mach_up_speed_dir'], "hybrid"), os.path.join(dir_paths['mach_speed_results_dir'])],
@@ -527,14 +527,14 @@ def process_tests(machine_id, num_runs, dir_paths, algs_dict, pqc_type_vars, col
     # Set the pqc-var types dictionary so that both PQC and PQC-hybrid results can be processed
     pqc_type_vars.update({
         "up_results_path": [
-            os.path.join(dir_paths['mach_up_results_dir'], "handshake-results", "pqc"), 
-            os.path.join(dir_paths['mach_up_results_dir'], "handshake-results", "hybrid")
+            os.path.join(dir_paths['mach_up_results_dir'], "handshake_results", "pqc"), 
+            os.path.join(dir_paths['mach_up_results_dir'], "handshake_results", "hybrid")
         ], 
     })
 
     # Ensure that the machine's up-results directory exists before continuing
     if not os.path.exists(dir_paths['mach_up_results_dir']):
-        print(f"[ERROR] - Machine-ID ({machine_id}) up-results directory does not exist, please ensure the up-results directory is present before continuing")
+        print(f"[ERROR] - Machine-ID ({machine_id}) up_results directory does not exist, please ensure the up_results directory is present before continuing")
         sys.exit(1)
 
     # Create the results directory for current machine and handle Machine-ID clashes

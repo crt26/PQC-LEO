@@ -230,9 +230,9 @@ function setup_base_env() {
     # Declare the main directory path variables based on the project's root dir
     libs_dir="$root_dir/lib"
     tmp_dir="$root_dir/tmp"
-    test_data_dir="$root_dir/test-data"
-    test_scripts_path="$root_dir/scripts/test-scripts"
-    parsing_scripts="$root_dir/scripts/parsing-scripts"
+    test_data_dir="$root_dir/test_data"
+    test_scripts_path="$root_dir/scripts/test_scripts"
+    parsing_scripts="$root_dir/scripts/parsing_scripts"
 
     # Check if the system is ARM based and if PMU checks are required
     if [[ "$(uname -m)" = arm* || "$(uname -m)" == aarch* ]]; then
@@ -266,12 +266,12 @@ function set_result_paths() {
     # Helper function for setting the result storage paths based on the assigned machine-ID
 
     # Set the results directory paths based on assigned machine-ID for these results
-    machine_results_path="$test_data_dir/up-results/liboqs/machine-$machine_num"
-    parsed_results_path="$test_data_dir/results/liboqs/machine-$machine_num"
-    machine_speed_results="$machine_results_path/raw-speed-results"
-    machine_mem_results="$machine_results_path/mem-results"
-    kem_mem_results="$machine_mem_results/kem-mem-metrics"
-    sig_mem_results="$machine_mem_results/sig-mem-metrics"
+    machine_results_path="$test_data_dir/up_results/liboqs/machine_$machine_num"
+    parsed_results_path="$test_data_dir/results/liboqs/machine_$machine_num"
+    machine_speed_results="$machine_results_path/raw_speed_results"
+    machine_mem_results="$machine_results_path/mem_results"
+    kem_mem_results="$machine_mem_results/kem_mem_metrics"
+    sig_mem_results="$machine_mem_results/sig_mem_metrics"
 
 }
 
@@ -433,7 +433,7 @@ function setup_test_suite() {
     set_result_paths
 
     # Create the un-parsed results directory for the machine-ID
-    if [ -d "$test_data_dir/up-results" ]; then
+    if [ -d "$test_data_dir/up_results" ]; then
 
         # Check if there is already results present for assigned machine-ID and handle any clashes
         if [ -d "$machine_results_path" ]; then
@@ -509,8 +509,8 @@ function setup_test_suite() {
     done
 
     # Set the alg-list txt filepaths
-    kem_alg_file="$test_data_dir/alg-lists/kem-algs.txt"
-    sig_alg_file="$test_data_dir/alg-lists/sig-algs.txt"
+    kem_alg_file="$test_data_dir/alg_lists/kem_algs.txt"
+    sig_alg_file="$test_data_dir/alg_lists/sig_algs.txt"
 
     # Create the PQC KEM and digital signature algorithm list arrays
     kem_algs=()

@@ -45,9 +45,9 @@ function setup_base_env() {
     # Declare the main directory path variables based on the project's root dir
     libs_dir="$root_dir/lib"
     tmp_dir="$root_dir/tmp"
-    test_data_dir="$root_dir/test-data"
-    test_scripts_path="$root_dir/scripts/test-scripts"
-    util_scripts="$root_dir/scripts/utility-scripts"
+    test_data_dir="$root_dir/test_data"
+    test_scripts_path="$root_dir/scripts/test_scripts"
+    util_scripts="$root_dir/scripts/utility_scripts"
 
     # Declare the global library directory path variables
     openssl_path="$libs_dir/openssl_3.5.0"
@@ -76,10 +76,10 @@ function setup_base_env() {
     current_group=""
 
     # Set the alg-list txt filepaths
-    kem_alg_file="$test_data_dir/alg-lists/tls-kem-algs.txt"
-    sig_alg_file="$test_data_dir/alg-lists/tls-sig-algs.txt"
-    hybrid_kem_alg_file="$test_data_dir/alg-lists/tls-hybr-kem-algs.txt"
-    hybrid_sig_alg_file="$test_data_dir/alg-lists/tls-hybr-sig-algs.txt"
+    kem_alg_file="$test_data_dir/alg_lists/tls_kem_algs.txt"
+    sig_alg_file="$test_data_dir/alg_lists/tls_sig_algs.txt"
+    hybrid_kem_alg_file="$test_data_dir/alg_lists/tls-hybr_kem_algs.txt"
+    hybrid_sig_alg_file="$test_data_dir/alg_lists/tls-hybr_sig_algs.txt"
 
     # Set the test classic algorithms and ciphers arrays
     classic_algs=("RSA_2048" "RSA_3072" "RSA_4096" "prime256v1" "secp384r1" "secp521r1")
@@ -317,12 +317,12 @@ function pqc_tests() {
 
                 # Set the cert and key files depending on the test type
                 if [ "$test_type" -eq 0 ]; then
-                    cert_file="$pqc_cert_dir/""${sig/:/_}""-srv.crt"
-                    key_file="$pqc_cert_dir/""${sig/:/_}""-srv.key"
+                    cert_file="$pqc_cert_dir/""${sig/:/_}""_srv.crt"
+                    key_file="$pqc_cert_dir/""${sig/:/_}""_srv.key"
 
                 elif [ "$test_type" -eq 1 ]; then
-                    cert_file="$hybrid_cert_dir/""${sig/:/_}""-srv.crt"
-                    key_file="$hybrid_cert_dir/""${sig/:/_}""-srv.key"
+                    cert_file="$hybrid_cert_dir/""${sig/:/_}""_srv.crt"
+                    key_file="$hybrid_cert_dir/""${sig/:/_}""_srv.key"
                 fi
 
                 # Start the OpenSSL s_server process
@@ -410,8 +410,8 @@ function classic_tests() {
                 if [[ $classic_alg == "prime256v1" || $classic_alg == "secp384r1" || $classic_alg == "secp521r1" ]]; then
 
                     # Set the cert/key filenames for current ECC algorithm
-                    classic_cert_file="$classic_cert_dir/$classic_alg-srv.crt"
-                    classic_key_file="$classic_cert_dir/$classic_alg-srv.key"
+                    classic_cert_file="$classic_cert_dir/${classic_alg}_srv.crt"
+                    classic_key_file="$classic_cert_dir/${classic_alg}_srv.key"
 
                     # Start the ECC test server processes
                     "$openssl_path/bin/openssl" s_server \
@@ -427,8 +427,8 @@ function classic_tests() {
                 else
 
                     # Set the cert/key filenames for current RSA algorithm
-                    classic_cert_file="$classic_cert_dir/$classic_alg-srv.crt"
-                    classic_key_file="$classic_cert_dir/$classic_alg-srv.key"
+                    classic_cert_file="$classic_cert_dir/${classic_alg}_srv.crt"
+                    classic_key_file="$classic_cert_dir/${classic_alg}_srv.key"
 
                     # Start the RSA test server processes
                     "$openssl_path/bin/openssl" s_server \

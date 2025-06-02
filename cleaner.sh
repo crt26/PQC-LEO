@@ -40,26 +40,26 @@ function setup_base_env() {
     done
 
     # Declare the main directory path variables based on the project's root dir
-    dependency_dir="$root_dir/dependency-libs"
+    dependency_dir="$root_dir/dependency_libs"
     libs_dir="$root_dir/lib"
     tmp_dir="$root_dir/tmp"
-    test_data_dir="$root_dir/test-data"
+    test_data_dir="$root_dir/test_data"
 
     # Declare the global library directory path variables
     openssl_path="$libs_dir/openssl_3.5.0"
     liboqs_path="$libs_dir/liboqs"
-    oqs_provider_path="$libs_dir/oqs-provider"
+    oqs_provider_path="$libs_dir/oqs_provider"
 
     # Declaring the global source-code directory path variables
-    liboqs_source="$tmp_dir/liboqs-source"
-    oqs_provider_source="$tmp_dir/oqs-provider-source"
-    openssl_source="$tmp_dir/openssl-3.5.0"
+    liboqs_source="$tmp_dir/liboqs_source"
+    oqs_provider_source="$tmp_dir/oqs_provider_source"
+    openssl_source="$tmp_dir/openssl_3.5.0"
 
     # Declaring the global test-data directory path variables
     test_data_results="$test_data_dir/results"
-    test_data_up_results="$test_data_dir/up-results"
+    test_data_up_results="$test_data_dir/up_results"
     test_data_keys="$test_data_dir/keys"
-    test_data_alg_lists_dir="$test_data_dir/alg-lists"
+    test_data_alg_lists_dir="$test_data_dir/alg_lists"
 
 }
 
@@ -94,8 +94,8 @@ function select_uninstall_mode() {
             1)
                 # Uninstall Liboqs only
                 rm -rf "$liboqs_path"
-                rm "$test_data_alg_lists_dir/kem-algs.txt"
-                rm "$test_data_alg_lists_dir/sig-algs.txt"
+                rm "$test_data_alg_lists_dir/kem_algs.txt"
+                rm "$test_data_alg_lists_dir/sig_algs.txt"
                 echo -e "\nLiboqs Uninstalled"
                 break;;
             

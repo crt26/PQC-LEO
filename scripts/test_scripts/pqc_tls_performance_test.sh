@@ -361,14 +361,14 @@ function setup_base_env() {
     # Declare the main directory path variables based on the project's root dir
     libs_dir="$root_dir/lib"
     tmp_dir="$root_dir/tmp"
-    test_data_dir="$root_dir/test-data"
-    test_scripts_path="$root_dir/scripts/test-scripts"
-    util_scripts="$root_dir/scripts/utility-scripts"
-    parsing_scripts="$root_dir/scripts/parsing-scripts"
+    test_data_dir="$root_dir/test_data"
+    test_scripts_path="$root_dir/scripts/test_scripts"
+    util_scripts="$root_dir/scripts/utility_scripts"
+    parsing_scripts="$root_dir/scripts/parsing_scripts"
 
     # Declare the global library directory path variables
     openssl_path="$libs_dir/openssl_3.5.0"
-    oqs_provider_path="$libs_dir/oqs-provider"
+    oqs_provider_path="$libs_dir/oqs_provider"
 
     # Ensure that the OQS-Provider and OpenSSL libraries are present before proceeding
     if [ ! -d "$oqs_provider_path" ]; then
@@ -464,9 +464,9 @@ function set_tls_paths() {
     # to the environment for the server/client script.
 
     # Set the result directory paths based on assigned machine-ID for results
-    export MACHINE_RESULTS_PATH="$test_data_dir/up-results/oqs-provider/machine-$MACHINE_NUM"
-    export MACHINE_HANDSHAKE_RESULTS="$MACHINE_RESULTS_PATH/handshake-results"
-    export MACHINE_SPEED_RESULTS="$MACHINE_RESULTS_PATH/speed-results"
+    export MACHINE_RESULTS_PATH="$test_data_dir/up_results/oqs_provider/machine_$MACHINE_NUM"
+    export MACHINE_HANDSHAKE_RESULTS="$MACHINE_RESULTS_PATH/handshake_results"
+    export MACHINE_SPEED_RESULTS="$MACHINE_RESULTS_PATH/speed_results"
 
     # Set the specific test types result directory paths
     export PQC_HANDSHAKE="$MACHINE_HANDSHAKE_RESULTS/pqc"
@@ -625,7 +625,7 @@ function configure_results_dir() {
     set_tls_paths
 
     # Create the un-parsed result directories for the machine-ID and and handle any clashes
-    if [ -d "$test_data_dir/up-results" ]; then
+    if [ -d "$test_data_dir/up_results" ]; then
     
         # Check if there is already results present for assigned machine-ID and handle any clashes
         if [ -d "$MACHINE_RESULTS_PATH" ]; then
@@ -650,7 +650,7 @@ function configure_results_dir() {
     fi
 
     # Set the parsed results directory path based on the decided machine-ID
-    parsed_results_path="$test_data_dir/results/oqs-provider/machine-$MACHINE_NUM"
+    parsed_results_path="$test_data_dir/results/oqs_provider/machine_$MACHINE_NUM"
 
     # Check if Parsed results already exist for the Machine-ID
     if [ -d "$parsed_results_path" ]; then
@@ -983,7 +983,7 @@ function handle_result_parsing() {
         # Ensure that the parsing script completed successfully
         if [ $exit_status -eq 0 ]; then
             echo -e "\nParsed results can be found in the following directory:"
-            echo "$test_data_dir/results/oqs-provider/machine-$MACHINE_NUM"
+            echo "$test_data_dir/results/oqs_provider/machine_$MACHINE_NUM"
         else
             echo -e "\n[WARNING] - Result parsing failed, manual calling of parsing script is now required\n"
         fi

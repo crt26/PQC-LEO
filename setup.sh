@@ -14,9 +14,9 @@
 root_dir=$(pwd)
 libs_dir="$root_dir/lib"
 tmp_dir="$root_dir/tmp"
-test_data_dir="$root_dir/test-data"
-alg_lists_dir="$test_data_dir/alg-lists"
-util_scripts="$root_dir/scripts/utility-scripts"
+test_data_dir="$root_dir/test_data"
+alg_lists_dir="$test_data_dir/alg_lists"
+util_scripts="$root_dir/scripts/utility_scripts"
 
 # Declare the global dependency library version variables
 openssl_version="3.5.0"
@@ -33,12 +33,12 @@ oqs_provider_tested_sha="9a22bfb5e5c14a831419c1b10fbab08af5361a70"
 # Declare the global library directory path variables
 openssl_path="$libs_dir/openssl_$openssl_version"
 liboqs_path="$libs_dir/liboqs"
-oqs_provider_path="$libs_dir/oqs-provider"
+oqs_provider_path="$libs_dir/oqs_provider"
 
 # Declare the global source-code directory path variables
-liboqs_source="$tmp_dir/liboqs-source"
-oqs_provider_source="$tmp_dir/oqs-provider-source"
-openssl_source="$tmp_dir/openssl-$openssl_version"
+liboqs_source="$tmp_dir/liboqs_source"
+oqs_provider_source="$tmp_dir/oqs_provider_source"
+openssl_source="$tmp_dir/openssl_$openssl_version"
 
 # Set the global flag variables
 install_type=0 # 0=Liboqs-only, 1=Liboqs+OQS-Provider, 2=OQS-Provider-only
@@ -334,9 +334,9 @@ function download_libraries() {
     echo -e "##############################\n"
 
     # Download OpenSSL 3.4.1 and extract it into the tmp directory
-    wget -O "$tmp_dir/openssl-$openssl_version.tar.gz" "$openssl_download_url"
-    tar -xf "$tmp_dir/openssl-$openssl_version.tar.gz" -C $tmp_dir
-    rm "$tmp_dir/openssl-$openssl_version.tar.gz"
+    wget -O "$tmp_dir/openssl_$openssl_version.tar.gz" "$openssl_download_url"
+    tar -xf "$tmp_dir/openssl_$openssl_version.tar.gz" -C $tmp_dir
+    rm "$tmp_dir/openssl_$openssl_version.tar.gz"
 
     # Ensure that the OpenSSL source directory is present before continuing
     if [ ! -d "$openssl_source" ]; then
@@ -925,8 +925,8 @@ function liboqs_build() {
         fi
 
         # Replacing the default Liboqs test_mem source-code files with the modded versions
-        cp "$root_dir/modded-lib-files/test_sig_mem.c" "$liboqs_source/tests/test_sig_mem.c"
-        cp "$root_dir/modded-lib-files/test_kem_mem.c" "$liboqs_source/tests/test_kem_mem.c"
+        cp "$root_dir/modded_lib_files/test_sig_mem.c" "$liboqs_source/tests/test_sig_mem.c"
+        cp "$root_dir/modded_lib_files/test_kem_mem.c" "$liboqs_source/tests/test_kem_mem.c"
 
         # Set the HQC enabled cmake flag is the user has selected to enable HQC
         if [ "$enable_hqc" -eq 1 ]; then
@@ -951,7 +951,7 @@ function liboqs_build() {
         cmake --build "$liboqs_path/build" --target install -- -j $threads
 
         # Create the test-data storage directories
-        mkdir -p "$liboqs_path/mem-results/kem-mem-metrics/" && mkdir -p "$liboqs_path/mem-results/sig-mem-metrics/" && mkdir "$liboqs_path/speed-results"
+        mkdir -p "$liboqs_path/mem_results/kem_mem_metrics/" && mkdir -p "$liboqs_path/mem_results/sig_mem_metrics/" && mkdir "$liboqs_path/speed_results"
 
         # Output the install success message to the terminal
         echo -e "\nLiboqs Install Complete"
@@ -972,7 +972,7 @@ function oqs_provider_build() {
     echo -e "#######################\n"
 
     # Set the generate.yml filepaths
-    backup_generate_file="$root_dir/modded-lib-files/generate.yml"
+    backup_generate_file="$root_dir/modded_lib_files/generate.yml"
     oqs_provider_generate_file="$oqs_provider_source/oqs-template/generate.yml"
 
     # Enable all the disabled signature algorithms in the OQS-Provider library if the user has specified to do so
@@ -1097,8 +1097,8 @@ function main() {
                 # Build the required dependency libraries and clean up
                 openssl_build
                 liboqs_build
-                # rm -rf $tmp_dir/*
-                rm -rf $tmp_dir/liboqs-source $tmp_dir/openssl-$openssl_version # temp removal for hqc bug fix
+                # rm -rf $tmp_dir/* # original clean up
+                rm -rf $tmp_dir/liboqs_source $tmp_dir/openssl_$openssl_version # temp removal for hqc bug fix
 
                 # Create the required alg-list files for the automated testing
                 cd "$util_scripts"
@@ -1125,8 +1125,8 @@ function main() {
                 openssl_build
                 liboqs_build
                 oqs_provider_build
-                #rm -rf $tmp_dir/* # original cleanup
-                rm -rf $tmp_dir/liboqs-source $tmp_dir/openssl-$openssl_version $tmp_dir/oqs-provider-source # temp removal for hqc bug fix
+                #rm -rf $tmp_dir/* # original clean up
+                rm -rf $tmp_dir/liboqs_source $tmp_dir/openssl_$openssl_version $tmp_dir/oqs_provider_source # temp removal for hqc bug fix
                 #touch "$tmp_dir/test.flag"
 
                 # Create the required alg-list files for the automated testing
@@ -1163,8 +1163,8 @@ function main() {
 
                 # Build the OQS-Provider library
                 oqs_provider_build
-                #rm -rf $tmp_dir/* # original cleanup
-                rm -rf $tmp_dir/liboqs-source $tmp_dir/openssl-$openssl_version $tmp_dir/oqs-provider-source # temp removal for hqc bug fix
+                #rm -rf $tmp_dir/* # original clean up
+                rm -rf $tmp_dir/liboqs_source $tmp_dir/openssl_$openssl_version $tmp_dir/oqs_provider_source # temp removal for hqc bug fix
 
                 # Check if the Liboqs alg-list files are present before deciding which alg-list files need generated
                 if [ -f "$alg_lists_dir/kem-algs.txt" ] && [ -f "$alg_lists_dir/sig-algs.txt" ]; then

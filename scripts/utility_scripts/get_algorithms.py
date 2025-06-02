@@ -77,7 +77,7 @@ def setup_base_env():
     # Declare the global library directory path variables
     liboqs_build_dir = os.path.join(root_dir, "lib", "liboqs", "build", "tests")
     openssl_path = os.path.join(root_dir, "lib", "openssl_3.5.0")
-    oqs_provider_path = os.path.join(root_dir, "lib", "oqs-provider")
+    oqs_provider_path = os.path.join(root_dir, "lib", "oqs_provider")
     openssl_lib_dir = ""
 
     # Check the OpenSSL library directory path
@@ -93,10 +93,10 @@ def setup_base_env():
     os.environ['LD_LIBRARY_PATH'] = new_ld_library_path
 
     # Set the path to the ALGORITHMS.md file
-    oqs_provider_src_dir = os.path.join(root_dir, "tmp", "oqs-provider-source")
+    oqs_provider_src_dir = os.path.join(root_dir, "tmp", "oqs_provider_source")
 
     # Ensure that there are no previous list files present (mainly for if this script is ran manually, setup.sh will handle this)
-    alg_list_dir = os.path.join(root_dir, "test-data", "alg-lists")
+    alg_list_dir = os.path.join(root_dir, "test_data", "alg_lists")
 
     if os.path.isdir(alg_list_dir):
         for file in os.listdir(alg_list_dir):
@@ -156,7 +156,7 @@ def get_liboqs_algs():
     
     # Set the test_bins and output directory for algorithm lists
     test_bins = [f"{liboqs_build_dir}/test_kem", f"{liboqs_build_dir}/test_sig"]
-    output_dir = os.path.join(root_dir, "test-data", "alg-lists")
+    output_dir = os.path.join(root_dir, "test_data", "alg_lists")
 
     # Loop through the different test type binaries (KEM and SIG) and run them
     for bin in test_bins:
@@ -176,9 +176,9 @@ def get_liboqs_algs():
 
                 # Set the output filename for the current algorithm type
                 if "kem" in bin:
-                    alg_list_file = os.path.join(output_dir, "kem-algs.txt")
+                    alg_list_file = os.path.join(output_dir, "kem_algs.txt")
                 else:
-                    alg_list_file = os.path.join(output_dir, "sig-algs.txt")
+                    alg_list_file = os.path.join(output_dir, "sig_algs.txt")
 
                 # Filter out HQC KEM algorithms from the list if the HQC enabled flag is not set (temp fix for HQC bug)
                 if not os.path.exists(os.path.join(root_dir, "tmp", ".hqc_enabled.flag")):
@@ -330,10 +330,10 @@ def get_tls_pqc_algs():
             speed_hybrid_algs.extend(provider_hybrid_algs)
 
         # Set the various output filenames depending on the current algorithm type
-        alg_list_file = os.path.join(output_dir, f"tls-{alg_type[:3]}-algs.txt")
-        hybrid_alg_list_file = os.path.join(output_dir, f"tls-hybr-{alg_type[:3]}-algs.txt")
-        speed_list_file = os.path.join(output_dir, f"tls-speed-{alg_type[:3]}-algs.txt")
-        speed_hybrid_alg_list_file = os.path.join(output_dir, f"tls-speed-hybr-{alg_type[:3]}-algs.txt")
+        alg_list_file = os.path.join(output_dir, f"tls_{alg_type[:3]}_algs.txt")
+        hybrid_alg_list_file = os.path.join(output_dir, f"tls_hybr_{alg_type[:3]}_algs.txt")
+        speed_list_file = os.path.join(output_dir, f"tls_speed_{alg_type[:3]}_algs.txt")
+        speed_hybrid_alg_list_file = os.path.join(output_dir, f"tls_speed_hybr_{alg_type[:3]}_algs.txt")
 
         # Write out the algorithms to the list files
         write_to_file(algs, alg_list_file)
@@ -351,9 +351,9 @@ def set_tls_classic_algs():
     classic_sigs = ["RSA_2048", "RSA_3072", "RSA_4096", "prime256v1", "secp384r1", "secp521r1"]
 
     # Set the output directory and text file names
-    output_dir = os.path.join(root_dir, "test-data", "alg-lists")
-    kem_list_file = os.path.join(output_dir, "classic-tls-kem-algs.txt")
-    sig_list_file = os.path.join(output_dir, "classic-tls-sig-algs.txt")
+    output_dir = os.path.join(root_dir, "test_data", "alg_lists")
+    kem_list_file = os.path.join(output_dir, "classic_tls_kem_algs.txt")
+    sig_list_file = os.path.join(output_dir, "classic_tls_sig_algs.txt")
     
     # Write out the classic algorithms to the list files
     write_to_file(classic_kems, kem_list_file)

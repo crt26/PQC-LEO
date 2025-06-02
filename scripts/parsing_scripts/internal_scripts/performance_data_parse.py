@@ -35,12 +35,12 @@ def setup_parse_env(root_dir):
 
     # Set the test results directory paths in central paths dictionary
     dir_paths['root_dir'] = root_dir
-    dir_paths['results_dir'] = os.path.join(root_dir, "test-data", "results", "liboqs")
-    dir_paths['up_results'] = os.path.join(root_dir, "test-data", "up-results", "liboqs")
+    dir_paths['results_dir'] = os.path.join(root_dir, "test_data", "results", "liboqs")
+    dir_paths['up_results'] = os.path.join(root_dir, "test_data", "up_results", "liboqs")
 
     # Set the alg lists text filenames
-    kem_algs_file = os.path.join(root_dir, "test-data", "alg-lists", "kem-algs.txt")
-    sig_algs_file = os.path.join(root_dir, "test-data", "alg-lists", "sig-algs.txt")
+    kem_algs_file = os.path.join(root_dir, "test_data", "alg_lists", "kem_algs.txt")
+    sig_algs_file = os.path.join(root_dir, "test_data", "alg_lists", "sig_algs.txt")
 
     # Read in the algorithms from the KEM alg-list file
     with open(kem_algs_file, "r") as kem_file:
@@ -74,7 +74,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
 
             # Remove the old results directory automatically for current Machine-ID
             print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...\n")
-            shutil.rmtree(dir_paths["results_dir"], f"machine-{machine_id}")
+            shutil.rmtree(dir_paths["results_dir"], f"machine_{machine_id}")
 
             # Create the new directories for parsed results
             os.makedirs(dir_paths["type_speed_dir"])
@@ -99,7 +99,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
 
                     # Replace all old results and create a new empty directory to store the parsed results
                     print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...\n")
-                    shutil.rmtree(dir_paths["results_dir"], f"machine-{machine_id}")
+                    shutil.rmtree(dir_paths["results_dir"], f"machine_{machine_id}")
 
                     # Create the new directories for parsed results
                     os.makedirs(dir_paths["type_speed_dir"])
@@ -194,8 +194,8 @@ def pre_speed_processing(dir_paths, num_runs):
         os.makedirs(dir_paths['up_speed_dir'])
 
     # Setting the initial prefix variables for KEM and sig files
-    kem_prefix = "test-kem-speed-"
-    sig_prefix = "test-sig-speed-"
+    kem_prefix = "test_kem_speed_"
+    sig_prefix = "test_sig-speed_"
 
     # Pre-format the KEM and sig csv speed files to remove system information from file
     for run_count in range(1, num_runs+1):
@@ -242,8 +242,8 @@ def speed_processing(dir_paths, num_runs, kem_algs, sig_algs):
         exporting the data into a clean CSV format """
 
     # Set the filename prefix variables
-    kem_prefix = "test-kem-speed-"
-    sig_prefix = "test-sig-speed-"
+    kem_prefix = "test_kem_speed_"
+    sig_prefix = "test_sig_speed_"
 
     # Create the algorithm lists to insert into new header column
     new_col_kem = [alg for alg in kem_algs for _ in range(3)]
@@ -322,7 +322,7 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
             for operation in range(0,3,1):
 
                 # Parse the metrics and add the results to dataframe row
-                kem_up_filename = kem_alg + "-" + str(operation) + "-" + str(run_count) + ".txt"
+                kem_up_filename = kem_alg + "_" + str(operation) + "_" + str(run_count) + ".txt"
                 kem_up_filepath = os.path.join(kem_up_dir, kem_up_filename)
 
                 try:
@@ -354,7 +354,7 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
         check_data_mismatch(len(mem_results_df), len(kem_algs), "KEM Memory Results")
         
         # Output the KEM csv file for this run
-        kem_filename = "kem-mem-metrics-" + str(run_count) + ".csv"
+        kem_filename = "kem_mem_metrics-" + str(run_count) + ".csv"
         kem_filepath = os.path.join(dir_paths["type_mem_dir"], kem_filename)
         mem_results_df.to_csv(kem_filepath, index=False)
 
@@ -368,7 +368,7 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
             for operation in range(0,3,1):
 
                 # Parse the metrics and add the results to dataframe row
-                sig_up_filename = sig_alg + "-" + str(operation) + "-" + str(run_count) + ".txt"
+                sig_up_filename = sig_alg + "_" + str(operation) + "_" + str(run_count) + ".txt"
                 sig_up_filepath = os.path.join(sig_up_dir, sig_up_filename)
 
                 try:
@@ -400,7 +400,7 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
         check_data_mismatch(len(mem_results_df), len(sig_algs), "Sig Memory Results")
 
         # Output the digital signature csv file for this run
-        sig_filename = "sig-mem-metrics-" + str(run_count) + ".csv"
+        sig_filename = "sig_mem_metrics_" + str(run_count) + ".csv"
         sig_filepath = os.path.join(dir_paths["type_mem_dir"], sig_filename)
         mem_results_df.to_csv(sig_filepath, index=False)
 
@@ -417,11 +417,11 @@ def process_tests(machine_id, num_runs, dir_paths, kem_algs, sig_algs, replace_o
     liboqs_avg = LiboqsResultAverager(dir_paths, kem_algs, sig_algs, num_runs, alg_operations)
 
     # Set the unparsed-directory paths in the central paths dictionary
-    dir_paths['up_speed_dir'] = os.path.join(dir_paths['up_results'], f"machine-{str(machine_id)}", "speed-results")
-    dir_paths['up_mem_dir'] = os.path.join(dir_paths['up_results'], f"machine-{str(machine_id)}", "mem-results")
-    dir_paths['type_speed_dir'] = os.path.join(dir_paths['results_dir'], f"machine-{str(machine_id)}", "speed-results")
-    dir_paths['type_mem_dir'] = os.path.join(dir_paths['results_dir'], f"machine-{str(machine_id)}", "mem-results")
-    dir_paths['raw_speed_dir'] = os.path.join(dir_paths['up_results'], f"machine-{str(machine_id)}", "raw-speed-results")
+    dir_paths['up_speed_dir'] = os.path.join(dir_paths['up_results'], f"machine_{str(machine_id)}", "speed_results")
+    dir_paths['up_mem_dir'] = os.path.join(dir_paths['up_results'], f"machine_{str(machine_id)}", "mem_results")
+    dir_paths['type_speed_dir'] = os.path.join(dir_paths['results_dir'], f"machine_{str(machine_id)}", "speed_results")
+    dir_paths['type_mem_dir'] = os.path.join(dir_paths['results_dir'], f"machine_{str(machine_id)}", "mem_results")
+    dir_paths['raw_speed_dir'] = os.path.join(dir_paths['up_results'], f"machine_{str(machine_id)}", "raw_speed_results")
 
     # Ensure that the machine's up-results directory exists before continuing
     if not os.path.exists(dir_paths['up_results']):

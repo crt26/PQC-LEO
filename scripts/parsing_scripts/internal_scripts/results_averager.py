@@ -36,8 +36,8 @@ class LiboqsResultAverager:
             that current machine """
 
         # Declare the filepath prefix variables
-        kem_mem_file_prefix = os.path.join(self.dir_paths['type_mem_dir'], "kem-mem-metrics-")
-        sig_mem_file_prefix = os.path.join(self.dir_paths['type_mem_dir'], "sig-mem-metrics-")
+        kem_mem_file_prefix = os.path.join(self.dir_paths['type_mem_dir'], "kem_mem_metrics_")
+        sig_mem_file_prefix = os.path.join(self.dir_paths['type_mem_dir'], "sig_mem_metrics_")
 
         # Declare the dataframes and fieldnames
         mem_fieldnames = ["Algorithm", "Operation", "intits", "maxBytes", "maxHeap", "extHeap", "maxStack"]
@@ -119,9 +119,9 @@ class LiboqsResultAverager:
                 sig_mem_avg.loc[len(sig_mem_avg)] = row
 
         # Export the average csv files
-        kem_csv_name = os.path.join(self.dir_paths['type_mem_dir'], "kem-mem-avg.csv")
+        kem_csv_name = os.path.join(self.dir_paths['type_mem_dir'], "kem_mem_avg.csv")
         kem_mem_avg.to_csv(kem_csv_name, index=False)
-        sig_csv_name = os.path.join(self.dir_paths['type_mem_dir'], "sig-mem-avg.csv")
+        sig_csv_name = os.path.join(self.dir_paths['type_mem_dir'], "sig_mem_avg.csv")
         sig_mem_avg.to_csv(sig_csv_name, index=False)
 
     #------------------------------------------------------------------------------
@@ -131,12 +131,12 @@ class LiboqsResultAverager:
             that current machine """
 
         # Declare the filepath prefix variables and fieldnames list
-        kem_filename_prefix = os.path.join(self.dir_paths['type_speed_dir'], "test-kem-speed-")
-        sig_filename_prefix = os.path.join(self.dir_paths['type_speed_dir'], "test-sig-speed-")
+        kem_filename_prefix = os.path.join(self.dir_paths['type_speed_dir'], "test_kem_speed_")
+        sig_filename_prefix = os.path.join(self.dir_paths['type_speed_dir'], "test_sig_speed_")
         speed_fieldnames = []
 
         # Get the fieldnames from first file
-        test_filename = "test-kem-speed-1.csv"
+        test_filename = "test_kem_speed_1.csv"
         test_filename = os.path.join(self.dir_paths['type_speed_dir'], test_filename)
 
         # Load the test file into dataframe and put the headers into a list
@@ -222,9 +222,9 @@ class LiboqsResultAverager:
                 sig_speed_avg.loc[len(sig_speed_avg)] = row
 
         # Export the average csv files
-        kem_csv_name = os.path.join(self.dir_paths['type_speed_dir'], "kem-speed-avg.csv")
+        kem_csv_name = os.path.join(self.dir_paths['type_speed_dir'], "kem_speed_avg.csv")
         kem_speed_avg.to_csv(kem_csv_name, index=False)
-        sig_csv_name = os.path.join(self.dir_paths['type_speed_dir'], "sig-speed-avg.csv")
+        sig_csv_name = os.path.join(self.dir_paths['type_speed_dir'], "sig_speed_avg.csv")
         sig_speed_avg.to_csv(sig_csv_name, index=False)
 
 #------------------------------------------------------------------------------------------------------------------------------
@@ -273,7 +273,7 @@ class OqsProviderResultAverager:
                     for current_run in range(1, self.num_runs+1):
 
                         # Set the current run filepath
-                        current_run_filename = f"tls-handshake-{sig}-run-{current_run}.csv"
+                        current_run_filename = f"tls_handshake_{sig}_run_{current_run}.csv"
                         current_run_filepath = os.path.join(sig_path, current_run_filename)
 
                         # Read in the current run csv to get metrics
@@ -307,7 +307,7 @@ class OqsProviderResultAverager:
                     sig_avg_df.loc[len(sig_avg_df)] = sig_reused_average_row
 
                 # Output the averages for the current signing algorithm to csv file
-                avg_out_filename = f"tls-handshake-{sig}-avg.csv"
+                avg_out_filename = f"tls_handshake_{sig}_avg.csv"
                 avg_out_filepath = os.path.join(sig_path, avg_out_filename)
                 sig_avg_df.to_csv(avg_out_filepath, index=False)
 
@@ -334,7 +334,7 @@ class OqsProviderResultAverager:
                 for current_run in range(1, self.num_runs+1):
 
                     # Setting current run filepath
-                    current_run_filename = f"classic-results-run-{str(current_run)}.csv"
+                    current_run_filename = f"classic_results_run_{str(current_run)}.csv"
                     current_run_filepath = os.path.join(self.dir_paths['classic_handshake_results'], current_run_filename)
 
                     # Reading in current run csv to get metrics
@@ -369,7 +369,7 @@ class OqsProviderResultAverager:
                 classic_avg_df.loc[len(classic_avg_df)] = curve_reused_combined_row
 
         # Output averages to csv file
-        avg_out_filename = f"classic-speed-avg.csv"
+        avg_out_filename = f"classic_speed_avg.csv"
         avg_out_filepath = os.path.join(self.dir_paths['classic_handshake_results'], avg_out_filename)
         classic_avg_df.to_csv(avg_out_filepath, index=False)
 
@@ -398,13 +398,13 @@ class OqsProviderResultAverager:
         for test_type, dir_list in self.dir_paths["speed_types_dirs"].items():
 
             # Set the file prefix depending on test type
-            pqc_fileprefix = "tls-speed" if test_type == "pqc" else "tls-speed-hybrid"
+            pqc_fileprefix = "tls_speed" if test_type == "pqc" else "tls_speed_hybrid"
 
             # Process both the KEM and Sig averages for the current test type
             for alg_type in alg_types:
 
                 # Get the algorithms present for the current test/alg type being processed
-                temp_filename = f"{pqc_fileprefix}-{alg_type}-1.csv"
+                temp_filename = f"{pqc_fileprefix}_{alg_type}_1.csv"
                 algs = self.get_speed_algs(temp_filename, dir_list)
 
                 # Set the headers used in the csv files based on alg_type and creating dataframe
@@ -421,7 +421,7 @@ class OqsProviderResultAverager:
                     for run_num in range(1, self.num_runs+1):
 
                         # Set the filename and path for current type and run
-                        current_filename = f"{pqc_fileprefix}-{alg_type}-{run_num}.csv"
+                        current_filename = f"{pqc_fileprefix}_{alg_type}_{run_num}.csv"
                         current_filepath = os.path.join(dir_list[1], current_filename)
                     
                         # Pull in the algorithm values for the current run and alg
@@ -448,6 +448,6 @@ class OqsProviderResultAverager:
                     speed_avg_df.loc[len(speed_avg_df)] = speed_avg_row
 
                 # Export the TLS speed averages to csv file
-                speed_avg_filename = f"{pqc_fileprefix}-{alg_type}-avg.csv"
+                speed_avg_filename = f"{pqc_fileprefix}_{alg_type}_avg.csv"
                 speed_avg_filepath = os.path.join(dir_list[1], speed_avg_filename)
                 speed_avg_df.to_csv(speed_avg_filepath, index=False)

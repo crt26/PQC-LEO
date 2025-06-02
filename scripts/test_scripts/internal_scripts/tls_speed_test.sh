@@ -44,13 +44,13 @@ function setup_test_env() {
     # Declare the main directory path variables based on the project's root dir
     libs_dir="$root_dir/lib"
     tmp_dir="$root_dir/tmp"
-    test_data_dir="$root_dir/test-data"
-    test_scripts_path="$root_dir/scripts/test-scripts"
-    util_scripts="$root_dir/scripts/utility-scripts"
+    test_data_dir="$root_dir/test_data"
+    test_scripts_path="$root_dir/scripts/test_scripts"
+    util_scripts="$root_dir/scripts/utility_scripts"
 
     # Declare the global library directory path variables
     openssl_path="$libs_dir/openssl_3.5.0"
-    oqs_provider_path="$libs_dir/oqs-provider"
+    oqs_provider_path="$libs_dir/oqs_provider"
     provider_path="$oqs_provider_path/lib"
 
     # Ensure that the OQS-Provider and OpenSSL libraries are present before proceeding
@@ -74,10 +74,10 @@ function setup_test_env() {
     export LD_LIBRARY_PATH="$openssl_lib_path:$LD_LIBRARY_PATH"
 
     # Set the alg-list txt filepaths
-    kem_alg_file="$test_data_dir/alg-lists/tls-speed-kem-algs.txt"
-    sig_alg_file="$test_data_dir/alg-lists/tls-speed-sig-algs.txt"
-    hybrid_kem_alg_file="$test_data_dir/alg-lists/tls-speed-hybr-kem-algs.txt"
-    hybrid_sig_alg_file="$test_data_dir/alg-lists/tls-speed-hybr-sig-algs.txt"
+    kem_alg_file="$test_data_dir/alg_lists/tls_speed_kem_algs.txt"
+    sig_alg_file="$test_data_dir/alg_lists/tls_speed_sig_algs.txt"
+    hybrid_kem_alg_file="$test_data_dir/alg_lists/tls_speed_hybr_kem_algs.txt"
+    hybrid_sig_alg_file="$test_data_dir/alg_lists/tls_speed_hybr_sig_algs.txt"
 
     # Create the PQC KEM and digital signature algorithm list arrays
     kem_algs=()
@@ -123,10 +123,10 @@ function tls_speed_test() {
     test_types=("PQC KEMs" "PQC Digital Signatures" "Hybrid-PQC KEMs" "Hybrid-PQC Digital Signatures")
     alg_lists=("${kem_algs[*]}" "${sig_algs[*]}" "${hybrid_kem_algs[*]}" "${hybrid_sig_algs[*]}")
     output_files=(
-        "$PQC_SPEED/tls-speed-kem" 
-        "$PQC_SPEED/tls-speed-sig" 
-        "$HYBRID_SPEED/tls-speed-hybrid-kem" 
-        "$HYBRID_SPEED/tls-speed-hybrid-sig"
+        "$PQC_SPEED/tls_speed_kem" 
+        "$PQC_SPEED/tls_speed_sig" 
+        "$HYBRID_SPEED/tls_speed_hybrid_kem" 
+        "$HYBRID_SPEED/tls_speed_hybrid_sig"
     )
 
     # Perform the TLS speed tests for the specified number of runs
@@ -140,14 +140,14 @@ function tls_speed_test() {
         for test_index in "${!test_types[@]}"; do
 
             # Set the temp error log file path for the current test type
-            error_log_file="$tmp_dir/tls-speed-test-$run_num-${test_types[$test_index]}.log"
+            error_log_file="$tmp_dir/tls_speed_test_${run_num}_${test_types[$test_index]}.log"
 
             # Output the current task to the terminal
             echo "Performing TLS speed tests for ${test_types[$test_index]}..."
 
             # Set the algorithm list and output file for the current test type
             algs_string="${alg_lists[$test_index]}"
-            output_file="${output_files[$test_index]}-$run_num.txt"
+            output_file="${output_files[$test_index]}_$run_num.txt"
 
             # Perform the OpenSSL speed test with the current test parameters
             "$openssl_path/bin/openssl" speed \

@@ -45,13 +45,13 @@ function setup_base_env() {
     # Declare the main directory path variables based on the project's root dir
     libs_dir="$root_dir/lib"
     tmp_dir="$root_dir/tmp"
-    test_data_dir="$root_dir/test-data"
-    test_scripts_path="$root_dir/scripts/test-scripts"
-    util_scripts="$root_dir/scripts/utility-scripts"
+    test_data_dir="$root_dir/test_data"
+    test_scripts_path="$root_dir/scripts/test_scripts"
+    util_scripts="$root_dir/scripts/utility_scripts"
 
     # Declare the global library directory path variables
     openssl_path="$libs_dir/openssl_3.5.0"
-    provider_path="$libs_dir/oqs-provider/lib"
+    provider_path="$libs_dir/oqs_provider/lib"
 
     # Declare global key storage directory paths
     key_storage_path="$test_data_dir/keys"
@@ -76,10 +76,10 @@ function setup_base_env() {
     current_group=""
 
     # Set the alg-list txt filepaths
-    kem_alg_file="$test_data_dir/alg-lists/tls-kem-algs.txt"
-    sig_alg_file="$test_data_dir/alg-lists/tls-sig-algs.txt"
-    hybrid_kem_alg_file="$test_data_dir/alg-lists/tls-hybr-kem-algs.txt"
-    hybrid_sig_alg_file="$test_data_dir/alg-lists/tls-hybr-sig-algs.txt"
+    kem_alg_file="$test_data_dir/alg_lists/tls_kem_algs.txt"
+    sig_alg_file="$test_data_dir/alg_lists/tls_sig_algs.txt"
+    hybrid_kem_alg_file="$test_data_dir/alg_lists/tls_hybr_kem_algs.txt"
+    hybrid_sig_alg_file="$test_data_dir/alg_lists/tls_hybr_sig_algs.txt"
 
     # Set the test classic algorithms and ciphers arrays
     classic_algs=( "RSA_2048" "RSA_3072" "RSA_4096" "prime256v1" "secp384r1" "secp521r1")
@@ -319,16 +319,16 @@ function pqc_tests() {
 
                     # Set the cert and key files depending on test type
                     if [ "$test_type" -eq 0 ]; then
-                        cert_file="$pqc_cert_dir/""${sig_name}""-CA.crt"
+                        cert_file="$pqc_cert_dir/""${sig_name}""_CA.crt"
                         handshake_dir=$PQC_HANDSHAKE
 
                     elif [ "$test_type" -eq 1 ]; then
-                        cert_file="$hybrid_cert_dir/""${sig/:/_}""-srv.crt"
+                        cert_file="$hybrid_cert_dir/""${sig/:/_}""_srv.crt"
                         handshake_dir=$HYBRID_HANDSHAKE
                     fi
 
                     # Set the output filename based on current combination and run
-                    output_name="tls-handshake-$run_num-$sig_name-$kem.txt"
+                    output_name="tls_handshake_${run_num}_${sig_name-$kem}.txt"
 
                     # Reset the fail counter
                     fail_counter=0
@@ -422,8 +422,8 @@ function classic_tests() {
                 control_signal "control_wait"
 
                 # Set the output filename based on current combination and run and CA file
-                output_name="tls-handshake-classic-$run_num-$cipher-$classic_alg.txt"
-                classic_cert_file="$classic_cert_dir/$classic_alg-srv.crt"
+                output_name="tls_handshake_classic_${run_num}_${cipher}_${classic_alg}.txt"
+                classic_cert_file="$classic_cert_dir/${classic_alg}_srv.crt"
 
                 # Reset the fail counter
                 fail_counter=0
