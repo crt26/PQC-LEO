@@ -2,7 +2,7 @@
 Copyright (c) 2023-2025 Callum Turino
 SPDX-License-Identifier: MIT
 
-Liboqs result parsing script for PQC performance benchmarking.  
+Parsing script for PQC computational performance benchmarking gathered via the Liboqs library.
 Parses raw memory and CPU speed results produced by the automated Liboqs test suite, processes them into  
 clean, structured CSV files, and computes averaged results using the results_averager module.  
 This script is called by the central parse_results.py controller and supports single-machine, multi-run setups.
@@ -15,11 +15,11 @@ import os
 import sys
 import shutil
 import time
-from internal_scripts.results_averager import LiboqsResultAverager
+from internal_scripts.results_averager import ComputationalAverager
 
 #------------------------------------------------------------------------------------------------------------------------------
 def setup_parse_env(root_dir):
-    """ Function for setting up the environment for the Liboqs parsing script. 
+    """ Function for setting up the environment for parsing computational performance results.
         The function will set the various directory paths, read in the algorithm 
         lists and set the root directories. """
 
@@ -83,13 +83,13 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
         else:
 
             # Output the warning message to the terminal
-            print(f"[WARNING] - There are already parsed Liboqs testing results present for Machine-ID ({machine_id})\n")
+            print(f"[WARNING] - There are already parsed computational testing results present for Machine-ID ({machine_id})\n")
 
             # Get the decision from user on how to handle old results before parsing continues
             while True:
 
                 # Output the potential options and handle user choice
-                print(f"From the following options, choose how would you like to handle the old Liboqs results:\n")
+                print(f"From the following options, choose how would you like to handle the old computational performance results:\n")
                 print("Option 1 - Replace old parsed results with new ones")
                 print("Option 2 - Exit parsing programme to move old results and rerun after (if you choose this option, please move the entire folder not just its contents)")
                 print("Option 3 - Make parsing script programme wait until you have move files before continuing")
@@ -238,7 +238,7 @@ def pre_speed_processing(dir_paths, num_runs):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def speed_processing(dir_paths, num_runs, kem_algs, sig_algs):
-    """ Function for processing the Liboqs CPU speed up-results and 
+    """ Function for processing the computational CPU speed up-results and 
         exporting the data into a clean CSV format """
 
     # Set the filename prefix variables
@@ -354,7 +354,7 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
         check_data_mismatch(len(mem_results_df), len(kem_algs), "KEM Memory Results")
         
         # Output the KEM csv file for this run
-        kem_filename = "kem_mem_metrics-" + str(run_count) + ".csv"
+        kem_filename = "kem_mem_metrics_" + str(run_count) + ".csv"
         kem_filepath = os.path.join(dir_paths["type_mem_dir"], kem_filename)
         mem_results_df.to_csv(kem_filepath, index=False)
 
@@ -414,7 +414,7 @@ def process_tests(machine_id, num_runs, dir_paths, kem_algs, sig_algs, replace_o
     alg_operations = {'kem_operations': ["keygen", "encaps", "decaps"], 'sig_operations': ["keypair", "sign", "verify"]}
 
     # Create an instance of the Liboqs average generator class before processing results
-    liboqs_avg = LiboqsResultAverager(dir_paths, kem_algs, sig_algs, num_runs, alg_operations)
+    comp_avg = ComputationalAverager(dir_paths, kem_algs, sig_algs, num_runs, alg_operations)
 
     # Set the unparsed-directory paths in the central paths dictionary
     dir_paths['up_speed_dir'] = os.path.join(dir_paths['up_results'], f"machine_{str(machine_id)}", "speed_results")
@@ -425,7 +425,7 @@ def process_tests(machine_id, num_runs, dir_paths, kem_algs, sig_algs, replace_o
 
     # Ensure that the machine's up-results directory exists before continuing
     if not os.path.exists(dir_paths['up_results']):
-        print(f"[ERROR] - Machine-ID ({machine_id}) up-results directory does not exist, please ensure the up-results directory is present before continuing")
+        print(f"[ERROR] - Machine-ID ({machine_id}) up_results directory does not exist, please ensure the up-results directory is present before continuing")
         sys.exit(1)
 
     # Create the required directories and handling any clashes with previously parsed results
@@ -437,12 +437,12 @@ def process_tests(machine_id, num_runs, dir_paths, kem_algs, sig_algs, replace_o
     memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations)
 
     # Call the average generation methods for memory and CPU performance results
-    liboqs_avg.avg_mem()
-    liboqs_avg.avg_speed()
+    comp_avg.avg_mem()
+    comp_avg.avg_speed()
 
 #------------------------------------------------------------------------------------------------------------------------------
-def parse_liboqs(test_opts, replace_old_results):
-    """ Entrypoint for controlling the parsing of the Liboqs benchmarking results. This function
+def parse_comp_performance(test_opts, replace_old_results):
+    """ Entrypoint for controlling the parsing of computational benchmarking results. This function
         is called from the main parsing control script and will call the necessary functions to parse the results """
 
     # Get the test options
@@ -451,7 +451,7 @@ def parse_liboqs(test_opts, replace_old_results):
     root_dir = test_opts[2]
 
     # Setup the script environment
-    print(f"\nPreparing to Parse Liboqs Results:\n")
+    print(f"\nPreparing to parse Computational Performance Results:\n")
     kem_algs, sig_algs, dir_paths = setup_parse_env(root_dir)
 
     # Process the results

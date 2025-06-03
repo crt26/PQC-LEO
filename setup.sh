@@ -41,7 +41,7 @@ oqs_provider_source="$tmp_dir/oqs_provider_source"
 openssl_source="$tmp_dir/openssl_$openssl_version"
 
 # Set the global flag variables
-install_type=0 # 0=Liboqs-only, 1=Liboqs+OQS-Provider, 2=OQS-Provider-only
+install_type=0  # 0=Computational only, 1=Computational+TLS, 2=TLS only
 use_latest_version=0
 user_defined_speed_flag=0
 enable_hqc=0 # temp flag for hqc bug fix
@@ -1072,9 +1072,9 @@ function main() {
 
         # Output the install type options to the user
         echo "Please Select one of the following build options"
-        echo "1 - Build Liboqs Library Only"
-        echo "2 - Build OQS-Provider and Liboqs Library"
-        echo "3 - Build OQS-Provider Library with previous Liboqs Install"
+        echo "1 - Computational Performance Testing Only"
+        echo "2 - Both Computational and TLS PQC Performance Testing"
+        echo "3 - TLS PQC Performance Testing Only (requires existing computational setup)"
         echo "4 - Exit Setup"
 
         # Prompt the user for their selection
@@ -1085,9 +1085,9 @@ function main() {
 
             1)
                 # Output the selection choice to the terminal
-                echo -e "\n############################"
-                echo "Liboqs Only Install Selected"
-                echo -e "############################\n"
+                echo -e "\n###############################################"
+                echo "Computational Performance Only Install Selected"
+                echo -e "###############################################\n"
 
                 # Configure the setup environment and install the required dependencies
                 install_type=0
@@ -1111,9 +1111,9 @@ function main() {
             
             2)
                 # Output the selection choice to the terminal
-                echo -e "\n########################################"
-                echo "Liboqs and OQS-Provider Install Selected"
-                echo -e "########################################\n"
+                echo -e "\n##################################################"
+                echo "Computational and TLS Performance Install Selected"
+                echo -e "###############################################\n"
 
                 # Configure the setup environment and install the required dependencies
                 install_type=1
@@ -1140,9 +1140,9 @@ function main() {
 
             3)
                 # Output the selection choice to the terminal
-                echo -e "\n##################################"
-                echo "OQS-Provider Only Install Selected"
-                echo -e "##################################\n"
+                echo -e "\n#####################################"
+                echo "TLS Performance Only Install Selected"
+                echo -e "#####################################\n"
 
                 # Configure the setup environment and install the required dependencies
                 install_type=2
@@ -1155,7 +1155,7 @@ function main() {
 
                 # Check if a Liboqs install is already present and install if not
                 if [ ! -d "$liboqs_path" ]; then
-                    echo -e "\n[ERROR] - The Liboqs Install source could not be found."
+                    echo -e "\n[ERROR] - Existing computational performance setup not found."
                     echo -e "Please select option 2 instead to install both Liboqs and OQS-Provider libraries\n"
                     echo "Exiting Script..."
                     exit 1

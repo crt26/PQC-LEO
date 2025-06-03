@@ -13,11 +13,11 @@ import pandas as pd
 import os
 
 #------------------------------------------------------------------------------------------------------------------------------
-class LiboqsResultAverager:
+class ComputationalAverager:
 
     #------------------------------------------------------------------------------
     def __init__(self, dir_paths, kem_algs, sig_algs, num_runs, alg_operations):
-        """ Class for generating average metrics from Liboqs performance results.
+        """ Class for generating average metrics from computational performance results.
             Computes per-algorithm averages across multiple benchmarking runs for both 
             memory usage and CPU speed results. Called by the Liboqs parsing script after 
             results have been processed into structured CSVs. """
