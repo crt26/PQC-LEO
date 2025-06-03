@@ -285,7 +285,7 @@ def get_tls_pqc_algs():
 
     # Set required path variables, algorithm categories, and provider flags
     openssl_bin = os.path.join(openssl_path, "bin","openssl")
-    output_dir = os.path.join(root_dir, "test-data", "alg-lists")
+    output_dir = os.path.join(root_dir, "test_data", "alg_lists")
     alg_cats = ["kem", "signature"]
     provider_flags = {
         "default": ["-provider", "default"], 

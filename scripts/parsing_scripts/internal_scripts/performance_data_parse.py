@@ -35,8 +35,8 @@ def setup_parse_env(root_dir):
 
     # Set the test results directory paths in central paths dictionary
     dir_paths['root_dir'] = root_dir
-    dir_paths['results_dir'] = os.path.join(root_dir, "test_data", "results", "liboqs")
-    dir_paths['up_results'] = os.path.join(root_dir, "test_data", "up_results", "liboqs")
+    dir_paths['results_dir'] = os.path.join(root_dir, "test_data", "results", "computational_performance")
+    dir_paths['up_results'] = os.path.join(root_dir, "test_data", "up_results", "computational_performance")
 
     # Set the alg lists text filenames
     kem_algs_file = os.path.join(root_dir, "test_data", "alg_lists", "kem_algs.txt")
@@ -195,7 +195,7 @@ def pre_speed_processing(dir_paths, num_runs):
 
     # Setting the initial prefix variables for KEM and sig files
     kem_prefix = "test_kem_speed_"
-    sig_prefix = "test_sig-speed_"
+    sig_prefix = "test_sig_speed_"
 
     # Pre-format the KEM and sig csv speed files to remove system information from file
     for run_count in range(1, num_runs+1):
@@ -298,8 +298,8 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
         and outputting the results into a CSV format """
 
     # Set the un-parsed memory results directory variables
-    kem_up_dir = os.path.join(dir_paths["up_mem_dir"], "kem-mem-metrics")
-    sig_up_dir = os.path.join(dir_paths["up_mem_dir"], "sig-mem-metrics")
+    kem_up_dir = os.path.join(dir_paths["up_mem_dir"], "kem_mem_metrics")
+    sig_up_dir = os.path.join(dir_paths["up_mem_dir"], "sig_mem_metrics")
 
 
     # Declare the list variables used in memory processing

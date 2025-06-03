@@ -333,9 +333,9 @@ function download_libraries() {
     echo "Downloading Required Libraries"
     echo -e "##############################\n"
 
-    # Download OpenSSL 3.4.1 and extract it into the tmp directory
+    # Download OpenSSL 3.5.0 and extract it into the tmp directory
     wget -O "$tmp_dir/openssl_$openssl_version.tar.gz" "$openssl_download_url"
-    tar -xf "$tmp_dir/openssl_$openssl_version.tar.gz" -C $tmp_dir
+    tar -xf "$tmp_dir/openssl_$openssl_version.tar.gz" -C $tmp_dir && mv "$tmp_dir/openssl-$openssl_version" "$openssl_source"
     rm "$tmp_dir/openssl_$openssl_version.tar.gz"
 
     # Ensure that the OpenSSL source directory is present before continuing
@@ -814,7 +814,7 @@ function openssl_build() {
         fi
 
         # Patch the OpenSSL configuration file to include directives for the OQS-Provider library
-        if ! "$util_scripts/configure-openssl-cnf.sh" 0; then
+        if ! "$util_scripts/configure_openssl_cnf.sh" 0; then
             echo "[ERROR] - Failed to modify OpenSSL configuration file."
             exit 1
         fi
@@ -1167,7 +1167,7 @@ function main() {
                 rm -rf $tmp_dir/liboqs_source $tmp_dir/openssl_$openssl_version $tmp_dir/oqs_provider_source # temp removal for hqc bug fix
 
                 # Check if the Liboqs alg-list files are present before deciding which alg-list files need generated
-                if [ -f "$alg_lists_dir/kem-algs.txt" ] && [ -f "$alg_lists_dir/sig-algs.txt" ]; then
+                if [ -f "$alg_lists_dir/kem_algs.txt" ] && [ -f "$alg_lists_dir/sig_algs.txt" ]; then
                     alg_list_flag="3"
                 else
                     alg_list_flag="2"

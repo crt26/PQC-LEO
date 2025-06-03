@@ -325,7 +325,7 @@ function handle_machine_id_clash() {
         echo -e "2 - Assign a different machine ID\n"
 
         # Read in the user's response
-        read -p "Please select an option (1-2):" user_response
+        read -p "Please select an option (1-2): " user_response
 
         # Determine the action based on the user's response
         case $user_response in
@@ -551,11 +551,11 @@ function speed_tests() {
 
         # Execute KEM CPU performance benchmarking
         echo -e "Performing PQC KEM speed test run number - $run_num\n"
-        "$kem_speed_bin" > "$machine_speed_results/test-kem-speed-$run_num.csv"
+        "$kem_speed_bin" > "$machine_speed_results/test_kem_speed_$run_num.csv"
 
         # Execute digital signature CPU performance benchmarking
         echo -e "Performing PQC digital signature speed test run number - $run_num\n"
-        "$sig_speed_bin" > "$machine_speed_results/test-sig-speed-$run_num.csv"
+        "$sig_speed_bin" > "$machine_speed_results/test_sig_speed_$run_num.csv"
 
     done
 
@@ -596,7 +596,7 @@ function mem_tests() {
                 echo -e "$kem_alg - $op_kem_str Test\n"
 
                 # Run the memory test with the Valgrind memory profiler and output the memory metrics
-                filename="$kem_mem_results/$kem_alg-$operation-$run_count.txt"
+                filename="$kem_mem_results/${kem_alg}_${operation}_${run_count}.txt"
                 valgrind --tool=massif --stacks=yes --massif-out-file="$mem_tmp_dir/massif.out" "$kem_mem_bin" "$kem_alg" "$operation"
                 ms_print "$mem_tmp_dir/massif.out" > $filename
                 rm -f "$mem_tmp_dir/massif.out" && echo -e "\n"
@@ -622,7 +622,7 @@ function mem_tests() {
                 echo -e "$sig_alg - $op_sig_str Test\n"
 
                 # Run the memory test with the Valgrind memory profiler and output the memory metrics
-                filename="$sig_mem_results/$sig_alg-$operation-$run_count.txt"
+                filename="$sig_mem_results/${sig_alg}_${operation}_${run_count}.txt"
                 valgrind --tool=massif --stacks=yes --massif-out-file="$mem_tmp_dir/massif.out" "$sig_mem_bin" "$sig_alg" "$operation"
                 ms_print "$mem_tmp_dir/massif.out" > $filename
                 rm -f "$mem_tmp_dir/massif.out" && echo -e "\n"

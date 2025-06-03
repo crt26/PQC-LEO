@@ -3,14 +3,14 @@
 /dependency_libs
 /results/
 /up_results/
-/tmp/
+tmp/
 /.vscode
 /lib
 /test_data/keys
 /test_data/up_results
 /test_data/results
 /temp_storage/
-/scripts/parsing_scripts/__pycache__
+__pycache__/
 /test_data/
 /.pqc_eval_dir_marker.tmp
 /dev-scripts
