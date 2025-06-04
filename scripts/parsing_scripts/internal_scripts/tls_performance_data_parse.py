@@ -352,7 +352,7 @@ def classic_based_processing(current_run, dir_paths, algs_dict, col_headers):
     """ Function for processing results from classic cipher TLS handshake testing """
 
     # Set the up-results directory path and create the dataframe used in test processing
-    classic_up_results_dir = os.path.join(dir_paths['mach_up_results_dir'], "handshake-results", "classic")
+    classic_up_results_dir = os.path.join(dir_paths['mach_up_results_dir'], "handshake_results", "classic")
     cipher_metrics_df = pd.DataFrame(columns=col_headers['classic_headers'])
 
     # Loop through each ciphersuite
@@ -477,7 +477,7 @@ def speed_processing(current_run, dir_paths, speed_headers, algs_dict):
                 sys.exit(1)
 
             # Output the speed metrics csv for the current test type and algorithm
-            output_filepath = os.path.join(dir_list[1], f"{pqc_fileprefix}-{alg_type}-{str(current_run)}.csv")
+            output_filepath = os.path.join(dir_list[1], f"{pqc_fileprefix}_{alg_type}_{str(current_run)}.csv")
             speed_metrics_df.to_csv(output_filepath, index=False)
 
 #------------------------------------------------------------------------------------------------------------------------------
@@ -518,8 +518,8 @@ def process_tests(machine_id, num_runs, dir_paths, algs_dict, pqc_type_vars, col
     dir_paths['mach_up_speed_dir'] = os.path.join(dir_paths['up_results'], f"machine_{str(machine_id)}", "speed_results")
     dir_paths['mach_speed_results_dir'] = os.path.join(dir_paths['results_dir'], f"machine_{str(machine_id)}", "speed_results")
     dir_paths['speed_types_dirs'] = {
-        "pqc": [os.path.join(dir_paths['mach_up_speed_dir'], "pqc"), os.path.join(dir_paths['mach_speed_results_dir'])], 
-        "hybrid": [os.path.join(dir_paths['mach_up_speed_dir'], "hybrid"), os.path.join(dir_paths['mach_speed_results_dir'])],
+        "pqc": [os.path.join(dir_paths['mach_up_speed_dir'], "pqc"), dir_paths['mach_speed_results_dir']], 
+        "hybrid": [os.path.join(dir_paths['mach_up_speed_dir'], "hybrid"), dir_paths['mach_speed_results_dir']],
     }
 
     # Set the pqc-var types dictionary so that both PQC and PQC-hybrid results can be processed
