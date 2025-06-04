@@ -5,16 +5,16 @@
 
 # Server-side script for executing TLS handshake performance tests in coordination with a remote client. 
 # It evaluates all supported combinations of classic, Post-Quantum Cryptography (PQC), and Hybrid-PQC signature
-# and KEM algorithms using OpenSSL 3.5.0 integrated with the OQS-Provider. The script performs three main test suites:
-# PQC-only, Hybrid-PQC, and Classic handshake tests. It is called by the full-oqs-provider-test.sh benchmarking 
-# controller script and uses globally defined test parameters, certificate and key files, and control signalling 
-# for synchronisation with the client.
+# and Key Encapsulation Mechanism (KEM) algorithms using OpenSSL 3.5.0, with support for both native PQC 
+# implementations and those integrated via OQS-Provider. The script performs three main test suites: 
+# PQC-only, Hybrid-PQC, and Classic handshake tests. It is called by the TLS benchmarking controller script 
+# and uses globally defined test parameters, certificate and key files, and control signalling for synchronisation with the client. 
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_base_env() {
-    # Function for setting up the basic global variables for the test suite. This includes setting the root directory
-    # and the global library paths for the test suite. The function establishes the root path by determining the path of the script and
-    # using this, determines the root directory of the project.
+    # Function for setting up the basic global variables for the script. This includes setting the root directory, the global 
+    # library paths for the test suite, and creating the algorithm arrays. The function establishes the root path by determining 
+    # the path of the script and using this, determines the root directory of the project.
 
     # Determine the directory that the script is being run from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -45,13 +45,13 @@ function setup_base_env() {
     # Declare the main directory path variables based on the project's root dir
     libs_dir="$root_dir/lib"
     tmp_dir="$root_dir/tmp"
-    test_data_dir="$root_dir/test-data"
-    test_scripts_path="$root_dir/scripts/test-scripts"
-    util_scripts="$root_dir/scripts/utility-scripts"
+    test_data_dir="$root_dir/test_data"
+    test_scripts_path="$root_dir/scripts/test_scripts"
+    util_scripts="$root_dir/scripts/utility_scripts"
 
     # Declare the global library directory path variables
     openssl_path="$libs_dir/openssl_3.5.0"
-    provider_path="$libs_dir/oqs-provider/lib"
+    provider_path="$libs_dir/oqs_provider/lib"
 
     # Declare global key storage directory paths
     key_storage_path="$test_data_dir/keys"
@@ -76,10 +76,10 @@ function setup_base_env() {
     current_group=""
 
     # Set the alg-list txt filepaths
-    kem_alg_file="$test_data_dir/alg-lists/tls-kem-algs.txt"
-    sig_alg_file="$test_data_dir/alg-lists/tls-sig-algs.txt"
-    hybrid_kem_alg_file="$test_data_dir/alg-lists/tls-hybr-kem-algs.txt"
-    hybrid_sig_alg_file="$test_data_dir/alg-lists/tls-hybr-sig-algs.txt"
+    kem_alg_file="$test_data_dir/alg_lists/tls_kem_algs.txt"
+    sig_alg_file="$test_data_dir/alg_lists/tls_sig_algs.txt"
+    hybrid_kem_alg_file="$test_data_dir/alg_lists/tls_hybr_kem_algs.txt"
+    hybrid_sig_alg_file="$test_data_dir/alg_lists/tls_hybr_sig_algs.txt"
 
     # Set the test classic algorithms and ciphers arrays
     classic_algs=("RSA_2048" "RSA_3072" "RSA_4096" "prime256v1" "secp384r1" "secp521r1")
@@ -87,7 +87,7 @@ function setup_base_env() {
 
     # Ensure that a control sleep time env variables has been passed if not disabled
     if [ -z "$CONTROL_SLEEP_TIME" ] && [ -z "$DISABLE_CONTROL_SLEEP" ]; then
-        echo "[ERROR] - Control sleep time env variable not set, this indicates a wider issue with the full-oqs-provider-test.sh script"
+        echo "[ERROR] - Control sleep time env variable not set. This likely indicates a broader issue with the TLS benchmarking controller script."
         exit 1
     fi
 
@@ -131,7 +131,7 @@ function set_test_env() {
         current_group="${current_group:1}"
 
         # Set the configurations in openssl.cnf file for PQC testing
-        if ! "$util_scripts/configure-openssl-cnf.sh" $configure_mode; then
+        if ! "$util_scripts/configure_openssl_cnf.sh" $configure_mode; then
             echo "[ERROR] - Failed to modify OpenSSL configuration."
             exit 1
         fi
@@ -159,7 +159,7 @@ function set_test_env() {
         current_group="${current_group:1}"
 
         # Set the configurations in openssl.cnf file for Hybrid-PQC testing
-        if ! "$util_scripts/configure-openssl-cnf.sh" $configure_mode; then
+        if ! "$util_scripts/configure_openssl_cnf.sh" $configure_mode; then
             echo "[ERROR] - Failed to modify OpenSSL configuration."
             exit 1
         fi
@@ -170,7 +170,7 @@ function set_test_env() {
         current_group="ffdhe2048:ffdhe3072:ffdhe4096:prime256v1:secp384r1:secp521r1"
 
         # Set the configurations in openssl.cnf file for classic algorithm testing
-        if ! "$util_scripts/configure-openssl-cnf.sh" $configure_mode; then
+        if ! "$util_scripts/configure_openssl_cnf.sh" $configure_mode; then
             echo "[ERROR] - Failed to modify OpenSSL configuration."
             exit 1
         fi
@@ -317,12 +317,12 @@ function pqc_tests() {
 
                 # Set the cert and key files depending on the test type
                 if [ "$test_type" -eq 0 ]; then
-                    cert_file="$pqc_cert_dir/""${sig/:/_}""-srv.crt"
-                    key_file="$pqc_cert_dir/""${sig/:/_}""-srv.key"
+                    cert_file="$pqc_cert_dir/""${sig/:/_}""_srv.crt"
+                    key_file="$pqc_cert_dir/""${sig/:/_}""_srv.key"
 
                 elif [ "$test_type" -eq 1 ]; then
-                    cert_file="$hybrid_cert_dir/""${sig/:/_}""-srv.crt"
-                    key_file="$hybrid_cert_dir/""${sig/:/_}""-srv.key"
+                    cert_file="$hybrid_cert_dir/""${sig/:/_}""_srv.crt"
+                    key_file="$hybrid_cert_dir/""${sig/:/_}""_srv.key"
                 fi
 
                 # Start the OpenSSL s_server process
@@ -410,8 +410,8 @@ function classic_tests() {
                 if [[ $classic_alg == "prime256v1" || $classic_alg == "secp384r1" || $classic_alg == "secp521r1" ]]; then
 
                     # Set the cert/key filenames for current ECC algorithm
-                    classic_cert_file="$classic_cert_dir/$classic_alg-srv.crt"
-                    classic_key_file="$classic_cert_dir/$classic_alg-srv.key"
+                    classic_cert_file="$classic_cert_dir/${classic_alg}_srv.crt"
+                    classic_key_file="$classic_cert_dir/${classic_alg}_srv.key"
 
                     # Start the ECC test server processes
                     "$openssl_path/bin/openssl" s_server \
@@ -427,8 +427,8 @@ function classic_tests() {
                 else
 
                     # Set the cert/key filenames for current RSA algorithm
-                    classic_cert_file="$classic_cert_dir/$classic_alg-srv.crt"
-                    classic_key_file="$classic_cert_dir/$classic_alg-srv.key"
+                    classic_cert_file="$classic_cert_dir/${classic_alg}_srv.crt"
+                    classic_key_file="$classic_cert_dir/${classic_alg}_srv.key"
 
                     # Start the RSA test server processes
                     "$openssl_path/bin/openssl" s_server \

@@ -2,29 +2,29 @@
 Copyright (c) 2023-2025 Callum Turino
 SPDX-License-Identifier: MIT
 
-Controller script for parsing PQC performance results produced by the Liboqs and OQS-Provider testing tools.
-It allows the user to parse Liboqs, OQS-Provider, or both result sets by either supplying parameters via command-line
-arguments or using an interactive prompt. The script collects the required test parameters (e.g., Machine-ID and number
-of test runs), invokes the appropriate parsing modules, and outputs cleaned, formatted CSV files to the results directory
-at the project root. Parsing is supported only on Linux systems and depends on the presence of the original algorithm list files
-used for testing.
+Controller script for parsing PQC performance results produced by the computational and TLS testing tools.
+It allows the user to parse computational performance, TLS performance, or both result sets by either supplying 
+parameters via command-line arguments or using an interactive prompt. The script collects the required test parameters 
+(e.g., Machine-ID and number of test runs), invokes the appropriate parsing modules, and outputs cleaned, formatted CSV 
+files to the results directory at the project root. Parsing is supported only on Linux systems and depends on the presence 
+of the original algorithm list files used for testing.
 """
 
 #------------------------------------------------------------------------------------------------------------------------------
-from liboqs_parse import parse_liboqs
-from oqs_provider_parse import parse_oqs_provider
+from internal_scripts.performance_data_parse import parse_comp_performance
+from internal_scripts.tls_performance_data_parse import parse_tls_performance
 import os
 import sys
 import argparse
 
 #------------------------------------------------------------------------------------------------------------------------------
 def handle_args():
-    """ Function for handling the command line arguments passed to the script. The function uses the argparse
-        library to define the expected arguments and their types. The function returns the parsed arguments if valid. """
+    """ Function for Handling command-line arguments for the script, validates them, and returns the parsed arguments. 
+        Raises errors and exits if arguments are invalid. """
     
     # Define the argument parser and the valid options for the script
     parser = argparse.ArgumentParser(description="PQC-Evaluation-Tools Results Parsing Tool")
-    parser.add_argument('--parse-mode', type=str, help='The parsing mode to be used (liboqs or oqs-provider)')
+    parser.add_argument('--parse-mode', type=str, help='The parsing mode to be used (computational or tls)')
     parser.add_argument('--machine-id', type=int, help='The Machine-ID of the results to be parsed')
     parser.add_argument('--total-runs', type=int, help='The number of test runs to be parsed')
     parser.add_argument("--replace-old-results", action="store_true", help="Replace old results for the passed Machine-ID if this flag is set")
@@ -42,13 +42,13 @@ def handle_args():
         if parse_mode == 'both':
             raise Exception("The --parse-mode argument cannot be set to 'both' for automatic parsing, please use the interactive mode from the terminal")
         
-        elif parse_mode != "liboqs" and parse_mode != "oqs-provider":
-            raise Exception(f"Invalid parse mode provided to the script - {parse_mode}, please use 'liboqs' or 'oqs-provider'")
+        elif parse_mode != "computational" and parse_mode != "tls":
+            raise Exception(f"Invalid parse mode provided to the script - {parse_mode}, please use 'computational' or 'tls'")
 
-        # Determine if a machine ID has been provided to the script
+        # Determine if a machine-ID has been provided to the script
         if machine_id is not None:
 
-            # Check if the machine ID is a valid integer
+            # Check if the machine-ID is a valid integer
             if machine_id < 0 or not isinstance(machine_id, int):
                 raise Exception(f"Invalid Machine-ID provided to the script - {machine_id}, please use a positive integer value")
             
@@ -70,9 +70,9 @@ def handle_args():
 
 #------------------------------------------------------------------------------------------------------------------------------
 def setup_base_env():
-    """ Function for setting up the global environment variables for the test suite. The function establishes
-        the root path by determining the path of the script and recursively moving up the directory tree until
-        it finds the .pqc_eval_dir_marker.tmp file. The root path is then returned to the main function. """
+    """ Function for setting up the global environment by determining the root path. It recursively moves up the directory 
+        tree until it finds the .pqc_eval_dir_marker.tmp file, then returns the root path. """
+
     
     # Determine the directory that the script is being executed from and set the marker filename
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -105,9 +105,9 @@ def get_mode_selection():
 
         # Output the parsing options to user and store the response
         print("Please select one of the following Parsing options:")
-        print("1 - Parse Liboqs results")
-        print("2 - Parse OQS-Provider results")
-        print("3 - Parse both Liboqs and OQS-Provider results")
+        print("1 - Parse computational performance results")
+        print("2 - Parse TLS performance results")
+        print("3 - Parse both computational and TLS performance results")
         print("4 - Exit")
         user_parse_mode = input("Enter your choice (1-4): ")
         print(f"\n")
@@ -128,11 +128,8 @@ def get_mode_selection():
 
 #------------------------------------------------------------------------------------------------------------------------------
 def get_test_opts(root_dir):
-    """ Helper function for getting the test parameters used in during the automated testing, which includes 
-        the number of runs and number of machines tested. """
-    
-    # Output the greeting message to the terminal
-    print(f"PQC-Evaluation-Tools Results Parsing Tool\n\n")
+    """ Helper function for getting the parsing mode from the user in interactive mode. It displays the available options 
+        and returns the selected choice. """
 
     # Get the Machine-ID to be parsed from the user
     while True:
@@ -163,7 +160,8 @@ def get_test_opts(root_dir):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def main():
-    """Main function which controls the parsing scripts for Liboqs and OQS-Provider testing results"""
+    """ Main function for controlling the parsing of computational and TLS performance testing results. 
+        Handles both command-line and interactive modes to process results based on user input. """
 
     # Setup the base environment for the script
     root_dir = setup_base_env()
@@ -184,17 +182,20 @@ def main():
             replace_old_results = False
 
         # Determine which parsing mode to use and get the test options
-        if args.parse_mode == "liboqs":
-            print("Parsing Liboqs results")
-            liboqs_test_opts = [args.machine_id, args.total_runs, root_dir]
-            parse_liboqs(liboqs_test_opts, replace_old_results)
+        if args.parse_mode == "computational":
+            print("Parsing Computational Performance Results")
+            comp_test_opts = [args.machine_id, args.total_runs, root_dir]
+            parse_comp_performance(comp_test_opts, replace_old_results)
         
-        elif args.parse_mode == "oqs-provider":
-            print("Parsing OQS-Provider results")
-            oqs_provider_test_opts = [args.machine_id, args.total_runs, root_dir]
-            parse_oqs_provider(oqs_provider_test_opts, replace_old_results)
+        elif args.parse_mode == "tls":
+            print("Parsing TLS Performance Results")
+            tls_test_opts = [args.machine_id, args.total_runs, root_dir]
+            parse_tls_performance(tls_test_opts, replace_old_results)
 
     else:
+
+        # Output the greeting message to the terminal
+        print(f"PQC-Evaluation-Tools Results Parsing Tool\n")
 
         # Get the parsing mode from the user
         user_parse_mode = get_mode_selection()
@@ -203,14 +204,14 @@ def main():
         if user_parse_mode == '1':
 
             # Output the selected parsing option
-            print("Parsing only Liboqs results selected")
+            print("Parsing only computational performance results selected")
 
             # Get the test options used for the benchmarking
-            print(f"Setting total liboqs machine results\n")
-            liboqs_test_opts = get_test_opts(root_dir)
+            print(f"Gathering testing parameters used for computational performance\n")
+            comp_test_opts = get_test_opts(root_dir)
 
             # Call the parsing script for Liboqs results
-            parse_liboqs(liboqs_test_opts, replace_old_results)
+            parse_comp_performance(comp_test_opts, replace_old_results)
         
         elif user_parse_mode == '2':
 
@@ -218,11 +219,11 @@ def main():
             print("Parsing only OQS-Provider results selected")
 
             # Get the test options used for the benchmarking
-            print(f"Setting total OQS-Provider machine results\n")
-            oqs_provider_test_opts = get_test_opts(root_dir)
+            print(f"Gathering testing parameters for TLS performance testing\n")
+            tls_test_opts = get_test_opts(root_dir)
 
             # Call the parsing script for OQS-Provider TLS results
-            parse_oqs_provider(oqs_provider_test_opts, replace_old_results)
+            parse_tls_performance(tls_test_opts, replace_old_results)
 
         elif user_parse_mode == '3':
 
@@ -230,19 +231,19 @@ def main():
             print("Parsing both result sets selected")
 
             # Get the test options used for the benchmarking
-            print(f"Setting total Liboqs machine results\n")
-            liboqs_test_opts = get_test_opts(root_dir)
+            print(f"Gathering testing parameters used for computational performance\n")
+            comp_test_opts = get_test_opts(root_dir)
 
-            print(f"\nSetting total OQS-Provider machine results\n")
-            oqs_provider_test_opts = get_test_opts(root_dir)
+            print(f"Gathering testing parameters for TLS performance testing\n")
+            tls_test_opts = get_test_opts(root_dir)
             
-            # Parse the Liboqs results
-            parse_liboqs(liboqs_test_opts, replace_old_results)
-            print("Liboqs Parsing complete\n")
+            # Parse the computational performance results
+            parse_comp_performance(comp_test_opts, replace_old_results)
+            print("Computational Performance Parsing complete\n")
 
-            # Parse the OQS-Provider Results
-            parse_oqs_provider(oqs_provider_test_opts, replace_old_results)
-            print("OQS-Provider Parsing complete\n")
+            # Parse the TLS performance results
+            parse_tls_performance(tls_test_opts, replace_old_results)
+            print("TLS Performance Parsing complete\n")
 
         else:
             print(f"[ERROR] - Invalid value in the parsing mode variable - {user_parse_mode}")

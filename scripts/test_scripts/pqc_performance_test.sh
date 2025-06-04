@@ -3,16 +3,16 @@
 # Copyright (c) 2023-2025 Callum Turino
 # SPDX-License-Identifier: MIT
 
-# Script for controlling the Liboqs PQC computational performance benchmarking. It accepts test parameters 
-# from the user and executes the relevant benchmarking binaries to perform speed and memory tests 
-# on the post-quantum cryptographic algorithms included in the Liboqs library.
+# Script for controlling the automated PQC computational performance benchmarking. It accepts test parameters 
+# from the user and executes the relevant benchmarking binaries to perform speed and memory tests (via the Liboqs library).
 # The script also handles the organisation and storage of results, ensuring they are saved in the appropriate 
 # directories based on the assigned machine number.
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function get_user_yes_no() {
-    # Helper function for getting a yes or no response from the user for a given question regarding the setup process. The function
-    # will return 0 for yes and 1 for no which can be checked by the calling function.
+    # Helper function to prompt the user for a yes or no response. The function loops until
+    # a valid response ('y' or 'n') is provided and sets the global variable `user_y_n_response`
+    # to 1 for 'yes' and 0 for 'no'.
 
     # Set the local user prompt variable to what was passed to the function
     local user_prompt="$1"
@@ -23,17 +23,17 @@ function get_user_yes_no() {
         # Output the question to the user and get their response
         read -p "$user_prompt (y/n): " user_input
 
-        # Check the user input is valid and set the user response variable
+        # Validate the input and set the response
         case $user_input in
 
             [Yy]* )
                 user_y_n_response=1
-                return 0
+                break
                 ;;
 
             [Nn]* )
                 user_y_n_response=0
-                return 1
+                break
                 ;;
 
             * )
@@ -48,10 +48,11 @@ function get_user_yes_no() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function output_help_message() {
-    # Helper function for outputting the help message to the user when the --help flag is present or when incorrect arguments are passed.
+    # Helper function for outputting the help message to the user when the --help flag is present or
+    # when incorrect arguments are passed.
 
     # Output the supported options and their usage to the user
-    echo "Usage: setup.sh [options]"
+    echo "Usage: pqc_performance.sh [options]"
     echo "Options:"
     echo "  --disable-result-parsing       Disable the result parsing for the test suite."
     echo "  --help                         Display this help message."
@@ -166,6 +167,8 @@ function enable_arm_pmu() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function resolve_arm_pmu_access() {
+    # Function for resolving ARM PMU access issues. Checks if PQAX is installed and attempts to enable PMU access.
+    # Falls back to a clean installation if necessary.
 
     # Check if a PQAX install is already present and if not call the function to enable it
     if [ -d "$libs_dir/pqax" ]; then
@@ -198,8 +201,9 @@ function resolve_arm_pmu_access() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_base_env() {
-    # Function for setting up the global environment variables for the test suite. This includes determining the root directory 
-    # by tracing the script's location, and configuring paths for libraries, test data, and temporary files.
+    # Function for setting up the global environment variables for the test suite.
+    # This includes determining the project's root directory, configuring paths for libraries,
+    # test data, and temporary files, and verifying system architecture and dependencies.
 
     # Determine the directory that the script is being executed from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -230,9 +234,12 @@ function setup_base_env() {
     # Declare the main directory path variables based on the project's root dir
     libs_dir="$root_dir/lib"
     tmp_dir="$root_dir/tmp"
-    test_data_dir="$root_dir/test-data"
-    test_scripts_path="$root_dir/scripts/test-scripts"
-    parsing_scripts="$root_dir/scripts/parsing-scripts"
+    test_data_dir="$root_dir/test_data"
+    test_scripts_path="$root_dir/scripts/test_scripts"
+    parsing_scripts="$root_dir/scripts/parsing_scripts"
+
+    # Declare the internal test script path variables
+    result_parser_script="$parsing_scripts/parse_results.py"
 
     # Check if the system is ARM based and if PMU checks are required
     if [[ "$(uname -m)" = arm* || "$(uname -m)" == aarch* ]]; then
@@ -266,12 +273,12 @@ function set_result_paths() {
     # Helper function for setting the result storage paths based on the assigned machine-ID
 
     # Set the results directory paths based on assigned machine-ID for these results
-    machine_results_path="$test_data_dir/up-results/liboqs/machine-$machine_num"
-    parsed_results_path="$test_data_dir/results/liboqs/machine-$machine_num"
-    machine_speed_results="$machine_results_path/raw-speed-results"
-    machine_mem_results="$machine_results_path/mem-results"
-    kem_mem_results="$machine_mem_results/kem-mem-metrics"
-    sig_mem_results="$machine_mem_results/sig-mem-metrics"
+    machine_results_path="$test_data_dir/up_results/computational_performance/machine_$machine_num"
+    parsed_results_path="$test_data_dir/results/computational_performance/machine_$machine_num"
+    machine_speed_results="$machine_results_path/raw_speed_results"
+    machine_mem_results="$machine_results_path/mem_results"
+    kem_mem_results="$machine_mem_results/kem_mem_metrics"
+    sig_mem_results="$machine_mem_results/sig_mem_metrics"
 
 }
 
@@ -322,7 +329,7 @@ function handle_machine_id_clash() {
         echo -e "2 - Assign a different machine ID\n"
 
         # Read in the user's response
-        read -p "Please select an option (1-2):" user_response
+        read -p "Please select an option (1-2): " user_response
 
         # Determine the action based on the user's response
         case $user_response in
@@ -362,10 +369,11 @@ function handle_machine_id_clash() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function get_test_options() {
-    # Function for getting the testing parameters from the user. This includes the machine-ID for the results,
-    # the number of test runs, and whether the results will be compared against other machines.
+    # Function for collecting testing parameters from the user. The function allows the user to assign a custom Machine-ID to 
+    # the performance results or use the default ID. It prompts the user to specify the number of test runs required and 
+    # validates the input to ensure correctness.
 
-    # Ask the user if they want to compare results with other machines
+    # Ask the user if they wish to assign a custom Machine-ID to the performance results
     while true; do
 
         # Prompt the user for their response and read it in
@@ -420,8 +428,9 @@ function get_test_options() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_test_suite() {
-    # Function for setting up the Liboqs test suite. This includes creating the necessary directories for storing results,
-    # checking for existing results, creating the algorithms arrays, and setting up the filepaths for the test binaries.
+    # Function for setting up the computational performance test suite. This includes creating the necessary directories 
+    # for storing results, checking for existing results, creating the algorithms arrays, and setting up the filepaths for 
+    # the test binaries.
 
     # Output the current task to the terminal
     echo "#########################"
@@ -433,7 +442,7 @@ function setup_test_suite() {
     set_result_paths
 
     # Create the un-parsed results directory for the machine-ID
-    if [ -d "$test_data_dir/up-results" ]; then
+    if [ -d "$test_data_dir/up_results" ]; then
 
         # Check if there is already results present for assigned machine-ID and handle any clashes
         if [ -d "$machine_results_path" ]; then
@@ -509,8 +518,8 @@ function setup_test_suite() {
     done
 
     # Set the alg-list txt filepaths
-    kem_alg_file="$test_data_dir/alg-lists/kem-algs.txt"
-    sig_alg_file="$test_data_dir/alg-lists/sig-algs.txt"
+    kem_alg_file="$test_data_dir/alg_lists/kem_algs.txt"
+    sig_alg_file="$test_data_dir/alg_lists/sig_algs.txt"
 
     # Create the PQC KEM and digital signature algorithm list arrays
     kem_algs=()
@@ -535,24 +544,25 @@ function setup_test_suite() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function speed_tests() {
-    # Function for performing the Liboqs CPU speed benchmarking tests. This includes running the KEM and digital signature speed tests
-    # for the specified number of runs and storing the results in the appropriate results directories.
+    # Function for performing the PQC CPU speed benchmarking tests via Liboqs. This includes 
+    # running the KEM and digital signature speed tests for the specified number of runs and storing 
+    # the results in the appropriate results directories.
 
     # Output the current task to the terminal
-    echo "#############################"
-    echo "Performing Liboqs Speed Tests"
-    echo -e "#############################\n"
+    echo "##############################"
+    echo "Performing PQC CPU Speed Tests"
+    echo -e "##############################\n"
 
     # Perform the Liboqs CPU performance testing for the specified number of runs
     for run_num in $(seq 1 $number_of_runs); do 
 
         # Execute KEM CPU performance benchmarking
         echo -e "Performing PQC KEM speed test run number - $run_num\n"
-        "$kem_speed_bin" > "$machine_speed_results/test-kem-speed-$run_num.csv"
+        "$kem_speed_bin" > "$machine_speed_results/test_kem_speed_$run_num.csv"
 
         # Execute digital signature CPU performance benchmarking
         echo -e "Performing PQC digital signature speed test run number - $run_num\n"
-        "$sig_speed_bin" > "$machine_speed_results/test-sig-speed-$run_num.csv"
+        "$sig_speed_bin" > "$machine_speed_results/test_sig_speed_$run_num.csv"
 
     done
 
@@ -560,13 +570,14 @@ function speed_tests() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function mem_tests() {
-    # Function for performing the Liboqs memory performance benchmarking tests. This includes running the KEM and digital signature memory tests
-    # for the specified number of runs and storing the results in the appropriate results directories.
+    # Function for performing PQC memory benchmarking tests using Liboqs. Runs KEM and digital signature memory tests 
+    # for the specified number of runs, collecting memory usage metrics for each cryptographic operation and saving
+    # the results in the appropriate directories.
 
     # Output the current task to the terminal
-    echo -e "##############################"
-    echo -e "Performing Liboqs Memory Tests"
-    echo -e "*##############################\n"
+    echo -e "###########################"
+    echo -e "Performing PQC Memory Tests"
+    echo -e "###########################\n"
 
     # Ensure the temp memory results directories are present
     if [ -d "$test_scripts_path/tmp/" ]; then
@@ -593,7 +604,7 @@ function mem_tests() {
                 echo -e "$kem_alg - $op_kem_str Test\n"
 
                 # Run the memory test with the Valgrind memory profiler and output the memory metrics
-                filename="$kem_mem_results/$kem_alg-$operation-$run_count.txt"
+                filename="$kem_mem_results/${kem_alg}_${operation}_${run_count}.txt"
                 valgrind --tool=massif --stacks=yes --massif-out-file="$mem_tmp_dir/massif.out" "$kem_mem_bin" "$kem_alg" "$operation"
                 ms_print "$mem_tmp_dir/massif.out" > $filename
                 rm -f "$mem_tmp_dir/massif.out" && echo -e "\n"
@@ -619,7 +630,7 @@ function mem_tests() {
                 echo -e "$sig_alg - $op_sig_str Test\n"
 
                 # Run the memory test with the Valgrind memory profiler and output the memory metrics
-                filename="$sig_mem_results/$sig_alg-$operation-$run_count.txt"
+                filename="$sig_mem_results/${sig_alg}_${operation}_${run_count}.txt"
                 valgrind --tool=massif --stacks=yes --massif-out-file="$mem_tmp_dir/massif.out" "$sig_mem_bin" "$sig_alg" "$operation"
                 ms_print "$mem_tmp_dir/massif.out" > $filename
                 rm -f "$mem_tmp_dir/massif.out" && echo -e "\n"
@@ -645,8 +656,9 @@ function mem_tests() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function handle_result_parsing() {
-    # Function for handling automatic result parsing based on user-defined flags. Calls the parsing script with 
-    # the correct arguments, including the replace flag if set, and verifies whether parsing completed successfully.
+    # Function for handling automatic result parsing based on user-defined flags. This function determines whether 
+    # to parse results automatically, replace old results, or skip parsing based on the flags set during the test 
+    # setup. It calls the parsing script with the appropriate arguments and verifies the success of the parsing process.
 
     # Check if the automatic result parsing flag is set to enabled
     if [ $parse_results -eq 1 ]; then
@@ -655,8 +667,8 @@ function handle_result_parsing() {
         if [ $replace_old_results -eq 0 ]; then
 
             # Call the result parsing script to parse the results with replace flag not set
-            python3 "$parsing_scripts/parse_results.py" \
-                --parse-mode="liboqs"  \
+            python3 "$result_parser_script" \
+                --parse-mode="computational"  \
                 --machine-id="$machine_num" \
                 --total-runs=$number_of_runs
             exit_status=$?
@@ -664,8 +676,8 @@ function handle_result_parsing() {
         else
 
             # Call the result parsing script to parse the results with replace flag set
-            python3 "$parsing_scripts/parse_results.py" \
-                --parse-mode="liboqs"  \
+            python3 "$result_parser_script" \
+                --parse-mode="computational"  \
                 --machine-id="$machine_num" \
                 --total-runs=$number_of_runs \
                 --replace-old-results
@@ -676,7 +688,7 @@ function handle_result_parsing() {
         # Ensure that the parsing script completed successfully
         if [ $exit_status -eq 0 ]; then
             echo -e "\nParsed results can be found in the following directory:"
-            echo "$test_data_dir/results/liboqs/machine-$machine_num"
+            echo "$parsed_results_path"
         else
             echo -e "\n[WARNING] - Result parsing failed, manual calling of parsing script is now required\n"
         fi 
@@ -685,7 +697,7 @@ function handle_result_parsing() {
 
         # Output the complete message with the test results path to the user
         echo -e "All performance testing complete, the unparsed results for Machine-ID ($machine_num) can be found in:"
-        echo "Results Dir Path - $machine_results_path"
+        echo "$machine_results_path"
         
     else
         echo -e "\n[ERROR] - parse_results flag not set correctly, manual calling of parsing script is now required\n"
@@ -697,12 +709,12 @@ function handle_result_parsing() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function main() {
-    # Main function for controlling the automated Liboqs PQC computational performance testing
+    # Main function for controlling the automated PQC computational performance testing using the Liboqs library.
 
     # Output the welcome message to the terminal
-    echo "###########################################################"
-    echo "PQC-Evaluation-Tools - Automated Liboqs Performance Testing"
-    echo -e "###########################################################\n"
+    echo "###############################################################"
+    echo "PQC-Evaluation-Tools - Computational Performance Testing Suite"
+    echo -e "###############################################################\n"
 
     # Set the default automatic result parsing flags
     parse_results=1

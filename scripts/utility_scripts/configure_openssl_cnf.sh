@@ -9,7 +9,8 @@
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function output_help_message() {
-    # Helper function for outputting the help message to the user when the --help flag is present or when incorrect arguments are passed
+    # Helper function for outputting the help message to the user when the --help flag is present or
+    # when incorrect arguments are passed.
 
     # Output the supported options and their usage to the user
     echo "Usage: configure-openssl-cnf.sh [options]"
@@ -24,7 +25,7 @@ function output_help_message() {
 #-------------------------------------------------------------------------------------------------------------------------------
 function parse_args() {
     # Function for parsing the command line arguments passed to the script. Based on the detected arguments, the function will 
-    # set the relevant global flags and parameter variables that are used throughout the test control process.
+    # set the relevant global flags that are used throughout the setup process.
 
     # Check if the help flag is passed at any position in the command line arguments
     if [[ "$*" =~ --help ]]; then
@@ -101,8 +102,9 @@ function parse_args() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_base_env() {
-    # Function for setting up the global environment variables for the test suite. This includes determining the root directory 
-    # by tracing the script's location, and configuring paths for libraries, test data, and temporary files.
+    # Function for setting up the foundational global variables required for the test suite. This includes determining the project's root directory,
+    # establishing paths for libraries, scripts, and test data, and validating the presence of required libraries. Additionally, it sets up environment
+    # variables for control ports and sleep timers, ensuring proper configuration for the test suite's execution.
 
     # Determine the directory that the script is being executed from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -133,13 +135,13 @@ function setup_base_env() {
     # Declare the main directory path variables based on the project's root dir
     libs_dir="$root_dir/lib"
     tmp_dir="$root_dir/tmp"
-    test_data_dir="$root_dir/test-data"
-    test_scripts_path="$root_dir/scripts/test-scripts"
+    test_data_dir="$root_dir/test_data"
+    test_scripts_path="$root_dir/scripts/test_scripts"
 
     # Declare the global library directory path variables
     openssl_path="$libs_dir/openssl_3.5.0"
     liboqs_path="$libs_dir/liboqs"
-    oqs_provider_path="$libs_dir/oqs-provider"
+    oqs_provider_path="$libs_dir/oqs_provider"
 
     # Ensure that the OpenSSL library is present before proceeding
     if [ ! -d "$openssl_path" ]; then
@@ -161,9 +163,10 @@ function setup_base_env() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function configure_conf_statements() {
-    # Function to modify the OpenSSL configuration (openssl.cnf) between standard and PQC testing modes. 
-    # Standard mode comments out custom group settings, while PQC mode enables them for post-quantum 
-    # key generation with the OQS-Provider.
+    # Function to modify the OpenSSL configuration (openssl.cnf) based on the selected mode:
+    # Mode 0: Modify the default OpenSSL Configuration file to include OQS-Provider directives (for setup only).
+    # Mode 1: Configure OpenSSL Configuration for Key Generation mode.
+    # Mode 2: Configure OpenSSL for TLS testing mode.
 
     # Declare the required local variables
     local openssl_conf_path="$openssl_path/openssl.cnf"
@@ -217,7 +220,9 @@ ssl_conf   = ssl_sect
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function main() {
-    # Main function for controlling the utility script
+    # Main function that processes command-line arguments, sets up the environment, 
+    # and modifies the OpenSSL configuration based on the selected mode (key generation, 
+    # TLS testing, or OQS-Provider setup) to ensure proper configuration for the script's execution.
 
     # Declare the global configuration mode flag
     configure_mode=""

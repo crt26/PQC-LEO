@@ -1,17 +1,57 @@
-#!/bin/bash
+!/bin/bash
 
 # Copyright (c) 2023-2025 Callum Turino
 # SPDX-License-Identifier: MIT
 
 # Utility script for cleaning up project files produced during PQC benchmarking.
-# Provides options to uninstall the OQS-Provider libraries, clear old benchmarking results and generated TLS keys, or perform both actions.
-# Uninstalling will remove the Liboqs, OQS-Provider, and OpenSSL 3.5.0 installations from the system.
+# Provides options to uninstall computational performance libraries, clear old benchmarking results, 
+# and generated TLS keys, or perform both actions.
+# Uninstalling will remove the necessary libraries and installations from the system.
 # Clearing results will remove test outputs and key material under the test-data directory.
 
 #-------------------------------------------------------------------------------------------------------------------------------
+function get_user_yes_no() {
+    # Helper function to prompt the user for a yes or no response. The function loops until
+    # a valid response ('y' or 'n') is provided and sets the global variable `user_y_n_response`
+    # to 1 for 'yes' and 0 for 'no'.
+
+    # Set the local user prompt variable to what was passed to the function
+    local user_prompt="$1"
+
+    # Get the user input for the yes or no question
+    while true; do
+
+        # Output the question to the user and get their response
+        read -p "$user_prompt (y/n): " user_input
+
+        # Validate the input and set the response
+        case $user_input in
+
+            [Yy]* )
+                user_y_n_response=1
+                break
+                ;;
+
+            [Nn]* )
+                user_y_n_response=0
+                break
+                ;;
+
+            * )
+                echo -e "Please answer y or n\n"
+                ;;
+
+        esac
+
+    done
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
 function setup_base_env() {
-    # Function for setting up the global environment variables for the test suite. This includes determining the root directory 
-    # by tracing the script's location, and configuring paths for libraries, test data, and temporary files.
+    # Function for initializing the global environment variables required by the utility script.
+    # This involves identifying the project's root directory and setting up paths for libraries,
+    # test data, temporary files, and other resources.
 
     # Determine the directory that the script is being executed from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -33,33 +73,38 @@ function setup_base_env() {
 
         # If the system's root directory is reached and the file is not found, exit the script
         if [ "$current_dir" == "/" ]; then
-            echo -e "Root directory path file not present, please ensure the path is correct and try again."
+            echo -e "[ERROR] - Root directory path file not present, please ensure the path is correct and try again."
+            echo "If the project has not been setup, the cleaner script can not be used"
             exit 1
         fi
 
     done
 
     # Declare the main directory path variables based on the project's root dir
-    dependency_dir="$root_dir/dependency-libs"
+    dependency_dir="$root_dir/dependency_libs"
     libs_dir="$root_dir/lib"
     tmp_dir="$root_dir/tmp"
-    test_data_dir="$root_dir/test-data"
+    test_data_dir="$root_dir/test_data"
+    parsing_scripts_dir="$root_dir/scripts/parsing_scripts"
 
     # Declare the global library directory path variables
     openssl_path="$libs_dir/openssl_3.5.0"
     liboqs_path="$libs_dir/liboqs"
-    oqs_provider_path="$libs_dir/oqs-provider"
+    oqs_provider_path="$libs_dir/oqs_provider"
 
     # Declaring the global source-code directory path variables
-    liboqs_source="$tmp_dir/liboqs-source"
-    oqs_provider_source="$tmp_dir/oqs-provider-source"
-    openssl_source="$tmp_dir/openssl-3.5.0"
+    liboqs_source="$tmp_dir/liboqs_source"
+    oqs_provider_source="$tmp_dir/oqs_provider_source"
+    openssl_source="$tmp_dir/openssl_3.5.0"
 
     # Declaring the global test-data directory path variables
     test_data_results="$test_data_dir/results"
-    test_data_up_results="$test_data_dir/up-results"
+    test_data_up_results="$test_data_dir/up_results"
     test_data_keys="$test_data_dir/keys"
-    test_data_alg_lists_dir="$test_data_dir/alg-lists"
+    test_data_alg_lists_dir="$test_data_dir/alg_lists"
+
+    # Declaring the __pycahce__ locations array
+    pycache_locations=("$parsing_scripts_dir/__pycache__" "$parsing_scripts_dir/internal_scripts/__pycache__")
 
 }
 
@@ -67,7 +112,8 @@ function setup_base_env() {
 function select_uninstall_mode() {
     # Function for selecting the uninstall option for the currently installed dependency libraries. 
     # The function will also remove the generated algorithms lists from the test-data directory
-    # depending on the user's uninstall choice.
+    # depending on the user's uninstall choice. Additionally, it will remove the __pycache__ directories 
+    # that may be generated by the parsing scripts to ensure a fully clean environment.
 
     # Output the current task to the terminal
     echo -e "\n########################"
@@ -94,8 +140,8 @@ function select_uninstall_mode() {
             1)
                 # Uninstall Liboqs only
                 rm -rf "$liboqs_path"
-                rm "$test_data_alg_lists_dir/kem-algs.txt"
-                rm "$test_data_alg_lists_dir/sig-algs.txt"
+                rm "$test_data_alg_lists_dir/kem_algs.txt"
+                rm "$test_data_alg_lists_dir/sig_algs.txt"
                 echo -e "\nLiboqs Uninstalled"
                 break;;
             
@@ -124,7 +170,7 @@ function select_uninstall_mode() {
 
                 # Exit the script
                 echo "Exiting Uninstall Script!"
-                exit 1
+                exit 0
                 ;;
 
             *)
@@ -137,6 +183,29 @@ function select_uninstall_mode() {
 
     done
 
+    # Ask the user if they want to remove __pycache__ directories for parsing scripts
+    echo -e "\nPycache Removal:"
+    get_user_yes_no "Do you also want to remove __pycache__ directories generated from the parsing scripts?"
+
+    # Determine the user's response and act accordingly
+     if [ "$user_y_n_response" -eq 1 ]; then
+
+        # Output the current task to the terminal
+        echo -e "Removing Parsing Scripts __pycache__ Directories..."
+
+        # Loop through the pycache locations and remove them if they exist
+        for pycache_location in "${pycache_locations[@]}"; do
+            if [ -d "$pycache_location" ]; then
+                echo -e "\nRemoving parsing scripts pycache directory: $pycache_location"
+                rm -rf "$pycache_location"
+                echo -e "Parsing scripts pycache directory removed\n"
+            fi
+        done
+
+    else
+        echo "Skipping removal of parsing scripts __pycache__ directories."
+    fi
+
 }
 
 #------------------------------------------------------------------------------
@@ -146,7 +215,7 @@ function remove_old_results() {
     # Output the current task to the terminal
     echo -e "\n###############################"
     echo "Clearing Results and TLS Keys"
-    echo -e "\n###############################\n"
+    echo -e "###############################\n"
 
     # Verify the user definitely wants to remove all results and keys
     while true; do 

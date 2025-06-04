@@ -2,10 +2,10 @@
 Copyright (c) 2023-2025 Callum Turino
 SPDX-License-Identifier: MIT
 
-OQS-Provider result parsing script for PQC TLS performance benchmarking.  
-Parses raw TLS handshake and OpenSSL speed test outputs produced by the automated OQS-Provider test suite,  
-structures the results into clean CSV files, and computes averaged metrics using the results_averager module.  
-This script is called by the central parse_results.py controller and supports single-machine, multi-run setups.
+Result parsing script for PQC TLS performance benchmarking.
+Parses raw TLS handshake and OpenSSL speed test outputs produced by the automated test suite, 
+structures the results into clean CSV files, and computes averaged metrics using the results_averager module. 
+Supports setups using both OpenSSL-native PQC algorithms and the OQS-Provider.
 """
 
 #------------------------------------------------------------------------------------------------------------------------------
@@ -14,13 +14,12 @@ import os
 import sys
 import shutil
 import time
-from results_averager import OqsProviderResultAverager
+from internal_scripts.results_averager import TLSAverager
 
 #------------------------------------------------------------------------------------------------------------------------------
 def setup_parse_env(root_dir):
-    """ Function for setting up the environment for the OQS-Provider TLS parsing script. The function
-        will set the various directory paths, read in the algorithm lists, set the root directories 
-        and set the column headers for the CSV files that will be outputted. """
+    """ Function for setting up the environment for parsing PQC TLS results. Sets directory paths, reads algorithm lists, 
+        and defines column headers for output CSV files. """
 
     # Define the central paths dictionary that will be used by the various methods and functions
     dir_paths = {}
@@ -64,7 +63,6 @@ def setup_parse_env(root_dir):
     }
 
     # Declare the dictionary which contains testing types and defining the speed column headers
-    speed_type_vars = {"PQC": "", "Hybrid": ""}
     speed_headers = [
         ["Algorithm", "Keygen", "encaps", "decaps", "Keygen/s", "Encaps/s", "Decaps/s"], 
         ["Algorithm", "Keygen", "Signs", "Verify", "Keygen/s", "sign/s", "verify/s"]
@@ -72,19 +70,19 @@ def setup_parse_env(root_dir):
 
     # Set the test results directory paths in the central paths dictionary
     dir_paths['root_dir'] = root_dir
-    dir_paths['results_dir'] = os.path.join(root_dir, "test-data", "results", "oqs-provider")
-    dir_paths['up_results'] = os.path.join(root_dir, "test-data", "up-results", "oqs-provider")
+    dir_paths['results_dir'] = os.path.join(root_dir, "test_data", "results", "tls_performance")
+    dir_paths['up_results'] = os.path.join(root_dir, "test_data", "up_results", "tls_performance")
 
     # Set the alg-list filenames for the various PQC test types (PQC and PQC-Hybrid)
     alg_list_files = {
-        "kem_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-kem-algs.txt"),
-        "sig_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-sig-algs.txt"),
-        "hybrid_kem_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-hybr-kem-algs.txt"),
-        "hybrid_sig_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-hybr-sig-algs.txt"),
-        "speed_kem_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-speed-kem-algs.txt"),
-        "speed_sig_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-speed-sig-algs.txt"),
-        "hybrid_speed_kem_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-speed-hybr-kem-algs.txt"),
-        "hybrid_speed_sig_algs": os.path.join(root_dir, "test-data", "alg-lists", "tls-speed-hybr-sig-algs.txt"),
+        "kem_algs": os.path.join(root_dir, "test_data", "alg_lists", "tls_kem_algs.txt"),
+        "sig_algs": os.path.join(root_dir, "test_data", "alg_lists", "tls_sig_algs.txt"),
+        "hybrid_kem_algs": os.path.join(root_dir, "test_data", "alg_lists", "tls_hybr_kem_algs.txt"),
+        "hybrid_sig_algs": os.path.join(root_dir, "test_data", "alg_lists", "tls_hybr_sig_algs.txt"),
+        "speed_kem_algs": os.path.join(root_dir, "test_data", "alg_lists", "tls_speed_kem_algs.txt"),
+        "speed_sig_algs": os.path.join(root_dir, "test_data", "alg_lists", "tls_speed_sig_algs.txt"),
+        "hybrid_speed_kem_algs": os.path.join(root_dir, "test_data", "alg_lists", "tls_speed_hybr_kem_algs.txt"),
+        "hybrid_speed_sig_algs": os.path.join(root_dir, "test_data", "alg_lists", "tls_speed_hybr_sig_algs.txt"),
     }
 
     # Pull the algorithm names from the alg-lists files and create the relevant alg lists
@@ -115,7 +113,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
 
             # Replace all old results and create a new empty directory to store the parsed results
             print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...\n")
-            shutil.rmtree(dir_paths["results_dir"], f"machine-{machine_id}")
+            shutil.rmtree(dir_paths["results_dir"], f"machine_{machine_id}")
 
             # Create the new directories for parsed results
             os.makedirs(dir_paths["mach_handshake_dir"])
@@ -124,13 +122,13 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
         else:
 
             # Output the warning message to the terminal
-            print(f"[WARNING] - There are already parsed OQS-Provider testing results present for Machine-ID ({machine_id})\n")
+            print(f"[WARNING] - Parsed TLS performance results already exist for Machine-ID ({machine_id})\n")
 
             # Get the decision from user on how to handle old results before parsing continues
             while True:
 
                 # Output the potential options and handle user choice
-                print(f"From the following options, choose how would you like to handle the old OQS-Provider results:\n")
+                print(f"From the following options, choose how you would like to handle the existing TLS performance results:\n")
                 print("Option 1 - Replace old parsed results with new ones")
                 print("Option 2 - Exit parsing programme to move old results and rerun after (if you choose this option, please move the entire folder not just its contents)")
                 print("Option 3 - Make parsing script programme wait until you have move files before continuing")
@@ -140,7 +138,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
 
                     # Replace all old results and create a new empty directory to store the parsed results
                     print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...\n")
-                    shutil.rmtree(dir_paths["results_dir"], f"machine-{machine_id}")
+                    shutil.rmtree(dir_paths["results_dir"], f"machine_{machine_id}")
 
                     # Create the new directories for parsed results
                     os.makedirs(dir_paths["mach_handshake_dir"])
@@ -185,8 +183,8 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def get_metrics(current_row, test_filepath, get_reuse_metrics):
-    """ Helper function for pulling the current sig/kem metrics from 
-        the supplied OQS-Provider s_time output file. """
+    """ Helper function to extract signature/KEM handshake metrics from s_time output files, 
+        handling both session ID first use and reuse metrics. """
 
     # Get the relevant data from the supplied performance metrics output file
     try:
@@ -266,7 +264,7 @@ def pqc_based_pre_processing(current_run, type_index, pqc_type_vars, col_headers
         # Determine the number of expected and actual result files in the up-results directory
         up_results_dir = pqc_type_vars["up_results_path"][type_index]
         expected_files = len(algs_dict[pqc_type_vars["sig_alg_type"][type_index]]) * len(algs_dict[pqc_type_vars["kem_alg_type"][type_index]])
-        actual_files = [file for file in os.listdir(up_results_dir) if file.startswith("tls-handshake-1-") and file.endswith(".txt")]
+        actual_files = [file for file in os.listdir(up_results_dir) if file.startswith("tls_handshake_1_") and file.endswith(".txt")]
 
         # Ensure that the up-results directory for current PQC type and run contains the correct number of files
         if expected_files != len(actual_files):
@@ -285,7 +283,7 @@ def pqc_based_pre_processing(current_run, type_index, pqc_type_vars, col_headers
         for kem in algs_dict[pqc_type_vars["kem_alg_type"][type_index]]:
 
             # Set the filename and path
-            filename = f"tls-handshake-{current_run}-{sig}-{kem}.txt"
+            filename = f"tls_handshake_{current_run}_{sig}_{kem}.txt"
             test_filepath = os.path.join(pqc_type_vars["up_results_path"][type_index], filename)
             
             # Get the session id first use metrics for the current KEM
@@ -309,15 +307,14 @@ def pqc_based_pre_processing(current_run, type_index, pqc_type_vars, col_headers
             current_row.clear()
 
     # Output the full base PQC TLS metrics for the current run
-    base_out_filename = f"{pqc_type_vars['type_prefix'][type_index]}-base-results-run-{current_run}.csv"
+    base_out_filename = f"{pqc_type_vars['type_prefix'][type_index]}_base_results_run_{current_run}.csv"
     output_filepath = os.path.join(dir_paths[pqc_type_vars["base_type"][type_index]], base_out_filename)
     sig_metrics_df.to_csv(output_filepath,index=False)
 
 #------------------------------------------------------------------------------------------------------------------------------
 def pqc_based_processing(current_run, dir_paths, algs_dict, pqc_type_vars, col_headers):
-    """ Function for parsing both PQC and PQC-Hybrid TLS results for the current run. The function will
-        process the results and output the full base results for the current run and then separate the
-        results into individual CSV files for each sig/kem combo. This will be done for both PQC and PQC-Hybrid. """
+    """ Function to parse and process both PQC and PQC-Hybrid TLS results for the current run. 
+        Generates base results and separates them into individual CSV files for each sig/KEM combo. """
 
     # Process the results for both PQC (0) and PQC-Hybrid (1) TLS results
     for type_index in range (0,2):
@@ -326,7 +323,7 @@ def pqc_based_processing(current_run, dir_paths, algs_dict, pqc_type_vars, col_h
         pqc_based_pre_processing(current_run, type_index, pqc_type_vars, col_headers, algs_dict, dir_paths)
 
         # Set the base results filename and path based on current run
-        pqc_base_filename = f"{pqc_type_vars['type_prefix'][type_index]}-base-results-run-{current_run}.csv"
+        pqc_base_filename = f"{pqc_type_vars['type_prefix'][type_index]}_base_results_run_{current_run}.csv"
         pqc_base_filepath = os.path.join(dir_paths[pqc_type_vars["base_type"][type_index]], pqc_base_filename)
 
         # Create the storage directory and files for separated sig/kem combo results
@@ -344,16 +341,17 @@ def pqc_based_processing(current_run, dir_paths, algs_dict, pqc_type_vars, col_h
             current_sig_df = base_df[base_df["Signing Algorithm"].str.contains(sig)]
 
             # Output the current sig filtered df to csv
-            output_filename = f"tls-handshake-{sig}-run-{current_run}.csv"
+            output_filename = f"tls_handshake_{sig}_run_{current_run}.csv"
             output_filepath = os.path.join(sig_path, output_filename)
             current_sig_df.to_csv(output_filepath, index=False)
 
 #------------------------------------------------------------------------------------------------------------------------------
 def classic_based_processing(current_run, dir_paths, algs_dict, col_headers):
-    """ Function for processing results from classic cipher TLS handshake testing """
+    """ Function to process TLS handshake results for classic cipher algorithms, 
+        extracting metrics and generating CSV files. """
 
     # Set the up-results directory path and create the dataframe used in test processing
-    classic_up_results_dir = os.path.join(dir_paths['mach_up_results_dir'], "handshake-results", "classic")
+    classic_up_results_dir = os.path.join(dir_paths['mach_up_results_dir'], "handshake_results", "classic")
     cipher_metrics_df = pd.DataFrame(columns=col_headers['classic_headers'])
 
     # Loop through each ciphersuite
@@ -363,7 +361,7 @@ def classic_based_processing(current_run, dir_paths, algs_dict, col_headers):
         for alg in algs_dict['classic_algs']:
 
             # Set the filename and path
-            filename = f"tls-handshake-classic-{current_run}-{cipher}-{alg}.txt"
+            filename = f"tls_handshake_classic_{current_run}_{cipher}_{alg}.txt"
             test_filepath = os.path.join(classic_up_results_dir, filename)
             
             # Get the session id first use metrics for the current signature
@@ -387,7 +385,7 @@ def classic_based_processing(current_run, dir_paths, algs_dict, col_headers):
             current_row.clear()
 
     # Output the full base Classic TLS metrics for current run
-    cipher_out_filename = f"classic-results-run-{current_run}.csv"
+    cipher_out_filename = f"classic_results_run_{current_run}.csv"
     output_filepath = os.path.join(dir_paths['classic_handshake_results'], cipher_out_filename)
     cipher_metrics_df.to_csv(output_filepath, index=False)
 
@@ -406,8 +404,8 @@ def tls_speed_drop_last(data_cells):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def get_speed_metrics(speed_filepath, alg_type, speed_headers):
-    """ Function for extracting the speed metrics from the raw OpenSSL s_speed tool with OQS-Provider output file 
-        for the current algorithm type (kem or sig) """
+    """ Function to extract speed metrics from raw OpenSSL s_speed output for the specified 
+        algorithm type (KEM or SIG). """
 
     # Declare the variables needed for getting metrics and setting up the dataframe with test/alg type headers
     start = False
@@ -448,8 +446,8 @@ def get_speed_metrics(speed_filepath, alg_type, speed_headers):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def speed_processing(current_run, dir_paths, speed_headers, algs_dict):
-    """ Function for processing OpenSSL s_speed with OQS_Provider metrics for both PQC and PQC-Hybrid algorithms
-       for the current run """
+    """ Function to process OpenSSL and OQS-Provider s_speed metrics for both 
+        PQC and PQC-Hybrid algorithms in the current run. """
 
     # Define the alg type list 
     alg_types = ["kem", "sig"]
@@ -458,13 +456,13 @@ def speed_processing(current_run, dir_paths, speed_headers, algs_dict):
     for test_type, dir_list in dir_paths['speed_types_dirs'].items():
 
         # Set the file prefix depending on the current test type
-        pqc_fileprefix = "tls-speed" if test_type == "pqc" else "tls-speed-hybrid"
+        pqc_fileprefix = "tls_speed" if test_type == "pqc" else "tls_speed_hybrid"
 
         # Process both the KEM and signature results for the current test type
         for alg_type in alg_types:
 
             # Set the up-results filepath and pull metrics from the raw file
-            speed_filepath = os.path.join(dir_list[0], f"{pqc_fileprefix}-{alg_type}-{str(current_run)}.txt")
+            speed_filepath = os.path.join(dir_list[0], f"{pqc_fileprefix}_{alg_type}_{str(current_run)}.txt")
             speed_metrics_df = get_speed_metrics(speed_filepath, alg_type, speed_headers)
 
             # Set the alg list dict key based on the current test and algorithm type
@@ -478,20 +476,19 @@ def speed_processing(current_run, dir_paths, speed_headers, algs_dict):
                 sys.exit(1)
 
             # Output the speed metrics csv for the current test type and algorithm
-            output_filepath = os.path.join(dir_list[1], f"{pqc_fileprefix}-{alg_type}-{str(current_run)}.csv")
+            output_filepath = os.path.join(dir_list[1], f"{pqc_fileprefix}_{alg_type}_{str(current_run)}.csv")
             speed_metrics_df.to_csv(output_filepath, index=False)
 
 #------------------------------------------------------------------------------------------------------------------------------
 def output_processing(num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers):
-    """ Function for processing the outputs of the 
-        s_time and s_speed TLS benchmarking tests for the current machine """
-    
+    """ Function to process the results of s_time and s_speed TLS benchmarking tests for the current machine. """
+
     # Set the result directories paths in the central paths dictionary
     dir_paths['pqc_handshake_results'] = os.path.join(dir_paths['mach_handshake_dir'], "pqc")
     dir_paths['classic_handshake_results'] = os.path.join(dir_paths['mach_handshake_dir'], "classic")
     dir_paths['hybrid_handshake_results'] = os.path.join(dir_paths['mach_handshake_dir'], "hybrid")
-    dir_paths['pqc_base_results'] = os.path.join(dir_paths['pqc_handshake_results'], "base-results")
-    dir_paths['hybrid_base_results'] = os.path.join(dir_paths['hybrid_handshake_results'], "base-results")
+    dir_paths['pqc_base_results'] = os.path.join(dir_paths['pqc_handshake_results'], "base_results")
+    dir_paths['hybrid_base_results'] = os.path.join(dir_paths['hybrid_handshake_results'], "base_results")
 
     # Set the base-results files directories for the different test types
     os.makedirs(dir_paths['pqc_base_results'])
@@ -506,35 +503,34 @@ def output_processing(num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers
 
 #------------------------------------------------------------------------------------------------------------------------------
 def process_tests(machine_id, num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers, replace_old_results):
-    """ Function for controlling the parsing scripts for the OQS-Provider TLS testing up-result files
-        and calling average  calculation scripts """
+    """ Function for controlling the parsing scripts for the PQC TLS performance testing up-result files
+        and calling average calculation scripts """
 
-    # Create an instance of the OQS-Provider average generator class before processing results
-    oqs_provider_avg = None
-    oqs_provider_avg = OqsProviderResultAverager(dir_paths, num_runs, algs_dict, pqc_type_vars, col_headers)
+    # Create an instance of the TLS average generator class before processing results
+    tls_avg = TLSAverager(dir_paths, num_runs, algs_dict, pqc_type_vars, col_headers)
 
     # Set the machine's results directories paths in the central paths dictionary
-    dir_paths['mach_results_dir'] = os.path.join(dir_paths['results_dir'], f"machine-{str(machine_id)}")
-    dir_paths['mach_up_results_dir'] = os.path.join(dir_paths['up_results'], f"machine-{str(machine_id)}")
-    dir_paths['mach_handshake_dir']  = os.path.join(dir_paths['results_dir'], f"machine-{str(machine_id)}", "handshake-results")
-    dir_paths['mach_up_speed_dir'] = os.path.join(dir_paths['up_results'], f"machine-{str(machine_id)}", "speed-results")
-    dir_paths['mach_speed_results_dir'] = os.path.join(dir_paths['results_dir'], f"machine-{str(machine_id)}", "speed-results")
+    dir_paths['mach_results_dir'] = os.path.join(dir_paths['results_dir'], f"machine_{str(machine_id)}")
+    dir_paths['mach_up_results_dir'] = os.path.join(dir_paths['up_results'], f"machine_{str(machine_id)}")
+    dir_paths['mach_handshake_dir']  = os.path.join(dir_paths['results_dir'], f"machine_{str(machine_id)}", "handshake_results")
+    dir_paths['mach_up_speed_dir'] = os.path.join(dir_paths['up_results'], f"machine_{str(machine_id)}", "speed_results")
+    dir_paths['mach_speed_results_dir'] = os.path.join(dir_paths['results_dir'], f"machine_{str(machine_id)}", "speed_results")
     dir_paths['speed_types_dirs'] = {
-        "pqc": [os.path.join(dir_paths['mach_up_speed_dir'], "pqc"), os.path.join(dir_paths['mach_speed_results_dir'])], 
-        "hybrid": [os.path.join(dir_paths['mach_up_speed_dir'], "hybrid"), os.path.join(dir_paths['mach_speed_results_dir'])],
+        "pqc": [os.path.join(dir_paths['mach_up_speed_dir'], "pqc"), dir_paths['mach_speed_results_dir']], 
+        "hybrid": [os.path.join(dir_paths['mach_up_speed_dir'], "hybrid"), dir_paths['mach_speed_results_dir']],
     }
 
     # Set the pqc-var types dictionary so that both PQC and PQC-hybrid results can be processed
     pqc_type_vars.update({
         "up_results_path": [
-            os.path.join(dir_paths['mach_up_results_dir'], "handshake-results", "pqc"), 
-            os.path.join(dir_paths['mach_up_results_dir'], "handshake-results", "hybrid")
+            os.path.join(dir_paths['mach_up_results_dir'], "handshake_results", "pqc"), 
+            os.path.join(dir_paths['mach_up_results_dir'], "handshake_results", "hybrid")
         ], 
     })
 
     # Ensure that the machine's up-results directory exists before continuing
     if not os.path.exists(dir_paths['mach_up_results_dir']):
-        print(f"[ERROR] - Machine-ID ({machine_id}) up-results directory does not exist, please ensure the up-results directory is present before continuing")
+        print(f"[ERROR] - Machine-ID ({machine_id}) up_results directory does not exist, please ensure the up_results directory is present before continuing")
         sys.exit(1)
 
     # Create the results directory for current machine and handle Machine-ID clashes
@@ -542,22 +538,22 @@ def process_tests(machine_id, num_runs, dir_paths, algs_dict, pqc_type_vars, col
 
     # Call the processing function and the average calculation methods for the current machine
     output_processing(num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers)
-    oqs_provider_avg.gen_pqc_avgs()
-    oqs_provider_avg.gen_classic_avgs()
-    oqs_provider_avg.gen_speed_avgs(speed_headers)
+    tls_avg.gen_pqc_avgs()
+    tls_avg.gen_classic_avgs()
+    tls_avg.gen_speed_avgs(speed_headers)
 
 #------------------------------------------------------------------------------------------------------------------------------
-def parse_oqs_provider(test_opts, replace_old_results):
-    """ Main function for controlling the parsing of the OQS-Provider TLS handshake and speed results. This function
-        is called from the main parsing control script and will call the necessary functions to parse the results """
-
+def parse_tls_performance(test_opts, replace_old_results):
+    """ Entrypoint function for parsing OQS-Provider TLS handshake and speed results. 
+        Controls the parsing flow and triggers relevant functions. """
+    
     # Get test options and set test parameter vars
     machine_id = test_opts[0]
     num_runs = test_opts[1]
     root_dir = test_opts[2]
 
     # Setup script environment
-    print(f"\nPreparing to Parse OQS-Provider Results:\n")
+    print(f"\nPreparing to Parse TLS Performance Results:\n")
     dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers = setup_parse_env(root_dir)
 
     # Process the OQS-Provider results

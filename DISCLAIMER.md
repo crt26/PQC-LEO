@@ -2,13 +2,13 @@
 # Project Disclaimer
 
 ## General Disclaimer
-This project is intended solely for research and benchmarking purposes. The tools and scripts provided in this repository are designed to evaluate the performance characteristics of Post-Quantum Cryptography (PQC) algorithms in controlled environments. They are not intended for production use or security-critical applications.
+This project is intended solely for research and benchmarking purposes. The tools and scripts provided in this repository are designed to benchmark the computational and TLS-level performance of Post-Quantum Cryptography (PQC) algorithms in controlled environments. They are not intended for production use or security-critical applications.
 
 The maintainers of this project assume no liability for any consequences resulting from the use or misuse of this repository or its components.
 
 Users are expected to understand the implications of enabling, modifying, or extending any parts of the framework, especially when integrating with cryptographic libraries and systems.
 
-## Licence Compliance
+## Third-Party Licence Compliance
 
 This project complies with the licensing terms of all third-party software and libraries it utilises. All dependencies are downloaded and built locally during the setup process; however, this repository does include modified versions of specific source files from third-party projects where necessary.
 

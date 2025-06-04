@@ -2,7 +2,7 @@
 Copyright (c) 2023-2025 Callum Turino
 SPDX-License-Identifier: MIT
 
-Liboqs result parsing script for PQC performance benchmarking.  
+Parsing script for PQC computational performance benchmarking gathered via the Liboqs library.
 Parses raw memory and CPU speed results produced by the automated Liboqs test suite, processes them into  
 clean, structured CSV files, and computes averaged results using the results_averager module.  
 This script is called by the central parse_results.py controller and supports single-machine, multi-run setups.
@@ -15,11 +15,11 @@ import os
 import sys
 import shutil
 import time
-from results_averager import LiboqsResultAverager
+from internal_scripts.results_averager import ComputationalAverager
 
 #------------------------------------------------------------------------------------------------------------------------------
 def setup_parse_env(root_dir):
-    """ Function for setting up the environment for the Liboqs parsing script. 
+    """ Function for setting up the environment for parsing computational performance results.
         The function will set the various directory paths, read in the algorithm 
         lists and set the root directories. """
 
@@ -35,12 +35,12 @@ def setup_parse_env(root_dir):
 
     # Set the test results directory paths in central paths dictionary
     dir_paths['root_dir'] = root_dir
-    dir_paths['results_dir'] = os.path.join(root_dir, "test-data", "results", "liboqs")
-    dir_paths['up_results'] = os.path.join(root_dir, "test-data", "up-results", "liboqs")
+    dir_paths['results_dir'] = os.path.join(root_dir, "test_data", "results", "computational_performance")
+    dir_paths['up_results'] = os.path.join(root_dir, "test_data", "up_results", "computational_performance")
 
     # Set the alg lists text filenames
-    kem_algs_file = os.path.join(root_dir, "test-data", "alg-lists", "kem-algs.txt")
-    sig_algs_file = os.path.join(root_dir, "test-data", "alg-lists", "sig-algs.txt")
+    kem_algs_file = os.path.join(root_dir, "test_data", "alg_lists", "kem_algs.txt")
+    sig_algs_file = os.path.join(root_dir, "test_data", "alg_lists", "sig_algs.txt")
 
     # Read in the algorithms from the KEM alg-list file
     with open(kem_algs_file, "r") as kem_file:
@@ -74,7 +74,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
 
             # Remove the old results directory automatically for current Machine-ID
             print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...\n")
-            shutil.rmtree(dir_paths["results_dir"], f"machine-{machine_id}")
+            shutil.rmtree(dir_paths["results_dir"], f"machine_{machine_id}")
 
             # Create the new directories for parsed results
             os.makedirs(dir_paths["type_speed_dir"])
@@ -83,13 +83,13 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
         else:
 
             # Output the warning message to the terminal
-            print(f"[WARNING] - There are already parsed Liboqs testing results present for Machine-ID ({machine_id})\n")
+            print(f"[WARNING] - There are already parsed computational testing results present for Machine-ID ({machine_id})\n")
 
             # Get the decision from user on how to handle old results before parsing continues
             while True:
 
                 # Output the potential options and handle user choice
-                print(f"From the following options, choose how would you like to handle the old Liboqs results:\n")
+                print(f"From the following options, choose how would you like to handle the old computational performance results:\n")
                 print("Option 1 - Replace old parsed results with new ones")
                 print("Option 2 - Exit parsing programme to move old results and rerun after (if you choose this option, please move the entire folder not just its contents)")
                 print("Option 3 - Make parsing script programme wait until you have move files before continuing")
@@ -99,7 +99,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
 
                     # Replace all old results and create a new empty directory to store the parsed results
                     print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...\n")
-                    shutil.rmtree(dir_paths["results_dir"], f"machine-{machine_id}")
+                    shutil.rmtree(dir_paths["results_dir"], f"machine_{machine_id}")
 
                     # Create the new directories for parsed results
                     os.makedirs(dir_paths["type_speed_dir"])
@@ -182,10 +182,9 @@ def get_peak(mem_file, peak_metrics):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def pre_speed_processing(dir_paths, num_runs):
-    """ Function for preparing the speed up-result data to 
-        by removing system information in the file, allowing for
-        further processing in the script. """
-    
+    """ Function for preparing speed up-result data by removing system information, 
+        making it ready for further processing. """
+
     # Setup the destination directory in current machines up-results for pre-processed speed files
     if not os.path.exists(dir_paths['up_speed_dir']):
         os.makedirs(dir_paths['up_speed_dir'])
@@ -194,8 +193,8 @@ def pre_speed_processing(dir_paths, num_runs):
         os.makedirs(dir_paths['up_speed_dir'])
 
     # Setting the initial prefix variables for KEM and sig files
-    kem_prefix = "test-kem-speed-"
-    sig_prefix = "test-sig-speed-"
+    kem_prefix = "test_kem_speed_"
+    sig_prefix = "test_sig_speed_"
 
     # Pre-format the KEM and sig csv speed files to remove system information from file
     for run_count in range(1, num_runs+1):
@@ -238,12 +237,12 @@ def pre_speed_processing(dir_paths, num_runs):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def speed_processing(dir_paths, num_runs, kem_algs, sig_algs):
-    """ Function for processing the Liboqs CPU speed up-results and 
-        exporting the data into a clean CSV format """
+    """ Function for processing CPU speed up-results and exporting the data 
+        into a clean CSV format. """
 
     # Set the filename prefix variables
-    kem_prefix = "test-kem-speed-"
-    sig_prefix = "test-sig-speed-"
+    kem_prefix = "test_kem_speed_"
+    sig_prefix = "test_sig_speed_"
 
     # Create the algorithm lists to insert into new header column
     new_col_kem = [alg for alg in kem_algs for _ in range(3)]
@@ -298,8 +297,8 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
         and outputting the results into a CSV format """
 
     # Set the un-parsed memory results directory variables
-    kem_up_dir = os.path.join(dir_paths["up_mem_dir"], "kem-mem-metrics")
-    sig_up_dir = os.path.join(dir_paths["up_mem_dir"], "sig-mem-metrics")
+    kem_up_dir = os.path.join(dir_paths["up_mem_dir"], "kem_mem_metrics")
+    sig_up_dir = os.path.join(dir_paths["up_mem_dir"], "sig_mem_metrics")
 
 
     # Declare the list variables used in memory processing
@@ -322,7 +321,7 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
             for operation in range(0,3,1):
 
                 # Parse the metrics and add the results to dataframe row
-                kem_up_filename = kem_alg + "-" + str(operation) + "-" + str(run_count) + ".txt"
+                kem_up_filename = kem_alg + "_" + str(operation) + "_" + str(run_count) + ".txt"
                 kem_up_filepath = os.path.join(kem_up_dir, kem_up_filename)
 
                 try:
@@ -354,7 +353,7 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
         check_data_mismatch(len(mem_results_df), len(kem_algs), "KEM Memory Results")
         
         # Output the KEM csv file for this run
-        kem_filename = "kem-mem-metrics-" + str(run_count) + ".csv"
+        kem_filename = "kem_mem_metrics_" + str(run_count) + ".csv"
         kem_filepath = os.path.join(dir_paths["type_mem_dir"], kem_filename)
         mem_results_df.to_csv(kem_filepath, index=False)
 
@@ -368,7 +367,7 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
             for operation in range(0,3,1):
 
                 # Parse the metrics and add the results to dataframe row
-                sig_up_filename = sig_alg + "-" + str(operation) + "-" + str(run_count) + ".txt"
+                sig_up_filename = sig_alg + "_" + str(operation) + "_" + str(run_count) + ".txt"
                 sig_up_filepath = os.path.join(sig_up_dir, sig_up_filename)
 
                 try:
@@ -400,32 +399,31 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
         check_data_mismatch(len(mem_results_df), len(sig_algs), "Sig Memory Results")
 
         # Output the digital signature csv file for this run
-        sig_filename = "sig-mem-metrics-" + str(run_count) + ".csv"
+        sig_filename = "sig_mem_metrics_" + str(run_count) + ".csv"
         sig_filepath = os.path.join(dir_paths["type_mem_dir"], sig_filename)
         mem_results_df.to_csv(sig_filepath, index=False)
 
 #------------------------------------------------------------------------------------------------------------------------------
 def process_tests(machine_id, num_runs, dir_paths, kem_algs, sig_algs, replace_old_results):
-    """ Function for parsing the results for a single or multiple machines 
-        and stores them as csv files. Once up-results are processed
-        averages are calculated for the results """
-    
+    """ Function for parsing results for one or more machines, storing them as CSV files, 
+        and calculating averages once the up-results are processed. """
+
     # Declare the algorithm operations dictionary
     alg_operations = {'kem_operations': ["keygen", "encaps", "decaps"], 'sig_operations': ["keypair", "sign", "verify"]}
 
-    # Create an instance of the Liboqs average generator class before processing results
-    liboqs_avg = LiboqsResultAverager(dir_paths, kem_algs, sig_algs, num_runs, alg_operations)
+    # Create an instance of the computational performance average generator class before processing results
+    comp_avg = ComputationalAverager(dir_paths, kem_algs, sig_algs, num_runs, alg_operations)
 
     # Set the unparsed-directory paths in the central paths dictionary
-    dir_paths['up_speed_dir'] = os.path.join(dir_paths['up_results'], f"machine-{str(machine_id)}", "speed-results")
-    dir_paths['up_mem_dir'] = os.path.join(dir_paths['up_results'], f"machine-{str(machine_id)}", "mem-results")
-    dir_paths['type_speed_dir'] = os.path.join(dir_paths['results_dir'], f"machine-{str(machine_id)}", "speed-results")
-    dir_paths['type_mem_dir'] = os.path.join(dir_paths['results_dir'], f"machine-{str(machine_id)}", "mem-results")
-    dir_paths['raw_speed_dir'] = os.path.join(dir_paths['up_results'], f"machine-{str(machine_id)}", "raw-speed-results")
+    dir_paths['up_speed_dir'] = os.path.join(dir_paths['up_results'], f"machine_{str(machine_id)}", "speed_results")
+    dir_paths['up_mem_dir'] = os.path.join(dir_paths['up_results'], f"machine_{str(machine_id)}", "mem_results")
+    dir_paths['type_speed_dir'] = os.path.join(dir_paths['results_dir'], f"machine_{str(machine_id)}", "speed_results")
+    dir_paths['type_mem_dir'] = os.path.join(dir_paths['results_dir'], f"machine_{str(machine_id)}", "mem_results")
+    dir_paths['raw_speed_dir'] = os.path.join(dir_paths['up_results'], f"machine_{str(machine_id)}", "raw_speed_results")
 
     # Ensure that the machine's up-results directory exists before continuing
     if not os.path.exists(dir_paths['up_results']):
-        print(f"[ERROR] - Machine-ID ({machine_id}) up-results directory does not exist, please ensure the up-results directory is present before continuing")
+        print(f"[ERROR] - Machine-ID ({machine_id}) up_results directory does not exist, please ensure the up-results directory is present before continuing")
         sys.exit(1)
 
     # Create the required directories and handling any clashes with previously parsed results
@@ -437,21 +435,21 @@ def process_tests(machine_id, num_runs, dir_paths, kem_algs, sig_algs, replace_o
     memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations)
 
     # Call the average generation methods for memory and CPU performance results
-    liboqs_avg.avg_mem()
-    liboqs_avg.avg_speed()
+    comp_avg.avg_mem()
+    comp_avg.avg_speed()
 
 #------------------------------------------------------------------------------------------------------------------------------
-def parse_liboqs(test_opts, replace_old_results):
-    """ Entrypoint for controlling the parsing of the Liboqs benchmarking results. This function
-        is called from the main parsing control script and will call the necessary functions to parse the results """
-
+def parse_comp_performance(test_opts, replace_old_results):
+    """ Entrypoint for parsing computational benchmarking results. 
+        Calls necessary functions to process the results. """
+    
     # Get the test options
     machine_id = test_opts[0]
     num_runs = test_opts[1]
     root_dir = test_opts[2]
 
     # Setup the script environment
-    print(f"\nPreparing to Parse Liboqs Results:\n")
+    print(f"\nPreparing to parse Computational Performance Results:\n")
     kem_algs, sig_algs, dir_paths = setup_parse_env(root_dir)
 
     # Process the results

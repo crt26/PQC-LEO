@@ -1,14 +1,14 @@
-# Automated PQC Performance Benchmarking Tool Usage Guide <!-- omit from toc -->
+# Automated PQC Computational Performance Benchmarking Tool Usage Guide <!-- omit from toc -->
 
 ## Overview <!-- omit from toc -->
-This guide provides detailed instructions for using the automated Post-Quantum Cryptographic (PQC) computational performance testing tool. It allows users to gather benchmarking data for PQC algorithms using the Open Quantum Safe (OQS) Liboqs library. Results are collected automatically and can be customised with user-defined test parameters.
+This guide provides detailed instructions for using the automated Post-Quantum Cryptographic (PQC) computational performance testing tool. It allows users to gather benchmarking data for PQC algorithms using the Open Quantum Safe (OQS) Liboqs library as the current backend. Results are collected automatically and can be customised with user-defined test parameters.
 
 The tool outputs raw performance metrics in CSV and text formats, which are later parsed using Python scripts for easier interpretation and analysis.
 
 ### Contents <!-- omit from toc -->
 - [Supported Hardware and Software](#supported-hardware-and-software)
 - [Performing PQC Computational Performance Testing](#performing-pqc-computational-performance-testing)
-  - [Running the Liboqs Testing Tool](#running-the-liboqs-testing-tool)
+  - [Running the Testing Script](#running-the-testing-script)
   - [Configuring Testing Parameters](#configuring-testing-parameters)
 - [Outputted Results](#outputted-results)
 - [Useful External Documentation](#useful-external-documentation)
@@ -17,26 +17,26 @@ The tool outputs raw performance metrics in CSV and text formats, which are late
 The automated testing tool is currently only supported on the following devices:
 
 - x86 Linux Machines using a Debian-based operating system
-- ARM Linux devices using a 64-bit Debian based Operating System
+- ARM Linux devices using a 64-bit Debian-based Operating System
 
-**Notice:** The HQC KEM algorithms are disabled by default in recent Liboqs versions due to a disclosed IND-CCA2 vulnerability. For benchmarking purposes, the setup process includes an optional flag to enable HQC, accompanied by a user confirmation prompt and warning. For instructions on enabling HQC, see the [Advanced Setup Configuration Guide](../advanced-setup-configuration.md), and refer to the [Disclaimer Document](../../DISCLAIMER.md) for more information on this issue.
+**Notice:** The HQC KEM algorithms are disabled by default in recent Liboqs versions due to a disclosed IND-CCA2 vulnerability. For benchmarking purposes, the setup process includes an optional flag to enable HQC, accompanied by a user confirmation prompt and warning. For instructions on enabling HQC, see the [Advanced Setup Configuration Guide](../advanced_setup_configuration.md), and refer to the [Disclaimer Document](../../DISCLAIMER.md) for more information on this issue.
 
 ## Performing PQC Computational Performance Testing
 
-### Running the Liboqs Testing Tool
-The automated test script is located in the `scripts/testing-scripts` directory and can be launched using the following commands:
+### Running the Testing Script
+The automated test script is located in the `scripts/testing_scripts` directory and can be launched using the following commands:
 
 ```
-./full-liboqs-test.sh
+./pqc_performance_test.sh
 ```
 
-When executed, the testing tool will provide various testing parameter options before the benchmarking process begins.
+When executed, the testing script will prompt you to configure the benchmarking parameters.
 
 ### Configuring Testing Parameters
-Before testing begins, the script will prompt you to configure a few testing parameters which includes:
+Before testing begins, the script will prompt you to configure a few testing parameters, which include:
 
-- Whether the results should have a custom Machine-ID assigned to them.
-- The number of times each test should be run to allow for more accurate average calculation.
+- Should the results have a custom Machine-ID assigned to them?
+- The number of times each test should be run to allow for a more accurate average calculation.
 
 #### Machine Comparison Option <!-- omit from toc -->
 The first testing option is:
@@ -59,26 +59,26 @@ You can then enter a valid integer value to specify the total number of test run
 ## Outputted Results
 After testing completes, raw performance results are saved to the following directory:
 
-`test-data/up-results/liboqs/machine-x`
+`test_data/up_results/computational_performance/machine_x`
 
-Where `machine-x` refers to the assigned Machine-ID. If no ID was specified, the default ID of 1 is used.
+Where `machine_x` refers to the assigned Machine-ID. If no ID was specified, the default ID of 1 is used.
 
-By default, the Liboqs testing script will automatically trigger the parsing system upon completion. It passes the Machine-ID and total number of test runs to the parsing tool, which then processes the raw output into structured CSV files.
+By default, the testing script will automatically trigger the parsing system upon completion. It passes the Machine-ID and total number of test runs to the parsing tool, which then processes the raw output into structured CSV files.
 
 These parsed results are saved in:
 
-`test-data/results/liboqs/machine-x`
+`test_data/results/computational_performance/machine_x`
 
 To skip automatic parsing and retain only the raw test output, pass the `--disable-result-parsing` flag when launching the test script:
 
 ```
-./full-liboqs-test.sh --disable-result-parsing
+./pqc_performance_test.sh --disable-result-parsing
 ```
 
-For complete details on parsing functionality and a breakdown of the collected Liboqs performance metrics, refer to the following documentation:
+For complete details on parsing functionality and a breakdown of the collected computational performance metrics, refer to the following documentation:
 
-- [Parsing Performance Results Usage Guide](../performance-results/parsing-scripts-usage-guide.md)
-- [Performance Metrics Guide](../performance-results/performance-metrics-guide.md)
+- [Parsing Performance Results Usage Guide](../performance_results/parsing_scripts_usage_guide.md)
+- [Performance Metrics Guide](../performance_results/performance_metrics_guide.md)
 
 ## Useful External Documentation
 - [Liboqs Webpage](https://openquantumsafe.org/liboqs/)

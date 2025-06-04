@@ -2,18 +2,18 @@
 Copyright (c) 2023-2025 Callum Turino
 SPDX-License-Identifier: MIT
 
-Utility script for retrieving supported cryptographic algorithms from the Liboqs and OQS-Provider libraries. 
+Utility script for retrieving supported cryptographic algorithms from the Liboqs, OpenSSL (classic + PQC), and OQS-Provider libraries. 
 It outputs these algorithms to text files used by benchmarking and parsing scripts to determine which 
-algorithms to test and evaluate.
+algorithms to test and evaluate for computational performance and TLS handshakes testing.
 
 Primarily intended to be called by the main setup.sh script, this utility accepts an argument that specifies 
 the installation type and determines which algorithm lists should be generated. It can also be executed manually.
 
 Accepted arguments:
-    1 - Liboqs only
-    2 - Liboqs and OQS-Provider
-    3 - OQS-Provider only
-    4 - Parse ALGORITHMS.md in OQS-Provider source to count supported algorithms
+    1 - Computational performance testing only (Liboqs algorithms)
+    2 - Computational and TLS performance testing (Liboqs, OpenSSL, and OQS-Provider algorithms)
+    3 - TLS performance testing only (OpenSSL and OQS-Provider algorithms)
+    4 - Parse ALGORITHMS.md in OQS-Provider source to count the total number of supported algorithms
 """
 
 #------------------------------------------------------------------------------------------------------------------------------
@@ -34,8 +34,8 @@ oqs_provider_src_dir = ""
 
 #------------------------------------------------------------------------------------------------------------------------------
 def output_help_message():
-    """ Helper function for outputting the help message to the user when the --help flag is present 
-        or when incorrect arguments are passed """
+    """ Helper function for outputting the help message to the user when the --help flag is present or
+        when incorrect arguments are passed. """
 
     # Output the supported options and their usage to the user
     print("get_algorithms.py [options]")
@@ -77,7 +77,7 @@ def setup_base_env():
     # Declare the global library directory path variables
     liboqs_build_dir = os.path.join(root_dir, "lib", "liboqs", "build", "tests")
     openssl_path = os.path.join(root_dir, "lib", "openssl_3.5.0")
-    oqs_provider_path = os.path.join(root_dir, "lib", "oqs-provider")
+    oqs_provider_path = os.path.join(root_dir, "lib", "oqs_provider")
     openssl_lib_dir = ""
 
     # Check the OpenSSL library directory path
@@ -93,10 +93,10 @@ def setup_base_env():
     os.environ['LD_LIBRARY_PATH'] = new_ld_library_path
 
     # Set the path to the ALGORITHMS.md file
-    oqs_provider_src_dir = os.path.join(root_dir, "tmp", "oqs-provider-source")
+    oqs_provider_src_dir = os.path.join(root_dir, "tmp", "oqs_provider_source")
 
     # Ensure that there are no previous list files present (mainly for if this script is ran manually, setup.sh will handle this)
-    alg_list_dir = os.path.join(root_dir, "test-data", "alg-lists")
+    alg_list_dir = os.path.join(root_dir, "test_data", "alg_lists")
 
     if os.path.isdir(alg_list_dir):
         for file in os.listdir(alg_list_dir):
@@ -156,7 +156,7 @@ def get_liboqs_algs():
     
     # Set the test_bins and output directory for algorithm lists
     test_bins = [f"{liboqs_build_dir}/test_kem", f"{liboqs_build_dir}/test_sig"]
-    output_dir = os.path.join(root_dir, "test-data", "alg-lists")
+    output_dir = os.path.join(root_dir, "test_data", "alg_lists")
 
     # Loop through the different test type binaries (KEM and SIG) and run them
     for bin in test_bins:
@@ -176,9 +176,9 @@ def get_liboqs_algs():
 
                 # Set the output filename for the current algorithm type
                 if "kem" in bin:
-                    alg_list_file = os.path.join(output_dir, "kem-algs.txt")
+                    alg_list_file = os.path.join(output_dir, "kem_algs.txt")
                 else:
-                    alg_list_file = os.path.join(output_dir, "sig-algs.txt")
+                    alg_list_file = os.path.join(output_dir, "sig_algs.txt")
 
                 # Filter out HQC KEM algorithms from the list if the HQC enabled flag is not set (temp fix for HQC bug)
                 if not os.path.exists(os.path.join(root_dir, "tmp", ".hqc_enabled.flag")):
@@ -195,9 +195,9 @@ def get_liboqs_algs():
             return
 
 #------------------------------------------------------------------------------------------------------------------------------
-def oqs_provider_extract_algs(test_type, provider_type, output_str):
-    """ Helper function to extract the algorithms from the output string of the OpenSSL binary. The binary is passed 
-        the algorithm type and the OQS-Provider flags so that it prints out the algorithms supported for that type in OQS-Provider. """
+def extract_tls_algs(test_type, provider_type, output_str):
+    """ Helper function for Extracting PQC and Hybrid-PQC algorithms supported by OpenSSL and OQS-Provider from the output string, 
+        filtering based on the test type (PQC or Hybrid-PQC) and the provider type (OpenSSL or OQS-Provider). """
 
     # Set the algorithm lists used for the PQC and Hybrid-PQC algorithms
     algs = []
@@ -280,12 +280,11 @@ def oqs_provider_extract_algs(test_type, provider_type, output_str):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def get_tls_pqc_algs():
-    """ Function to get the PQC and Hybrid-PQC algorithms supported by 
-        the OQS-Provider library for the TLS benchmarking. """
+    """ Retrieves the PQC and Hybrid-PQC algorithms supported by both OpenSSL and OQS-Provider for TLS benchmarking. """
 
     # Set required path variables, algorithm categories, and provider flags
     openssl_bin = os.path.join(openssl_path, "bin","openssl")
-    output_dir = os.path.join(root_dir, "test-data", "alg-lists")
+    output_dir = os.path.join(root_dir, "test_data", "alg_lists")
     alg_cats = ["kem", "signature"]
     provider_flags = {
         "default": ["-provider", "default"], 
@@ -315,7 +314,7 @@ def get_tls_pqc_algs():
 
             # Extract the PQC and Hybrid-PQC algorithms for TLS handshakes from the output string
             test_type = 0
-            provider_algs, provider_hybrid_algs = oqs_provider_extract_algs(test_type, provider_type, stdout)
+            provider_algs, provider_hybrid_algs = extract_tls_algs(test_type, provider_type, stdout)
 
             # Append the extracted algorithms to the master lists
             algs.extend(provider_algs)
@@ -323,17 +322,17 @@ def get_tls_pqc_algs():
 
             # Extract the speed algorithms for the current algorithm type
             test_type = 1
-            provider_algs, provider_hybrid_algs = oqs_provider_extract_algs(test_type, provider_type, stdout)
+            provider_algs, provider_hybrid_algs = extract_tls_algs(test_type, provider_type, stdout)
 
             # Append the extracted algorithms to the master lists
             speed_algs.extend(provider_algs)
             speed_hybrid_algs.extend(provider_hybrid_algs)
 
         # Set the various output filenames depending on the current algorithm type
-        alg_list_file = os.path.join(output_dir, f"tls-{alg_type[:3]}-algs.txt")
-        hybrid_alg_list_file = os.path.join(output_dir, f"tls-hybr-{alg_type[:3]}-algs.txt")
-        speed_list_file = os.path.join(output_dir, f"tls-speed-{alg_type[:3]}-algs.txt")
-        speed_hybrid_alg_list_file = os.path.join(output_dir, f"tls-speed-hybr-{alg_type[:3]}-algs.txt")
+        alg_list_file = os.path.join(output_dir, f"tls_{alg_type[:3]}_algs.txt")
+        hybrid_alg_list_file = os.path.join(output_dir, f"tls_hybr_{alg_type[:3]}_algs.txt")
+        speed_list_file = os.path.join(output_dir, f"tls_speed_{alg_type[:3]}_algs.txt")
+        speed_hybrid_alg_list_file = os.path.join(output_dir, f"tls_speed_hybr_{alg_type[:3]}_algs.txt")
 
         # Write out the algorithms to the list files
         write_to_file(algs, alg_list_file)
@@ -351,9 +350,9 @@ def set_tls_classic_algs():
     classic_sigs = ["RSA_2048", "RSA_3072", "RSA_4096", "prime256v1", "secp384r1", "secp521r1"]
 
     # Set the output directory and text file names
-    output_dir = os.path.join(root_dir, "test-data", "alg-lists")
-    kem_list_file = os.path.join(output_dir, "classic-tls-kem-algs.txt")
-    sig_list_file = os.path.join(output_dir, "classic-tls-sig-algs.txt")
+    output_dir = os.path.join(root_dir, "test_data", "alg_lists")
+    kem_list_file = os.path.join(output_dir, "classic_tls_kem_algs.txt")
+    sig_list_file = os.path.join(output_dir, "classic_tls_sig_algs.txt")
     
     # Write out the classic algorithms to the list files
     write_to_file(classic_kems, kem_list_file)
