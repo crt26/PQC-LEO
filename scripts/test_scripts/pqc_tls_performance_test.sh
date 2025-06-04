@@ -12,7 +12,7 @@
 #-------------------------------------------------------------------------------------------------------------------------------
 function get_user_yes_no() {
     # Helper function for getting a yes or no response from the user for a given question regarding the setup process. The function
-    # will return 0 for yes and 1 for no which can be checked by the calling function.
+    # then set the global user_y_n_response variable to 1 for yes and 0 for no. The function will loop until a valid response is given.
 
     # Set the local user prompt variable to what was passed to the function
     local user_prompt="$1"
@@ -28,12 +28,12 @@ function get_user_yes_no() {
 
             [Yy]* )
                 user_y_n_response=1
-                return 0
+                break
                 ;;
 
             [Nn]* )
                 user_y_n_response=0
-                return 1
+                break
                 ;;
 
             * )

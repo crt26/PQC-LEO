@@ -49,7 +49,7 @@ enable_hqc=0 # temp flag for hqc bug fix
 #-------------------------------------------------------------------------------------------------------------------------------
 function get_user_yes_no() {
     # Helper function for getting a yes or no response from the user for a given question regarding the setup process. The function
-    # will return 0 for yes and 1 for no which can be checked by the calling function.
+    # then set the global user_y_n_response variable to 1 for yes and 0 for no. The function will loop until a valid response is given.
 
     # Set the local user prompt variable to what was passed to the function
     local user_prompt="$1"
@@ -65,12 +65,12 @@ function get_user_yes_no() {
 
             [Yy]* )
                 user_y_n_response=1
-                return 0
+                break
                 ;;
 
             [Nn]* )
                 user_y_n_response=0
-                return 1
+                break
                 ;;
 
             * )
@@ -109,7 +109,7 @@ function confirm_enable_hqc_algs() {
     get_user_yes_no "Would you like continue with enabling the HQC KEM algorithms in the Liboqs library?"
 
     # Check the user response and set the enable_hqc flag accordingly
-    if [ "$user_y_n_response" -eq 1 ]; then
+    if [ $user_y_n_response -eq 1 ]; then
         echo -e "\n[NOTICE] - HQC KEM algorithms will be enabled in the Liboqs library build process\n"
         enable_hqc=1
     else
@@ -161,7 +161,7 @@ function parse_args() {
                 get_user_yes_no "Would you like to continue with using the latest version of the OQS libraries?"
 
                 # Check the user response and to determine the next steps
-                if [ "$user_y_n_response" -eq 1 ]; then
+                if [ $user_y_n_response -eq 1 ]; then
                     echo -e "\n[NOTICE] - Using the latest version of the OQS libraries...\n"
                     use_latest_version=1
                 else
@@ -250,7 +250,7 @@ function configure_dirs() {
         get_user_yes_no "Would you like to reinstall the libraries?"
 
         # Continue with the setup or exit based on the user choice
-        if [ "$user_y_n_response" -eq 1 ]; then
+        if [ $user_y_n_response -eq 1 ]; then
             echo -e "Deleting old files and reinstalling...\n"
         else
             echo "Will not reinstall, exiting setup script..."
@@ -305,7 +305,7 @@ function configure_oqs_provider_build() {
     get_user_yes_no "Would you like to enable all the digital signature algorithms in the OQS-Provider library that are disabled by default?"
 
     # Set the enable_algs flag based on the user response to later be checked the OQS-Provider build function
-    if [ "$user_y_n_response" -eq 1 ]; then
+    if [ $user_y_n_response -eq 1 ]; then
         oqs_enable_algs="true"
     else
         oqs_enable_algs="false"
@@ -315,7 +315,7 @@ function configure_oqs_provider_build() {
     get_user_yes_no "Would you like to enable the KEM encoders option in the OQS-Provider build?"
 
     # Set the OQS-Provider build flags based on the user response
-    if [ "$oqs_enable_algs" == "true" ]; then
+    if [ $user_y_n_response -eq 1 ]; then
         encoder_flag="ON"
     else
         encoder_flag="OFF"
@@ -614,7 +614,7 @@ function modify_openssl_src() {
         get_user_yes_no "Would you like to continue with the setup process?"
 
         # Determine which option the user has selected and continue with the setup process or exit
-        if [ "$user_y_n_response" -eq 1 ]; then
+        if [ $user_y_n_response -eq 1 ]; then
             echo "Continuing setup process..."
             return 0
         else
@@ -663,7 +663,7 @@ function modify_openssl_src() {
         get_user_yes_no "Would you like to continue with the setup process using the default new value of $fallback_value instead?"
 
         # If fallback should be used, modify the speed.c file to use the fallback value instead, otherwise exit the setup script
-        if [ "$user_y_n_response" -eq 1 ]; then
+        if [ $user_y_n_response -eq 1 ]; then
             new_value=$fallback_value
         else
             echo "Exiting setup script..."
@@ -716,7 +716,7 @@ function modify_openssl_src() {
                 echo -e "It is possible to continue with the setup process using the fallback high values for the MAX_KEM_NUM and MAX_SIG_NUM values.\n"
                 get_user_yes_no "Would you like to continue with the setup process using the fallback values ($fallback_value algorithms)?"
 
-                if [ "$user_y_n_response" -eq 1 ]; then
+                if [ $user_y_n_response -eq 1 ]; then
                     echo "Continuing setup process with fallback values..."
                     new_value=$fallback_value
                 else
@@ -986,7 +986,7 @@ function oqs_provider_build() {
             get_user_yes_no "Would you like to continue with the setup process anyway?"
 
             # Determine the next action based on the user's response
-            if [ "$user_y_n_response" -eq 0 ]; then
+            if [ $user_y_n_response -eq 0 ]; then
                 echo -e "Exiting setup script..."
                 exit 1
             else
@@ -1005,7 +1005,7 @@ function oqs_provider_build() {
             get_user_yes_no "Would you like to continue with the setup process anyway?"
 
             # Determine the next action based on the user's response
-            if [ "$user_y_n_response" -eq 0 ]; then
+            if [ $user_y_n_response -eq 0 ]; then
                 echo -e "Exiting setup script..."
                 exit 1
             else
