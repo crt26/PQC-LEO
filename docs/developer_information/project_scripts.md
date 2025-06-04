@@ -79,28 +79,28 @@ For further information on the main setup script's usage, please refer to the ma
 This is a utility script for cleaning the various project files from the compiling and benchmarking operations. The script provides functionality for either uninstalling the OQS and other dependency libraries from the system, clearing the old results, algorithm list files, and generated TLS keys, or both.
 
 ### get_algorithms.py
-This Python utility script generates lists of supported cryptographic algorithms based on the currently installed versions of the Liboqs and OQS-Provider libraries. These lists are stored under the `test_data/alg_lists` directory and are used by benchmarking and parsing tools to determine which algorithms to run. Additionally, the utility script can be used to parse the OQS-Provider `ALGORITHMS.md` file to determine the number of algorithms it supports.
+This Python utility script generates lists of supported cryptographic algorithms based on the currently installed versions of the Liboqs, OpenSSL (classic + PQC), and OQS-Provider libraries. These lists are stored under the `test_data/alg_lists` directory and are used by benchmarking and parsing tools to determine which algorithms to run for computational performance testing and TLS handshakes testing.
 
-The `setup.sh` script primarily invokes this script, where an argument is passed to determine the installation and testing context. However, it can also be run manually to regenerate the algorithm list files.
+Primarily intended to be invoked by the `setup.sh` script, this utility accepts an argument that specifies the installation and testing context. However, it can also be run manually to regenerate the algorithm list files
 
 The script supports the following functionality:
 
-- Extracts supported KEM and digital signature algorithms from the Liboqs library using its built-in test binaries
+- Extracts supported PQC KEM and digital signature algorithms from the Liboqs library using its built-in test binaries.
 
-- Retrieves supported PQC and Hybrid-PQC TLS algorithms from the OQS-Provider via OpenSSL
+- Retrieves supported PQC and Hybrid-PQC TLS algorithms from OpenSSL and the OQS-Provider library.
 
-- Generates hardcoded lists of classical TLS algorithms for baseline performance comparisons
+- Generates hardcoded lists of classical TLS algorithms for baseline performance comparisons.
 
-- Parses the OQS-Provider’s `ALGORITHMS.md` file to determine the total number of supported algorithms (used by `setup.sh` when configuring OpenSSL’s `speed.c`)
+- Parses the OQS-Provider’s `ALGORITHMS.md` file to determine the total number of supported algorithms (used by setup.sh when configuring OpenSSL’s `speed.c`).
 
 The utility script accepts the following arguments:
 
-| **Argument** | **Functionality**                                                                                                             |
-|--------------|-------------------------------------------------------------------------------------------------------------------------------|
-| `1`          | Extracts algorithms for **Liboqs only**.                                                                                      |
-| `2`          | Extracts algorithms for **both Liboqs and OQS-Provider**.                                                                     |
-| `3`          | Extracts algorithms for **OQS-Provider only**.                                                                                |
-| `4`          | Parses `ALGORITHMS.md` from **OQS-Provider** to determine the total number of supported algorithms (used only by `setup.sh`). |
+| **Argument** | **Functionality**                                                                                                          |
+|--------------|----------------------------------------------------------------------------------------------------------------------------|
+| 1            | Extracts algorithms for **computational performance testing** (Liboqs algorithms only).                                    |
+| 2            | Extracts algorithms for both **computational and TLS performance testing** (Liboqs, OpenSSL, and OQS-Provider algorithms). |
+| 3            | Extracts algorithms for **TLS performance testing** (OpenSSL and OQS-Provider algorithms only).                            |
+| 4            | Parses `ALGORITHMS.md` from OQS-Provider to determine the total number of supported algorithms (used only by `setup.sh`).  |
 
 While running option `4` manually will work, it is unnecessary. This function is used exclusively by the `setup.sh` script to modify OpenSSL’s `speed.c` file when all OQS-Provider algorithms are enabled. Unlike the other arguments, it does not alter or create files in the repository; it only returns the algorithm count for use during setup.
 

@@ -182,10 +182,9 @@ def get_peak(mem_file, peak_metrics):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def pre_speed_processing(dir_paths, num_runs):
-    """ Function for preparing the speed up-result data to 
-        by removing system information in the file, allowing for
-        further processing in the script. """
-    
+    """ Function for preparing speed up-result data by removing system information, 
+        making it ready for further processing. """
+
     # Setup the destination directory in current machines up-results for pre-processed speed files
     if not os.path.exists(dir_paths['up_speed_dir']):
         os.makedirs(dir_paths['up_speed_dir'])
@@ -238,8 +237,8 @@ def pre_speed_processing(dir_paths, num_runs):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def speed_processing(dir_paths, num_runs, kem_algs, sig_algs):
-    """ Function for processing the computational CPU speed up-results and 
-        exporting the data into a clean CSV format """
+    """ Function for processing CPU speed up-results and exporting the data 
+        into a clean CSV format. """
 
     # Set the filename prefix variables
     kem_prefix = "test_kem_speed_"
@@ -406,10 +405,9 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def process_tests(machine_id, num_runs, dir_paths, kem_algs, sig_algs, replace_old_results):
-    """ Function for parsing the results for a single or multiple machines 
-        and stores them as csv files. Once up-results are processed
-        averages are calculated for the results """
-    
+    """ Function for parsing results for one or more machines, storing them as CSV files, 
+        and calculating averages once the up-results are processed. """
+
     # Declare the algorithm operations dictionary
     alg_operations = {'kem_operations': ["keygen", "encaps", "decaps"], 'sig_operations': ["keypair", "sign", "verify"]}
 
@@ -442,9 +440,9 @@ def process_tests(machine_id, num_runs, dir_paths, kem_algs, sig_algs, replace_o
 
 #------------------------------------------------------------------------------------------------------------------------------
 def parse_comp_performance(test_opts, replace_old_results):
-    """ Entrypoint for controlling the parsing of computational benchmarking results. This function
-        is called from the main parsing control script and will call the necessary functions to parse the results """
-
+    """ Entrypoint for parsing computational benchmarking results. 
+        Calls necessary functions to process the results. """
+    
     # Get the test options
     machine_id = test_opts[0]
     num_runs = test_opts[1]

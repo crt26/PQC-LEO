@@ -2,18 +2,18 @@
 Copyright (c) 2023-2025 Callum Turino
 SPDX-License-Identifier: MIT
 
-Utility script for retrieving supported cryptographic algorithms from the Liboqs and OQS-Provider libraries. 
+Utility script for retrieving supported cryptographic algorithms from the Liboqs, OpenSSL (classic + PQC), and OQS-Provider libraries. 
 It outputs these algorithms to text files used by benchmarking and parsing scripts to determine which 
-algorithms to test and evaluate.
+algorithms to test and evaluate for computational performance and TLS handshakes testing.
 
 Primarily intended to be called by the main setup.sh script, this utility accepts an argument that specifies 
 the installation type and determines which algorithm lists should be generated. It can also be executed manually.
 
 Accepted arguments:
-    1 - Liboqs only
-    2 - Liboqs and OQS-Provider
-    3 - OQS-Provider only
-    4 - Parse ALGORITHMS.md in OQS-Provider source to count supported algorithms
+    1 - Computational performance testing only (Liboqs algorithms)
+    2 - Computational and TLS performance testing (Liboqs, OpenSSL, and OQS-Provider algorithms)
+    3 - TLS performance testing only (OpenSSL and OQS-Provider algorithms)
+    4 - Parse ALGORITHMS.md in OQS-Provider source to count the total number of supported algorithms
 """
 
 #------------------------------------------------------------------------------------------------------------------------------
@@ -34,8 +34,8 @@ oqs_provider_src_dir = ""
 
 #------------------------------------------------------------------------------------------------------------------------------
 def output_help_message():
-    """ Helper function for outputting the help message to the user when the --help flag is present 
-        or when incorrect arguments are passed """
+    """ Helper function for outputting the help message to the user when the --help flag is present or
+        when incorrect arguments are passed. """
 
     # Output the supported options and their usage to the user
     print("get_algorithms.py [options]")
@@ -195,9 +195,9 @@ def get_liboqs_algs():
             return
 
 #------------------------------------------------------------------------------------------------------------------------------
-def oqs_provider_extract_algs(test_type, provider_type, output_str):
-    """ Helper function to extract the algorithms from the output string of the OpenSSL binary. The binary is passed 
-        the algorithm type and the OQS-Provider flags so that it prints out the algorithms supported for that type in OQS-Provider. """
+def extract_tls_algs(test_type, provider_type, output_str):
+    """ Helper function for Extracting PQC and Hybrid-PQC algorithms supported by OpenSSL and OQS-Provider from the output string, 
+        filtering based on the test type (PQC or Hybrid-PQC) and the provider type (OpenSSL or OQS-Provider). """
 
     # Set the algorithm lists used for the PQC and Hybrid-PQC algorithms
     algs = []
@@ -280,8 +280,7 @@ def oqs_provider_extract_algs(test_type, provider_type, output_str):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def get_tls_pqc_algs():
-    """ Function to get the PQC and Hybrid-PQC algorithms supported by 
-        the OQS-Provider library for the TLS benchmarking. """
+    """ Retrieves the PQC and Hybrid-PQC algorithms supported by both OpenSSL and OQS-Provider for TLS benchmarking. """
 
     # Set required path variables, algorithm categories, and provider flags
     openssl_bin = os.path.join(openssl_path, "bin","openssl")
@@ -315,7 +314,7 @@ def get_tls_pqc_algs():
 
             # Extract the PQC and Hybrid-PQC algorithms for TLS handshakes from the output string
             test_type = 0
-            provider_algs, provider_hybrid_algs = oqs_provider_extract_algs(test_type, provider_type, stdout)
+            provider_algs, provider_hybrid_algs = extract_tls_algs(test_type, provider_type, stdout)
 
             # Append the extracted algorithms to the master lists
             algs.extend(provider_algs)
@@ -323,7 +322,7 @@ def get_tls_pqc_algs():
 
             # Extract the speed algorithms for the current algorithm type
             test_type = 1
-            provider_algs, provider_hybrid_algs = oqs_provider_extract_algs(test_type, provider_type, stdout)
+            provider_algs, provider_hybrid_algs = extract_tls_algs(test_type, provider_type, stdout)
 
             # Append the extracted algorithms to the master lists
             speed_algs.extend(provider_algs)

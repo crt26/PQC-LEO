@@ -3,17 +3,19 @@
 # Copyright (c) 2023-2025 Callum Turino
 # SPDX-License-Identifier: MIT
 
-# Script executed from the client machine to benchmark the computational performance of PQC, Hybrid-PQC, and 
-# Classic digital signature and KEM algorithms using OpenSSL 3.5.0, with support for both native PQC and the OQS-Provider.
-# It receives test parameters from the main OQS-Provider test control script and runs OpenSSL's speed utility to collect
-# per-algorithm timing metrics. Results are stored in machine-specific directories under the appropriate 
-# TLS test type, using the assigned machine ID exported by the full-pqc-tls-test.sh script.
+# Client-side script for benchmarking the performance of cryptographic algorithms used in TLS, including 
+# Post-Quantum Cryptography (PQC), and Hybrid-PQC signature and Key Encapsulation Mechanism (KEM) algorithms.
+# This benchmarking is performed using OpenSSL 3.5.0's s_speed utility, which measures the execution time of 
+# cryptographic operations for each algorithm. The script evaluates both native PQC implementations available in 
+# OpenSSL and those integrated via OQS-Provider. The results are stored in machine-specific directories according 
+# to the selected test type (PQC, Hybrid-PQC, or Classic). Test parameters are passed from the main OQS-Provider 
+# benchmarking control script, which coordinates the execution and ensures synchronization of the tests.
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_test_env() {
-    # Function for setting up the global environment variables for the test suite. This includes determining the root directory 
-    # by tracing the script's location, and configuring paths for libraries, test data, and temporary files. The function
-    # also handles the creation of the algorithm list arrays and the output directories for the test results.
+    # Function for setting up the basic global variables for the script. This includes setting the root directory, the global 
+    # library paths for the test suite, and creating the algorithm arrays. The function establishes the root path by determining 
+    # the path of the script and using this, determines the root directory of the project.
 
     # Determine the directory that the script is being executed from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -116,8 +118,9 @@ function setup_test_env() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function tls_speed_test() {
-    # Function for running the TLS speed tests for the various algorithm types. It uses the OpenSSL s_speed utility to benchmark
-    # the performance of the specified algorithms using OpenSSL 3.5.0, with support for both native PQC and OQS-Provider algorithms.
+    # Function for running TLS speed tests on various algorithm types, measuring cryptographic performance using OpenSSL 
+    # 3.5.0's `s_speed` utility. The utility benchmarks signature and key exchange algorithms, supporting both native 
+    # PQC algorithms and those provided via the OQS-Provider.
 
     # Set the test parameter arrays
     test_types=("PQC-KEMs" "PQC-Digital Signatures" "Hybrid-PQC KEMs" "Hybrid-PQC-Digital-Signatures")
@@ -175,7 +178,8 @@ function tls_speed_test() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function tls_speed_test_entrypoint() {
-    # Main function for controlling the TLS speed performance tests
+    # Main function for managing the execution of TLS speed performance tests. 
+    # It sets up the environment, runs the tests for various algorithm types, and handles OpenSSL configuration modifications.
 
     # Setup the base environment for the test suite
     setup_test_env

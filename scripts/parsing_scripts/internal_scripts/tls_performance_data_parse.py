@@ -18,9 +18,8 @@ from internal_scripts.results_averager import TLSAverager
 
 #------------------------------------------------------------------------------------------------------------------------------
 def setup_parse_env(root_dir):
-    """ Function for setting up the environment for the PQC TLS parsing script. The function
-        will set the various directory paths, read in the algorithm lists, set the root directories 
-        and set the column headers for the CSV files that will be outputted. """
+    """ Function for setting up the environment for parsing PQC TLS results. Sets directory paths, reads algorithm lists, 
+        and defines column headers for output CSV files. """
 
     # Define the central paths dictionary that will be used by the various methods and functions
     dir_paths = {}
@@ -64,7 +63,6 @@ def setup_parse_env(root_dir):
     }
 
     # Declare the dictionary which contains testing types and defining the speed column headers
-    speed_type_vars = {"PQC": "", "Hybrid": ""}
     speed_headers = [
         ["Algorithm", "Keygen", "encaps", "decaps", "Keygen/s", "Encaps/s", "Decaps/s"], 
         ["Algorithm", "Keygen", "Signs", "Verify", "Keygen/s", "sign/s", "verify/s"]
@@ -185,7 +183,8 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def get_metrics(current_row, test_filepath, get_reuse_metrics):
-    """ Helper function to extract sig/KEM handshake metrics from s_time output files. """
+    """ Helper function to extract signature/KEM handshake metrics from s_time output files, 
+        handling both session ID first use and reuse metrics. """
 
     # Get the relevant data from the supplied performance metrics output file
     try:
@@ -314,9 +313,8 @@ def pqc_based_pre_processing(current_run, type_index, pqc_type_vars, col_headers
 
 #------------------------------------------------------------------------------------------------------------------------------
 def pqc_based_processing(current_run, dir_paths, algs_dict, pqc_type_vars, col_headers):
-    """ Function for parsing both PQC and PQC-Hybrid TLS results for the current run. The function will
-        process the results and output the full base results for the current run and then separate the
-        results into individual CSV files for each sig/kem combo. This will be done for both PQC and PQC-Hybrid. """
+    """ Function to parse and process both PQC and PQC-Hybrid TLS results for the current run. 
+        Generates base results and separates them into individual CSV files for each sig/KEM combo. """
 
     # Process the results for both PQC (0) and PQC-Hybrid (1) TLS results
     for type_index in range (0,2):
@@ -349,7 +347,8 @@ def pqc_based_processing(current_run, dir_paths, algs_dict, pqc_type_vars, col_h
 
 #------------------------------------------------------------------------------------------------------------------------------
 def classic_based_processing(current_run, dir_paths, algs_dict, col_headers):
-    """ Function for processing results from classic cipher TLS handshake testing """
+    """ Function to process TLS handshake results for classic cipher algorithms, 
+        extracting metrics and generating CSV files. """
 
     # Set the up-results directory path and create the dataframe used in test processing
     classic_up_results_dir = os.path.join(dir_paths['mach_up_results_dir'], "handshake_results", "classic")
@@ -405,8 +404,8 @@ def tls_speed_drop_last(data_cells):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def get_speed_metrics(speed_filepath, alg_type, speed_headers):
-    """ Function for extracting the speed metrics from the raw OpenSSL s_speed tool with OQS-Provider output file 
-        for the current algorithm type (kem or sig) """
+    """ Function to extract speed metrics from raw OpenSSL s_speed output for the specified 
+        algorithm type (KEM or SIG). """
 
     # Declare the variables needed for getting metrics and setting up the dataframe with test/alg type headers
     start = False
@@ -447,8 +446,8 @@ def get_speed_metrics(speed_filepath, alg_type, speed_headers):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def speed_processing(current_run, dir_paths, speed_headers, algs_dict):
-    """ Function for processing OpenSSL s_speed with OQS_Provider metrics for both PQC and PQC-Hybrid algorithms
-       for the current run """
+    """ Function to process OpenSSL and OQS-Provider s_speed metrics for both 
+        PQC and PQC-Hybrid algorithms in the current run. """
 
     # Define the alg type list 
     alg_types = ["kem", "sig"]
@@ -482,9 +481,8 @@ def speed_processing(current_run, dir_paths, speed_headers, algs_dict):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def output_processing(num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers):
-    """ Function for processing the outputs of the 
-        s_time and s_speed TLS benchmarking tests for the current machine """
-    
+    """ Function to process the results of s_time and s_speed TLS benchmarking tests for the current machine. """
+
     # Set the result directories paths in the central paths dictionary
     dir_paths['pqc_handshake_results'] = os.path.join(dir_paths['mach_handshake_dir'], "pqc")
     dir_paths['classic_handshake_results'] = os.path.join(dir_paths['mach_handshake_dir'], "classic")
@@ -546,9 +544,9 @@ def process_tests(machine_id, num_runs, dir_paths, algs_dict, pqc_type_vars, col
 
 #------------------------------------------------------------------------------------------------------------------------------
 def parse_tls_performance(test_opts, replace_old_results):
-    """ Main function for controlling the parsing of the OQS-Provider TLS handshake and speed results. This function
-        is called from the main parsing control script and will call the necessary functions to parse the results """
-
+    """ Entrypoint function for parsing OQS-Provider TLS handshake and speed results. 
+        Controls the parsing flow and triggers relevant functions. """
+    
     # Get test options and set test parameter vars
     machine_id = test_opts[0]
     num_runs = test_opts[1]

@@ -3,9 +3,9 @@ Copyright (c) 2023-2025 Callum Turino
 SPDX-License-Identifier: MIT
 
 Result averaging module for PQC benchmarking tools. Defines classes for calculating average metrics 
-from multi-run benchmarking outputs  produced by the Liboqs and OQS-Provider test suites. This module is 
+from multi-run benchmarking outputs produced by the computational and TLS performance test suites. This module is 
 used internally by the main parsing scripts and is not intended to be run standalone. It computes per-algorithm averages 
-for memory, CPU speed, and TLS handshake results, and exports the aggregated values in structured CSV format.
+for memory, CPU speed, and TLS handshake, and TLS speed results, and exports the aggregated values in structured CSV format.
 """
 
 #------------------------------------------------------------------------------------------------------------------------------
@@ -19,8 +19,8 @@ class ComputationalAverager:
     def __init__(self, dir_paths, kem_algs, sig_algs, num_runs, alg_operations):
         """ Class for generating average metrics from computational performance results.
             Computes per-algorithm averages across multiple benchmarking runs for both 
-            memory usage and CPU speed results. Called by the Liboqs parsing script after 
-            results have been processed into structured CSVs. """
+            memory usage and CPU speed results. Called by the computational performance parsing 
+            script after results have been processed into structured CSVs. """
 
         # Set the global class variables used in the class methods
         self.dir_paths = dir_paths
@@ -33,7 +33,7 @@ class ComputationalAverager:
     def avg_mem(self):
         """ Method for taking in the provided memory 
             results and generating an average for all the runs for
-            that current machine """
+            the machine-ID included in the results paths """
 
         # Declare the filepath prefix variables
         kem_mem_file_prefix = os.path.join(self.dir_paths['type_mem_dir'], "kem_mem_metrics_")
@@ -128,7 +128,7 @@ class ComputationalAverager:
     def avg_speed(self):
         """ Method for taking in the provided speed 
             results and generating an average for all the runs for
-            that current machine """
+            the machine-ID included in the results paths """
 
         # Declare the filepath prefix variables and fieldnames list
         kem_filename_prefix = os.path.join(self.dir_paths['type_speed_dir'], "test_kem_speed_")
@@ -232,10 +232,10 @@ class TLSAverager:
 
     #------------------------------------------------------------------------------
     def __init__(self, dir_paths, num_runs, algs_dict, pqc_type_vars, col_headers):
-        """ Class for generating average metrics from PQC sTLS benchmarking results.
+        """ Class for generating average metrics from PQC TLS benchmarking results.
             Supports PQC, PQC-Hybrid, and classic handshake results, as well as OpenSSL speed tests.
             Computes per-algorithm averages across multiple runs and outputs them to CSV format. 
-            Called by the oqs-provider parsing script. """
+            Called by the TLS performance parsing script. """
         
         # Set the global class variables used in the class methods
         self.dir_paths = dir_paths
@@ -248,7 +248,7 @@ class TLSAverager:
     def gen_pqc_avgs(self):
         """ Method for taking in the provided PQC TLS handshake
             results and generating an average for all the runs for
-            that current machine """
+            the machine-ID included in the results paths """
        
         # Process the result averages for both PQC (0) and PQC-Hybrid (1) TLS test types
         for type_index in range (0,2):
@@ -315,7 +315,7 @@ class TLSAverager:
     def gen_classic_avgs(self):
         """ Method for taking in the provided classic TLS handshake
             results and generating an average for all the runs for
-            that current machine """
+            the machine-ID included in the results paths"""
 
         # Declaring main average dataframe
         classic_avg_df = pd.DataFrame(columns=self.col_headers['classic_headers'])
@@ -389,7 +389,8 @@ class TLSAverager:
     #------------------------------------------------------------------------------
     def gen_speed_avgs(self, speed_headers):
         """ Method for taking in the provided TLS speed results 
-            and generating an average for all the runs for the current machine """
+            and generating an average for all the runs for the 
+            machine-ID included in the results paths """
         
         # Define the alg_types list for average processing
         alg_types = ["kem", "sig"]

@@ -3,7 +3,7 @@
 # Copyright (c) 2023-2025 Callum Turino
 # SPDX-License-Identifier: MIT
 
-# Script for controlling the TLS benchmarking suite using OpenSSL 3.5.0. Supports both native PQC algorithms and those 
+# Script for controlling the TLS benchmarking suite using OpenSSL 3.5.0. Supports both OpenSSL native PQC algorithms and those 
 # provided via OQS-Provider. It handles the configuration of test parameters, machine role assignment, port and environment 
 # validation, and result directory setup. Based on the selected machine role, the script calls the relevant client or 
 # server benchmarking script to perform handshake and speed tests across post-quantum, classical, and hybrid-pqc algorithm modes, 
@@ -11,8 +11,9 @@
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function get_user_yes_no() {
-    # Helper function for getting a yes or no response from the user for a given question regarding the setup process. The function
-    # then set the global user_y_n_response variable to 1 for yes and 0 for no. The function will loop until a valid response is given.
+    # Helper function to prompt the user for a yes or no response. The function loops until
+    # a valid response ('y' or 'n') is provided and sets the global variable `user_y_n_response`
+    # to 1 for 'yes' and 0 for 'no'.
 
     # Set the local user prompt variable to what was passed to the function
     local user_prompt="$1"
@@ -23,7 +24,7 @@ function get_user_yes_no() {
         # Output the question to the user and get their response
         read -p "$user_prompt (y/n): " user_input
 
-        # Check the user input is valid and set the user response variable
+        # Validate the input and set the response
         case $user_input in
 
             [Yy]* )
@@ -48,7 +49,8 @@ function get_user_yes_no() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function output_help_message() {
-    # Helper function for outputting the help message to the user when the --help flag is present or when incorrect arguments are passed
+    # Helper function for outputting the help message to the user when the --help flag is present or
+    # when incorrect arguments are passed.
 
     # Output the supported options and their usage to the user
     echo "Usage: pqc_tls_performance_test.sh [options]"
@@ -81,7 +83,7 @@ function is_valid_port() {
 #-------------------------------------------------------------------------------------------------------------------------------
 function parse_args {
     # Function for parsing the command line arguments passed to the script. Based on the detected arguments, the function will 
-    # set the relevant global flags and parameter variables that are used throughout the test control process.
+    # set the relevant global flags that are used throughout the setup process.
 
     # Check if the help flag is passed at any position in the command line arguments
     if [[ "$*" =~ --help ]]; then
@@ -330,9 +332,9 @@ function is_port_in_use() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_base_env() {
-    # Function for setting up the basic global variables for the test suite. This includes setting the root directory
-    # and the global library paths for the test suite. The function establishes the root path by determining the path of the script and
-    # using this, determines the root directory of the project.
+    # Function for setting up the foundational global variables required for the test suite. This includes determining the project's root directory,
+    # establishing paths for libraries, scripts, and test data, and validating the presence of required libraries. Additionally, it sets up environment
+    # variables for control ports and sleep timers, ensuring proper configuration for the test suite's execution.
 
     # Determine the directory that the script is being run from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -534,7 +536,7 @@ function clean_environment() {
 function get_machine_num() {
     # Helper function for getting the machine-ID from the user to assign to the test results
 
-    # Prompt the use for the machine number to be assigned to the results
+    # Prompt the use for the machine-ID to be assigned to the results
     while true; do
 
         # Get the machine-ID from the user
@@ -627,7 +629,9 @@ function handle_machine_id_clash() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function configure_results_dir() {
-    # Function for configuring the results directories for the test results
+    # Function responsible for setting up and managing the results directories for the test suite.
+    # This includes handling potential clashes with existing results, creating new directories for 
+    # unparsed and parsed results, and ensuring proper configuration for storing test outputs.
 
     # Set the results paths based on the machine-ID
     set_tls_paths
@@ -694,14 +698,15 @@ function configure_results_dir() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function configure_test_options {
-    # Function for configuring the test parameters, including machine type, number of test runs, and TLS test lengths, based on user input
+    # Function for configuring the test parameters based on user input. This includes selecting the machine type (server or client),
+    # specifying the number of test runs, and setting the TLS handshake and speed test durations.
 
     # Output the current task to the terminal
     echo -e "#########################"
     echo "Configure Test Parameters"
     echo -e "#########################\n"
 
-    # Prompt the user for the test machine selection until a valid response is given
+    # Prompt the user for the test machine type selection until a valid response is given
     while true; do
 
         # Outputting the test machine options to the user
@@ -838,8 +843,8 @@ function configure_test_options {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function check_transferred_keys() {
-    # Function for checking with the user they have generated and transferred the server certificates and private-keys
-    # to the client machine before starting tests
+    # Function to ensure the user has generated and transferred the necessary server certificates and private keys
+    # to the client machine before proceeding with the tests.
 
     # Check with the user if cert/keys have been transferred
     while true; do
@@ -865,9 +870,9 @@ function check_transferred_keys() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function run_tests() {
-    # Function for performing the TLS handshake and speed tests. It will get the IP address of the other machine from the user
-    # and check that the IP address is in the correct format. The function will then call the relevant test scripts based on
-    # the machine type selected.
+    # Function responsible for executing TLS handshake and speed tests. It prompts the user to provide the IP address of the 
+    # other machine, validates the format of the provided IP address. Based on the machine type (server or client), it invokes 
+    # the appropriate test scripts to perform the tests and handles any errors that may occur during execution.
    
     # Set the regex variable for checking the IP address format entered by user
     ipv4_regex_check="^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$"
@@ -960,8 +965,9 @@ function run_tests() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function handle_result_parsing() {
-    # Function for handling automatic result parsing based on user-defined flags. Calls the parsing script with 
-    # the correct arguments, including the replace flag if set, and verifies whether parsing completed successfully.
+    # Function for handling automatic result parsing based on user-defined flags. This function determines whether 
+    # to parse results automatically, replace old results, or skip parsing based on the flags set during the test 
+    # setup. It calls the parsing script with the appropriate arguments and verifies the success of the parsing process.
 
     # Parse the results if the flag is set to enabled
     if [ $parse_results -eq 1 ]; then

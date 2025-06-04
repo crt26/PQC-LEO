@@ -1,17 +1,19 @@
-#!/bin/bash
+!/bin/bash
 
 # Copyright (c) 2023-2025 Callum Turino
 # SPDX-License-Identifier: MIT
 
 # Utility script for cleaning up project files produced during PQC benchmarking.
-# Provides options to uninstall the OQS-Provider libraries, clear old benchmarking results and generated TLS keys, or perform both actions.
-# Uninstalling will remove the Liboqs, OQS-Provider, and OpenSSL 3.5.0 installations from the system.
+# Provides options to uninstall computational performance libraries, clear old benchmarking results, 
+# and generated TLS keys, or perform both actions.
+# Uninstalling will remove the necessary libraries and installations from the system.
 # Clearing results will remove test outputs and key material under the test-data directory.
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function get_user_yes_no() {
-    # Helper function for getting a yes or no response from the user for a given question regarding the setup process. The function
-    # then set the global user_y_n_response variable to 1 for yes and 0 for no. The function will loop until a valid response is given.
+    # Helper function to prompt the user for a yes or no response. The function loops until
+    # a valid response ('y' or 'n') is provided and sets the global variable `user_y_n_response`
+    # to 1 for 'yes' and 0 for 'no'.
 
     # Set the local user prompt variable to what was passed to the function
     local user_prompt="$1"
@@ -22,7 +24,7 @@ function get_user_yes_no() {
         # Output the question to the user and get their response
         read -p "$user_prompt (y/n): " user_input
 
-        # Check the user input is valid and set the user response variable
+        # Validate the input and set the response
         case $user_input in
 
             [Yy]* )
@@ -47,8 +49,9 @@ function get_user_yes_no() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_base_env() {
-    # Function for setting up the global environment variables for the test suite. This includes determining the root directory 
-    # by tracing the script's location, and configuring paths for libraries, test data, and temporary files.
+    # Function for initializing the global environment variables required by the utility script.
+    # This involves identifying the project's root directory and setting up paths for libraries,
+    # test data, temporary files, and other resources.
 
     # Determine the directory that the script is being executed from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)

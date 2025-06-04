@@ -3,17 +3,20 @@
 # Copyright (c) 2023-2025 Callum Turino
 # SPDX-License-Identifier: MIT
 
-# Client-side script for executing TLS handshake performance tests in coordination with a remote server. 
+# Client-side script for executing TLS handshake performance tests in coordination with a remote server.
 # It evaluates all supported combinations of classic, Post-Quantum Cryptography (PQC), and Hybrid-PQC signature
-# and KEM algorithms using OpenSSL 3.5.0, with support for both native PQC and the OQS-Provider. The script performs 
-# three main test suites: PQC-only, Hybrid-PQC, and Classic handshake tests. It is called by the TLS benchmarking controller 
-# script and uses globally defined test parameters, certificate files, and control signalling for synchronisation with the server.
+# and Key Encapsulation Mechanism (KEM) algorithms using OpenSSL 3.5.0, with support for both native PQC 
+# implementations and those integrated via OQS-Provider. The script performs three main test suites: 
+# PQC-only, Hybrid-PQC, and Classic handshake tests. It is called by the TLS benchmarking controller script 
+# and uses globally defined test parameters, certificate files, and control signalling for synchronization with the server.
+# As the client-side script, it stores the output of the tests based on parameters passed to it from the main controller script,
+# saving the results to the designated directories for later analysis.
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_base_env() {
-    # Function for setting up the basic global variables for the test suite. This includes setting the root directory
-    # and the global library paths for the test suite. The function establishes the root path by determining the path of the script and
-    # using this, determines the root directory of the project.
+    # Function for setting up the basic global variables for the script. This includes setting the root directory, the global 
+    # library paths for the test suite, and creating the algorithm arrays. The function establishes the root path by determining 
+    # the path of the script and using this, determines the root directory of the project.
 
     # Determine the directory that the script is being run from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)

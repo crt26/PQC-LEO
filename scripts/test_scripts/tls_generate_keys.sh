@@ -3,10 +3,10 @@
 # Copyright (c) 2023-2025 Callum Turino
 # SPDX-License-Identifier: MIT
 
-# Script for generating all the server certificates and keys required for the TLS handshake benchmarking suite. 
-# It creates classic, post-quantum, and hybrid-pqc certificates by generating CA keys, certificate signing requests, 
-# and signed server certificates using OpenSSL 3.5.0. The resulting key material must be copied to the client machine #
-# unless both client and server run on the same system.
+# Script for generating server certificates and keys for TLS handshake benchmarking.
+# Generates classic, Post-Quantum, and Hybrid-PQC certificates using OpenSSL 3.5.0, 
+# using PQC implementations natively available in OpenSSL and those integrated via OQS-Provider.
+# The generated key material must be copied to the client machine unless both client and server run on the same system.
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_base_env() {
@@ -98,7 +98,9 @@ function setup_base_env() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function classic_keygen() {
-    # Function for generating all of the server certificates and private-keys needed for the classic TLS benchmarking tests
+    # Function for generating server certificates and private keys required for PQC TLS handshake benchmarking tests.
+    # This includes creating CA certificates, server certificate signing requests, and signed server certificates using RSA
+    # and ECC digital signature algorithms supported both natively in OpenSSL.
 
     # Loop through the classic digital signature to generate the CA/server certs and private-key files
     for sig in "${classic_sigs[@]}"; do
@@ -227,7 +229,9 @@ function classic_keygen() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function pqc_keygen() {
-    # Function for generating all of the server certificates and private-keys needed for the PQC TLS benchmarking tests
+    # Function for generating server certificates and private keys required for PQC TLS handshake benchmarking tests.
+    # This includes creating CA certificates, server certificate signing requests, and signed server certificates using PQC digital 
+    # signature algorithms supported both natively in OpenSSL and integrated into OpenSSL via the OQS-Provider.
 
     # Loop through the PQC digital signature to generate the CA/server certs and private-key files
     for sig in "${sig_algs[@]}"; do
@@ -282,7 +286,9 @@ function pqc_keygen() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function hybrid_pqc_keygen() {
-    # Function for generating all of the server certificates and private-keys needed for the Hybrid-PQC TLS benchmarking tests
+    # Function for generating server certificates and private keys required for Hybrid-PQC TLS handshake benchmarking tests.
+    # This includes creating CA certificates, server certificate signing requests, and signed server certificates using Hybrid-PQC 
+    # digital signature algorithms supported both natively in OpenSSL and integrated into OpenSSL via the OQS-Provider.
 
     # Loop through the Hybrid-PQC digital signature to generate the CA/server certs and private-key files
     for sig in "${hybrid_sig_algs[@]}"; do
@@ -336,10 +342,14 @@ function hybrid_pqc_keygen() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function main() {
-    # Main function for controlling the certificate and private-key generation process for the various TLS benchmarking tests
+    # Main function coordinating the generation of certificates and private keys for TLS handshake benchmarking tests. 
+    # This includes support for classic, post-quantum (PQC), and Hybrid-PQC digital signature algorithms.
 
-    # Output a greeting message to the terminal
-    echo -e "TLS Certificate Generation Script (Supports OpenSSL-native PQC + OQS-Provider)\n"
+    # Output the welcome message to the terminal
+    echo "#########################################################"
+    echo "PQC-Evaluation-Tools - TLS Certificate & Key Generator"
+    echo "Classic | PQC | Hybrid-PQC (OpenSSL 3.5.0 + OQS-Provider)"
+    echo -e "#########################################################\n"
 
     # Setup the base environment for the script
     setup_base_env

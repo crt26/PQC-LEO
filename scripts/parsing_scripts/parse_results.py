@@ -19,8 +19,8 @@ import argparse
 
 #------------------------------------------------------------------------------------------------------------------------------
 def handle_args():
-    """ Function for handling the command line arguments passed to the script. The function uses the argparse
-        library to define the expected arguments and their types. The function returns the parsed arguments if valid. """
+    """ Function for Handling command-line arguments for the script, validates them, and returns the parsed arguments. 
+        Raises errors and exits if arguments are invalid. """
     
     # Define the argument parser and the valid options for the script
     parser = argparse.ArgumentParser(description="PQC-Evaluation-Tools Results Parsing Tool")
@@ -70,9 +70,9 @@ def handle_args():
 
 #------------------------------------------------------------------------------------------------------------------------------
 def setup_base_env():
-    """ Function for setting up the global environment variables for the test suite. The function establishes
-        the root path by determining the path of the script and recursively moving up the directory tree until
-        it finds the .pqc_eval_dir_marker.tmp file. The root path is then returned to the main function. """
+    """ Function for setting up the global environment by determining the root path. It recursively moves up the directory 
+        tree until it finds the .pqc_eval_dir_marker.tmp file, then returns the root path. """
+
     
     # Determine the directory that the script is being executed from and set the marker filename
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -128,9 +128,9 @@ def get_mode_selection():
 
 #------------------------------------------------------------------------------------------------------------------------------
 def get_test_opts(root_dir):
-    """ Helper function for getting the test parameters used in during the automated testing, which includes 
-        the number of runs and number of machines tested. """
-    
+    """ Helper function for getting the parsing mode from the user in interactive mode. It displays the available options 
+        and returns the selected choice. """
+
     # Get the Machine-ID to be parsed from the user
     while True:
         try:
@@ -160,7 +160,8 @@ def get_test_opts(root_dir):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def main():
-    """Main function which controls parsing of computational and TLS performance testing results"""
+    """ Main function for controlling the parsing of computational and TLS performance testing results. 
+        Handles both command-line and interactive modes to process results based on user input. """
 
     # Setup the base environment for the script
     root_dir = setup_base_env()
