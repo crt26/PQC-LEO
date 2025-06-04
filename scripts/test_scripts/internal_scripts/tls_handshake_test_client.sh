@@ -4,11 +4,10 @@
 # SPDX-License-Identifier: MIT
 
 # Client-side script for executing TLS handshake performance tests in coordination with a remote server. 
-# It evaluates all supported combinations of classic, Post-Quantum Cryptography (PQC), and Hybrid-PQC signature 
-# and KEM algorithms using OpenSSL 3.5.0 integrated with the OQS-Provider. The script performs three main test suites:
-# PQC-only, Hybrid-PQC, and Classic handshake tests. It is called by the full-oqs-provider-test.sh benchmarking 
-# controller script and uses globally defined test parameters, certificate files, and control signalling 
-# for synchronisation with the server.
+# It evaluates all supported combinations of classic, Post-Quantum Cryptography (PQC), and Hybrid-PQC signature
+# and KEM algorithms using OpenSSL 3.5.0, with support for both native PQC and the OQS-Provider. The script performs 
+# three main test suites: PQC-only, Hybrid-PQC, and Classic handshake tests. It is called by the TLS benchmarking controller 
+# script and uses globally defined test parameters, certificate files, and control signalling for synchronisation with the server.
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_base_env() {
@@ -87,7 +86,7 @@ function setup_base_env() {
 
     # Ensure that a control sleep time env variables has been passed if not disabled
     if [ -z "$CONTROL_SLEEP_TIME" ] && [ -z "$DISABLE_CONTROL_SLEEP" ]; then
-        echo "[ERROR] - Control sleep time env variable not set, this indicates a wider issue with the full-oqs-provider-test.sh script"
+        echo "[ERROR] - Control sleep time env variable not set. This likely indicates a broader issue with the TLS benchmarking controller script."
         exit 1
     fi
     
@@ -328,7 +327,7 @@ function pqc_tests() {
                     fi
 
                     # Set the output filename based on current combination and run
-                    output_name="tls_handshake_${run_num}_${sig_name-$kem}.txt"
+                    output_name="tls_handshake_${run_num}_${sig_name}_${kem}.txt"
 
                     # Reset the fail counter
                     fail_counter=0

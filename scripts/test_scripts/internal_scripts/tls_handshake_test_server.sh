@@ -5,9 +5,9 @@
 
 # Server-side script for executing TLS handshake performance tests in coordination with a remote client. 
 # It evaluates all supported combinations of classic, Post-Quantum Cryptography (PQC), and Hybrid-PQC signature
-# and KEM algorithms using OpenSSL 3.5.0 integrated with the OQS-Provider. The script performs three main test suites:
-# PQC-only, Hybrid-PQC, and Classic handshake tests. It is called by the full-oqs-provider-test.sh benchmarking 
-# controller script and uses globally defined test parameters, certificate and key files, and control signalling 
+# and KEM algorithms using OpenSSL 3.5.0, with support for both native PQC and the OQS-Provider. The script performs 
+# three main test suites: PQC-only, Hybrid-PQC, and Classic handshake tests. It is called by the TLS benchmarking controller 
+# script benchmarking and uses globally defined test parameters, certificate and key files, and control signalling 
 # for synchronisation with the client.
 
 #-------------------------------------------------------------------------------------------------------------------------------
@@ -51,7 +51,7 @@ function setup_base_env() {
 
     # Declare the global library directory path variables
     openssl_path="$libs_dir/openssl_3.5.0"
-    provider_path="$libs_dir/oqs-provider/lib"
+    provider_path="$libs_dir/oqs_provider/lib"
 
     # Declare global key storage directory paths
     key_storage_path="$test_data_dir/keys"
@@ -78,8 +78,8 @@ function setup_base_env() {
     # Set the alg-list txt filepaths
     kem_alg_file="$test_data_dir/alg_lists/tls_kem_algs.txt"
     sig_alg_file="$test_data_dir/alg_lists/tls_sig_algs.txt"
-    hybrid_kem_alg_file="$test_data_dir/alg_lists/tls-hybr_kem_algs.txt"
-    hybrid_sig_alg_file="$test_data_dir/alg_lists/tls-hybr_sig_algs.txt"
+    hybrid_kem_alg_file="$test_data_dir/alg_lists/tls_hybr_kem_algs.txt"
+    hybrid_sig_alg_file="$test_data_dir/alg_lists/tls_hybr_sig_algs.txt"
 
     # Set the test classic algorithms and ciphers arrays
     classic_algs=("RSA_2048" "RSA_3072" "RSA_4096" "prime256v1" "secp384r1" "secp521r1")
@@ -87,7 +87,7 @@ function setup_base_env() {
 
     # Ensure that a control sleep time env variables has been passed if not disabled
     if [ -z "$CONTROL_SLEEP_TIME" ] && [ -z "$DISABLE_CONTROL_SLEEP" ]; then
-        echo "[ERROR] - Control sleep time env variable not set, this indicates a wider issue with the full-oqs-provider-test.sh script"
+        echo "[ERROR] - Control sleep time env variable not set. This likely indicates a broader issue with the TLS benchmarking controller script."
         exit 1
     fi
 

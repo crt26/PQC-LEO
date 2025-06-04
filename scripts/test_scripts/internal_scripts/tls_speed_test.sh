@@ -4,8 +4,8 @@
 # SPDX-License-Identifier: MIT
 
 # Script executed from the client machine to benchmark the computational performance of PQC, Hybrid-PQC, and 
-# Classic digital signature and KEM algorithms integrated into OpenSSL 3.5.0 via the OQS-Provider. It receives 
-# test parameters from the main OQS-Provider test control script and runs OpenSSL's speed utility to collect
+# Classic digital signature and KEM algorithms using OpenSSL 3.5.0, with support for both native PQC and the OQS-Provider.
+# It receives test parameters from the main OQS-Provider test control script and runs OpenSSL's speed utility to collect
 # per-algorithm timing metrics. Results are stored in machine-specific directories under the appropriate 
 # TLS test type, using the assigned machine ID exported by the full-pqc-tls-test.sh script.
 
@@ -117,15 +117,15 @@ function setup_test_env() {
 #-------------------------------------------------------------------------------------------------------------------------------
 function tls_speed_test() {
     # Function for running the TLS speed tests for the various algorithm types. It uses the OpenSSL s_speed utility to benchmark
-    # the performance of the specified algorithms when integrated into OpenSSL 3.5.0 via the OQS-Provider.
+    # the performance of the specified algorithms using OpenSSL 3.5.0, with support for both native PQC and OQS-Provider algorithms.
 
     # Set the test parameter arrays
-    test_types=("PQC KEMs" "PQC Digital Signatures" "Hybrid-PQC KEMs" "Hybrid-PQC Digital Signatures")
+    test_types=("PQC-KEMs" "PQC-Digital Signatures" "Hybrid-PQC KEMs" "Hybrid-PQC-Digital-Signatures")
     alg_lists=("${kem_algs[*]}" "${sig_algs[*]}" "${hybrid_kem_algs[*]}" "${hybrid_sig_algs[*]}")
     output_files=(
         "$PQC_SPEED/tls_speed_kem" 
         "$PQC_SPEED/tls_speed_sig" 
-        "$HYBRID_SPEED/tls_speed_hybrid_kem" 
+        "$HYBRID_SPEED/tls_speed_hybrid_kem"
         "$HYBRID_SPEED/tls_speed_hybrid_sig"
     )
 

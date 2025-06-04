@@ -12,7 +12,7 @@ of the original algorithm list files used for testing.
 
 #------------------------------------------------------------------------------------------------------------------------------
 from internal_scripts.performance_data_parse import parse_comp_performance
-from internal_scripts.tls_performance_data_parse import parse_oqs_provider
+from internal_scripts.tls_performance_data_parse import parse_tls_performance
 import os
 import sys
 import argparse
@@ -189,7 +189,7 @@ def main():
         elif args.parse_mode == "tls":
             print("Parsing TLS Performance Results")
             tls_test_opts = [args.machine_id, args.total_runs, root_dir]
-            parse_oqs_provider(tls_test_opts, replace_old_results)
+            parse_tls_performance(tls_test_opts, replace_old_results)
 
     else:
 
@@ -222,7 +222,7 @@ def main():
             tls_test_opts = get_test_opts(root_dir)
 
             # Call the parsing script for OQS-Provider TLS results
-            parse_oqs_provider(tls_test_opts, replace_old_results)
+            parse_tls_performance(tls_test_opts, replace_old_results)
 
         elif user_parse_mode == '3':
 
@@ -241,7 +241,7 @@ def main():
             print("Computational Performance Parsing complete\n")
 
             # Parse the TLS performance results
-            parse_oqs_provider(tls_test_opts, replace_old_results)
+            parse_tls_performance(tls_test_opts, replace_old_results)
             print("TLS Performance Parsing complete\n")
 
         else:

@@ -228,11 +228,11 @@ class ComputationalAverager:
         sig_speed_avg.to_csv(sig_csv_name, index=False)
 
 #------------------------------------------------------------------------------------------------------------------------------
-class OqsProviderResultAverager:
+class TLSAverager:
 
     #------------------------------------------------------------------------------
     def __init__(self, dir_paths, num_runs, algs_dict, pqc_type_vars, col_headers):
-        """ Class for generating average metrics from OQS-Provider TLS benchmarking results.
+        """ Class for generating average metrics from PQC sTLS benchmarking results.
             Supports PQC, PQC-Hybrid, and classic handshake results, as well as OpenSSL speed tests.
             Computes per-algorithm averages across multiple runs and outputs them to CSV format. 
             Called by the oqs-provider parsing script. """

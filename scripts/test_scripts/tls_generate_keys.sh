@@ -264,7 +264,7 @@ function pqc_keygen() {
         "$openssl_path/bin/openssl" x509 \
             -req \
             -in "$pqc_cert_dir/${sig}_srv.csr" \
-            -out "$pqc_cert_dir/${sig}-srv.crt" \
+            -out "$pqc_cert_dir/${sig}_srv.crt" \
             -CA "$pqc_cert_dir/${sig}_CA.crt" \
             -CAkey "$pqc_cert_dir/${sig}_CA.key" \
             -CAcreateserial \
@@ -306,7 +306,7 @@ function hybrid_pqc_keygen() {
         "$openssl_path/bin/openssl" req \
             -new \
             -newkey $sig \
-            -keyout "$hybrid_cert_dir/${sig}-srv.key" \
+            -keyout "$hybrid_cert_dir/${sig}_srv.key" \
             -out "$hybrid_cert_dir/${sig}_srv.csr" \
             -nodes \
             -subj "/CN=oqstest $sig server" \
@@ -339,7 +339,7 @@ function main() {
     # Main function for controlling the certificate and private-key generation process for the various TLS benchmarking tests
 
     # Output a greeting message to the terminal
-    echo -e "OQS-Provider TLS Certificate Generation Script\n"
+    echo -e "TLS Certificate Generation Script (Supports OpenSSL-native PQC + OQS-Provider)\n"
 
     # Setup the base environment for the script
     setup_base_env
@@ -369,7 +369,7 @@ function main() {
     hybrid_pqc_keygen
 
     # Restore the OpenSSL conf file to have configuration needed for testing scripts
-    if ! "$util_scripts/configure_openssl-cnf.sh" 2; then
+    if ! "$util_scripts/configure_openssl_cnf.sh" 2; then
         echo "[ERROR] - Failed to modify OpenSSL configuration."
         exit 1
     fi

@@ -413,7 +413,7 @@ def process_tests(machine_id, num_runs, dir_paths, kem_algs, sig_algs, replace_o
     # Declare the algorithm operations dictionary
     alg_operations = {'kem_operations': ["keygen", "encaps", "decaps"], 'sig_operations': ["keypair", "sign", "verify"]}
 
-    # Create an instance of the Liboqs average generator class before processing results
+    # Create an instance of the computational performance average generator class before processing results
     comp_avg = ComputationalAverager(dir_paths, kem_algs, sig_algs, num_runs, alg_operations)
 
     # Set the unparsed-directory paths in the central paths dictionary

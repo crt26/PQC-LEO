@@ -3,11 +3,11 @@
 # Copyright (c) 2023-2025 Callum Turino
 # SPDX-License-Identifier: MIT
 
-# Script for controlling the OQS-Provider TLS benchmarking suite using OpenSSL 3.5.0. It handles the configuration 
-# of test parameters, machine role assignment, port and environment validation, and result directory setup. Based on 
-# the selected machine role, the script calls the relevant client or server benchmarking script to perform handshake 
-# and speed tests across post-quantum, classical, and hybrid-pqc algorithm modes, storing results in machine-specific 
-# directories for later analysis.
+# Script for controlling the TLS benchmarking suite using OpenSSL 3.5.0. Supports both native PQC algorithms and those 
+# provided via OQS-Provider. It handles the configuration of test parameters, machine role assignment, port and environment 
+# validation, and result directory setup. Based on the selected machine role, the script calls the relevant client or 
+# server benchmarking script to perform handshake and speed tests across post-quantum, classical, and hybrid-pqc algorithm modes, 
+# storing results in machine-specific directories for later analysis.
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function get_user_yes_no() {
@@ -51,7 +51,7 @@ function output_help_message() {
     # Helper function for outputting the help message to the user when the --help flag is present or when incorrect arguments are passed
 
     # Output the supported options and their usage to the user
-    echo "Usage: full-oqs-provider-test.sh [options]"
+    echo "Usage: pqc_tls_performance_test.sh [options]"
     echo "Options:"
     echo "  --server-control-port=<PORT>       Set the server control port             (1024-65535)"
     echo "  --client-control-port=<PORT>       Set the client control port             (1024-65535)"
@@ -167,6 +167,7 @@ function parse_args {
                 fi
 
                 # Set the disable control sleep flag and shift
+                echo -e "[NOTICE] - Control Signal Sleep Timer Disabled\n"
                 disable_control_sleep="True"
 
                 shift
@@ -237,6 +238,7 @@ function parse_args {
 
             # Determine the next action based on the user response
             if [ $user_y_n_response -eq 1 ]; then
+                echo -e "[NOTICE] - Control Signal Sleep Timer Disabled\n"
                 disable_control_sleep="True"
             else
                 echo -e "\nExiting script..."
@@ -439,7 +441,7 @@ function setup_base_env() {
                     continue
 
                 elif [ "$custom_port_index" -eq 2 ] && [ "$port_process" == "openssl" ]; then
-                    echo "[WARNING] - ${port_names[$custom_port_index]} is active from a previous test, killing the process"
+                    echo -e "[WARNING] - ${port_names[$custom_port_index]} is active from a previous test, killing the process\n"
                     kill -9 "$port_pid"
 
                 else
@@ -470,7 +472,7 @@ function set_tls_paths() {
     # to the environment for the server/client script.
 
     # Set the result directory paths based on assigned machine-ID for results
-    export MACHINE_RESULTS_PATH="$test_data_dir/up_results/oqs_provider/machine_$MACHINE_NUM"
+    export MACHINE_RESULTS_PATH="$test_data_dir/up_results/tls_performance/machine_$MACHINE_NUM"
     export MACHINE_HANDSHAKE_RESULTS="$MACHINE_RESULTS_PATH/handshake_results"
     export MACHINE_SPEED_RESULTS="$MACHINE_RESULTS_PATH/speed_results"
 
@@ -656,7 +658,7 @@ function configure_results_dir() {
     fi
 
     # Set the parsed results directory path based on the decided machine-ID
-    parsed_results_path="$test_data_dir/results/oqs_provider/machine_$MACHINE_NUM"
+    parsed_results_path="$test_data_dir/results/tls_performance/machine_$MACHINE_NUM"
 
     # Check if Parsed results already exist for the Machine-ID
     if [ -d "$parsed_results_path" ]; then
@@ -850,7 +852,7 @@ function check_transferred_keys() {
             break
 
         else
-            echo -e "\nPlease generate the certs and keys needed for testing using oqsprovider-generate-keys.sh and transfer to client machine before testing"
+            echo -e "\nPlease generate the certificates and keys needed for testing (e.g., via tls_generate_keys.sh) and transfer them to the client machine."
             echo -e "\nExiting test..."
             sleep 2
             exit 0
@@ -969,7 +971,7 @@ function handle_result_parsing() {
 
             # Call the result parsing script to parse the results with replace flag not set
             python3 "$result_parser_script" \
-                --parse-mode="oqs-provider"  \
+                --parse-mode="tls"  \
                 --machine-id="$MACHINE_NUM" \
                 --total-runs=$NUM_RUN
             exit_status=$?
@@ -978,7 +980,7 @@ function handle_result_parsing() {
 
             # Call the result parsing script to parse the results with replace flag set
             python3 "$result_parser_script" \
-                --parse-mode="oqs-provider"  \
+                --parse-mode="tls"  \
                 --machine-id="$MACHINE_NUM" \
                 --total-runs=$NUM_RUN \
                 --replace-old-results
@@ -989,7 +991,8 @@ function handle_result_parsing() {
         # Ensure that the parsing script completed successfully
         if [ $exit_status -eq 0 ]; then
             echo -e "\nParsed results can be found in the following directory:"
-            echo "$test_data_dir/results/oqs_provider/machine_$MACHINE_NUM"
+            echo "$parsed_results_path"
+
         else
             echo -e "\n[WARNING] - Result parsing failed, manual calling of parsing script is now required\n"
         fi
@@ -998,7 +1001,7 @@ function handle_result_parsing() {
 
         # Output the complete message with the test results path to the user
         echo -e "All performance testing complete, the unparsed results for Machine-ID ($MACHINE_NUM) can be found in:"
-        echo "Results Dir Path - $MACHINE_RESULTS_PATH"
+        echo "$MACHINE_RESULTS_PATH"
         
     else
         echo -e "\n[ERROR] - parse_results flag not set correctly, manual calling of parsing script is now required\n"
@@ -1010,12 +1013,12 @@ function handle_result_parsing() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function main() {
-    # Main function for controlling the automated OQS-Provider PQC TLS performance testing
+    # Main function for controlling automated TLS performance testing using PQC algorithms supported by OpenSSL and OQS-Provider
 
     # Output the welcome message to the terminal
-    echo "#####################################################################"
-    echo "PQC-Evaluation-Tools - Automated OQS-Provider TLS Performance Testing"
-    echo -e "#####################################################################\n"
+    echo "############################################################"
+    echo "PQC-Evaluation-Tools - Automated PQC TLS Performance Testing"
+    echo -e "############################################################\n"
 
     # Set the default global flag variables
     custom_control_time_flag="False"

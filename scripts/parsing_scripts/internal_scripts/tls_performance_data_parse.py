@@ -2,10 +2,10 @@
 Copyright (c) 2023-2025 Callum Turino
 SPDX-License-Identifier: MIT
 
-OQS-Provider result parsing script for PQC TLS performance benchmarking.  
-Parses raw TLS handshake and OpenSSL speed test outputs produced by the automated OQS-Provider test suite,  
-structures the results into clean CSV files, and computes averaged metrics using the results_averager module.  
-This script is called by the central parse_results.py controller and supports single-machine, multi-run setups.
+Result parsing script for PQC TLS performance benchmarking.
+Parses raw TLS handshake and OpenSSL speed test outputs produced by the automated test suite, 
+structures the results into clean CSV files, and computes averaged metrics using the results_averager module. 
+Supports setups using both OpenSSL-native PQC algorithms and the OQS-Provider.
 """
 
 #------------------------------------------------------------------------------------------------------------------------------
@@ -14,11 +14,11 @@ import os
 import sys
 import shutil
 import time
-from internal_scripts.results_averager import OqsProviderResultAverager
+from internal_scripts.results_averager import TLSAverager
 
 #------------------------------------------------------------------------------------------------------------------------------
 def setup_parse_env(root_dir):
-    """ Function for setting up the environment for the OQS-Provider TLS parsing script. The function
+    """ Function for setting up the environment for the PQC TLS parsing script. The function
         will set the various directory paths, read in the algorithm lists, set the root directories 
         and set the column headers for the CSV files that will be outputted. """
 
@@ -72,8 +72,8 @@ def setup_parse_env(root_dir):
 
     # Set the test results directory paths in the central paths dictionary
     dir_paths['root_dir'] = root_dir
-    dir_paths['results_dir'] = os.path.join(root_dir, "test_data", "results", "oqs_provider")
-    dir_paths['up_results'] = os.path.join(root_dir, "test_data", "up_results", "oqs_provider")
+    dir_paths['results_dir'] = os.path.join(root_dir, "test_data", "results", "tls_performance")
+    dir_paths['up_results'] = os.path.join(root_dir, "test_data", "up_results", "tls_performance")
 
     # Set the alg-list filenames for the various PQC test types (PQC and PQC-Hybrid)
     alg_list_files = {
@@ -124,13 +124,13 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
         else:
 
             # Output the warning message to the terminal
-            print(f"[WARNING] - There are already parsed OQS-Provider testing results present for Machine-ID ({machine_id})\n")
+            print(f"[WARNING] - Parsed TLS performance results already exist for Machine-ID ({machine_id})\n")
 
             # Get the decision from user on how to handle old results before parsing continues
             while True:
 
                 # Output the potential options and handle user choice
-                print(f"From the following options, choose how would you like to handle the old OQS-Provider results:\n")
+                print(f"From the following options, choose how you would like to handle the existing TLS performance results:\n")
                 print("Option 1 - Replace old parsed results with new ones")
                 print("Option 2 - Exit parsing programme to move old results and rerun after (if you choose this option, please move the entire folder not just its contents)")
                 print("Option 3 - Make parsing script programme wait until you have move files before continuing")
@@ -185,8 +185,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def get_metrics(current_row, test_filepath, get_reuse_metrics):
-    """ Helper function for pulling the current sig/kem metrics from 
-        the supplied OQS-Provider s_time output file. """
+    """ Helper function to extract sig/KEM handshake metrics from s_time output files. """
 
     # Get the relevant data from the supplied performance metrics output file
     try:
@@ -506,12 +505,11 @@ def output_processing(num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers
 
 #------------------------------------------------------------------------------------------------------------------------------
 def process_tests(machine_id, num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers, replace_old_results):
-    """ Function for controlling the parsing scripts for the OQS-Provider TLS testing up-result files
-        and calling average  calculation scripts """
+    """ Function for controlling the parsing scripts for the PQC TLS performance testing up-result files
+        and calling average calculation scripts """
 
-    # Create an instance of the OQS-Provider average generator class before processing results
-    oqs_provider_avg = None
-    oqs_provider_avg = OqsProviderResultAverager(dir_paths, num_runs, algs_dict, pqc_type_vars, col_headers)
+    # Create an instance of the TLS average generator class before processing results
+    tls_avg = TLSAverager(dir_paths, num_runs, algs_dict, pqc_type_vars, col_headers)
 
     # Set the machine's results directories paths in the central paths dictionary
     dir_paths['mach_results_dir'] = os.path.join(dir_paths['results_dir'], f"machine_{str(machine_id)}")
@@ -542,12 +540,12 @@ def process_tests(machine_id, num_runs, dir_paths, algs_dict, pqc_type_vars, col
 
     # Call the processing function and the average calculation methods for the current machine
     output_processing(num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers)
-    oqs_provider_avg.gen_pqc_avgs()
-    oqs_provider_avg.gen_classic_avgs()
-    oqs_provider_avg.gen_speed_avgs(speed_headers)
+    tls_avg.gen_pqc_avgs()
+    tls_avg.gen_classic_avgs()
+    tls_avg.gen_speed_avgs(speed_headers)
 
 #------------------------------------------------------------------------------------------------------------------------------
-def parse_oqs_provider(test_opts, replace_old_results):
+def parse_tls_performance(test_opts, replace_old_results):
     """ Main function for controlling the parsing of the OQS-Provider TLS handshake and speed results. This function
         is called from the main parsing control script and will call the necessary functions to parse the results """
 
@@ -557,7 +555,7 @@ def parse_oqs_provider(test_opts, replace_old_results):
     root_dir = test_opts[2]
 
     # Setup script environment
-    print(f"\nPreparing to Parse OQS-Provider Results:\n")
+    print(f"\nPreparing to Parse TLS Performance Results:\n")
     dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers = setup_parse_env(root_dir)
 
     # Process the OQS-Provider results
