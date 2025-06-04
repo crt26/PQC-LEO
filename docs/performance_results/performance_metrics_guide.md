@@ -68,7 +68,7 @@ The table below describes the metrics included in the CPU benchmarking results:
 ### Memory Benchmarking
 The memory benchmarking tool evaluates how much memory individual PQC cryptographic operations consume when executed on the system. This is accomplished by running the `test-kem-mem` and `test-sig-mem` Liboqs tools for each PQC algorithm and its respective operations with the Valgrind Massif profiler. Each operation is performed once with the Valgrind Massif profiler to gather peak memory usage and can be tested across multiple runs to ensure consistency.
 
-The following table describes the memory-related metrics captured during after the  result parsing process has been completed:
+The following table describes the memory-related metrics captured after the result parsing process has been completed:
 
 | **Metric** | **Description**                                                                 |
 |------------|---------------------------------------------------------------------------------|
@@ -92,13 +92,13 @@ The table below outlines where this data is stored and how it's organised in the
 | Performance Averages | Parsed    | Average results for the performance metrics across test runs.                                                                                          | Located alongside parsed CSV files in `results/computational_performance/machine_X/` |
 
 ## PQC TLS Performance Metrics
-The TLS performance testing suite benchmarks PQC, Hybrid-PQC, and classical algorithm configurations available through both OpenSSL's native support and the OQS-Provider. As of OpenSSL 3.5.0, PQC algorithms are supported through both sources, and the suite is designed to evaluate performance consistently across the full range of available implementations. It measures performance within the TLS 1.3 handshake protocol as well as the execution speed of cryptographic operations directly through OpenSSL. This provides insight into how PQC schemes perform in real-world security protocol scenarios. Classical digital signature algorithms and cipher suites are also tested to establish a performance baseline for comparison with PQC and Hybrid-PQC configurations.
+The TLS performance testing suite benchmarks PQC, Hybrid-PQC, and classical algorithm configurations available through both OpenSSL's native support and the OQS-Provider. As of OpenSSL 3.5.0, PQC algorithms are supported through both sources, and the suite is designed to evaluate performance consistently across the full range of available implementations. It measures performance within the TLS 1.3 handshake protocol and the execution speed of cryptographic operations directly through OpenSSL. This provides insight into how PQC schemes perform in real-world security protocol scenarios. Classical digital signature algorithms and ciphersuites are also tested to establish a performance baseline for comparison with PQC and Hybrid-PQC configurations.
 
 As part of the automated TLS testing, two categories of evaluations are conducted:
 
 - **TLS Handshake Testing** - This simulates full TLS 1.3 handshakes using OpenSSL’s `s_server` and `s_time` tools, evaluating both standard and session-resumed connections.
 
-- **TLS Speed Testing** - This uses the OpenSSL `s_speed` tool to benchmark the algorithm’s low-level operations, such as key generation, encapsulation, signing, and verification.
+- **TLS Speed Testing** - This uses the OpenSSL `s_speed` tool to benchmark the algorithm's low-level operations, such as key generation, encapsulation, signing, and verification.
 
 ### TLS Handshake Testing
 The TLS handshake performance tests measure how efficiently different PQC, Hybrid-PQC, and classical algorithm combinations perform during the TLS 1.3 handshake process. These tests are executed using OpenSSL's built-in benchmarking tools (`s_server` and `s_time`).
@@ -117,9 +117,9 @@ The table below describes the performance metrics gathered during this testing:
 | Connections in Real Time (Session Reuse)    | Handshakes per real-world time with session reuse. Reflects practical performance with resumed sessions.          |
 
 ### TLS Speed Testing
-TLS speed testing benchmarks the raw cryptographic performance of PQC and Hybrid-PQC algorithms when integrated into the OpenSSL for both natively supported algorithms and those provided by the OQS-Provider library. This is done using the OpenSSL `s_speed` tool, which measures the execution time and throughput of cryptographic operations for each algorithm.
+TLS speed testing benchmarks the raw cryptographic performance of PQC and Hybrid-PQC algorithms when integrated into OpenSSL for both natively supported algorithms and those provided by the OQS-Provider library. This is done using the OpenSSL `s_speed` tool, which measures the execution time and throughput of cryptographic operations for each algorithm.
 
-The primary objective of this test is to gather the base system performance of the schemes when integrated into the OpenSSL library. The results provide insight into the algorithm’s standalone efficiency when running within OpenSSL, which can produce additional overhead compared to the performance tests provided by the computational performance testing suite.
+The primary objective of this test is to gather the base system performance of the schemes when integrated into the OpenSSL library. The results provide insight into the algorithm's standalone efficiency when running within OpenSSL, which can produce additional overhead compared to the performance tests provided by the computational performance testing suite.
 
 #### Digital Signature Algorithm Metrics
 The following table describes the metrics collected for digital signature algorithms during TLS speed testing:

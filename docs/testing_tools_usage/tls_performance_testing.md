@@ -1,7 +1,7 @@
 # Automated PQC TLS Performance Benchmarking Tool Usage Guide <!-- omit from toc -->
 
 ## Overview <!-- omit from toc -->
-This tool provides automated benchmarking for PQC-enabled TLS 1.3 handshakes and cryptographic operations within OpenSSL 3.5.0. It supports testing of both OpenSSL-native PQC algorithms and those integrated into OpenSSL via the OQS-Provider library. The benchmarking process evaluates TLS handshakes using Post-Quantum Cryptography (PQC) and Hybrid-PQC cipher suites, as well as traditional cryptographic algorithms for baseline comparison.
+This tool provides automated benchmarking for PQC-enabled TLS 1.3 handshakes and cryptographic operations within OpenSSL 3.5.0. It supports testing of both OpenSSL-native PQC algorithms and those integrated into OpenSSL via the OQS-Provider library. The benchmarking process evaluates TLS handshakes using Post-Quantum Cryptography (PQC) and Hybrid-PQC ciphersuites, as well as traditional cryptographic algorithms for baseline comparison.
 
 Tests can be conducted either on a single machine (localhost) or across two networked machines, using a physical or virtual connection. The tool collects detailed timing and performance metrics for each algorithm combination under test.
 
@@ -29,7 +29,7 @@ The relevant PQC TLS Performance testing scripts can be found in the `scripts/te
 The automated testing tool is currently only supported on the following devices:
 
 - x86 Linux Machines using a Debian-based operating system
-- ARM Linux devices using a 64-bit Debian based Operating System
+- ARM Linux devices using a 64-bit Debian-based Operating System
 
 ## Supported PQC Algorithms
 This tool supports all PQC and Hybrid-PQC algorithms available through OpenSSL 3.5.0 and the OQS-Provider. However, due to known incompatibilities and dependency limitations, a small number of algorithms are excluded from testing.
@@ -81,9 +81,9 @@ Upon executing the script, the testing tool will prompt you to enter the paramet
 The testing tool will prompt you to enter the parameters for the test. These parameters include:
 
 - Machine type (server or client)
-- Whether the results should have a custom Machine-ID assigned to them (if machine is client)
-- Duration of each TLS handshake tests (if machine is client) **†**
-- Duration of TLS speed tests (if machine is client) **††**
+- Whether the results should have a custom Machine-ID assigned to them (if the machine is a client)
+- Duration of each TLS handshake tests (if the machine is a client) **†**
+- Duration of TLS speed tests (if the machine is a client) **††**
 - Number of test runs to be performed
 - IP address of the other machine (use 127.0.0.1 for single-machine testing)
 
@@ -126,7 +126,7 @@ When two machines are used for testing that are connected over a physical/virtua
 
 3. Use the IP address of the client machine when prompted
 
-4. Now begin the setup of the client machine before the testing can begin
+4. Now, begin the setup of the client machine before the testing can begin
 
 #### Client Setup:
 1. On the client machine, run the `pqc_tls_performance_test.sh` script
@@ -164,7 +164,7 @@ For complete details on parsing functionality and a breakdown of the collected P
 - [Performance Metrics Guide](../performance_results/performance_metrics_guide.md)
 
 ## Advanced Testing Customisation
-The TLS performance testing script supports several configuration options that allow the benchmarking process to be tailored to specific environments. These options are particularly useful when operating in restricted networks, virtualised environments, or when precise control over test behaviour is required.
+The TLS performance testing script supports several configuration options that allow the benchmarking process to be tailored to specific environments. These options are beneficial when operating in restricted networks, virtualised environments, or when precise control over test behaviour is required.
 
 The currently supported testing customisation options are as follows:
 

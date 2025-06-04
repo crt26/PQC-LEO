@@ -1,7 +1,7 @@
 # Project Scripts Documentation <!-- omit from toc --> 
 
 ## Overview <!-- omit from toc --> 
-This document provides additional reference information for the various scripts in the repository. This documentation is designed primarily for developers or those who wish to understand better the core functionality of the project's various scripts.
+This document provides additional reference information for the various scripts in the repository. This documentation is designed primarily for developers or those who wish to better understand the core functionality of the project's various scripts.
 
 The scripts are grouped into the following categories:
 
@@ -33,7 +33,7 @@ It provides overviews of each script’s purpose, functionality, and any relevan
   - [results\_averager.py](#results_averagerpy)
 
 ## Project Utility Scripts
-These utility scripts assist with development, testing, and environment setup. Most utility scripts are located in the `scripts/utility_scripts` directory, except `cleaner.sh` and `setup.sh`, which is placed in the project's root for convenience. The utility scripts are primarily designed to be called from the various automation scripts in the repository, but some can be called manually if needed.
+These utility scripts assist with development, testing, and environment setup. Most utility scripts are located in the `scripts/utility_scripts` directory, except `cleaner.sh` and `setup.sh`, which are placed in the project's root for convenience. The utility scripts are primarily designed to be called from the various automation scripts in the repository, but some can be called manually if needed.
 
 The project utility scripts include the following:
 
@@ -165,14 +165,14 @@ The Full PQC TLS Test tool uses several scripts to conduct the TLS performance t
 - tls_speed_test.sh (Internal Script)
 - tls_generate_keys.sh
 
-Testing scripts are stored in the `scripts/testing_scripts` directory whilst internal scripts are stored in the `scripts/testing_scripts/internal_scripts` directory. Internal scripts are indented to be called by the main testing scripts and do not support being called in isolation.
+Testing scripts are stored in the `scripts/testing_scripts` directory, whilst internal scripts are stored in the `scripts/testing_scripts/internal_scripts` directory. Internal scripts are intended to be called by the main testing scripts and do not support being called in isolation.
 
 ### pqc_tls_performance_test.sh
-This is the main controller script used to execute the full TLS performance benchmarking suite. This provides both TLS handshake and TLS speed testing for PQC, Hybrid-PQC and classical encryptions algorithms supported in both the OpenSSL 3.5.0 and OQS-Provider libraries. It automatically coordinates the execution of the TLS handshake and cryptographic speed tests by calling the appropriate subordinate scripts. All results are organised and stored under the relevant machine directory using the provided Machine-ID. It is designed to be run on both the client and server machines and prompts the user for required parameters such as machine role, IP addresses, test duration, and number of runs. It coordinates the execution of all relevant test scripts (`tls_handshake_test_server.sh`, `tls_handshake_test_client.sh`, and `tls_speed_test.sh`). It ensures the results are stored correctly based on the assigned machine ID. When running on the client, it configures the TLS handshake and speed benchmarking test parameters.
+This is the main controller script used to execute the full TLS performance benchmarking suite. This provides both TLS handshake and TLS speed testing for PQC, Hybrid-PQC and classical encryption algorithms supported in both the OpenSSL 3.5.0 and OQS-Provider libraries. It automatically coordinates the execution of the TLS handshake and cryptographic speed tests by calling the appropriate subordinate scripts. All results are organised and stored under the relevant machine directory using the provided Machine-ID. It is designed to be run on both the client and server machines and prompts the user for required parameters such as machine role, IP addresses, test duration, and number of runs. It coordinates the execution of all relevant test scripts (`tls_handshake_test_server.sh`, `tls_handshake_test_client.sh`, and `tls_speed_test.sh`). It ensures the results are stored correctly based on the assigned machine ID. When running on the client, it configures the TLS handshake and speed benchmarking test parameters.
 
 It is important to note that when conducting testing, the `pqc_tls_performance_test.sh` script will prompt the user for parameters regarding the handling of storing and managing test results if the machine or current shell has been designated as the client (depending on whether single machine or separate machine testing is being performed).
 
-The script accepts the passing of various arguments when called, which allows the user to configure components of the automated testing functionality. For further information on their usage, please refer to the [TLS Performance Testing Instructions](../testing_tools_usage/tls_performance_testing.md) documentation file.
+The script accepts the passing of various arguments when called, which allows the user to configure components of the automated testing functionality. Please refer to the [TLS Performance Testing Instructions](../testing_tools_usage/tls_performance_testing.md) documentation file for further information on their usage.
 
 **Accepted Script Arguments:**
 
@@ -191,7 +191,7 @@ This script handles the server-side operations for the automated TLS handshake p
 This script handles the client-side operations for the automated TLS handshake performance testing. It performs tests across various combinations of PQC and Hybrid-PQC digital signature and KEM algorithms, as well as classical-only handshakes. The script includes error handling and will coordinate with the client to retry failed tests using control signalling. This script is intended to be called only by the `pqc_tls_performance_test.sh` script and **cannot be run manually**.
 
 ### tls_speed_test.sh
-This script performs TLS cryptographic operation benchmarking. It tests the CPU performance of PQC, Hybrid-PQC, and classical digital signature and KEM operations as implemented within OpenSSL (either natively or via OQS-Provider). This script is intended to be called only by the `pqc_tls_performance_test.sh` script and **cannot be run manually**. It is only called if the machine or current shell has been designated as the client (depending on whether single machine or separate machine testing is performed).
+This script performs TLS cryptographic operation benchmarking. It tests the CPU performance of PQC, Hybrid-PQC, and classical digital signature and KEM operations implemented within OpenSSL (natively or via OQS-Provider). This script is intended to be called only by the `pqc_tls_performance_test.sh` script and **cannot be run manually**. It is only called if the machine or current shell has been designated as the client (depending on whether single-machine or separate-machine testing is performed).
 
 ### tls_generate_keys.sh
 This script generates all the certificates and private keys needed for TLS handshake performance testing. It creates a certificate authority (CA) and server certificate for each PQC, Hybrid-PQC, and classical digital signature algorithm and KEM used in the tests. The generated keys must be copied to the client machine before running handshake tests so both machines can access the required certificates. This is particularly relevant if conducting testing between two machines over a physical/virtual network.
@@ -206,11 +206,11 @@ Various Python files included in the project provide the automatic result parsin
 - tls_performance_data_parse.py
 - results_averager.py
 
-These scripts support both automated invocation (triggered by the automated test scripts) and manual execution via terminal input or command-line flags. Parsing is currently **supported only on Linux systems**. Windows environments are not supported due to the inability to create the necessary environment needed for parsing the raw performance results.
+These scripts support automated invocation (triggered by the automated test scripts) and manual execution via terminal input or command-line flags. Parsing is currently **supported only on Linux systems**. Windows environments are not supported due to the inability to create the environment needed to parse the raw performance results.
 
-By default, parsing is triggered automatically at the end of each test run. The test scripts pass the necessary parameters (Machine-ID, number of runs, and test type) directly to the parsing system.
+By default, parsing is triggered automatically at the end of each test run. The test scripts directly pass the necessary parameters (Machine-ID, number of runs, and test type) to the parsing system.
 
-While several scripts are utilised for the result parsing process, only the `parse_results.py` is intended to be called. The main parsing script calls the remaining scripts depending on which parameters the user supplies to the script when prompted. The main parsing script is stored in the `scripts/parsing_scripts` directory whilst internal scripts are stored in the `scripts/parsing_scripts/internal_scripts` directory.
+While several scripts are utilised for the result parsing process, only the `parse_results.py` is intended to be called. The main parsing script calls the remaining scripts depending on which parameters the user supplies to the script when prompted. The main parsing script is stored in the `scripts/parsing_scripts` directory, whilst internal scripts are stored in the `scripts/parsing_scripts/internal_scripts` directory.
 
 For full documentation on how the parsing system works, including usage instructions and a breakdown of the performance metrics collected, please refer to the following documentation:
 
@@ -220,10 +220,10 @@ For full documentation on how the parsing system works, including usage instruct
 ### parse_results.py
 This script acts as the main controller for the result-parsing processes. It supports two modes of operation:
 
-- **Interactive Mode:** Prompts the user to select a result type (computational performance, tls performance, or both) and to enter parsing parameters such as Machine-ID and number of test runs.
-- **Command-Line Mode:** Accepts the same parameters via flags. This mode is used by the automated test scripts and can also be called manually for scripting purposes.
+- **Interactive Mode:** Prompts the user to select a result type (computational performance, TLS performance, or both) and to enter parsing parameters such as Machine-ID and number of test runs.
+- **Command-Line Mode:** Accepts the same parameters via flags. The automated test scripts use this mode and can also be called manually for scripting purposes.
 
-In both modes, the script identifies the relevant raw test results located in the `test_data/up_results` directory and invokes the appropriate parsing routines to generate structured CSV output. The results are then saved to the `test_data/results` directory, organised by test type and Machine-ID.
+In both modes, the script identifies the relevant raw test results in the `test_data/up_results` directory and invokes the appropriate parsing routines to generate structured CSV output. The results are then saved to the `test_data/results` directory, organised by test type and Machine-ID.
 
 **Usage Examples:**
 
@@ -239,16 +239,16 @@ Command-Line Mode:
 python3 parse_results.py --parse-mode=computational --machine-id=2 --total-runs=10
 ```
 
-The table below outlines each of the accepted commands and which are required for operation:
+The table below outlines each of the accepted commands that are required for operation:
 
-| **Argument**            | **Description**                                                                        | **Required Flag (*)** |
-|-------------------------|----------------------------------------------------------------------------------------|-----------------------|
-| `--parse-mode=<str>`    | Must be either computational or tls. both is not allowed here.                         | *                     |
-| `--machine-id=<int>`    | Machine-ID used during testing (positive integer).                                     | *                     |
-| `--total-runs=<int>`    | Number of test runs (must be > 0).                                                     | *                     |
-| `--replace-old-results` | Optional flag to force overwrite of any existing results for the specified Machine-ID. |                       |
+| **Argument**            | **Description**                                                                     | **Required Flag (*)** |
+|-------------------------|-------------------------------------------------------------------------------------|-----------------------|
+| `--parse-mode=<str>`    | Must be either computational or tls, both is not allowed here.                      | *                     |
+| `--machine-id=<int>`    | Machine-ID used during testing (positive integer).                                  | *                     |
+| `--total-runs=<int>`    | Number of test runs (must be > 0).                                                  | *                     |
+| `--replace-old-results` | Optional flag to force overwrite any existing results for the specified Machine-ID. |                       |
 
-**Note:** The command-line mode does not support parsing both result types in one call. Use interactive mode to combine parsing of computational performance and TLS performance data in a single session.
+**Note:** The command-line mode does not support parsing both result types in one call. Use interactive mode to combine the parsing of computational performance and TLS performance data in a single session.
 
 ### performance_data_parse.py
 This script contains functions for parsing un-parsed computational benchmarking data, transforming unstructured speed and memory test data into clean, structured CSV files. It processes CPU performance results and memory usage metrics gathered from Liboqs for each algorithm and operation across multiple test runs and machines. This script is **not to be called manually** and is only invoked by the `parse_results.py` script.
@@ -257,4 +257,4 @@ This script contains functions for parsing un-parsed computational benchmarking 
 This script processes TLS performance data collected from handshake and OpenSSL speed benchmarking using PQC, Hybrid-PQC, and classical algorithms. It extracts timing and cycle count metrics from both TLS communication and cryptographic operations, outputting the results into clean CSV files for analysis. This script is **not to be called manually** and is only invoked by the `parse_results.py` script.
 
 ### results_averager.py
-This script provides the internal classes used to generate average benchmarking results across multiple test runs for the two testing types. It is used by both `performance_data_parse.py` and `tls_performance_data_parse.py` to generate per-algorithm averages across multiple test runs. For computational performance tests, it handles the collection of CPU speed and memory profiling metrics collected using Liboqs. For TLS performance tests, it calculates average handshake durations and cryptographic operation timings gathered from OpenSSL with the OQS-Provider. This script is **not to be called manually** and is only executed internally by the result parsing scripts.
+This script provides the internal classes used to generate average benchmarking results across multiple test runs for the two testing types. It is used by both `performance_data_parse.py` and `tls_performance_data_parse.py` to generate per-algorithm averages across multiple test runs. For computational performance tests, it handles the collection of CPU speed and memory profiling metrics collected using Liboqs. For TLS performance tests, it calculates average handshake durations and cryptographic operation timings gathered from OpenSSL with the OQS-Provider. This script is **not to be called manually** and only executes internally by the result parsing scripts.

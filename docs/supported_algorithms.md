@@ -3,7 +3,7 @@
 ## Support Overview <!-- omit from toc -->
 This document outlines the Key Exchange Mechanisms (KEM) and digital signature algorithms supported in this project based on the upstream cryptographic dependencies (Liboqs, OQS-Provider, and OpenSSL). It also details exclusions and the rationale behind them.
 
-The PQC-Evaluation-Tools project provides support for all the PQC algorithms provided by its various dependency libraries. However, there are some exceptions to this which are detailed in the following subsections. For detailed information of the algorithms this project supports, please refer to the following dependency library documentation:
+The PQC-Evaluation-Tools project provides support for all the PQC algorithms provided by its various dependency libraries. However, there are some exceptions to this, which are detailed in the following subsections. For detailed information on the algorithms this project supports, please refer to the following dependency library documentation:
 
 - [Liboqs Supported Algorithms](https://github.com/open-quantum-safe/liboqs?tab=readme-ov-file#supported-algorithms)
 - [OpenSSL Supported PQC Algorithms](https://github.com/openssl/openssl/releases/tag/openssl-3.5.0)
@@ -28,7 +28,7 @@ The PQC-Evaluation-Tools project provides support for all the PQC algorithms pro
   - [Supported Digital Signature Algorithms](#supported-digital-signature-algorithms-2)
 
 ## Dependency Usage by Testing Category
-Different testing categories within this project utilize distinct combinations of upstream cryptographic dependencies. The table below summarizes which libraries are used in each testing context:
+Different testing categories within this project utilise distinct combinations of upstream cryptographic dependencies. The table below summarises which libraries are used in each testing context:
 
 | **Testing Category**              | **Dependencies Used**       |
 |-----------------------------------|-----------------------------|
@@ -36,7 +36,7 @@ Different testing categories within this project utilize distinct combinations o
 | TLS Handshake Testing             | OpenSSL 3.5.0, OQS-Provider |
 | OpenSSL speed Benchmarking        | OpenSSL 3.5.0, OQS-Provider |
 
-Whilst OQS-Provider utilises the implementations available in Liboqs, hence the need for it when compiling OQS-Provider, the algorithms it provides does differ. As such, its specific algorithm support is documented separately in its own section.
+Whilst OQS-Provider utilises the implementations available in Liboqs, hence the need for it when compiling OQS-Provider, the algorithms it provides differ. As such, its specific algorithm support is documented separately in its own section.
 
 ## Liboqs Algorithms
 
@@ -164,14 +164,14 @@ For additional information, please refer to the following documentation:
 ## OpenSSL Algorithms
 
 ### Algorithm Support Summary
-OpenSSL 3.5.0 introduces native support for the NIST-standardized post-quantum cryptographic algorithms **ML-KEM**, **ML-DSA**, and **SLH-DSA**. This project integrates these algorithms for TLS benchmarking where possible. However, some limitations affect their usage in performance testing and handshake scenarios:
+OpenSSL 3.5.0 introduces native support for the NIST-standardised post-quantum cryptographic algorithms **ML-KEM**, **ML-DSA**, and **SLH-DSA**. This project integrates these algorithms for TLS benchmarking where possible. However, some limitations affect their usage in performance testing and handshake scenarios:
 
 #### Known Limitations
 - **ML-DSA** and **SLH-DSA** are currently not supported by the OpenSSL `speed` utility, making them unavailable for cryptographic performance benchmarking.
 
 - **SLH-DSA** is supported at the provider level (e.g., for generating X.509 certificates) but is not yet integrated into the OpenSSL TLS stack (`s_client`, `s_server`, or `speed`). Its future integration into TLS 1.3 is being tracked via this [IETF draft](https://datatracker.ietf.org/doc/html/draft-reddy-tls-slhdsa-01). Until then, SPHINCS+ from the OQS-Provider will be used as a placeholder for stateless hash-based signatures in TLS tests.
   
-- The **X448MLKEM1024** Hybrid-PQC KEM is implemented and supported by OpenSSL's `speed` tool but not registered as a TLS group. It is excluded from handshake testing, though it remains available for standalone benchmarking and non-TLS evaluations.
+- The **X448MLKEM1024** Hybrid-PQC KEM is implemented and supported by OpenSSL's `speed` tool, but not registered as a TLS group. It is excluded from handshake testing, though it remains available for standalone benchmarking and non-TLS evaluations.
 
 #### Classical Algorithm Benchmarks
 To provide performance baselines for comparison, classical algorithms are also included in TLS benchmarking:
@@ -233,7 +233,7 @@ The following **UOV** algorithms do remain supported for TLS handshake testing:
 - p256_OV_Ip_pkc_skc
 
 #### OpenSSL 3.5.0 Compatibility
-With the introduction of native PQC support in OpenSSL 3.5.0, the OQS-Provider automatically disables its own implementations of overlapping algorithms (e.g., ML-KEM, ML-DSA, SLH-DSA) to avoid conflicts during provider initialization.
+With the introduction of native PQC support in OpenSSL 3.5.0, the OQS-Provider automatically disables its own implementations of overlapping algorithms (e.g., ML-KEM, ML-DSA, SLH-DSA) to avoid conflicts during provider initialisation.
 For further information on this, please refer to the following OQS-Provider documentation:
 
 #### Additional Information

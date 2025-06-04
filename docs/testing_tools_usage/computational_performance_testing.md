@@ -17,7 +17,7 @@ The tool outputs raw performance metrics in CSV and text formats, which are late
 The automated testing tool is currently only supported on the following devices:
 
 - x86 Linux Machines using a Debian-based operating system
-- ARM Linux devices using a 64-bit Debian based Operating System
+- ARM Linux devices using a 64-bit Debian-based Operating System
 
 **Notice:** The HQC KEM algorithms are disabled by default in recent Liboqs versions due to a disclosed IND-CCA2 vulnerability. For benchmarking purposes, the setup process includes an optional flag to enable HQC, accompanied by a user confirmation prompt and warning. For instructions on enabling HQC, see the [Advanced Setup Configuration Guide](../advanced_setup_configuration.md), and refer to the [Disclaimer Document](../../DISCLAIMER.md) for more information on this issue.
 
@@ -33,10 +33,10 @@ The automated test script is located in the `scripts/testing_scripts` directory 
 When executed, the testing script will prompt you to configure the benchmarking parameters.
 
 ### Configuring Testing Parameters
-Before testing begins, the script will prompt you to configure a few testing parameters which includes:
+Before testing begins, the script will prompt you to configure a few testing parameters, which include:
 
-- Whether the results should have a custom Machine-ID assigned to them.
-- The number of times each test should be run to allow for more accurate average calculation.
+- Should the results have a custom Machine-ID assigned to them?
+- The number of times each test should be run to allow for a more accurate average calculation.
 
 #### Machine Comparison Option <!-- omit from toc -->
 The first testing option is:

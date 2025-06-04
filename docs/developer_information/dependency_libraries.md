@@ -13,4 +13,4 @@ This document lists the **specific commits** used as the last tested versions of
 
 > **Note:** These versions are used by default unless the `--latest-dependency-versions` flag is explicitly set during setup.
 
-For installation instructions, see the [Installation Instructions](../README.md#installation-instructions).
+For installation instructions, see the [Installation Instructions](../README.md#installation-instructions) section in the main README.
