@@ -1,7 +1,7 @@
 # Supported PQC Algorithms <!-- omit from toc -->
 
 ## Support Overview <!-- omit from toc -->
-This document outlines the Key Exchange Mechanisms (KEM) and digital signature algorithms supported in this project based on the upstream cryptographic dependencies (liboqs, OQS-Provider, and OpenSSL). It also details exclusions and the rationale behind them.
+This document outlines the Key Exchange Mechanisms (KEM) and digital signature algorithms supported in this project based on the upstream cryptographic dependencies (Liboqs, OQS-Provider, and OpenSSL). It also details exclusions and the rationale behind them.
 
 The PQC-Evaluation-Tools project provides support for all the PQC algorithms provided by its various dependency libraries. However, there are some exceptions to this which are detailed in the following subsections. For detailed information of the algorithms this project supports, please refer to the following dependency library documentation:
 
@@ -12,6 +12,7 @@ The PQC-Evaluation-Tools project provides support for all the PQC algorithms pro
 > **Notice:** If you use the --latest-dependency-versions flag with the main setup script to pull the most recent versions of the OQS libraries, the supported algorithms may differ from what is documented here. This documentation reflects support based on the last tested versions of the dependencies and may not be accurate for upstream updates.
 
 ## Contents <!-- omit from toc -->
+- [Dependency Usage by Testing Category](#dependency-usage-by-testing-category)
 - [Liboqs Algorithms](#liboqs-algorithms)
   - [Algorithm Support Summary](#algorithm-support-summary)
   - [Supported KEM Algorithms](#supported-kem-algorithms)
@@ -26,6 +27,17 @@ The PQC-Evaluation-Tools project provides support for all the PQC algorithms pro
   - [Supported KEM Algorithms](#supported-kem-algorithms-2)
   - [Supported Digital Signature Algorithms](#supported-digital-signature-algorithms-2)
 
+## Dependency Usage by Testing Category
+Different testing categories within this project utilize distinct combinations of upstream cryptographic dependencies. The table below summarizes which libraries are used in each testing context:
+
+| **Testing Category**              | **Dependencies Used**       |
+|-----------------------------------|-----------------------------|
+| Computational Performance Testing | Liboqs                      |
+| TLS Handshake Testing             | OpenSSL 3.5.0, OQS-Provider |
+| OpenSSL speed Benchmarking        | OpenSSL 3.5.0, OQS-Provider |
+
+Whilst OQS-Provider utilises the implementations available in Liboqs, hence the need for it when compiling OQS-Provider, the algorithms it provides does differ. As such, its specific algorithm support is documented separately in its own section.
+
 ## Liboqs Algorithms
 
 ### Algorithm Support Summary
@@ -39,8 +51,8 @@ These exceptions are reflected in the support tables below. For users who wish t
 
 For additional information, please refer to the following documentation:
 
-- See the [Advanced Setup Configuration Guide](../advanced-setup-configuration.md) for instructions on enabling HQC.
-- Refer to the [Disclaimer Document](../../DISCLAIMER.md) for security warnings and usage guidance.
+- See the [Advanced Setup Configuration Guide](./advanced_setup_configuration.md) for instructions on enabling HQC.
+- Refer to the [Disclaimer Document](../DISCLAIMER.md) for security warnings and usage guidance.
 
 ### Supported KEM Algorithms
 
@@ -228,7 +240,7 @@ For further information on this, please refer to the following OQS-Provider docu
 For further details on algorithm support, compatibility, or enabling algorithms disabled by default, see:
 
 - [OQS-Provider Notice](https://github.com/open-quantum-safe/oqs-provider?tab=readme-ov-file#35-and-greater)
-- [Advanced Setup Configuration Guide](../advanced-setup-configuration.md)
+- [Advanced Setup Configuration Guide](./advanced_setup_configuration.md)
 
 ### Supported KEM Algorithms
 

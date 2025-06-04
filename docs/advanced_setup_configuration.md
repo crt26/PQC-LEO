@@ -14,10 +14,10 @@ By default, the setup process uses the **last tested versions** of the OQS libra
 
 This option may provide access to the most recent algorithm updates and bug fixes, but it may also introduce breaking changes due to upstream modifications. The setup script will display a warning and require explicit confirmation before proceeding with the latest versions.
 
-For more information on the specific versions used by default, see the [Dependency Libraries](./developer-information/dependency-libraries.md) documentation.
+For more information on the specific versions used by default, see the [Dependency Libraries](./developer_information/dependency_libraries.md) documentation.
 
 ## Adjusting OpenSSL speed Tool Hardcoded Limits
-When enabling all disabled digital signature algorithms during the OQS-Provider setup, the number of registered algorithms can exceed OpenSSL's internal limits. This causes the OpenSSL `s_speed` benchmarking tool to fail due to hardcoded values (`MAX_KEM_NUM` and `MAX_SIG_NUM`) in its source code.
+When the setup script is run using the `Full Install` or `TLS Testing Libraries Only` modes, an optional prompt allows enabling all digital signature algorithms disabled by default in the OQS-Provider library. If this option is selected, the total number of registered signature and KEM algorithms may exceed OpenSSL’s internal limits. This causes the OpenSSL `s_speed` benchmarking tool to fail due to hardcoded values (`MAX_KEM_NUM` and `MAX_SIG_NUM`) in its source code.
 
 By default, the main setup script will attempt to detect and patch these values automatically in the `s_speed` tool's source code. However, if you wish to manually set a custom value (or if auto-patching fails), you can use the following flag:
 
@@ -30,7 +30,7 @@ Replace [integer] with the desired value. The setup script will then patch the s
 For further details on this issue and the future plans to address the problem, please refer to this [git issue](https://github.com/crt26/pqc-evaluation-tools/issues/25) on the repositories page.
 
 ## Enabling HQC KEM Algorithms in Liboqs
-Recent versions of the Liboqs library disable the HQC KEM algorithms by default due to a known **IND-CCA2 vulnerability**. However, the PQC Evaluation Tools framework allows users to optionally re-enable HQC algorithms **for benchmarking purposes only**. This acts as a temporary solution until the updated implementation of HQC is addeed to Liboqs in version 0.14.0. 
+The computational performance benchmarking system in this project relies on PQC implementations from the Liboqs library. Recent versions of Liboqs disable HQC KEM algorithms by default due to a known **IND-CCA2 vulnerability**. The benchmarking suite provides an optional setup flag to re-enable HQC for **benchmarking purposes only**, as a temporary measure until a revised HQC implementation is included in Liboqs version 0.14.0.
 
 To enable HQC, use the following setup flag:
 
@@ -38,7 +38,7 @@ To enable HQC, use the following setup flag:
 ./setup.sh --enable-hqc-algs
 ```
 
-When this flag is provided, the setup script will present a clear warning explaining the associated risks of enabling HQC. The user must then explicitly confirm before HQC support is included in the Liboqs build.
+When this flag is provided, the setup script will display a warning outlining the associated risks. Explicit user confirmation is required before HQC algorithms are included in the Liboqs build.
 
 If enabled, the setup script will:
 - Pass the appropriate CMake flag to Liboqs to include HQC algorithms.
