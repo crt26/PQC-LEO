@@ -320,8 +320,6 @@ def get_tls_pqc_algs():
             )
             stdout, stderr = process.communicate()
 
-            print(stdout)
-
             # Extract the PQC and Hybrid-PQC algorithms for TLS handshakes from the output string
             test_type = 0
             provider_algs, provider_hybrid_algs = extract_tls_algs(test_type, provider_type, stdout)
