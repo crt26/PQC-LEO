@@ -209,9 +209,17 @@ def extract_tls_algs(test_type, provider_type, output_str):
     # leave commented until SLH-DSA is supported for TLS handshakes in OpenSSL
     #native_pqc_pattern = re.compile(r'^(MLKEM[0-9]+|MLDSA[0-9]+|SLH-DSA-[A-Z0-9-]+[a-z]*)$')
 
-    # Set the UOV exclude and include patterns
-    uov_exclude_pattern = re.compile(r'^(p(256|384|521)_)?OV_.*')
-    uov_include = ["OV_Ip_pkc", "p256_OV_Ip_pkc", "OV_Ip_pkc_skc", "p256_OV_Ip_pkc_skc"]
+    # Set the UOV and SNOVA exclude and include patterns
+    exclude_pattern = re.compile(r'^(p(256|384|521)_)?(OV_|snova)')
+    include_list = [
+        "OV_Ip_pkc", "p256_OV_Ip_pkc",
+        "OV_Ip_pkc_skc", "p256_OV_Ip_pkc_skc",
+        "snova2454", "p256_snova2454",
+        "snova2454esk", "p256_snova2454esk",
+        "snova37172", "p256_snova37172",
+        "snova2455", "p384_snova2455",
+        "snova2965", "p521_snova2965"
+    ]
 
     # Set the regex pattern to match OpenSSL native PQC algorithms depending on the test type
     if test_type == 0:
@@ -242,7 +250,7 @@ def extract_tls_algs(test_type, provider_type, output_str):
             alg = alg.split(" @ ")[0]
 
         # Skip over algorithms that are to be excluded from the list
-        if test_type == 0 and ((uov_exclude_pattern.match(alg) and alg not in uov_include) or alg in excluded_algs):
+        if test_type == 0 and ((exclude_pattern.match(alg) and alg not in include_list) or alg in excluded_algs):
             continue
 
         # Determine what filters are needed based on the provider type
@@ -311,6 +319,8 @@ def get_tls_pqc_algs():
                 universal_newlines=True
             )
             stdout, stderr = process.communicate()
+
+            print(stdout)
 
             # Extract the PQC and Hybrid-PQC algorithms for TLS handshakes from the output string
             test_type = 0
