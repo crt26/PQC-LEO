@@ -32,8 +32,8 @@ function setup_base_env() {
     openssl_download_url="https://github.com/openssl/openssl/releases/download/openssl-3.5.0/openssl-3.5.0.tar.gz"
 
     # Declare the global last tested version SHA variables
-    liboqs_tested_sha="b75bfb8c56d23a92227b04c096f0264b992de874"
-    oqs_provider_tested_sha="9a22bfb5e5c14a831419c1b10fbab08af5361a70"
+    liboqs_tested_sha="9aa76bc1309a9bc10061ec3aa07d727c030c9a86"
+    oqs_provider_tested_sha="2cc8dd3d3ef8764fa432f87a0ae15431d86bfa90"
 
     # Declare the global library directory path variables
     openssl_path="$libs_dir/openssl_$openssl_version"
@@ -49,7 +49,11 @@ function setup_base_env() {
     install_type=0  # 0=Computational only, 1=Computational+TLS, 2=TLS only
     use_latest_version=0
     user_defined_speed_flag=0
-    enable_hqc=0 # temp flag for hqc bug fix
+    user_defined_speed_value=0
+    enable_liboqs_hqc=0 # temp flag for hqc bug fix
+    enable_oqs_hqc=0 # temp flag for hqc bug fix
+    warning_given=0 # temp flag to indicate if the user has accepted the warning about HQC KEM algorithms
+    allow_hqc=0 # temp flag to indicate if the user has accepted the warning about HQC KEM algorithms 
 
 }
 
@@ -92,43 +96,6 @@ function get_user_yes_no() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
-function confirm_enable_hqc_algs() {
-    # Temporary helper function for warning the user about the disabled HQC KEM algorithms as discussed in issue
-    # (https://github.com/crt26/pqc-evaluation-tools/issues/46). The function will display a security warning and provide
-    # background information about why HQC KEM algorithms are disabled by default in Liboqs. It then prompts the user to
-    # decide whether to proceed with enabling HQC for benchmarking purposes. This function will be removed in the future
-    # when Liboqs version 0.14.0 is released and the HQC KEM algorithms are re-enabled by default.
-
-    # Output the current task to the terminal
-    echo -e "\nEnable HQC KEM Algorithms Flag Detected:\n"
-
-    # Output the security warning and background information to the user
-    echo -e "[WARNING] - The Liboqs library disables HQC KEM algorithms by default due to a recently disclosed"
-    echo -e "security vulnerability that compromises their IND-CCA2 security guarantees. Since this project's primary"
-    echo -e "focus is benchmarking (not production deployment), HQC can be still be enabled for performance testing purposes.\n"
-
-    echo -e "For more details, see:"
-    echo -e "- Liboqs issue: https://github.com/open-quantum-safe/liboqs/issues/2118"
-    echo -e "- pqc-evaluation-tools issue: https://github.com/crt26/pqc-evaluation-tools/issues/46\n"
-
-    echo -e "Please note: Enabling HQC is done at your own risk. This project assumes no responsibility for"
-    echo -e "any consequences that may result from using these algorithms.\n"
-
-    # Prompt the user to decide whether to enable HQC
-    get_user_yes_no "Would you like continue with enabling the HQC KEM algorithms in the Liboqs library?"
-
-    # Set the enable_hqc flag based on the user's response
-    if [ $user_y_n_response -eq 1 ]; then
-        echo -e "\n[NOTICE] - HQC KEM algorithms will be enabled in the Liboqs library build process\n"
-        enable_hqc=1
-    else
-        echo -e "\n[NOTICE] - HQC KEM algorithms will not be enabled in the Liboqs library build process\n"
-        enable_hqc=0
-    fi
-
-}
-
-#-------------------------------------------------------------------------------------------------------------------------------
 function output_help_message() {
     # Helper function for outputting the help message to the user when the --help flag is present or
     # when incorrect arguments are passed.
@@ -136,10 +103,57 @@ function output_help_message() {
     # Output the supported options and their usage to the user
     echo "Usage: setup.sh [options]"
     echo "Options:"
-    echo "  --latest-dependency-versions   Use the latest available versions of the OQS libraries (may cause compatibility issues)."
-    echo "  --set-speed-new-value=[int]    Set a new value for MAX_KEM_NUM and MAX_SIG_NUM in OpenSSL's speed.c file."
-    echo "  --enable-hqc-algs              Enable HQC KEM algorithms in liboqs (default: disabled due to security concerns)."
-    echo "  --help                         Display this help message."
+    echo "  --latest-dependency-versions     Use the latest available versions of the OQS libraries (may cause compatibility issues)."
+    echo "  --set-speed-new-value=[int]      Set a new value for MAX_KEM_NUM and MAX_SIG_NUM in OpenSSL's speed.c file."
+    echo "  --enable-liboqs-hqc-algs         Enable HQC KEM algorithms in liboqs (disabled by default due to non-conformance with latest spec)."
+    echo "  --enable-oqs-hqc-algs            Enable HQC KEM algorithms in OQS-Provider (requires HQC to also be enabled in liboqs)."
+    echo "  --help                           Display this help message."
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
+function confirm_enable_hqc_algs() {
+    # Temporary helper function for warning the user about the disabled HQC KEM algorithms as discussed in issue
+    # (https://github.com/crt26/pqc-evaluation-tools/issues/46). The function will display a security warning and provide
+    # background information about why HQC KEM algorithms are disabled by default in Liboqs and OQS-Provider. It then 
+    # prompts the user to decide whether to proceed with enabling HQC for benchmarking purposes. This function will be 
+    # removed in the future when Liboqs version 0.14.0 is released and the HQC KEM algorithms are re-enabled by default.
+
+    # Displays a clear warning about HQC vulnerabilities and disclaims all responsibility for its use.
+    echo -e "\nEnable HQC KEM Algorithms Flag Detected:\n"
+
+    echo -e "[WARNING] - The current implementation of the HQC KEM algorithm in the OQS libraries (liboqs and oqs-provider)"
+    echo -e "does not conform to the latest reference specification, which includes fixes for a previously identified security flaw.\n"
+
+    echo -e "Because of this, HQC is disabled by default in the OQS libraries.\n"
+
+    echo -e "This project provides the option to re-enable HQC solely for benchmarking purposes. Whether or not to enable it is"
+    echo -e "entirely up to the user. If HQC is enabled for performance testing within this project, the risks must"
+    echo -e "be fully understood and accepted.\n"
+
+    echo -e "This project and its maintainers make no guarantees about the correctness, security, or compliance of HQC"
+    echo -e "as currently implemented in the OQS libraries. Enabling HQC is done entirely at your own risk, and this project"
+    echo -e "accepts no responsibility for any issues that may arise from its use.\n"
+    
+    echo -e "For more information, see:"
+    echo -e "- https://github.com/open-quantum-safe/liboqs/issues/2118"
+    echo -e "- https://github.com/crt26/pqc-evaluation-tools/issues/46"
+    echo -e "- https://github.com/crt26/pqc-evaluation-tools/issues/60\n"
+
+    # Prompt the user to acknowledge the risks and decide whether to proceed with enabling HQC KEM algorithms
+    get_user_yes_no "Do you acknowledge the risks and wish to proceed with enabling HQC KEM algorithms?"
+
+    # Set the allow_hqc flag based on the user response
+    if [ $user_y_n_response -eq 1 ]; then
+        echo -e "\n[NOTICE] - HQC KEM algorithms will be enabled where applicable\n"
+        allow_hqc=1
+    else
+        echo -e "\n[NOTICE] - HQC KEM algorithms will remain disabled\n"
+        allow_hqc=0
+    fi
+
+    # Set the warning_given flag to indicate that the user has been warned about the HQC KEM algorithms
+    warning_given=1
 
 }
 
@@ -198,10 +212,37 @@ function parse_args() {
                 shift
                 ;;
 
-            --enable-hqc-algs)
+            --enable-liboqs-hqc-algs)
 
-                # Confirm with the user that they wish to enable the HQC KEM algorithms
-                confirm_enable_hqc_algs
+                # Give the user a warning about the HQC KEM algorithms if not already given
+                if [ $warning_given -ne 1 ]; then
+                    confirm_enable_hqc_algs
+                fi
+
+                # Enable the Liboqs HQC KEM algorithm if warning has been accepted
+                if [ $allow_hqc -eq 1 ]; then
+                    enable_liboqs_hqc=1
+                else
+                    enable_liboqs_hqc=0
+                fi
+
+                shift
+                ;;
+
+            --enable-oqs-hqc-algs)
+
+                # Give the user a warning about the HQC KEM algorithms if not already given
+                if [ $warning_given -ne 1 ]; then
+                    confirm_enable_hqc_algs
+                fi
+
+                # Enable the OQS-Provider HQC KEM algorithm if warning has been accepted
+                if [ $allow_hqc -eq 1 ]; then
+                    enable_oqs_hqc=1
+                else
+                    enable_oqs_hqc=0
+                fi
+                
                 shift
                 ;;
 
@@ -216,6 +257,25 @@ function parse_args() {
         esac
 
     done
+
+    # If enabling OQS-Provider HQC KEM algorithms, ensure that Liboqs HQC KEM algorithms are also enabled
+    if [ $enable_oqs_hqc -eq 1 ] && [ $enable_liboqs_hqc -eq 0 ]; then
+
+        # Output the warning message to the user and prompt to enable Liboqs HQC KEM algorithms as well
+        echo -e "[WARNING] - Enabling OQS-Provider HQC KEM algorithms requires Liboqs HQC KEM algorithms to be enabled as well."
+        get_user_yes_no "Would you like to enable Liboqs HQC KEM algorithms as well?"
+
+        # Determine any flag changes based on the user response
+        if [ $user_y_n_response -eq 1 ]; then
+            echo -e "\n[NOTICE] - Liboqs HQC KEM algorithms will be enabled in the Liboqs library build process\n"
+            enable_liboqs_hqc=1
+        else
+            echo -e "\n[NOTICE] - OQS-Provider HQC KEM algorithms will not be enabled in the OQS-Provider library build process"
+            sleep 3
+            enable_oqs_hqc=0
+        fi
+
+    fi
 
 }
 
@@ -287,8 +347,8 @@ function configure_oqs_provider_build() {
     # Function for configuring the OQS-Provider build process by setting optional build flags based on user input.
 
     # Set default values for optional build flags
-    oqs_enable_algs="false"
-    oqs_enable_encoders="false"
+    oqs_enable_algs=0
+    encoder_flag="OFF" # string as needed for insetting value into OQS-Provider cmake command
 
     # Output the current task to the terminal
     echo -e "\nConfiguring Optional OQS-Provider Build Options:\n"
@@ -298,9 +358,9 @@ function configure_oqs_provider_build() {
 
     # Set the oqs_enable_algs build flag option based on the user response
     if [ $user_y_n_response -eq 1 ]; then
-        oqs_enable_algs="true"
+        oqs_enable_algs=1
     else
-        oqs_enable_algs="false"
+        oqs_enable_algs=0
     fi
 
     # Determine if the users wishes to enable the KEM encoders option in the OQS-Provider build
@@ -544,215 +604,6 @@ function dependency_install() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
-function set_new_speed_values() {
-    # Helper function for setting the new hardcoded MAX_KEM_NUM/MAX_SIG_NUM variable values in the OpenSSL speed.c file
-
-    # Set the passed function arguments to local variables
-    local passed_filepath="$1"
-    local passed_value="$2"
-
-    # Update the MAX_KEM_NUM and MAX_SIG_NUM values in the speed.c file
-    sed -i "s/#define MAX_SIG_NUM [0-9]\+/#define MAX_SIG_NUM $new_value/g" "$passed_filepath"
-    sed -i "s/#define MAX_KEM_NUM [0-9]\+/#define MAX_KEM_NUM $new_value/g" "$passed_filepath"
-
-    # Ensure that the MAX_KEM_NUM/MAX_SIG_NUM values were successfully modified before continuing
-    if ! grep -q "#define MAX_SIG_NUM $new_value" "$passed_filepath" || ! grep -q "#define MAX_KEM_NUM $new_value" "$passed_filepath"; then
-        echo -e "\n[ERROR] - Modifying the MAX_KEM_NUM/MAX_SIG_NUM values in the speed.c file failed, please verify the setup and run a clean install"
-        exit 1
-    fi
-
-}
-
-#-------------------------------------------------------------------------------------------------------------------------------
-function modify_openssl_src() {
-    # Function for modifying OpenSSL's speed.c file to adjust MAX_KEM_NUM and MAX_SIG_NUM values.
-    # Handles errors, fallback values, and user-defined adjustments.
-
-    # Output the current task to the terminal
-    echo -e "[NOTICE] - Enable all disabled OQS-Provider algorithms flag is set, modifying the OpenSSL speed.c file to adjust the MAX_KEM_NUM/MAX_SIG_NUM values...\n"
-
-    # Set the speed.c filepath
-    speed_c_filepath="$openssl_source/apps/speed.c"
-
-    # Set the empty variable used for storing the fail output message used in the initial file checks
-    fail_output=""
-
-    # Check if the speed.c file is present and if the MAX_KEM_NUM/MAX_SIG_NUM values are present in the file
-    if [ ! -f "$speed_c_filepath" ]; then
-        fail_output="1"
-
-    elif ! grep -q "#define MAX_SIG_NUM" "$speed_c_filepath" || ! grep -q "#define MAX_KEM_NUM" "$speed_c_filepath"; then
-        fail_output="2"
-
-    fi
-
-    # If a fail output message is present, output the related options for proceeding based on the fail type
-    if [ -n "$fail_output" ]; then
-
-        # Output the relevant warning message and info to the the user
-        if [ "$fail_output" == "1" ]; then
-
-            # Output the file can not be found warning message to the user
-            echo "[WARNING] - The setup script cannot find the speed.c file in the OpenSSL source code."
-            echo -e "The setup process can continue, but the TLS speed tests may not work correctly.\n"
-
-        elif [ "$fail_output" == "2" ]; then
-
-            # Output the MAX_KEM_NUM/MAX_SIG_NUM values not found warning message to the user
-            echo "[WARNING] - The OpenSSL speed.c file does not contain the MAX_KEM_NUM/MAX_SIG_NUM values and could not be modified."
-            echo "The setup script can continue, but as the enable all disabled algs flag is set, the TLS speed tests may not work correctly."
-            echo -e "However, the TLS handshake tests will still work as expected.\n"
-
-        fi
-
-        # Output the options for proceeding to the user
-        get_user_yes_no "Would you like to continue with the setup process?"
-
-        # Determine which option the user has selected and continue with the setup process or exit
-        if [ $user_y_n_response -eq 1 ]; then
-            echo "Continuing setup process..."
-            return 0
-        else
-            echo "Exiting setup script..."
-            exit 1
-        fi
-
-    fi
-
-    # Extract the default values assigned to the MAX_KEM_NUM/MAX_SIG_NUM variables in the speed.c file
-    default_max_kem_num=$(grep -oP '(?<=#define MAX_KEM_NUM )\d+' "$speed_c_filepath")
-    default_max_sig_num=$(grep -oP '(?<=#define MAX_SIG_NUM )\d+' "$speed_c_filepath")
-
-    # If the user-defined speed flag is set, use the user-defined value
-    if [ "$user_defined_speed_flag" -eq 1 ]; then
-        new_value=$user_defined_speed_value
-    fi
-
-    # Set the default fallback value and emergency padding value for the MAX_KEM_NUM/MAX_SIG_NUM values in case of automatic detection failure
-    fallback_value=200
-    emergency_padding=100
-
-    # Determine highest value between the default MAX_KEM_NUM and MAX_SIG_NUM values (they should be the same but just in case)
-    highest_default_value=$(($default_max_kem_num > $default_max_sig_num ? $default_max_kem_num : $default_max_sig_num))
-
-    # Ensure that the fallback value is greater than the default MAX_KEM_NUM/MAX_SIG_NUM values
-    if [ "$highest_default_value" -gt "$fallback_value" ]; then
-
-        # Set the emergency fallback value and emergency value
-        fallback_value=$((highest_default_value + emergency_padding))
-
-        # Warn the user this has happened before continuing the setup process
-        echo "[WARNING] - The default fallback value for the MAX_KEM_NUM/MAX_SIG_NUM values is less than the default values in the speed.c file."
-        echo -e "The new fallback value with an emergency padding of $emergency_padding is $fallback_value.\n"
-        sleep 5
-
-    fi
-
-    # If the user defined value is set, check that the supplied value is not lower than the current default values in the speed.c file
-    if [ "$user_defined_speed_flag" -eq 1 ] && [ "$new_value" -lt "$highest_default_value" ]; then
-
-        # Output the warning message to the user and get their choice for continuing with the setup process
-        echo -e "\n[WARNING] - The user-defined new value for the MAX_KEM_NUM/MAX_SIG_NUM variables are less than the default values in the speed.c file."
-        echo "The current values in the speed.c file is MAX_KEM_NUM: $default_max_kem_num and MAX_SIG_NUM: $default_max_sig_num."
-        echo -e "In this situation, the setup process can use the fallback value of $fallback_value instead of the user defined value of $new_value\n"
-        get_user_yes_no "Would you like to continue with the setup process using the default new value of $fallback_value instead?"
-
-        # If fallback should be used, modify the speed.c file to use the fallback value instead, otherwise exit the setup script
-        if [ $user_y_n_response -eq 1 ]; then
-            new_value=$fallback_value
-        else
-            echo "Exiting setup script..."
-            exit 1
-        fi
-
-    fi
-
-    # Perform automatic adjustment or user defined adjustment of the MAX_KEM_NUM/MAX_SIG_NUM variables in the speed.c file
-    if [ "$user_defined_speed_flag" -eq 0 ]; then
-
-        # Determine how much the hardcoded MAX_KEM_NUM/MAX_SIG_NUM variables need increased by
-        cd "$util_scripts"
-        util_output=$($python_bin "get_algorithms.py" "4" 2>&1)
-        py_exit_status=$?
-        cd "$root_dir"
-
-        # Check if there were any errors with executing the Python utility script
-        if [ "$py_exit_status" -eq 0 ]; then
-
-            # Extract the number of algorithms in the OQS-Provider ALGORITHMS.md file from the Python script output
-            alg_count=$(echo "$util_output" | grep -oP '(?<=Total number of Algorithms: )\d+')
-
-            # Check if the captured algorithm count is a valid number
-            if ! [[ "$alg_count" =~ ^[0-9]+$ ]]; then
-                echo "[ERROR] - Failed to extract a valid number of algorithms from the Python script output."
-                exit 1
-            fi
-
-            # Determine the new value by adding the default value to the number of algorithms found
-            new_value=$((highest_default_value + alg_count))
-
-        else
-
-            # Determine what the cause of the error was and output the appropriate message and options to the user
-            if echo "$util_output" | grep -q "File not found:.*"; then
-
-                # Output the error message to the user
-                echo "[ERROR] - The Python script that extracts the number of algorithms from the OQS-Provider library could not find the required files."
-                echo "Please verify the installation of the OQS-Provider library and rerun the setup script."
-                exit 1
-
-            elif echo "$util_output" | grep -q "Failed to parse processing file structure:.*"; then
-
-                # Output the warning message to the user
-                echo "[WARNING] - There was an issue with the Python script that extracts the number of algorithms from the OQS-Provider library."
-                echo "The script returned the following error message: $util_output"
-
-                # Present the options to the user and determine the next steps
-                echo -e "It is possible to continue with the setup process using the fallback high values for the MAX_KEM_NUM and MAX_SIG_NUM values.\n"
-                get_user_yes_no "Would you like to continue with the setup process using the fallback values ($fallback_value algorithms)?"
-
-                if [ $user_y_n_response -eq 1 ]; then
-                    echo "Continuing setup process with fallback values..."
-                    new_value=$fallback_value
-                else
-                    echo "Exiting setup script..."
-                    exit 1
-                fi
-
-            else
-
-                # Output the error message to the user
-                echo "[ERROR] - A wider error occurred within the Python get_algorithms utility script. This will cause larger errors in the setup process."
-                echo "Please verify the setup environment and rerun the setup script."
-                echo "The script returned the following error message: $util_output"
-                exit 1
-
-            fi
-
-        fi
-
-        # Set the new values using the new_value variable
-        set_new_speed_values "$speed_c_filepath" "$new_value"
-
-    elif [ "$user_defined_speed_flag" -eq 1 ]; then
-
-        # Set the new values using the user-defined value
-        set_new_speed_values "$speed_c_filepath" "$new_value"
-
-    else
-
-        # Output an error message as the user_defined_speed_flag flag variable is not set correctly
-        echo "[ERROR] - The user_defined_speed_flag flag variable is not set correctly, please verify the code in the setup.sh script"
-        exit 1
-
-    fi
-
-    # Output modification success message to the terminal
-    echo "[NOTICE] - The MAX_KEM_NUM/MAX_SIG_NUM values in the OpenSSL speed.c file have been successfully modified to $new_value"
-
-}
-
-#-------------------------------------------------------------------------------------------------------------------------------
 function openssl_build() {
     # Function for handling the build of the OpenSSL library (version 3.5.0). The function will check if the library is already built
     # and if not, it will build the library using the specified configuration options. The function will call the modify_openssl_src function
@@ -777,8 +628,10 @@ function openssl_build() {
     if [ ! -d "$openssl_path" ]; then
 
         # Modify the s_speed tool's source code if the OQS-Provider library is being built with the enable all disabled algorithms flag
-        if [ "$oqs_enable_algs" == "true" ]; then
-            modify_openssl_src
+        if [ $oqs_enable_algs -eq 1 ]; then
+            "$util_scripts/source_code_modifier.sh" "modify_openssl_src" \
+                "--user-defined-flag=$user_defined_speed_flag" \
+                "--user-defined-speed-value=$user_defined_speed_value"
         fi
 
         # Build the required version of OpenSSL in project's directory structure only, not system wide
@@ -926,7 +779,7 @@ function liboqs_build() {
         cp "$root_dir/modded_lib_files/test_kem_mem.c" "$liboqs_source/tests/test_kem_mem.c"
 
         # Set the HQC enabled cmake flag if the user has selected to enable HQC
-        if [ "$enable_hqc" -eq 1 ]; then
+        if [ "$enable_liboqs_hqc" -eq 1 ]; then
             hqc_flag="-DOQS_ENABLE_KEM_HQC=ON"
             touch "$tmp_dir/.hqc_enabled.flag"
         else
@@ -973,60 +826,10 @@ function oqs_provider_build() {
     oqs_provider_generate_file="$oqs_provider_source/oqs-template/generate.yml"
 
     # Enable disabled signature algorithms if user has specified
-    if [ "$oqs_enable_algs" == "true" ]; then
-
-        # Ensure that the generate.yml file is present and determine action based on its presence
-        if [ ! -f  "$oqs_provider_generate_file" ]; then
-
-            # Output the error message to the user and prompt for their choice on proceeding
-            echo -e "\n[WARNING] - The generate.yml file is missing from the OQS-Provider library, it is possible that the library no longer supports this feature"
-            get_user_yes_no "Would you like to continue with the setup process anyway?"
-
-            # Determine the next action based on the user's response
-            if [ $user_y_n_response -eq 0 ]; then
-                echo -e "Exiting setup script..."
-                exit 1
-            else
-                echo "Continuing setup process..."
-                return 0
-            fi
-
-        fi
-
-        # Ensure that the generate.yml file still follows the enable: true/enable: false format before proceeding
-        if ! grep -q "enable: true" "$oqs_provider_generate_file" || ! grep -q "enable: false" "$oqs_provider_generate_file"; then
-
-            # Output the error message to the user and prompt for their choice on proceeding
-            echo -e "\n[WARNING] - The generate.yml file in the OQS-Provider library does not follow the expected format"
-            echo -e "this setup script cannot automatically enable all disabled signature algorithms\n"
-            get_user_yes_no "Would you like to continue with the setup process anyway?"
-
-            # Determine the next action based on the user's response
-            if [ $user_y_n_response -eq 0 ]; then
-                echo -e "Exiting setup script..."
-                exit 1
-            else
-                echo "Continuing setup process..."
-                return 0
-            fi
-
-        fi
-
-        # Modify the generate.yml file to enable all the disabled signature algorithms
-        sed -i 's/enable: false/enable: true/g' "$oqs_provider_generate_file"
-
-        # Check if the generate.yml file was successfully modified
-        if ! grep -q "enable: true" "$oqs_provider_generate_file"; then
-            echo -e "\n[ERROR] - Enabling all disabled signature algorithms in the OQS-Provider library failed, please verify the setup and run a clean install"
-            exit 1
-        fi
-
-        # Run the generate.py script to enable all disabled signature algorithms in the OQS-Provider library
-        export LIBOQS_SRC_DIR="$liboqs_source"
-        cd $oqs_provider_source
-        $python_bin $oqs_provider_source/oqs-template/generate.py
-        cd $root_dir
-
+    if [ $oqs_enable_algs -eq 1 ] || [ $enable_oqs_hqc -eq 1 ]; then
+        "$util_scripts/source_code_modifier.sh" "oqs_enable_algs" \
+            "--enable-hqc-algs=$enable_oqs_hqc" \
+            "--enable-disabled-algs=$oqs_enable_algs"
     fi
 
     # Build the OQS-Provider library
