@@ -55,6 +55,10 @@ function setup_base_env() {
     warning_given=0 # temp flag to indicate if the user has accepted the warning about HQC KEM algorithms
     allow_hqc=0 # temp flag to indicate if the user has accepted the warning about HQC KEM algorithms
 
+    # Declare the global flags for enabling OQS-Provider build options
+    oqs_enable_algs=0
+    encoder_flag="OFF" # string as needed for insetting value into OQS-Provider cmake command
+
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
@@ -393,15 +397,18 @@ function configure_dirs() {
     # Create the hidden pqc_eval_dir_marker.tmp file that is used by the test scripts to determine the root directory path
     touch "$root_dir/.pqc_eval_dir_marker.tmp"
 
+    # If HQC is to be enabled, create the hqc_algorithms marker file in the temp directory
+    if [ $enable_liboqs_hqc -eq 1 ] || [ $enable_oqs_hqc -eq 1 ]; then
+        touch "$tmp_dir/.hqc_enabled.flag"
+    else
+        rm -f "$tmp_dir/.hqc_enabled.flag"
+    fi
+
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function configure_oqs_provider_build() {
     # Function for configuring the OQS-Provider build process by setting optional build flags based on user input.
-
-    # Set default values for optional build flags
-    oqs_enable_algs=0
-    encoder_flag="OFF" # string as needed for insetting value into OQS-Provider cmake command
 
     # Output the current task to the terminal
     echo -e "\nConfiguring Optional OQS-Provider Build Options:\n"
@@ -842,12 +849,10 @@ function liboqs_build() {
         cp "$root_dir/modded_lib_files/test_kem_mem.c" "$liboqs_source/tests/test_kem_mem.c"
 
         # Set the HQC enabled cmake flag if the user has selected to enable HQC
-        if [ "$enable_liboqs_hqc" -eq 1 ]; then
+        if [ $enable_liboqs_hqc -eq 1 ]; then
             hqc_flag="-DOQS_ENABLE_KEM_HQC=ON"
-            touch "$tmp_dir/.hqc_enabled.flag"
         else
             hqc_flag=""
-            rm -f "$tmp_dir/.hqc_enabled.flag"
         fi
 
         # Build Liboqs using CMake
@@ -858,7 +863,7 @@ function liboqs_build() {
             -DOQS_USE_OPENSSL=ON \
             -DOPENSSL_ROOT_DIR="$openssl_path" \
             $build_flags \
-            $hqc_flag\
+            $hqc_flag
 
         cmake --build "$liboqs_path/build" -- -j $threads
         cmake --build "$liboqs_path/build" --target install -- -j $threads

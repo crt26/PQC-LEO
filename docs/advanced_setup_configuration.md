@@ -3,7 +3,7 @@ This document outlines additional configuration options when running the `setup.
 
 - Use the latest versions of the OQS dependency libraries
 - Manually Adjusting OpenSSL's `s_speed` Tool Hardcoded Limits
-- Enabling HQC KEM Algorithms in Liboqs
+- Enabling HQC KEM Algorithms in Liboqs and OQS-Provider
 
 ## Using the Latest Versions of the OQS Libraries
 By default, the setup process uses the **last tested versions** of the OQS libraries to ensure compatibility with this project's automation tools. However, users may opt to use the latest upstream versions of the dependencies by passing the following flag to the setup script:
@@ -29,26 +29,35 @@ Replace [integer] with the desired value. The setup script will then patch the s
 
 For further details on this issue and the plans to address the problem, please refer to this [git issue](https://github.com/crt26/pqc-evaluation-tools/issues/25) on the repositories page.
 
-## Enabling HQC KEM Algorithms in Liboqs
-This project's computational performance benchmarking system relies on PQC implementations from the Liboqs library. Recent versions of Liboqs disable HQC KEM algorithms by default due to a known **IND-CCA2 vulnerability**. The benchmarking suite provides an optional setup flag to re-enable HQC for **benchmarking purposes only**, as a temporary measure until a revised HQC implementation is included in Liboqs version 0.14.0.
+## Enabling HQC KEM Algorithms in Liboqs and OQS-Provider
+Recent versions of both Liboqs and OQS-Provider disable HQC KEM algorithms by default, due to their current implementations not conforming to the latest specification, which includes important security fixes. This project provides optional setup flags to re-enable HQC solely for benchmarking purposes, with full user awareness and consent. When enabling HQC, the setup script will display a security warning and require confirmation before continuing. If declined, HQC remains disabled.
 
-To enable HQC, use the following setup flag:
+To enable HQC KEM algorithms, the following flags can be passed to the `setup.sh` script:
 
+| **Flag**                   | **Description**                                                                                                 |
+|----------------------------|-----------------------------------------------------------------------------------------------------------------|
+| `--enable-liboqs-hqc-algs` | Enables HQC algorithms in Liboqs only.                                                                          |
+| `--enable-oqs-hqc-algs`    | Enables HQC algorithms in OQS-Provider only. Liboqs HQC must also be enabled. The script will prompt if needed. |
+| `--enable-all-hqc-algs`    | Enables HQC algorithms in both Liboqs and OQS-Provider. Overrides the other two flags if present.               |
+
+
+Example usage include:
 ```
-./setup.sh --enable-hqc-algs
+./setup.sh --enable-all-hqc-algs
 ```
 
-The setup script will display a warning outlining the associated risks when this flag is provided. Explicit user confirmation is required before HQC algorithms are included in the Liboqs build.
+If HQC is enabled (depending on which enable type is selected):
 
-If enabled, the setup script will:
-- Pass the appropriate CMake flag to Liboqs to include HQC algorithms.
-- Create a temporary marker file (`.hqc_enabled.flag`) in the `tmp` directory to track that HQC is enabled.
-- Ensure internal tools, such as the `get_algorithms.py` utility script, detect this marker and include HQC in the generated algorithm list text files.
+- Liboqs is built with -DOQS_ENABLE_KEM_HQC=ON.
+- OQS-Provider's generate.yml is updated to enable HQC 
+- A .hqc_enabled.flag is created in the tmp/ directory to inform other tools
+- The get_algorithms.py utility includes HQC in algorithm lists
 
-**Important:** If HQC is enabled, the resulting Liboqs build should only be used within this project's benchmarking tools. It must not be used for anything other than its intended purpose.
+**Important:** If HQC is enabled, the resulting OQS builds should only be used within this project's benchmarking tools. It must not be used for anything other than its intended purpose.
 
 For additional context, please see:
 - [Liboqs Pull Request #2122](https://github.com/open-quantum-safe/liboqs/pull/2122)
 - [Liboqs Issue #2118](https://github.com/open-quantum-safe/liboqs/issues/2118)
 - [PQC-Evaluation-Tools Issue #46](https://github.com/crt26/pqc-evaluation-tools/issues/46)
+- [PQC-Evaluation-Tools Issue [#60](https://github.com/crt26/pqc-evaluation-tools/issues/60)]
 - [Disclaimer Document](../DISCLAIMER.md)

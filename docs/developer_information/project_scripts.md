@@ -18,6 +18,7 @@ It provides overviews of each script’s purpose, functionality, and any relevan
   - [cleaner.sh](#cleanersh)
   - [get\_algorithms.py](#get_algorithmspy)
   - [configure\_openssl\_cnf.sh](#configure_openssl_cnfsh)
+  - [source\_code\_modifier.sh](#source_code_modifiersh)
 - [Automated Computational Performance Testing Scripts](#automated-computational-performance-testing-scripts)
   - [pqc\_performance\_test.sh](#pqc_performance_testsh)
 - [Automated TLS Performance Testing Scripts](#automated-tls-performance-testing-scripts)
@@ -40,7 +41,8 @@ The project utility scripts include the following:
 - setup.sh
 - cleaner.sh
 - get_algorithms.py
-- configure-openssl-cnf.sh
+- configure_openssl_cnf.sh
+- source_code_modifier.sh
 
 ### setup.sh
 This script automates the full environment setup for running the PQC benchmarking tools. It supports installing Liboqs, OQS-Provider, or both, based on user input, and configures the system accordingly.
@@ -67,16 +69,19 @@ The script also handles the automatic detection of the system architecture and a
 
 The script is run interactively but supports the following optional arguments for advanced use:
 
-| **Flag**                       | **Description**                                                                         |
-|--------------------------------|-----------------------------------------------------------------------------------------|
-| `--latest-dependency-versions` | Use the latest available versions of the OQS libraries (may cause compatibility issues) |
-| `--set-speed-new-value=<int>`  | Manually set `MAX_KEM_NUM` and `MAX_SIG_NUM` in OpenSSL’s `speed.c`                     |
-| `--enable-hqc-algs`            | Enable HQC KEM algorithms in Liboqs (default: disabled due to known vulnerability)      |
+| **Flag**                       | **Description**                                                                                                 |
+|--------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| `--latest-dependency-versions` | Use the latest upstream versions of Liboqs and OQS-Provider (may cause compatibility issues with this project). |
+| `--set-speed-new-value=<int>`  | Manually set `MAX_KEM_NUM` and `MAX_SIG_NUM` values in OpenSSL’s speed.c source file.                           |
+| `--enable-liboqs-hqc-algs`     | Enable HQC KEM algorithms in Liboqs. Disabled by default due to spec non-conformance and security concerns.     |
+| `--enable-oqs-hqc-algs`        | Enable HQC KEM algorithms in OQS-Provider. Requires Liboqs HQC to also be enabled.                              |
+| `--enable-all-hqc-algs`        | Enable HQC KEM algorithms in both Liboqs and OQS-Provider. Overrides the other two HQC flags if present.        |
+| `--help`                       | Display the help message for all supported options.                                                             |
 
-For further information on the main setup script's usage, please refer to the main [README](../../README.md) file.
+For further information on the main setup script's usage, please refer to the main [README](../../README.md) and [Advanced Setup Configuration](../advanced_setup_configuration.md) file.
 
 ### cleaner.sh
-This is a utility script for cleaning the various project files from the compiling and benchmarking operations. The script provides functionality for either uninstalling the OQS and other dependency libraries from the system, clearing the old results, algorithm list files, and generated TLS keys, or both.
+This utility script is used for cleaning up files generated during the compiling and benchmarking processes. It provides options for uninstalling libraries (which includes deleting generated `__pycache__` directories), clearing old benchmarking results, and removing generated TLS keys. Users can choose to perform individual cleanup actions or both, based on their needs.
 
 ### get_algorithms.py
 This Python utility script generates lists of supported cryptographic algorithms based on the currently installed versions of the Liboqs, OpenSSL (classic + PQC), and OQS-Provider libraries. These lists are stored under the `test_data/alg_lists` directory and are used by benchmarking and parsing tools to determine which algorithms to run for computational performance testing and TLS handshakes testing.
@@ -131,6 +136,42 @@ When called, the utility script accepts the following arguments:
 | `0`          | Performs initial setup by appending OQS-Provider-related directives to the `openssl.cnf` file. **This should only ever be called during setup when modifying the default OpenSSL conf file.** |
 | `1`          | Configures the OpenSSL environment for **key generation benchmarking** by commenting out PQC-related configuration lines.                                                                     |
 | `2`          | Configures the OpenSSL environment for **TLS handshake benchmarking** by uncommenting PQC-related configuration lines.                                                                        |
+
+### source_code_modifier.sh
+This internal utility script automates source code modifications for OpenSSL and OQS-Provider during the setup process. **It is not intended to be run manually from the terminal.** The `setup.sh` script automatically invokes it to adjust hardcoded OpenSSL constants, enable HQC algorithms, and optionally re-enable signature algorithms disabled by default in OQS-Provider. It is located in the `scripts/utility_scripts/` directory. 
+
+It provides the following internal modification tools, each of which accepts their own arguments:
+
+- **oqs_enable_algs** - Used for enabling HQC KEM algorithms, enabling signature algorithms disabled by default, or both.
+- **modify_openssl_src** - Used to modify the OpenSSL `speed.c` source code to increase hardcoded values. Only called if disabled signature algorithms are re-enabled in OQS-Provider.
+
+When calling the utility script, the first argument must always be which modification tools should be used. Subsequent arguments can be in any order, but must include all of the accepted arguments listed below for each tool.
+
+**Accepted Arguments for oqs_enable_algs**:
+
+| **Flag**                        | **Description**                                                                                       |
+|---------------------------------|-------------------------------------------------------------------------------------------------------|
+| `--enable-hqc-algs=[0\|1]`      | Set to `1` to enable HQC KEM algorithms in OQS-Provider by modifying the generate.yml file.           |
+| `--enable-disabled-algs=[0\|1]` | Set to `1` to enable signature algorithms that are disabled by default in OQS-Provider.               |
+| `--help`                        | Displays the help message for this tool. Intended primarily for debugging from within another script. |
+
+**Accepted Arguments for modify_openssl_src**:
+
+| **Flag**                           | **Description**                                                                                                                                                                                        |
+|------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--user-defined-flag=[0\|1]`       | Set to `1`to use a manually specified value (via --user-defined-speed-value) instead of an automatically calculated value.                                                                             |
+| `--user-defined-speed-value=[int]` | Specifies the new value to set for `MAX_KEM_NUM` and `MAX_SIG_NUM` in OpenSSL's `speed.c`. Must be a postivie integer if `--user-defined-flag` is set to `1`. Use `0` if `--user-defined-flag` is `0`. |
+| `--help`                           | Displays the help message for this tool. Intended primarily for debugging from within another script.                                                                                                  |
+
+
+Example Usage includes:
+```
+source_code_modifier.sh "oqs_enable_algs" "--enable-hqc-algs=1" "--enable-disabled-algs=1"
+```
+
+```
+source_code_modifier.sh "modify_openssl_src" "--user-defined-flag=1" "--user-defined-speed-value=500"
+```
 
 ## Automated Computational Performance Testing Scripts
 The computational performance testing suite benchmarks standalone PQC cryptographic operations for CPU and memory usage. It currently uses the Liboqs library and its testing tools to evaluate all supported KEM and digital signature algorithms. It is provided through a singular automation script which handles CPU and memory performance testing for PQC schemes. It is designed to be run interactively, prompting the user for test parameters such as the machine ID and number of test iterations.
