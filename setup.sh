@@ -629,9 +629,19 @@ function openssl_build() {
 
         # Modify the s_speed tool's source code if the OQS-Provider library is being built with the enable all disabled algorithms flag
         if [ $oqs_enable_algs -eq 1 ]; then
+
+            # Call the source code modifier utility script and capture the exit status
             "$util_scripts/source_code_modifier.sh" "modify_openssl_src" \
                 "--user-defined-flag=$user_defined_speed_flag" \
                 "--user-defined-speed-value=$user_defined_speed_value"
+            exit_status=$?
+
+            # Ensure that the source code modifier script ran successfully
+            if [ $exit_status -ne 0 ]; then
+                echo -e "\n[ERROR] - The source code modifier script failed to run successfully, please verify the installation and rerun the setup script"
+                exit 1
+            fi
+
         fi
 
         # Build the required version of OpenSSL in project's directory structure only, not system wide
@@ -827,9 +837,19 @@ function oqs_provider_build() {
 
     # Enable disabled signature algorithms if user has specified
     if [ $oqs_enable_algs -eq 1 ] || [ $enable_oqs_hqc -eq 1 ]; then
+
+        # Call the source code modifier utlity script and capture the exit status
         "$util_scripts/source_code_modifier.sh" "oqs_enable_algs" \
             "--enable-hqc-algs=$enable_oqs_hqc" \
             "--enable-disabled-algs=$oqs_enable_algs"
+        exit_status=$?
+
+        # Ensure that the source code modifier script ran successfully
+        if [ $exit_status -ne 0 ]; then
+            echo -e "\n[ERROR] - The source code modifier script failed to run successfully, please verify the installation and rerun the setup script"
+            exit 1
+        fi
+
     fi
 
     # Build the OQS-Provider library

@@ -485,7 +485,7 @@ function modify_openssl_src() {
     fi
 
     # Output modification success message to the terminal
-    echo "[NOTICE] - The MAX_KEM_NUM/MAX_SIG_NUM values in the OpenSSL speed.c file have been successfully modified to $new_value"
+    echo -e "[NOTICE] - The MAX_KEM_NUM/MAX_SIG_NUM values in the OpenSSL speed.c file have been successfully modified to $new_value\n"
 
 }
 
