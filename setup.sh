@@ -53,7 +53,7 @@ function setup_base_env() {
     enable_liboqs_hqc=0 # temp flag for hqc bug fix
     enable_oqs_hqc=0 # temp flag for hqc bug fix
     warning_given=0 # temp flag to indicate if the user has accepted the warning about HQC KEM algorithms
-    allow_hqc=0 # temp flag to indicate if the user has accepted the warning about HQC KEM algorithms 
+    allow_hqc=0 # temp flag to indicate if the user has accepted the warning about HQC KEM algorithms
 
 }
 
@@ -105,10 +105,11 @@ function output_help_message() {
     echo "Options:"
     echo "  --latest-dependency-versions     Use the latest available versions of the OQS libraries (may cause compatibility issues)."
     echo "  --set-speed-new-value=[int]      Set a new value for MAX_KEM_NUM and MAX_SIG_NUM in OpenSSL's speed.c file."
-    echo "  --enable-liboqs-hqc-algs         Enable HQC KEM algorithms in liboqs (disabled by default due to non-conformance with latest spec)."
+    echo "  --enable-liboqs-hqc-algs         Enable HQC KEM algorithms in liboqs (disabled by default due to spec non-conformance)."
     echo "  --enable-oqs-hqc-algs            Enable HQC KEM algorithms in OQS-Provider (requires HQC to also be enabled in liboqs)."
+    echo "  --enable-all-hqc-algs            Enable all HQC KEM algorithms in both liboqs and OQS-Provider (overrides individual HQC flags)."
     echo "  --help                           Display this help message."
-
+    
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
@@ -168,6 +169,16 @@ function parse_args() {
         exit 0
     fi
 
+    # Set the default flag set values for HQC flags (temp for hqc bug fix)
+    local all_hqc_flag_set=0
+    local liboqs_hqc_flag_set=0
+    local oqs_hqc_flag_set=0
+
+    # Check if the user has passed the enable all hqc algorithms flag
+    if [[ "$*" =~ --enable-all-hqc-algs ]]; then
+        all_hqc_flag_set=1
+    fi
+
     # Loop through the passed command line arguments and check for the supported options
     while [[ $# -gt 0 ]]; do
 
@@ -214,16 +225,24 @@ function parse_args() {
 
             --enable-liboqs-hqc-algs)
 
-                # Give the user a warning about the HQC KEM algorithms if not already given
-                if [ $warning_given -ne 1 ]; then
-                    confirm_enable_hqc_algs
-                fi
+                # Set the Liboqs HQC flag to indicate the flag has been passed
+                liboqs_hqc_flag_set=1
 
-                # Enable the Liboqs HQC KEM algorithm if warning has been accepted
-                if [ $allow_hqc -eq 1 ]; then
-                    enable_liboqs_hqc=1
-                else
-                    enable_liboqs_hqc=0
+                # Only handle the checks and enabling if the all_hqc_flag_set is not set
+                if [ $all_hqc_flag_set -eq 0 ]; then
+
+                    # Give the user a warning about the HQC KEM algorithms if not already given
+                    if [ $warning_given -ne 1 ]; then
+                        confirm_enable_hqc_algs
+                    fi
+
+                    # Enable the Liboqs HQC KEM algorithm if warning has been accepted
+                    if [ $allow_hqc -eq 1 ]; then
+                        enable_liboqs_hqc=1
+                    else
+                        enable_liboqs_hqc=0
+                    fi
+
                 fi
 
                 shift
@@ -231,18 +250,46 @@ function parse_args() {
 
             --enable-oqs-hqc-algs)
 
+                # Set the OQS-Provider HQC flag to indicate the flag has been passed
+                oqs_hqc_flag_set=1
+
+                # Only handle the checks and enabling if the all_hqc_flag_set is not set
+                if [ $all_hqc_flag_set -eq 0 ]; then
+
+                    # Give the user a warning about the HQC KEM algorithms if not already given
+                    if [ $warning_given -ne 1 ]; then
+                        confirm_enable_hqc_algs
+                    fi
+
+                    # Enable the OQS-Provider HQC KEM algorithm if warning has been accepted
+                    if [ $allow_hqc -eq 1 ]; then
+                        enable_oqs_hqc=1
+                        oqs_hqc_flag_set=1
+                    else
+                        enable_oqs_hqc=0
+                    fi
+                
+                fi
+                
+                shift
+                ;;
+
+            --enable-all-hqc-algs)
+
                 # Give the user a warning about the HQC KEM algorithms if not already given
                 if [ $warning_given -ne 1 ]; then
                     confirm_enable_hqc_algs
                 fi
 
-                # Enable the OQS-Provider HQC KEM algorithm if warning has been accepted
+                # Enable both Liboqs and OQS-Provider HQC KEM algorithms if warning has been accepted
                 if [ $allow_hqc -eq 1 ]; then
+                    enable_liboqs_hqc=1
                     enable_oqs_hqc=1
                 else
+                    enable_liboqs_hqc=0
                     enable_oqs_hqc=0
                 fi
-                
+
                 shift
                 ;;
 
@@ -257,6 +304,12 @@ function parse_args() {
         esac
 
     done
+
+    # Output the message that all HQC algs will be enabled regardless of other flags if the enabled all_hqc_flag_set flag is set
+    if [ $all_hqc_flag_set -eq 1 ] && { [ $liboqs_hqc_flag_set -eq 1 ] || [ $oqs_hqc_flag_set -eq 1 ]; }; then
+        echo -e "[NOTICE] - The --enable-all-hqc-algs has been set, enabling all HQC KEMs in Liboqs and OQS-Provider and overriding other HQC flags\n"
+
+    fi
 
     # If enabling OQS-Provider HQC KEM algorithms, ensure that Liboqs HQC KEM algorithms are also enabled
     if [ $enable_oqs_hqc -eq 1 ] && [ $enable_liboqs_hqc -eq 0 ]; then
