@@ -1,9 +1,9 @@
 # Automated PQC TLS Performance Benchmarking Tool Usage Guide <!-- omit from toc -->
 
 ## Overview <!-- omit from toc -->
-This tool provides automated benchmarking for PQC-enabled TLS 1.3 handshakes and cryptographic operations within OpenSSL 3.5.0. It supports testing of both OpenSSL-native PQC algorithms and those integrated into OpenSSL via the OQS-Provider library. The benchmarking process evaluates TLS handshakes using Post-Quantum Cryptography (PQC) and Hybrid-PQC ciphersuites, as well as traditional cryptographic algorithms for baseline comparison.
+This tool provides automated benchmarking for PQC-enabled TLS 1.3 handshakes and cryptographic operations within OpenSSL 3.5.0. It supports testing of both OpenSSL-native PQC algorithms and those integrated into OpenSSL via the OQS-Provider library. The benchmarking process evaluates TLS handshakes using Post-Quantum Cryptography (PQC) and Hybrid-PQC ciphersuites, as well as traditional cryptographic algorithms for a baseline comparison.
 
-Tests can be conducted either on a single machine (localhost) or across two networked machines, using a physical or virtual connection. The tool collects detailed timing and performance metrics for each algorithm combination under test.
+Tests can be conducted either on a single machine (localhost) or across two networked machines, using a physical or virtual connection. The tool records detailed performance and timing metrics for each algorithm pairing evaluated during testing.
 
 The relevant PQC TLS Performance testing scripts can be found in the `scripts/test_scripts` directory from the project's root.
 
@@ -86,7 +86,7 @@ The testing tool will prompt you to enter the parameters for the test. These par
 - Whether the results should have a custom Machine-ID assigned to them (if the machine is a client)
 - Duration of each TLS handshake tests (if the machine is a client) **†**
 - Duration of TLS speed tests (if the machine is a client) **††**
-- Number of test runs to be performed
+- Number of test runs to be performed (must match on both machines)
 - IP address of the other machine (use 127.0.0.1 for single-machine testing)
 
 **†** Defines the duration (in seconds) the OpenSSL `s_time` tool will use for each handshake test window. The client will attempt as many TLS handshakes as possible for each algorithm combination during this period.
@@ -116,7 +116,7 @@ If running the full test locally (single-machine), perform the following steps a
   
 4. Use 127.0.0.1 as the IP address for the other machine
 
-5. The test will begin, and results will be stored automatically
+5. The test will begin, and results will be stored and processed automatically
 
 ### Separate Server and Client Machine Testing
 When two machines are used for testing that are connected over a physical/virtual network, one machine will be configured as the server and the other as the client. Before starting, please ensure that both machines have the same server certificates and private keys stored in the `test_data/keys` directory.
@@ -154,7 +154,7 @@ These parsed results are saved in:
 
 > **Note:** When using multiple machines for testing, the results will only be stored on the client machine, not the server machine.
 
-To disable automatic parsing and preserve only the raw results, pass the `--disable-result-parsing` flag when launching the test script:
+To skip automatic parsing and only output the the raw test results, pass the `--disable-result-parsing` flag when launching the test script:
 
 ```
 ./pqc_tls_performance_test.sh --disable-result-parsing
@@ -168,7 +168,7 @@ For complete details on parsing functionality and a breakdown of the collected P
 ## Advanced Testing Customisation
 The TLS performance testing script supports several configuration options that allow the benchmarking process to be tailored to specific environments. These options are beneficial when operating in restricted networks, virtualised environments, or when precise control over test behaviour is required.
 
-The currently supported testing customisation options are as follows:
+Supported customisation features include:
 
 - TCP port configuration 
 - Control Signal Behaviour
@@ -188,7 +188,7 @@ If the default TCP ports are incompatible with the testing environment, custom p
 ### Adjusting Control Signalling
 By default, the tool uses a 0.25 second delay when sending control signals between the server and client instances. This is to avoid timing issues during the control signal exchange, which can cause testing to fail.
 
-If the default control signalling timing behaviour is unsuitable for your testing environment, you can customise the control signal sleep time or disable it entirely when executing the `pqc_tls_performance_test.sh` script. You can do this by including the following flags:
+If the default delay is unsuitable for your environment, you can either set a custom delay or disable it entirely:
 
 | **Flag**                      | **Description**                                          |
 |-------------------------------|----------------------------------------------------------|
@@ -215,5 +215,4 @@ Disabling automatic parsing may be appropriate in scenarios such as:
 - [OQS-Provider GitHub Page](https://github.com/open-quantum-safe/oqs-provider)
 - [Latest OQS-Provider Release Notes](https://github.com/open-quantum-safe/oqs-provider/blob/main/RELEASE.md)
 - [OQS Benchmarking Webpage](https://openquantumsafe.org/benchmarking/)
-- [OQS Profiling Project](https://openquantumsafe.org/benchmarking/)
 - [OpenSSL(3.5.0) Documentation](https://docs.openssl.org/3.5/)

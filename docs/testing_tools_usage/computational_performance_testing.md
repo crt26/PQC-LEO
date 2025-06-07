@@ -1,30 +1,36 @@
 # Automated PQC Computational Performance Benchmarking Tool Usage Guide <!-- omit from toc -->
 
 ## Overview <!-- omit from toc -->
-This guide provides detailed instructions for using the automated Post-Quantum Cryptographic (PQC) computational performance testing tool. It allows users to gather benchmarking data for PQC algorithms using the Open Quantum Safe (OQS) Liboqs library as the current backend. Results are collected automatically and can be customised with user-defined test parameters.
-
-The tool outputs raw performance metrics in CSV and text formats, which are later parsed using Python scripts for easier interpretation and analysis.
+This guide provides detailed instructions for using the automated Post-Quantum Cryptographic (PQC) computational performance testing tool. It allows users to gather benchmarking data for PQC algorithms using the Open Quantum Safe (OQS) Liboqs library. It automatically collects raw performance data in CSV and text formats, which can then be parsed into structured, analysis-ready results using the included Python scripts.
 
 ### Contents <!-- omit from toc -->
-- [Supported Hardware and Software](#supported-hardware-and-software)
+- [Supported Hardware](#supported-hardware)
+- [Supported PQC Algorithms](#supported-pqc-algorithms)
 - [Performing PQC Computational Performance Testing](#performing-pqc-computational-performance-testing)
   - [Running the Testing Script](#running-the-testing-script)
   - [Configuring Testing Parameters](#configuring-testing-parameters)
 - [Outputted Results](#outputted-results)
 - [Useful External Documentation](#useful-external-documentation)
 
-## Supported Hardware and Software
+## Supported Hardware
 The automated testing tool is currently only supported on the following devices:
 
 - x86 Linux Machines using a Debian-based operating system
 - ARM Linux devices using a 64-bit Debian-based Operating System
+
+## Supported PQC Algorithms
+This tool supports all PQC algorithms available through the Liboqs library. However there are some limitations to this that should be considered when using the computational performance testing tool. 
+
+For a full list of algorithms currently supported in this project’s performance testing suite, see:
+
+[Supported Algorithms](../supported_algorithms.md)
 
 **Notice:** The HQC KEM algorithms are disabled by default in recent versions of both Liboqs and the OQS-Provider, due to their current implementations not conforming to the latest specification, which includes important security fixes. For benchmarking purposes, the setup process includes an optional flag to enable HQC in these libraries, accompanied by a user confirmation prompt and warning. Enabling HQC is done at the user's own discretion and this project assumes no responsibility for its use. For instructions on enabling HQC, see the [Advanced Setup Configuration Guide](../advanced_setup_configuration.md), and refer to the [Disclaimer Document](../../DISCLAIMER.md) for more information on this issue.
 
 ## Performing PQC Computational Performance Testing
 
 ### Running the Testing Script
-The automated test script is located in the `scripts/testing_scripts` directory and can be launched using the following commands:
+The automated test script is located in the `scripts/testing_scripts` directory and can be launched using the following command:
 
 ```
 ./pqc_performance_test.sh
@@ -45,7 +51,7 @@ The first testing option is:
 Do you wish to assign a custom Machine-ID to the performance results? [y/n]?
 ```
 
-Selecting `y` (yes) enables multi-machine result comparison. The script will prompt you to assign a machine ID to the results, which the Python parsing scripts use to organise and differentiate data from different systems. This is useful when comparing performance across devices or architectures. Responding  `n` (no) to this option will assign a default value of `1` to the outputted machine results upon test completion.
+Selecting `y` (yes) allows you to assign a Machine-ID, which is used by the parsing scripts to organise and distinguish results from different systems, which is useful for cross-device or cross-architecture comparisons. If you select `n` (no), the default Machine-ID of 1 will be applied.
 
 #### Assigning Number of Test Runs <!-- omit from toc -->
 The second testing parameter is the number of test runs that should be performed. The script will present the following option:
@@ -54,7 +60,7 @@ The second testing parameter is the number of test runs that should be performed
 Enter the number of test runs required:
 ```
 
-You can then enter a valid integer value to specify the total number of test runs. However, it is important to note that a higher number of runs will significantly increase testing time, especially if the tool is being used on a more constrained device. This feature allows for sufficient gathering of data to perform average calculations, which is vital if conducting research into the performance of PQC algorithms.
+Enter a valid integer to specify how many times each test should run. A higher number of runs will increase the total testing time, especially on resource-constrained devices, but it also improves the accuracy of the resulting performance averages.
 
 ## Outputted Results
 After testing completes, raw performance results are saved to the following directory:
@@ -69,7 +75,7 @@ These parsed results are saved in:
 
 `test_data/results/computational_performance/machine_x`
 
-To skip automatic parsing and retain only the raw test output, pass the `--disable-result-parsing` flag when launching the test script:
+To skip automatic parsing and only output the the raw test results, pass the `--disable-result-parsing` flag when launching the test script:
 
 ```
 ./pqc_performance_test.sh --disable-result-parsing
@@ -86,4 +92,3 @@ For complete details on parsing functionality and a breakdown of the collected c
 - [Latest liboqs Release Notes](https://github.com/open-quantum-safe/liboqs/blob/main/RELEASE.md)
 - [Valgrind Massif Tool](http://valgrind.org/docs/manual/ms-manual.html)
 - [OQS Benchmarking Webpage](https://openquantumsafe.org/benchmarking/)
-- [OQS Profiling Project](https://openquantumsafe.org/benchmarking/)

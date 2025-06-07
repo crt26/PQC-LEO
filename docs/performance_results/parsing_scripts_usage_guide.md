@@ -3,7 +3,7 @@
 ## Document Overview <!-- omit from toc -->
 This document provides a comprehensive guide to the usage of the result parsing functionality included in the PQC-Evaluation-Tools project. It explains how the parsing system processes raw benchmarking output data into structured results, and how users can interact with the parsing system in both automated and manual modes.
 
-It also outlines the expected directory structure for test results, limitations of the current implementation, and how to manually invoke the parsing process using the provided Python script.
+It also outlines the expected directory structure for test results, limitations of the current implementation, and how to manually invoke the parsing process using the provided Python scripts.
 
 ### Contents <!-- omit from toc -->
 - [Parsing Overview](#parsing-overview)
@@ -19,10 +19,10 @@ The parsing system in PQC-Evaluation-Tools transforms raw test output into struc
 
 The automated testing scripts provided by this project will automatically call the Python parsing scripts once testing is completed and supply the testing parameters used. However, the user may decide to disable this feature and call the parsing scripts manually.
 
-The following sections detail the various methods by which the performance results can be parsed and the usage of such methods.
+The following sections describe how to use the available parsing methods and what to expect from each.
 
 ## Automatic Parsing
-When a testing script completes, the parsing process is triggered automatically. The script passes the assigned Machine-ID and number of test runs to the parsing tool, which then processes the raw result files and generates structured output. This automatic process is designed to simplify result management and ensure consistency without requiring any additional user input.
+When a testing script completes, the parsing process is triggered automatically. The script passes the assigned Machine-ID and number of test runs to the parsing tool, which then processes the raw result files and generates structured CSV files. This automatic process is designed to simplify result management and ensure consistency without requiring any additional user input.
 
 To disable automatic parsing, pass the `--disable-result-parsing` flag to the test script. For example:
 
@@ -33,13 +33,13 @@ To disable automatic parsing, pass the `--disable-result-parsing` flag to the te
 This defers parsing so it can be triggered interactively or via command-line flags later.
 
 ## Manual Parsing
-While automatic parsing is the recommended approach, you can also manually parse test results using one of two methods:
+While automatic parsing is recommended in most cases, manual parsing is fully supported and can be performed using one of two methods:
 
-- **Interactive mode** — prompted input from the terminal
+- **Interactive mode** — The user is prompted to enter parameters via the terminal.
 
-- **Command-line arguments** — direct input of parsing parameters via flags
+- **Command-line arguments** — Parsing parameters are passed directly as script flags.
 
-**Note:** If performing manual parsing in a separate environment from where the tests were run, the script requires access to the same algorithm list files used during testing. Please make sure these files are present in the expected directories before proceeding.
+**Note:** If performing manual parsing in a separate environment from where the tests were ran, the script requires access to the same algorithm list files used during testing. Please make sure these files are present in the expected directories before proceeding.
 
 ### Interactive Parsing
 To use the interactive parsing method, call the parsing script using the following command:
@@ -90,15 +90,15 @@ The output is organised by test type and Machine-ID in the following directories
 
 Where `machine_x` is the Machine-ID number assigned to the results when executing the testing scripts. If no custom Machine-ID is assigned, the default ID of 1 will be used.
 
-Please refer to the [Performance Metrics Guide](./parsing_scripts_usage_guide.md) for a detailed description of the performance metrics that this project can gather, what they mean, and how these scripts structure the un-parsed and parsed data.
+Please refer to the [Performance Metrics Guide](./performance_metrics_guide.md) for a detailed description of the performance metrics that this project can gather, what they mean, and how these scripts structure the un-parsed and parsed data.
 
 ## Current Parsing Limitations
 The current implementation of the parsing system includes several known limitations:
 
-- Only one **Machine-ID** can be processed simultaneously per mode (computational performance or TLS performance). The script must be run separately for each to parse results from multiple Machine-IDs.
+- Only one **Machine-ID** can be parsed at a time per mode. You must run the script separately to parse results from multiple machines.
 
-- If parsing both computational performance and TLS performance results in a single session (interactive mode only), one Machine-ID may be provided for each mode.
+- Parsing both computational and TLS results in a single run is supported only in **interactive mode**.
 
 - Parsing depends on access to the original algorithm list files used during testing. When parsing is performed on a different machine, the testing environment must be replicated to ensure compatibility.
 
-Future updates will resolve these constraints to improve cross-environment compatibility and support for more flexible parsing.
+These limitations will be addressed in future updates to improve flexibility and cross-system compatibility

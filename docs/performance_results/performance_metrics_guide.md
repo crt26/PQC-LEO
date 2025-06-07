@@ -1,15 +1,15 @@
 # PQC Performance Metrics & Results Storage Breakdown <!-- omit from toc -->
 
 ## Overview <!-- omit from toc -->
-This document provides a comprehensive guide to the performance metrics collected by the project's automated benchmarking tools for Post-Quantum Cryptography (PQC) algorithms using the Open Quantum Safe Project. It explains the types of metrics collected and how raw data is structured, parsed, and analysed across different test environments by the automated testing and parsing scripts included in this project.
+This document provides a comprehensive guide to the PQC computational and TLS performance metrics collected by the project's automated benchmarking tools. It describes the types of metrics gathered, and how raw test data is structured, parsed, and analysed across different environments using the provided testing and parsing scripts.
 
-Below is a list of the topics the document covers:
+Specifically, it covers:
 
-- A background overview of the cryptographic operations used in PQC digital signature schemes and Key Encapsulation Mechanisms (KEMs)
+- An overview of the core cryptographic operations used in PQC digital signature schemes and Key Encapsulation Mechanisms (KEMs)
 
-- A description of the computational performance metrics gathered by the automated performance testing (gathered using tools in the Liboqs library) and how it is stored and organised within this project
+- A breakdown of the computational performance metrics gathered via Liboqs benchmarking tools, including how these results are stored and organised
 
-- A description of the TLS performance metrics gathered by the automated testing of OpenSSL's native PQC algorithms and those provided through the OQS-Provider, and how these results are stored and organised
+- A description of TLS performance metrics obtained from testing OpenSSL’s native PQC support and OQS-Provider, along with their storage and processing structure
 
 ### Contents <!-- omit from toc -->
 - [Description of Post-Quantum Cryptographic Operations](#description-of-post-quantum-cryptographic-operations)
@@ -79,17 +79,19 @@ The following table describes the memory-related metrics captured after the resu
 | maxStack   | Maximum stack memory usage recorded during the test.                            |
 
 ## Computational Performance Result Data Storage Structure
-All performance data is initially stored as un-parsed output when using the Liboqs benchmarking script (`pqc_performance_test.sh`). This raw data is then processed using the Python parsing script to generate structured CSV files for analysis, including averages across test runs.
+All performance data is initially stored as un-parsed output when using the Liboqs benchmarking script (`pqc_performance_test.sh`). This raw data is then automatically processed using the Python parsing script to generate structured CSV files for analysis, including averages across test runs.
 
 The table below outlines where this data is stored and how it's organised in the project's directory structure:
 
-| **Data Type**        | **State** | **Description**                                                                                                                                        | **Location**                                                                         |
-|----------------------|-----------|--------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
-| CPU Speed            | Un-parsed | Raw `.csv` outputs directly from `speed_kem` and `speed_sig` binaries.                                                                                 | `test_data/up_results/computational_performance/machine_X/raw_speed_results/`        |
-| CPU Speed            | Parsed    | Cleaned CSV files with per-algorithm speed metrics and averages.                                                                                       | `test_data/results/computational_performance/machine_X/speed_results/`               |
-| Memory Usage         | Un-parsed | Raw `.txt` outputs from Valgrind Massif profiling of digital signature and KEM operations using the Liboqs `test-kem-mem` and `test-sig-mem` binaries. | `test_data/up_results/computational_performance/machine_X/mem_results/`              |
-| Memory Usage         | Parsed    | CSV summaries of peak memory usage for each algorithm-operation.                                                                                       | `test_data/results/computational_performance/machine_X/mem_results/`                 |
-| Performance Averages | Parsed    | Average results for the performance metrics across test runs.                                                                                          | Located alongside parsed CSV files in `results/computational_performance/machine_X/` |
+| **Data Type**        | **State** | **Description**                                              | **Location** *(relative to `test_data/`)*                           |
+|----------------------|-----------|--------------------------------------------------------------|---------------------------------------------------------------------|
+| CPU Speed            | Un-parsed | Raw `.csv` outputs from `speed_kem` and `speed_sig`.         | `up_results/computational_performance/machine_x/raw_speed_results/` |
+| CPU Speed            | Parsed    | Cleaned CSV files with metrics and averages.                 | `results/computational_performance/machine_x/speed_results/`        |
+| Memory Usage         | Un-parsed | Valgrind Massif `.txt` outputs from signature/KEM profiling. | `up_results/computational_performance/machine_x/mem_results/`       |
+| Memory Usage         | Parsed    | CSV summaries of peak memory usage.                          | `results/computational_performance/machine_x/mem_results/`          |
+| Performance Averages | Parsed    | Averaged metrics across test runs.                           | `results/computational_performance/machine_x/`                      |
+
+Where `machine_x` is the Machine-ID number assigned to the results when executing the testing scripts. If no custom Machine-ID is assigned, the default ID of 1 will be set for the results.
 
 ## PQC TLS Performance Metrics
 The TLS performance testing suite benchmarks PQC, Hybrid-PQC, and classical algorithm configurations available through both OpenSSL's native support and the OQS-Provider. As of OpenSSL 3.5.0, PQC algorithms are supported through both sources, and the suite is designed to evaluate performance consistently across the full range of available implementations. It measures performance within the TLS 1.3 handshake protocol and the execution speed of cryptographic operations directly through OpenSSL. This provides insight into how PQC schemes perform in real-world security protocol scenarios. Classical digital signature algorithms and ciphersuites are also tested to establish a performance baseline for comparison with PQC and Hybrid-PQC configurations.
@@ -117,7 +119,7 @@ The table below describes the performance metrics gathered during this testing:
 | Connections in Real Time (Session Reuse)    | Handshakes per real-world time with session reuse. Reflects practical performance with resumed sessions.          |
 
 ### TLS Speed Testing
-TLS speed testing benchmarks the raw cryptographic performance of PQC and Hybrid-PQC algorithms when integrated into OpenSSL for both natively supported algorithms and those provided by the OQS-Provider library. This is done using the OpenSSL `s_speed` tool, which measures the execution time and throughput of cryptographic operations for each algorithm.
+TLS speed testing benchmarks the raw cryptographic performance of PQC, Hybrid-PQC, and classical algorithms when integrated into OpenSSL for both natively supported algorithms and those provided by the OQS-Provider library. This is done using the OpenSSL `s_speed` tool, which measures the execution time and throughput of cryptographic operations for each algorithm.
 
 The primary objective of this test is to gather the base system performance of the schemes when integrated into the OpenSSL library. The results provide insight into the algorithm's standalone efficiency when running within OpenSSL, which can produce additional overhead compared to the performance tests provided by the computational performance testing suite.
 
@@ -148,14 +150,16 @@ The following table describes the metrics collected for Key Encapsulation Mechan
 ## TLS Performance Result Data Storage Structure
 When running the TLS benchmarking script (`full_tls_test.sh`), all performance data is initially stored as unparsed output. This includes both handshake and speed test results. After testing, the parsing script processes this raw data into structured CSV files, including calculated averages across test runs.
 
-| **Data Type**   | **State**     | **Description**                                                                                       | **Location**                                                                                        |
-|-----------------|---------------|-------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
-| TLS Handshake   | Un-parsed     | Raw `.txt` outputs from OpenSSL s_time tests for PQC, Hybrid-PQC, and Classic algorithm combinations. | `test_data/up_results/tls_performance/machine_X/handshake_results/{pqc/hybrid/classic}`             |
-| TLS Handshake   | Parsed        | Per-run CSVs with extracted handshake metrics, separated by signature algorithm.                      | `test_data/up_results/tls_performance/machine_X/handshake_results/{pqc/hybrid/classic}/{signature}` |
-| TLS Handshake   | Parsed (Base) | Combined CSVs aggregating all signature/KEM combinations for each run.                                | `test_data/results/tls_performance/machine_X/handshake_results/{pqc/hybrid}/base_results`           |
-| TLS Speed       | Un-parsed     | Raw `.txt` outputs from OpenSSL speed tests for PQC and Hybrid-PQC algorithms.                        | `test_data/up_results/tls_performance/machine_X/speed_results/{pqc/hybrid}`                         |
-| TLS Speed       | Parsed        | Cleaned CSVs with cryptographic operation timings and throughput.                                     | `test_data/results/tls_performance/machine_X/speed_results/`                                        |
-| Parsed Averages | Parsed        | Averaged handshake and speed results across test runs.                                                | Stored alongside parsed result files in `results/tls_performance/machine_X/`                        |
+| **Data Type**   | **State**     | **Description**                                                                             | **Location** *(relative to `test_data/`)*                                              |
+|-----------------|---------------|---------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|
+| TLS Handshake   | Un-parsed     | Raw `.txt` outputs from OpenSSL s_time tests for PQC, Hybrid-PQC, and Classic combinations. | `up_results/tls_performance/machine_x/handshake_results/{pqc/hybrid/classic}`          |
+| TLS Handshake   | Parsed        | Per-run CSVs with extracted handshake metrics, by signature algorithm.                      | `results/tls_performance/machine_x/handshake_results/{pqc/hybrid/classic}/{signature}` |
+| TLS Handshake   | Parsed (Base) | Combined CSVs aggregating all signature/KEM combinations for each run.                      | `results/tls_performance/machine_x/handshake_results/{pqc/hybrid}/base_results`        |
+| TLS Speed       | Un-parsed     | Raw `.txt` outputs from OpenSSL speed tests for PQC and Hybrid-PQC algorithms.              | `up_results/tls_performance/machine_x/speed_results/{pqc/hybrid}`                      |
+| TLS Speed       | Parsed        | Cleaned CSVs with cryptographic operation timings and throughput.                           | `results/tls_performance/machine_x/speed_results/`                                     |
+| Parsed Averages | Parsed        | Averaged handshake and speed results across test runs.                                      | Stored alongside parsed result files in `results/tls_performance/machine_x/`           |
+
+Where `machine_x` is the Machine-ID number assigned to the results when executing the testing scripts. If no custom Machine-ID is assigned, the default ID of 1 will be set for the results.
 
 ## Useful External Documentation
 - [Liboqs Webpage](https://openquantumsafe.org/liboqs/)
@@ -163,7 +167,5 @@ When running the TLS benchmarking script (`full_tls_test.sh`), all performance d
 - [Valgrind Massif Tool](http://valgrind.org/docs/manual/ms-manual.html)
 - [OQS-Provider Webpage](https://openquantumsafe.org/applications/tls.html#oqs-openssl-provider)
 - [OQS-Provider GitHub Page](https://github.com/open-quantum-safe/oqs-provider)
-- [OQS Profiling Project](https://openquantumsafe.org/benchmarking/)
 - [OpenSSL(3.5.0) Documentation](https://docs.openssl.org/3.5/)
 - [OQS Benchmarking Webpage](https://openquantumsafe.org/benchmarking/)
-- [OQS Profiling Project](https://openquantumsafe.org/benchmarking/)
