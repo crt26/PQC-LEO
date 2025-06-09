@@ -23,6 +23,8 @@ Future versions of the project aim to support additional PQC libraries, further 
 ### Supported Automation Functionality
 The project provides automation for:
 
+- Verifying and installing required system packages and Python PIP dependencies.
+
 - Compiling and configuring the OpenSSL, OQS, and ARM PMU dependency libraries.
 
 - Collecting PQC computational performance data, including CPU and memory usage metrics, using the Liboqs library.
@@ -63,7 +65,7 @@ The automated testing tool is currently only supported in the following environm
 - x86 Linux Machines using a Debian-based operating system
 - ARM Linux devices using a 64-bit Debian-based Operating System
 
-### Tested Dependency Libraries <!-- omit from toc -->
+### Tested Cryptographic Dependency Libraries <!-- omit from toc -->
 This version of the repository has been fully tested with the following library versions:
 
 - Liboqs Version: Post-0.13.0 commit **†**
@@ -78,7 +80,7 @@ While this setup maximises reliability, users who need access to more recent upd
 
 If any such issues arise, please report them to this repository’s GitHub Issues page so they can be addressed promptly. Instructions for modifying the library versions used by the benchmarking suite are provided in the Installation Instructions section.
 
-**†** For information on the specific commits used for the last tested versions of the dependency libraries, see the [Dependency Libraries](./docs/developer_information/dependency_libraries.md) documentation.
+**†** For information on the specific commits used for the last tested versions of the dependency libraries, see the [Project Dependencies](./docs/developer_information/project_dependencies.md) documentation.
 
 ## Supported Cryptographic Algorithms
 For further information on the classical and PQC algorithms this project provides support for, including information on any exclusions, please refer to the following documentation:
@@ -224,13 +226,13 @@ For complete details on parsing functionality and a breakdown of the collected p
 ### Internal Project Documentation <!-- omit from toc -->
 Links below provide access to the various internal project documentation. However, the majority of these documents can be found in the `docs` directory at the project's root.
 
-| **Category**                                     | **Documentation**                                                                                                                                                                                                                                       |
-|--------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Testing Tools Usage**                          | - [Automated Computational Performance Testing](docs/testing_tools_usage/computational_performance_testing.md) <br> - [Automated TLS Performance Testing](docs/testing_tools_usage/tls_performance_testing.md)                                          |
-| **Setup & Configuration**                        | - [Advanced Setup Configuration](docs/advanced_setup_configuration.md) <br> - [Supported Algorithms](docs/supported_algorithms.md)                                                                                                                      |
-| **Dependency Libraries & Developer Information** | - [Dependency Library Versions](docs/developer_information/dependency_libraries.md) <br> - [Project Scripts](docs/developer_information/project_scripts.md) <br> - [Repository Structure](docs/developer_information/repository_directory_structure.md) |
-| **Performance Results**                          | - [Parsing Performance Results Usage Guide](docs/performance_results/parsing_scripts_usage_guide.md) <br> - [Performance Metrics Guide](docs/performance_results/performance_metrics_guide.md)                                                          |
-| **Other Resources**                              | - [Project Disclaimer](./DISCLAIMER.md)                                                                                                                                                                                                                 |
+| **Category**                                     | **Documentation**                                                                                                                                                                                                                                  |
+|--------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Testing Tools Usage**                          | - [Automated Computational Performance Testing](docs/testing_tools_usage/computational_performance_testing.md) <br> - [Automated TLS Performance Testing](docs/testing_tools_usage/tls_performance_testing.md)                                     |
+| **Setup & Configuration**                        | - [Advanced Setup Configuration](docs/advanced_setup_configuration.md) <br> - [Supported Algorithms](docs/supported_algorithms.md)                                                                                                                 |
+| **Project Dependencies & Developer Information** | - [Project Dependencies](./docs/developer_information/project_dependencies.md) <br> - [Project Scripts](docs/developer_information/project_scripts.md) <br> - [Repository Structure](docs/developer_information/repository_directory_structure.md) |
+| **Performance Results**                          | - [Parsing Performance Results Usage Guide](docs/performance_results/parsing_scripts_usage_guide.md) <br> - [Performance Metrics Guide](docs/performance_results/performance_metrics_guide.md)                                                     |
+| **Other Resources**                              | - [Project Disclaimer](./DISCLAIMER.md)                                                                                                                                                                                                            |
 
 ### Project Wiki Page <!-- omit from toc -->
 The information provided in the internal documentation is also available through the project's GitHub Wiki:

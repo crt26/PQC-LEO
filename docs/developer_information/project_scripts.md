@@ -8,7 +8,7 @@ The project's scripts are grouped into the following categories:
 - The utility scripts
 - The automated computational performance testing scripts
 - The automated TLS performance testing scripts
-- The raw performance data parsing scripts
+- The performance data parsing scripts
 
 It provides overviews of each script’s purpose, functionality, and any relevant parameters required when running the scripts manually.
 

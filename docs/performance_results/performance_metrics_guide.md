@@ -48,9 +48,7 @@ This section provides a brief overview of these operations to support the perfor
 The computational performance tests collect detailed CPU and memory usage metrics for PQC digital signature and KEM algorithms. Using the Liboqs library, the automated testing tool performs each cryptographic operation and outputs the results, which are separated into two categories: CPU benchmarking and memory benchmarking.
 
 ### CPU Benchmarking
-The CPU benchmarking results measure the execution time and efficiency of various cryptographic operations for each PQC algorithm.
-
-Using the Liboqs `speed_kem` and `speed_sig` benchmarking tools, each operation is run repeatedly within a fixed time window (3 seconds by default). The tool performs as many iterations as possible in that time frame and records detailed performance metrics.
+The CPU benchmarking results measure the execution time and efficiency of various cryptographic operations for each PQC algorithm. Using the Liboqs `speed_kem` and `speed_sig` benchmarking tools, each operation is run repeatedly within a fixed time window (3 seconds by default). The tool performs as many iterations as possible in that time frame and records detailed performance metrics.
 
 The table below describes the metrics included in the CPU benchmarking results:
 
@@ -77,7 +75,7 @@ The following table describes the memory-related metrics captured after the resu
 | maxStack   | Maximum stack memory usage recorded during the test.                            |
 
 ## Computational Performance Result Data Storage Structure
-All performance data is initially stored as unparsed output when using the Liboqs benchmarking script (`pqc_performance_test.sh`). This raw data is then automatically processed using the Python parsing script to generate structured CSV files for analysis, including averages across test runs.
+All performance data is initially stored as unparsed output when using the computational performance benchmarking script (`pqc_performance_test.sh`). This raw data is then automatically processed using the Python parsing script to generate structured CSV files for analysis, including averages across test runs.
 
 The table below outlines where this data is stored and how it's organised in the project's directory structure:
 
