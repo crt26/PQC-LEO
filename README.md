@@ -1,4 +1,4 @@
-# PQC Evaluation Tools <!-- omit from toc -->
+# PQC-Evaluation-Tools <!-- omit from toc -->
 
 ### Project Description
 This repository provides an automated and comprehensive evaluation framework for benchmarking Post-Quantum Cryptography (PQC) algorithms. It is designed for researchers and developers looking to evaluate the feasibility of integrating PQC into their environments. The framework streamlines the setup and testing of PQC implementations, enabling the collection of computational and networking performance metrics across x86 and ARM systems through a suite of dedicated automation scripts.
