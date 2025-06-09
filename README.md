@@ -1,18 +1,5 @@
 # PQC Evaluation Tools <!-- omit from toc -->
 
-## Notice: <!-- omit from toc -->
-This is the **development branch**; it may not be in a fully functioning state, and the documentation may still need to be updated. The checkboxes below indicate whether the current development version is in a basic functioning state and if the documentation is accurate for its current functionality. Regardless, please keep this in mind and use the main branch if possible. Thank you.
-
-- [x] Functioning State
-- [x] Up-to-date documentation
-
-### Main Development Branch Task Tracking
-For full details on the project's development and the current development task lists, please refer to the repository's Github Projects Page here:
-
-[PQC-Evaluation-Tools Project Page](https://github.com/users/crt26/projects/2)
-
-## Repository Overview <!-- omit from toc -->
-
 ### Project Description
 This repository provides an automated and comprehensive evaluation framework for benchmarking Post-Quantum Cryptography (PQC) algorithms. It is designed for researchers and developers looking to evaluate the feasibility of integrating PQC into their environments. The framework streamlines the setup and testing of PQC implementations, enabling the collection of computational and networking performance metrics across x86 and ARM systems through a suite of dedicated automation scripts.
 
