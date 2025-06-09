@@ -1,7 +1,7 @@
 # PQC Performance Metrics & Results Storage Breakdown <!-- omit from toc -->
 
 ## Overview <!-- omit from toc -->
-This document provides a comprehensive guide to the PQC computational and TLS performance metrics collected by the project's automated benchmarking tools. It describes the types of metrics gathered, and how raw test data is structured, parsed, and analysed across different environments using the provided testing and parsing scripts.
+This document provides a comprehensive guide to the PQC computational and TLS performance metrics collected by the project's automated benchmarking tools. It describes the types of metrics gathered and how raw test data is structured, parsed, and analysed across different environments using the provided testing and parsing scripts.
 
 Specifically, it covers:
 
@@ -79,7 +79,7 @@ The following table describes the memory-related metrics captured after the resu
 | maxStack   | Maximum stack memory usage recorded during the test.                            |
 
 ## Computational Performance Result Data Storage Structure
-All performance data is initially stored as un-parsed output when using the Liboqs benchmarking script (`pqc_performance_test.sh`). This raw data is then automatically processed using the Python parsing script to generate structured CSV files for analysis, including averages across test runs.
+All performance data is initially stored as unparsed output when using the Liboqs benchmarking script (`pqc_performance_test.sh`). This raw data is then automatically processed using the Python parsing script to generate structured CSV files for analysis, including averages across test runs.
 
 The table below outlines where this data is stored and how it's organised in the project's directory structure:
 

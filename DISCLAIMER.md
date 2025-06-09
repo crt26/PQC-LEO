@@ -25,14 +25,14 @@ Users are responsible for ensuring compliance with all relevant third-party lice
 ## HQC Algorithm Inclusion Disclaimer
 The HQC KEM algorithms are disabled by default in both Liboqs and OQS-Provider due to the current implementation not conforming to the latest reference specification. This includes fixes for a previously identified security flaw that breaks IND-CCA2 guarantees under specific attack models.
 
-As a result, the PQC Evaluation Tools framework provides an optional mechanism to enable HQC **solely for benchmarking purposes**. Users who choose to enable HQC will be clearly warned about the associated risks, and they must explicitly acknowledge and confirm their decision to proceed. Please refer to the [Advanced Setup Configuration](docs/advanced_setup_configuration.md) for details on enabling HQC.
+As a result, the PQC Evaluation Tools framework provides an optional mechanism to enable HQC **solely for benchmarking purposes**. Users who choose to enable HQC will be warned about the associated risks and must explicitly acknowledge and confirm their decision to proceed. Please refer to the [Advanced Setup Configuration](docs/advanced_setup_configuration.md) for details on enabling HQC.
 
 Enabling HQC is done at the user's discretion, and users will be required to explicitly acknowledge the risks and confirm that they wish to proceed. The project maintainers make no guarantees about the correctness, security, or compliance of HQC as currently implemented in the OQS libraries. Enabling HQC is done entirely at your own risk, and this project assumes no responsibility for any issues that may arise from its use.
 
 If HQC is enabled:
 
 - It must only be used within the provided testing tools.
-- It must not be used in any production systems or real-world cryptographic deployments.
+- It must not be used in production systems or real-world cryptographic deployments.
 
 For more information, see:
 - [Liboqs Pull Request #2122](https://github.com/open-quantum-safe/liboqs/pull/2122)

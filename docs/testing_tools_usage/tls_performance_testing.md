@@ -38,7 +38,7 @@ Additional information on the excluded algorithms can be found in the OpenSSL an
 
 [Supported Algorithms](../supported_algorithms.md)
 
-**Notice:** The HQC KEM algorithms are disabled by default in recent versions of both Liboqs and the OQS-Provider, due to their current implementations not conforming to the latest specification, which includes important security fixes. For benchmarking purposes, the setup process includes an optional flag to enable HQC in these libraries, accompanied by a user confirmation prompt and warning. Enabling HQC is done at the user's own discretion and this project assumes no responsibility for its use. For instructions on enabling HQC, see the [Advanced Setup Configuration Guide](../advanced_setup_configuration.md), and refer to the [Disclaimer Document](../../DISCLAIMER.md) for more information on this issue.
+**Notice:** The HQC KEM algorithms are disabled by default in recent versions of both Liboqs and the OQS-Provider, due to their current implementations not conforming to the latest specification, which includes important security fixes. For benchmarking purposes, the setup process includes an optional flag to enable HQC in these libraries, accompanied by a user confirmation prompt and warning. Enabling HQC is done at the user's own discretion, and this project assumes no responsibility for its use. For instructions on enabling HQC, see the [Advanced Setup Configuration Guide](../advanced_setup_configuration.md), and refer to the [Disclaimer Document](../../DISCLAIMER.md) for more information on this issue.
 
 ## Preparing the Testing Environment
 Before running any tests, ensure your environment is correctly configured for either single-machine or two-machine testing. This includes opening required TCP ports in your firewall and generating the necessary TLS certificates and private keys.
@@ -154,7 +154,7 @@ These parsed results are saved in:
 
 > **Note:** When using multiple machines for testing, the results will only be stored on the client machine, not the server machine.
 
-To skip automatic parsing and only output the the raw test results, pass the `--disable-result-parsing` flag when launching the test script:
+To skip automatic parsing and only output the raw test results, pass the `--disable-result-parsing` flag when launching the test script:
 
 ```
 ./pqc_tls_performance_test.sh --disable-result-parsing

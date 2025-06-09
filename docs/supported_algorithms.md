@@ -229,9 +229,9 @@ Certain variations of the supported digital signature schemes are excluded from 
 - **SNOVA Scheme Variations**
 - **CROSSrsdp256small**
 
-These schemes remain available for use in the TLS speed tests this PQC-Evaluation-Tools provides using the OpenSSL `speed` tool. 
+These schemes remain available for use in the TLS speed tests that the PQC-Evaluation-Tools provides using the OpenSSL `speed` tool. 
 
-Whilst a signifiant number of these schemes variations can not be used in TLS Handshake testing, there are the following exceptions:
+Whilst a significant number of these scheme variations can not be used in TLS Handshake testing, there are the following exceptions:
 
 | **Scheme** | **Variations Supported for TLS Handshake Testing**                                                                                            |
 |------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
@@ -243,7 +243,7 @@ Whilst a signifiant number of these schemes variations can not be used in TLS Ha
 With the introduction of native PQC support in OpenSSL 3.5.0, the OQS-Provider automatically disables its implementations of overlapping algorithms (e.g., ML-KEM, ML-DSA, SLH-DSA) to prevent provider conflicts during initialisation. For more information, see the relevant OQS-Provider documentation below.
 
 #### Additional Information
-For further details on algorithm support, compatibility, HQC implementation issue, or enabling algorithms disabled by default, see:
+For further details on algorithm support, compatibility, HQC implementation issues, or enabling algorithms disabled by default, see:
 
 - [OQS-Provider Notice](https://github.com/open-quantum-safe/oqs-provider?tab=readme-ov-file#35-and-greater)
 - [Advanced Setup Configuration Guide](./advanced_setup_configuration.md)

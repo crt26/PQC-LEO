@@ -11,7 +11,7 @@
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_base_env() {
-    # Function for initializing global variables and directory paths required for the setup process.
+    # Function for initialising global variables and directory paths required for the setup process.
     # Sets paths for libraries, temporary files, test data, and utility scripts. Also defines default
     # values for flags and configuration options, ensuring a consistent environment for the setup script.
 
@@ -57,7 +57,7 @@ function setup_base_env() {
 
     # Declare the global flags for enabling OQS-Provider build options
     oqs_enable_algs=0
-    encoder_flag="OFF" # string as needed for insetting value into OQS-Provider cmake command
+    encoder_flag="OFF" # string as needed for inserting value into OQS-Provider cmake command
 
 }
 
@@ -118,7 +118,7 @@ function output_help_message() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function confirm_enable_hqc_algs() {
-    # Temporary helper function for warning the user about the disabled HQC KEM algorithms as discussed in issue
+    # Temporary helper function for warning the user about the disabled HQC KEM algorithms as discussed in the issue
     # (https://github.com/crt26/pqc-evaluation-tools/issues/46). The function will display a security warning and provide
     # background information about why HQC KEM algorithms are disabled by default in Liboqs and OQS-Provider. It then 
     # prompts the user to decide whether to proceed with enabling HQC for benchmarking purposes. This function will be 
@@ -148,7 +148,7 @@ function confirm_enable_hqc_algs() {
     # Prompt the user to acknowledge the risks and decide whether to proceed with enabling HQC KEM algorithms
     get_user_yes_no "Do you acknowledge the risks and wish to proceed with enabling HQC KEM algorithms?"
 
-    # Set the allow_hqc flag based on the user response
+    # Set the allow_hqc flag based on the user's response
     if [ $user_y_n_response -eq 1 ]; then
         echo -e "\n[NOTICE] - HQC KEM algorithms will be enabled where applicable\n"
         allow_hqc=1
@@ -164,7 +164,7 @@ function confirm_enable_hqc_algs() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function parse_args() {
-    # Function for parsing command-line arguments and sets global flags based on detected options.
+    # Function for parsing command-line arguments and setting global flags based on detected options.
     # Flags control various aspects of the setup process, such as library versions, speed values, and HQC algorithm settings.
 
     # Check for the --help flag and display the help message
@@ -173,12 +173,12 @@ function parse_args() {
         exit 0
     fi
 
-    # Set the default flag set values for HQC flags (temp for hqc bug fix)
+    # Set the default flag set values for HQC flags (temp for HQC bug fix)
     local all_hqc_flag_set=0
     local liboqs_hqc_flag_set=0
     local oqs_hqc_flag_set=0
 
-    # Check if the user has passed the enable all hqc algorithms flag
+    # Check if the user has passed the enable all HQC algorithms flag
     if [[ "$*" =~ --enable-all-hqc-algs ]]; then
         all_hqc_flag_set=1
     fi
@@ -193,11 +193,11 @@ function parse_args() {
 
                 # Output the warning message to the user
                 echo -e "\n[NOTICE] Using the latest version of the OQS libraries. This may lead to compatibility issues with this project."
-                echo "If the latest upstream changes cause problems, please report them to this projects issue page."
+                echo "If the latest upstream changes cause problems, please report them to this project's issue page."
                 echo -e "You can re-run the setup script without this flag to use the last tested version of the libraries if issues occur.\n"
 
                 # Determine if the user wishes to proceed with using the latest version
-                get_user_yes_no "Would you like to continue with using the latest version of the OQS libraries?"
+                get_user_yes_no "Would you like to continue using the latest version of the OQS libraries?"
 
                 # Prompt the user to confirm using the latest versions
                 if [ $user_y_n_response -eq 1 ]; then
@@ -240,7 +240,7 @@ function parse_args() {
                         confirm_enable_hqc_algs
                     fi
 
-                    # Enable the Liboqs HQC KEM algorithm if warning has been accepted
+                    # Enable the Liboqs HQC KEM algorithm if the warning has been accepted
                     if [ $allow_hqc -eq 1 ]; then
                         enable_liboqs_hqc=1
                     else
@@ -265,7 +265,7 @@ function parse_args() {
                         confirm_enable_hqc_algs
                     fi
 
-                    # Enable the OQS-Provider HQC KEM algorithm if warning has been accepted
+                    # Enable the OQS-Provider HQC KEM algorithm if the warning has been accepted
                     if [ $allow_hqc -eq 1 ]; then
                         enable_oqs_hqc=1
                         oqs_hqc_flag_set=1
@@ -285,7 +285,7 @@ function parse_args() {
                     confirm_enable_hqc_algs
                 fi
 
-                # Enable both Liboqs and OQS-Provider HQC KEM algorithms if warning has been accepted
+                # Enable both Liboqs and OQS-Provider HQC KEM algorithms if the warning has been accepted
                 if [ $allow_hqc -eq 1 ]; then
                     enable_liboqs_hqc=1
                     enable_oqs_hqc=1
@@ -318,7 +318,7 @@ function parse_args() {
     # If enabling OQS-Provider HQC KEM algorithms, ensure that Liboqs HQC KEM algorithms are also enabled
     if [ $enable_oqs_hqc -eq 1 ] && [ $enable_liboqs_hqc -eq 0 ]; then
 
-        # Output the warning message to the user and prompt to enable Liboqs HQC KEM algorithms as well
+        # Output the warning message to the user and prompt to enable Liboqs HQC KEM algorithms, as well
         echo -e "[WARNING] - Enabling OQS-Provider HQC KEM algorithms requires Liboqs HQC KEM algorithms to be enabled as well."
         get_user_yes_no "Would you like to enable Liboqs HQC KEM algorithms as well?"
 
@@ -342,27 +342,27 @@ function configure_dirs() {
     # Detects existing installations based on the selected install type, prompts the user for reinstallation, and ensures
     # a clean setup by removing old directories. Also creates a marker file for identifying the root directory path.
 
-    # Declare required directories array used in the directory check and creation
+    # Declare the required directories array used in the directory check and creation
     required_dirs=("$libs_dir" "$oqs_provider_source" "$tmp_dir" "$test_data_dir" "$alg_lists_dir")
 
     # Set the default value for the previous install flag
     previous_install=0
 
-    # Check if the dependency libraries have already been installed based on install type selected
+    # Check if the dependency libraries have already been installed based on the install type selected
     case $install_type in
         0) [ -d "$liboqs_path" ] && previous_install=1 ;;
         1) [ -d "$liboqs_path" ] || [ -d "$oqs_provider_path" ] && previous_install=1 ;;
         2) [ -d "$oqs_provider_path" ] && previous_install=1 ;;
     esac
 
-    # If a previous install is detected, get the user choice for reinstalling the dependency libraries
+    # If a previous install is detected, get the user's choice for reinstalling the dependency libraries
     if [ "$previous_install" -eq 1 ]; then
 
-        # Output the warning message and get the user choice for reinstalling the libraries
+        # Output the warning message and get the user's choice for reinstalling the libraries
         echo -e "\n[WARNING] - Previous Install Detected!!"
         get_user_yes_no "Would you like to reinstall the libraries?"
 
-        # Continue with the setup or exit based on the user choice
+        # Continue with the setup or exit based on the user's choice
         if [ $user_y_n_response -eq 1 ]; then
             echo -e "Deleting old files and reinstalling...\n"
         else
@@ -375,10 +375,10 @@ function configure_dirs() {
     # Remove old directories depending on the install type selected
     for dir in "${required_dirs[@]}"; do
 
-        # Check if directory exists and remove it for a clean install
+        # Check if the directory exists and remove it for a clean install
         if [ -d "$dir" ]; then
 
-            # If install type is 2, remove the old OQS-Provider install directory and not any existing Liboqs install directory
+            # If install type is 2, remove the old OQS-Provider install directory and any existing Liboqs install directory
             if [ "$dir" == "$libs_dir" ] && [ "$install_type" -eq 2 ]; then
                 rm -rf "$oqs_provider_path" && mkdir -p "$oqs_provider_path"
             elif [ "$dir" == "$tmp_dir" ] && [ "$install_type" -eq 2 ]; then
@@ -416,14 +416,14 @@ function configure_oqs_provider_build() {
     # Determine if the user wishes to enable all disabled signature algorithms in the OQS-Provider library
     get_user_yes_no "Would you like to enable all the digital signature algorithms in the OQS-Provider library that are disabled by default?"
 
-    # Set the oqs_enable_algs build flag option based on the user response
+    # Set the oqs_enable_algs build flag option based on the user's response
     if [ $user_y_n_response -eq 1 ]; then
         oqs_enable_algs=1
     else
         oqs_enable_algs=0
     fi
 
-    # Determine if the users wishes to enable the KEM encoders option in the OQS-Provider build
+    # Determine if the user wishes to enable the KEM encoders option in the OQS-Provider build
     get_user_yes_no "Would you like to enable the KEM encoders option in the OQS-Provider build?"
 
     # Set the OQS-Provider build flags based on the user response
@@ -526,7 +526,7 @@ function download_libraries() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function dependency_install() {
-    # Function for checking and installing the required system dependencies needed for the projects functionality. The function will
+    # Function for checking and installing the required system dependencies needed for the project's functionality. The function will
     # check for missing system packages and Python pip packages and install them if they are not present. Finally, the function will
     # call the download_libraries function used to get  the required dependency libraries (OpenSSL, Liboqs, OQS-Provider).
 
@@ -583,7 +583,7 @@ function dependency_install() {
                 echo -e "\nNOTICE: This version of pip requires that either virtual environments be used or the packages be installed system-wide"
                 echo -e "This project does not currently support automatic setup of virtual environments.\n"
 
-                # Get the user choice for using the --break-system-packages flag or not
+                # Get the user's choice for using the --break-system-packages flag or not
                 while true; do
 
                     # Output the options for proceeding to the user
@@ -592,7 +592,7 @@ function dependency_install() {
                     echo "2. Exit the setup script and manually install the required packages before retrying."
 
                     # Read in the user's response
-                    read -p "Please Select from the above options (1/2): " user_input
+                    read -p "Please select from the above options (1/2): " user_input
 
                     # Determine the next action based on the user's response
                     case $user_input in
@@ -624,7 +624,7 @@ function dependency_install() {
                 done
 
             elif echo "$pip_output" | grep -q 'ERROR: You must give at least one requirement to install (see "pip help install")'; then
-                # No need to do anything as pip is functioning correctly, as it supports the installing to the local user installation
+                # No need to do anything as pip is functioning correctly, as it supports installing to the local user installation
                 # This check just makes sure that this expected error from the pip install is ignored and does get caught by the else statement
                 :
 
@@ -648,7 +648,7 @@ function dependency_install() {
 
     fi
 
-    # Determine location of the system's Python binary
+    # Determine the location of the system's Python binary
     if [ -x "$(command -v python3)" ]; then
         python_bin="python3"
     else
@@ -674,7 +674,7 @@ function openssl_build() {
     echo "Building OpenSSL-$openssl_version"
     echo -e "######################\n"
 
-    # Output warning message this make take a while to the user
+    # Output warning message, this may take a while to the user
     echo -e "Starting OpenSSL $openssl_version build process. This may take a while, and no progress bar will be shown...\n"
     sleep 2
 
@@ -704,7 +704,7 @@ function openssl_build() {
 
         fi
 
-        # Build the required version of OpenSSL in project's directory structure only, not system wide
+        # Build the required version of OpenSSL in the project's directory structure only, not system-wide
         echo "Building OpenSSL Library"
         cd $openssl_source
         ./config --prefix="$openssl_path" --openssldir="$openssl_path" shared >/dev/null
@@ -713,21 +713,21 @@ function openssl_build() {
         cd $root_dir
         echo -e "OpenSSL build complete"
 
-        # Check the OpenSSL library directory name before exporting temp path
+        # Check the OpenSSL library directory name before exporting the temp path
         if [[ -d "$openssl_path/lib64" ]]; then
             openssl_lib_path="$openssl_path/lib64"
         else
             openssl_lib_path="$openssl_path/lib"
         fi
 
-        # Exporting the OpenSSL library filepath for install success check
+        # Exporting the OpenSSL library filepath for the install success check
         export LD_LIBRARY_PATH="$openssl_lib_path:$LD_LIBRARY_PATH"
 
-        # Testing if the OpenSSL has been correctly installed
+        # Testing if OpenSSL has been correctly installed
         test_output=$("$openssl_path/bin/openssl" version)
 
         if [[ "$test_output" != "OpenSSL 3.5.0 8 Apr 2025 (Library: OpenSSL 3.5.0 8 Apr 2025)" ]]; then
-            echo -e "\n\n[ERROR] - Installing required OpenSSL version failed, please verify install process"
+            echo -e "\n\n[ERROR] - Installing required OpenSSL version failed, please verify the installation process"
             exit 1
         fi
 
@@ -746,10 +746,10 @@ function openssl_build() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function enable_arm_pmu() {
-    # Function for enabling the ARM PMU and allowing it to be used in user space. The function will also check if the system is a Raspberry-Pi
+    # Function for enabling the ARM PMU and allowing it to be used in user space. The function will also check if the system is a Raspberry Pi
     # and install the Pi kernel headers if they are not already installed. The function will then enable the PMU and set the enabled_pmu flag.
 
-    # Checking if the system is a Raspberry-Pi and install the Pi kernel headers
+    # Checking if the system is a Raspberry Pi and install the Pi kernel headers
     if ! dpkg -s "raspberrypi-kernel-headers" >/dev/null 2>&1; then
         sudo apt-get update
         sudo apt-get install raspberrypi-kernel-headers
@@ -793,7 +793,7 @@ function liboqs_build() {
     # On ARM devices, enables user space access to the ARM PMU if needed. Handles optional enabling of HQC algorithms and 
     # replaces default test_mem files with project-specific versions for benchmarking.
 
-    # Building Liboqs if install type selected is 0 or 1
+    # Building Liboqs if the install type selected is 0 or 1
     if [ "$install_type" -eq 0 ] || [ "$install_type" -eq 1 ]; then
 
         # Output the current task to the terminal
@@ -829,7 +829,7 @@ function liboqs_build() {
                 enable_arm_pmu
             fi
 
-            # Set ARM-specific build flags if PMU is enabled otherwise use default build flags
+            # Set ARM-specific build flags if PMU is enabled, otherwise use default build flags
             if [ $enabled_pmu -eq 1 ];then
                 build_flags="-DOQS_SPEED_USE_ARM_PMU=ON"
             else
@@ -880,7 +880,7 @@ function liboqs_build() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function oqs_provider_build() {
-    # Function for Building the OQS-Provider dependency library. Configures the build process, enables disabled signature algorithms 
+    # Function for building the OQS-Provider dependency library. Configures the build process, enables disabled signature algorithms 
     # if requested, patches the generate.yml file, and runs the code generator. Ensures correct paths for OpenSSL and Liboqs, 
     # applies the KEM encoder option, and handles errors for missing or malformed configuration files.
 
@@ -893,10 +893,10 @@ function oqs_provider_build() {
     backup_generate_file="$root_dir/modded_lib_files/generate.yml"
     oqs_provider_generate_file="$oqs_provider_source/oqs-template/generate.yml"
 
-    # Enable disabled signature algorithms if user has specified
+    # Enable disabled signature algorithms if the user has specified
     if [ $oqs_enable_algs -eq 1 ] || [ $enable_oqs_hqc -eq 1 ]; then
 
-        # Call the source code modifier utlity script and capture the exit status
+        # Call the source code modifier utility script and capture the exit status
         "$util_scripts/source_code_modifier.sh" "oqs_enable_algs" \
             "--enable-hqc-algs=$enable_oqs_hqc" \
             "--enable-disabled-algs=$oqs_enable_algs"
@@ -941,7 +941,7 @@ function setup_controller() {
     while true; do
 
         # Output the install type options to the user
-        echo "Please Select one of the following build options"
+        echo "Please select one of the following build options"
         echo "1 - Computational Performance Testing Only"
         echo "2 - Both Computational and TLS PQC Performance Testing"
         echo "3 - TLS PQC Performance Testing Only (requires existing computational setup)"
@@ -950,7 +950,7 @@ function setup_controller() {
         # Prompt the user for their selection
         read -p "Enter your choice (1-4): " user_opt
 
-        # Determine the setup actions needed based on the user response
+        # Determine the setup actions needed based on the user's response
         case "$user_opt" in
 
             1)
@@ -1036,7 +1036,7 @@ function setup_controller() {
                 #rm -rf $tmp_dir/* # original clean up
                 rm -rf $tmp_dir/liboqs_source $tmp_dir/openssl_$openssl_version $tmp_dir/oqs_provider_source # temp removal for hqc bug fix
 
-                # Check if the Liboqs alg-list files are present before deciding which alg-list files need generated
+                # Check if the Liboqs alg-list files are present before deciding which alg-list files need generating
                 if [ -f "$alg_lists_dir/kem_algs.txt" ] && [ -f "$alg_lists_dir/sig_algs.txt" ]; then
                     alg_list_flag="3"
                 else
@@ -1062,7 +1062,7 @@ function setup_controller() {
             *)
 
                 # Output the invalid option message to the user
-                echo "Invalid option, please select valid option value (1-4)"
+                echo "Invalid option, please select a valid option value (1-4)"
                 ;;
 
         esac
@@ -1075,14 +1075,14 @@ function setup_controller() {
 
     elif [ "$encoder_flag" == "OFF" ]; then
 
-        # Remove flag file if present in the tmp directory as the KEM encoders are disabled
+        # Remove the flag file if present in the tmp directory, as the KEM encoders are disabled
         if [ -f "$tmp_dir/kem_encoders_enabled.flag" ]; then
             rm "$tmp_dir/kem_encoders_enabled.flag"
         fi
 
     fi
 
-    # Output that there was an issue with the python utility script that creates the alg-list files
+    # Output that there was an issue with the Python utility script that creates the alg-list files
     if [ "$py_exit_status" -ne 0 ]; then
         echo -e "\n[ERROR] - creating algorithm list files failed, please verify both setup and python scripts and rerun setup!!!"
         echo -e "If the issue persists, you may want to consider re-cloning the repo and rerunning the setup script\n"
@@ -1095,7 +1095,7 @@ function setup_controller() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function main() {
-    # Entry point for the PQC-Evaluation-Tools setup script. Initializes the environment, parses command-line arguments,
+    # Entry point for the PQC-Evaluation-Tools setup script. Initialises the environment, parses command-line arguments,
     # and delegates the setup process to the setup_controller function.
 
     # Output the welcome message to the terminal
@@ -1103,10 +1103,10 @@ function main() {
     echo "PQC-Evaluation-Tools Setup Script"
     echo -e "#################################\n"
 
-    # Setup the base environment global variables and directories paths
+    # Setup the base environment, global variables, and directory paths
     setup_base_env
 
-    # Parse the command line arguments passed to the script if any
+    # Parse the command line arguments passed to the script, if any
     if [ "$#" -gt 0 ]; then
         parse_args "$@"
     fi

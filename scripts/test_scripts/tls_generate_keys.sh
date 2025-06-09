@@ -100,7 +100,7 @@ function setup_base_env() {
 function classic_keygen() {
     # Function for generating server certificates and private keys required for PQC TLS handshake benchmarking tests.
     # This includes creating CA certificates, server certificate signing requests, and signed server certificates using RSA
-    # and ECC digital signature algorithms supported both natively in OpenSSL.
+    # and ECC digital signature algorithms supported natively in OpenSSL.
 
     # Loop through the classic digital signature to generate the CA/server certs and private-key files
     for sig in "${classic_sigs[@]}"; do
@@ -378,7 +378,7 @@ function main() {
     echo -e "\nGenerating certs and keys for Hybrid-PQC tests:"
     hybrid_pqc_keygen
 
-    # Restore the OpenSSL conf file to have configuration needed for testing scripts
+    # Restore the OpenSSL conf file to have the configuration needed for testing scripts
     if ! "$util_scripts/configure_openssl_cnf.sh" 2; then
         echo "[ERROR] - Failed to modify OpenSSL configuration."
         exit 1

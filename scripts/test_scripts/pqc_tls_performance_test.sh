@@ -151,7 +151,7 @@ function parse_args {
                 control_sleep_time="${1#*=}"
                 custom_control_time_flag="True"
 
-                # Check if the sleep timer is valid integer or float
+                # Check if the sleep timer is a valid integer or float
                 if [[ ! $control_sleep_time =~ ^[0-9]+([.][0-9]+)?$ ]]; then
                     echo "[ERROR] - Invalid control sleep time: $control_sleep_time"
                     exit 1
@@ -178,7 +178,7 @@ function parse_args {
             --disable-result-parsing)
 
                 # Output the warning message to the user
-                echo -e "\n[WARNING] - Result parsing disabled, results will require to be parsed manually\n"
+                echo -e "\n[WARNING] - Result parsing disabled, results will need to be parsed manually\n"
 
                 # Confirm with the user if they wish to proceed with the parsing disabled
                 get_user_yes_no "Are you sure you want to continue with result parsing disabled?"
@@ -216,17 +216,17 @@ function parse_args {
     # If the custom control sleep time flag has been set, perform additional checks
     if [ "$custom_control_time_flag" == "True" ]; then
 
-        # Check if the set sleep time value falls into given special cases
+        # Check if the set sleep time value falls into the given special cases
         if (( $(echo "$control_sleep_time > 0 && $control_sleep_time < 0.25" | bc -l) )); then
 
             # Output the warning to the user
             echo "[WARNING] - Control sleep time is below the lowest tested value of 0.25 seconds"
-            echo "In most instances this should be fine, but some environments have shown testing to fail using lower values"
+            echo "In most instances, this should be fine, but some environments have shown testing to fail using lower values"
 
             # Ask the user if they wish to continue with the lower value
             get_user_yes_no "Do you wish to continue with the sleep timer set to $control_sleep_time seconds?"
 
-            # Determine if the script should based on the user response
+            # Determine the next action based on the user's response
             if [ $user_y_n_response -eq 0 ]; then
                 echo -e "\nExiting script..."
                 exit 1
@@ -238,7 +238,7 @@ function parse_args {
             echo "[NOTICE] - You have set the control sleep time to 0 seconds"
             get_user_yes_no "Do you wish to disable the control signal sleep statement?"
 
-            # Determine the next action based on the user response
+            # Determine the next action based on the user's response
             if [ $user_y_n_response -eq 1 ]; then
                 echo -e "[NOTICE] - Control Signal Sleep Timer Disabled\n"
                 disable_control_sleep="True"
@@ -256,7 +256,7 @@ function parse_args {
 #-------------------------------------------------------------------------------------------------------------------------------
 function is_port_in_use() {
     # Helper function to determine if a given port is in use. The function will attempt to use various system tools to check if the port is in use.
-    # Once the available system tool has been determine, the function checks if a process is using the port, it then stores the process name 
+    # Once the available system tool has been determined, the function checks if a process is using the port; it then stores the process name 
     # in `port_process` and the process ID in `port_pid` variables.
 
     # Store the port number and initialise the process name and PID variables
@@ -275,7 +275,7 @@ function is_port_in_use() {
         port_pid=$(ss -tulnp | awk -v port=":$port" '$0 ~ port {gsub(".*pid=","",$NF); gsub(",.*","",$NF); print $NF}')
         port_process=$(ss -tulnp | awk -v port=":$port" '$0 ~ port {for (i=1; i<=NF; i++) if ($i ~ /users:\(\("/) {print $i; exit}}' | sed -E 's/users:\(\("//;s/",pid=.*//')
 
-        # Determine if the port is in use based on if a process ID is found
+        # Determine if the port is in use based on whether a process ID is found
         if [[ -n "$port_pid" ]]; then
             return 0
         fi
@@ -289,7 +289,7 @@ function is_port_in_use() {
         port_pid=$(netstat -tulnp 2>/dev/null | grep ":$port" | awk '{print $7}' | cut -d'/' -f1)
         port_process=$(netstat -tulnp 2>/dev/null | grep ":$port" | awk '{print $7}' | cut -d'/' -f2)
 
-        # Determine if the port is in use based on if a process ID is found
+        # Determine if the port is in use based on whether a process ID is found
         if [[ -n "$port_pid" ]]; then
             return 0
         fi
@@ -302,7 +302,7 @@ function is_port_in_use() {
         # Grab the process ID and process name when supplying the port number
         port_pid=$(lsof -Pi :"$port" -sTCP:LISTEN -t 2>/dev/null)
 
-        # Determine if the port is in use based on if a process ID is found
+        # Determine if the port is in use based on whether a process ID is found
         if [[ -n "$port_pid" ]]; then
             port_process=$(ps -p "$port_pid" -o comm= 2>/dev/null | awk '{$1=$1};1')
             return 0
@@ -310,11 +310,11 @@ function is_port_in_use() {
 
     else
 
-        # Output a warning that no tool was found to check port usage and get the user response
+        # Output a warning that no tool was found to check port usage, and get the user's response
         echo -e "[WARNING] - No tool found to check port usage (lsof, ss, netstat)\n"
         get_user_yes_no "Do you wish to continue without checking if the control ports are already in use?"
 
-        # Determine the next action based on the user response
+        # Determine the next action based on the user's response
         if [ $user_y_n_response -eq 1 ]; then
             skip_port_check="True"
             return 1
@@ -429,10 +429,10 @@ function setup_base_env() {
     # Ensure that control ports are not in use by other processes in the system
     for custom_port_index in "${!ports_to_check[@]}"; do
 
-        # Check if the port is in use in the system if the user has not chosen to skip the check due to missing tools
+        # Check if the port is in use in the system, if the user has not chosen to skip the check due to missing tools
         if [ "$skip_port_check" != "True" ] && is_port_in_use "${ports_to_check[$custom_port_index]}"; then
 
-            # Extract where the process pid is being ran from for the port being checked
+            # Extract where the process pid is being run from for the port being checked
             process_cmdline=$(readlink -f /proc/$port_pid/cwd)
 
             # Check if the conflicting process is from this test suite
@@ -473,12 +473,12 @@ function set_tls_paths() {
     # Function for setting the results paths based on the machine-ID assigned to the test results and exporting the paths 
     # to the environment for the server/client script.
 
-    # Set the result directory paths based on assigned machine-ID for results
+    # Set the result directory paths based on the assigned machine-ID for results
     export MACHINE_RESULTS_PATH="$test_data_dir/up_results/tls_performance/machine_$MACHINE_NUM"
     export MACHINE_HANDSHAKE_RESULTS="$MACHINE_RESULTS_PATH/handshake_results"
     export MACHINE_SPEED_RESULTS="$MACHINE_RESULTS_PATH/speed_results"
 
-    # Set the specific test types result directory paths
+    # Set the specific test types' result directory paths
     export PQC_HANDSHAKE="$MACHINE_HANDSHAKE_RESULTS/pqc"
     export CLASSIC_HANDSHAKE="$MACHINE_HANDSHAKE_RESULTS/classic"
     export HYBRID_HANDSHAKE="$MACHINE_HANDSHAKE_RESULTS/hybrid"
@@ -536,7 +536,7 @@ function clean_environment() {
 function get_machine_num() {
     # Helper function for getting the machine-ID from the user to assign to the test results
 
-    # Prompt the use for the machine-ID to be assigned to the results
+    # Prompt the user for the machine-ID to be assigned to the results
     while true; do
 
         # Get the machine-ID from the user
@@ -553,7 +553,7 @@ function get_machine_num() {
                 ;;
             
             *)
-                # Store the machine-ID  from the user and break out of the loop
+                # Store the machine-ID from the user and break out of the loop
                 MACHINE_NUM="$user_response"
                 echo -e "\nMachine-ID set to $user_response\n"
                 break
@@ -575,7 +575,7 @@ function handle_machine_id_clash() {
 
         # Output the choices for handling the clash to the user
         echo -e "[WARNING] - There are already results stored for Machine-ID ($MACHINE_NUM), would you like to:"
-        echo -e "1 - Replace old results and keep same Machine-ID"
+        echo -e "1 - Replace old results and keep the same Machine-ID"
         echo -e "2 - Assign a different machine ID"
 
         # Read in the user's response
@@ -599,7 +599,7 @@ function handle_machine_id_clash() {
 
             2)
 
-                # Get a new machine-ID that will assigned to the results instead
+                # Get a new machine-ID that will be assigned to the results instead
                 echo -e "\nAssigning new Machine-ID for test results"
                 get_machine_num
 
@@ -611,14 +611,14 @@ function handle_machine_id_clash() {
                     echo -e "No previous results present for Machine-ID ($MACHINE_NUM), continuing test setup"
                     break
                 else
-                    echo "There are previous results detected for new Machine-ID value, please select different value or replace old results"
+                    echo "There are previous results detected for the new Machine-ID value, please select a different value or replace the old results"
                 fi
                 ;;
 
             *)
 
                 # Output to the user that the input is invalid
-                echo "Invalid option, please select valid option value (1-2)"
+                echo "Invalid option, please select a valid option value (1-2)"
                 ;;
 
         esac
@@ -636,10 +636,10 @@ function configure_results_dir() {
     # Set the results paths based on the machine-ID
     set_tls_paths
 
-    # Create the un-parsed result directories for the machine-ID and and handle any clashes
+    # Create the unparsed result directories for the machine-ID and handle any clashes
     if [ -d "$test_data_dir/up_results" ]; then
     
-        # Check if there is already results present for assigned machine-ID and handle any clashes
+        # Check if there are already results present for the assigned machine-ID and handle any clashes
         if [ -d "$MACHINE_RESULTS_PATH" ]; then
             handle_machine_id_clash
         
@@ -710,7 +710,7 @@ function configure_test_options {
     while true; do
 
         # Outputting the test machine options to the user
-        echo "Please select on of the following test machine options to configure machine type:"
+        echo "Please select one of the following test machine options to configure machine type:"
         echo "1-This machine will be the server"
         echo "2-This machine will be the client"
         echo "3-Exit"
@@ -750,14 +750,14 @@ function configure_test_options {
             *)
 
                 # Output to the user that the input is invalid
-                echo "Invalid option, please select valid option value (1-3)"
+                echo "Invalid option, please select a valid option value (1-3)"
                 ;;
 
         esac
 
     done
 
-    # If test machine is client, get the TLS handshake and speed test lengths from user
+    # If the test machine is a client, get the TLS handshake and speed test lengths from the user
     if [ $machine_type == "Client" ]; then
 
         # Ask the user if they wish to assign a machine-ID to the performance results
@@ -821,7 +821,7 @@ function configure_test_options {
     # Prompt the user for the number of test runs until a valid response is given
     while true; do
 
-        # Output task to terminal only if server
+        # Output task to the terminal only if the machine is a server
         if [ $machine_type == "Server" ]; then
             echo -e "\n=== Setting Test Parameters ===\n"
         fi
@@ -852,7 +852,7 @@ function check_transferred_keys() {
         # Prompt the user for their response
         get_user_yes_no "Have you generated and transferred the testing keys to the client machine?"
 
-        # Determine the next action based on the user response
+        # Determine the next action based on the user's response
         if [ $user_y_n_response -eq 1 ]; then
             break
 
@@ -871,10 +871,10 @@ function check_transferred_keys() {
 #-------------------------------------------------------------------------------------------------------------------------------
 function run_tests() {
     # Function responsible for executing TLS handshake and speed tests. It prompts the user to provide the IP address of the 
-    # other machine, validates the format of the provided IP address. Based on the machine type (server or client), it invokes 
+    # other machine, and validates the format of the provided IP address. Based on the machine type (server or client), it invokes 
     # the appropriate test scripts to perform the tests and handles any errors that may occur during execution.
    
-    # Set the regex variable for checking the IP address format entered by user
+    # Set the regex variable for checking the IP address format entered by the user
     ipv4_regex_check="^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$"
 
     # Prompt the user for the IP address of the other machine until a valid response is given
@@ -884,7 +884,7 @@ function run_tests() {
         echo -e "\n=== Configure IP Parameters ===\n"
         read -p "Please enter the $ip_request_string machine's IP address: " usr_ip_input
 
-        # Format the user ip input by removing trailing spaces
+        # Format the user IP input by removing trailing spaces
         ip_address=$(echo $usr_ip_input | tr -d ' ')
 
         # Check if the IP address entered is in the correct format
@@ -906,12 +906,12 @@ function run_tests() {
     
     done
 
-    # Output the reminder to move keys before starting test (will automate in future)
-    echo -e "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-    echo -e "Please ensure that you have generated and transferred keys before starting test"
-    echo -e "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
+    # Output the reminder to move keys before starting the test (will automate in future)
+    echo -e "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    echo -e "Please ensure that you have generated and transferred keys before starting the test"
+    echo -e "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
 
-    # Prompt the user to see if they have transferred the certs/keys and clearing the screen
+    # Prompt the user to see if they have transferred the certs/keys, and clear the screen
     check_transferred_keys
     clear
 
@@ -956,7 +956,7 @@ function run_tests() {
             exit 1
         fi
 
-        # Set the parsing checks needed as this is the client machine
+        # Set the parsing checks needed, as this is the client machine
         parsing_check_needed=1
 
     fi
@@ -972,10 +972,10 @@ function handle_result_parsing() {
     # Parse the results if the flag is set to enabled
     if [ $parse_results -eq 1 ]; then
 
-        # Call the automatic parsing script based on if old results need to be replaced
+        # Call the automatic parsing script based on whether old results need to be replaced
         if [ $replace_old_results -eq 0 ]; then
 
-            # Call the result parsing script to parse the results with replace flag not set
+            # Call the result parsing script to parse the results with the replace flag not set
             python3 "$result_parser_script" \
                 --parse-mode="tls"  \
                 --machine-id="$MACHINE_NUM" \
@@ -984,7 +984,7 @@ function handle_result_parsing() {
 
         else
 
-            # Call the result parsing script to parse the results with replace flag set
+            # Call the result parsing script to parse the results with the replace flag set
             python3 "$result_parser_script" \
                 --parse-mode="tls"  \
                 --machine-id="$MACHINE_NUM" \
@@ -1038,7 +1038,7 @@ function main() {
     client_control_port="25001"
     s_server_port="4433"
 
-    # Parse the command line arguments passed to the script if any
+    # Parse the command line arguments passed to the script, if any
     if [[ $# -gt 0 ]]; then
         parse_args "$@"
     fi

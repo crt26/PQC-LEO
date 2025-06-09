@@ -44,7 +44,7 @@ function parse_args() {
 
             0)
 
-                # Set the configure mode if no mode has been yet
+                # Set the configure mode if no mode has been set yet
                 if [ "$mode_selected" == "False" ]; then
                     configure_mode=0
                     mode_selected="True"
@@ -59,7 +59,7 @@ function parse_args() {
 
             1)
 
-                # Set the configure mode if no mode has been yet
+                # Set the configure mode if no mode has been set yet
                 if [ "$mode_selected" == "False" ]; then
                     configure_mode=1
                     mode_selected="True"
@@ -73,7 +73,8 @@ function parse_args() {
                 ;;
 
             2)
-                # Set the configure mode if no mode has been yet
+            
+                # Set the configure mode if no mode has been set yet
                 if [ "$mode_selected" == "False" ]; then
                     configure_mode=2
                     mode_selected="True"

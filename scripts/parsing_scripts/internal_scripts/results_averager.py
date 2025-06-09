@@ -135,11 +135,11 @@ class ComputationalAverager:
         sig_filename_prefix = os.path.join(self.dir_paths['type_speed_dir'], "test_sig_speed_")
         speed_fieldnames = []
 
-        # Get the fieldnames from first file
+        # Get the fieldnames from the first file
         test_filename = "test_kem_speed_1.csv"
         test_filename = os.path.join(self.dir_paths['type_speed_dir'], test_filename)
 
-        # Load the test file into dataframe and put the headers into a list
+        # Load the test file into a dataframe and put the headers into a list
         check_df = pd.read_csv(test_filename)
         speed_fieldnames = check_df.columns.to_list()
 
@@ -178,7 +178,7 @@ class ComputationalAverager:
                 # Calculate the average for the cryptographic operation
                 operation_average = (operation_average.mean(axis=0)).to_frame()
 
-                # Create a new row and exporting to main KEM speed average dataframe
+                # Create a new row and export to the main KEM speed average dataframe
                 row = operation_average.iloc[:, 0].to_list()
                 row.insert(0, kem_alg)
                 row.insert(1, operation)
@@ -262,7 +262,7 @@ class TLSAverager:
                 # Create the dataframe and filepaths
                 sig_avg_df = pd.DataFrame(columns=self.col_headers['pqc_based_headers'])
                 
-                # Get the sig/kem averages by reading in the average for specific kem across all runs
+                # Get the sig/kem averages by reading in the average for a specific kem across all runs
                 for kem in self.algs_dict[self.pqc_type_vars["kem_alg_type"][type_index]]:
 
                     # Reset the combined sig dataframe
@@ -276,7 +276,7 @@ class TLSAverager:
                         current_run_filename = f"tls_handshake_{sig}_run_{current_run}.csv"
                         current_run_filepath = os.path.join(sig_path, current_run_filename)
 
-                        # Read in the current run csv to get metrics
+                        # Read in the current run CSV to get metrics
                         current_run_df = pd.read_csv(current_run_filepath)
 
                         # Extract the data for the current KEM
@@ -326,7 +326,7 @@ class TLSAverager:
             # Loop through all ECC curves
             for alg in self.algs_dict['classic_algs']:
 
-                # Resetting combined curve dataframe
+                # Resetting the combined curve dataframe
                 curve_first_combined_df = pd.DataFrame(columns=self.col_headers['classic_headers'])
                 curve_reused_combined_df = pd.DataFrame(columns=self.col_headers['classic_headers'])
 
@@ -337,7 +337,7 @@ class TLSAverager:
                     current_run_filename = f"classic_results_run_{str(current_run)}.csv"
                     current_run_filepath = os.path.join(self.dir_paths['classic_handshake_results'], current_run_filename)
 
-                    # Reading in current run csv to get metrics
+                    # Reading in the current run CSV to get metrics
                     current_run_df = pd.read_csv(current_run_filepath)
 
                     # Extracting the data for the current curve and ciphersuite
@@ -364,7 +364,7 @@ class TLSAverager:
                         curve_first_combined_row.append(float(curve_first_combined_df[column].mean()))
                         curve_reused_combined_row.append(float(curve_reused_combined_df[column].mean()))
                 
-                # Append average rows onto main average dataframe
+                # Append average rows onto the main average dataframe
                 classic_avg_df.loc[len(classic_avg_df)] = curve_first_combined_row
                 classic_avg_df.loc[len(classic_avg_df)] = curve_reused_combined_row
 
@@ -408,7 +408,7 @@ class TLSAverager:
                 temp_filename = f"{pqc_fileprefix}_{alg_type}_1.csv"
                 algs = self.get_speed_algs(temp_filename, dir_list)
 
-                # Set the headers used in the csv files based on alg_type and creating dataframe
+                # Set the headers used in the CSV files based on alg_type and create a dataframe
                 headers = speed_headers[0] if alg_type == "kem" else speed_headers[1]
                 speed_avg_df = pd.DataFrame(columns=headers)
 
@@ -421,7 +421,7 @@ class TLSAverager:
                     # Loop through the runs to get averages for the alg type
                     for run_num in range(1, self.num_runs+1):
 
-                        # Set the filename and path for current type and run
+                        # Set the filename and path for the current type and run
                         current_filename = f"{pqc_fileprefix}_{alg_type}_{run_num}.csv"
                         current_filepath = os.path.join(dir_list[1], current_filename)
                     
@@ -444,7 +444,7 @@ class TLSAverager:
                         else:
                             speed_avg_row.append(float(combined_df[column].mean()))
 
-                    # Append the row to main average dataframe
+                    # Append the row to the main average dataframe
                     speed_avg_row.insert(0, alg)
                     speed_avg_df.loc[len(speed_avg_df)] = speed_avg_row
 

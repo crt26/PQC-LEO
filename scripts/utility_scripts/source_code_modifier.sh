@@ -100,7 +100,7 @@ function parse_args() {
         exit 0
     fi
 
-    # Determine which set of arguments need to be parsed based on the supplied modification tool
+    # Determine which set of arguments needs to be parsed based on the supplied modification tool
     if [ "$modification_tool" == "oqs_enable_algs" ]; then
 
         # Loop through the passed command line arguments and check for the supported options
@@ -114,7 +114,7 @@ function parse_args() {
                     # Set the enable_hqc flag based on the value passed
                     enable_hqc=$(echo "$1" | cut -d '=' -f 2)
 
-                    # Ensure that value attached to the flag is either 0 or 1
+                    # Ensure that the value attached to the flag is either 0 or 1
                     if [[ "$enable_hqc" != "0" && "$enable_hqc" != "1" ]]; then
                         echo "[ERROR] - Invalid value for --enable-hqc-algs, must be 0 or 1"
                         output_help_message
@@ -129,7 +129,7 @@ function parse_args() {
                     # Set the enable_disabled_algs flag based on the value passed
                     enable_disabled_algs=$(echo "$1" | cut -d '=' -f 2)
 
-                    # Ensure that value attached to the flag is either 0 or 1
+                    # Ensure that the value attached to the flag is either 0 or 1
                     if [[ "$enable_disabled_algs" != "0" && "$enable_disabled_algs" != "1" ]]; then
                         echo "[ERROR] - Invalid value for --enable-disabled-algs, must be 0 or 1"
                         output_help_message
@@ -171,7 +171,7 @@ function parse_args() {
                     # Extract the value from the argument and ensure it is either 0 or 1
                     user_defined_speed_flag=$(echo "$1" | cut -d '=' -f 2)
 
-                    # Ensure that value attached to the flag is either 0 or 1
+                    # Ensure that the value attached to the flag is either 0 or 1
                     if [[ "$user_defined_speed_flag" != "0" && "$user_defined_speed_flag" != "1" ]]; then
                         echo "[ERROR] - Invalid value for --user-defined-flag, must be 0 or 1"
                         output_help_message
@@ -184,7 +184,7 @@ function parse_args() {
 
                 --user-defined-speed-value=*)
 
-                    # Set the user defined speed value based on the value passed
+                    # Set the user-defined speed value based on the value passed
                     user_defined_speed_value=$(echo "$1" | cut -d '=' -f 2)
 
                     # Check if it's a valid positive integer
@@ -216,7 +216,7 @@ function parse_args() {
             exit 1
         fi
 
-        # Ensure that if the user_defined_speed_flag is set that user defined speed value is not 0
+        # Ensure that if the user_defined_speed_flag is set, that user defined speed value is not 0
         if [ "$user_defined_speed_flag" -eq 1 ] && [ "$user_defined_speed_value" -eq 0 ]; then
             echo "[ERROR] - The new speed value for the MAX_KEM_NUM/MAX_SIG_NUM variables can not be 0"
             exit 1
@@ -326,7 +326,7 @@ function modify_openssl_src() {
     # If a fail output message is present, output the related options for proceeding based on the fail type
     if [ -n "$fail_output" ]; then
 
-        # Output the relevant warning message and info to the the user
+        # Output the relevant warning message and info to the user
         if [ "$fail_output" == "1" ]; then
 
             # Output the file can not be found warning message to the user
@@ -369,7 +369,7 @@ function modify_openssl_src() {
     fallback_value=200
     emergency_padding=100
 
-    # Determine highest value between the default MAX_KEM_NUM and MAX_SIG_NUM values (they should be the same but just in case)
+    # Determine the highest value between the default MAX_KEM_NUM and MAX_SIG_NUM values (they should be the same, but just in case)
     highest_default_value=$(($default_max_kem_num > $default_max_sig_num ? $default_max_kem_num : $default_max_sig_num))
 
     # Ensure that the fallback value is greater than the default MAX_KEM_NUM/MAX_SIG_NUM values
@@ -378,7 +378,7 @@ function modify_openssl_src() {
         # Set the emergency fallback value and emergency value
         fallback_value=$((highest_default_value + emergency_padding))
 
-        # Warn the user this has happened before continuing the setup process
+        # Warn the user that this has happened before continuing the setup process
         echo "[WARNING] - The default fallback value for the MAX_KEM_NUM/MAX_SIG_NUM values is less than the default values in the speed.c file."
         echo -e "The new fallback value with an emergency padding of $emergency_padding is $fallback_value.\n"
         sleep 5
@@ -389,9 +389,9 @@ function modify_openssl_src() {
     if [ "$user_defined_speed_flag" -eq 1 ] && [ "$new_value" -lt "$highest_default_value" ]; then
 
         # Output the warning message to the user and get their choice for continuing with the setup process
-        echo -e "\n[WARNING] - The user-defined new value for the MAX_KEM_NUM/MAX_SIG_NUM variables are less than the default values in the speed.c file."
+        echo -e "\n[WARNING] - The user-defined new value for the MAX_KEM_NUM/MAX_SIG_NUM variables is less than the default values in the speed.c file."
         echo "The current values in the speed.c file is MAX_KEM_NUM: $default_max_kem_num and MAX_SIG_NUM: $default_max_sig_num."
-        echo -e "In this situation, the setup process can use the fallback value of $fallback_value instead of the user defined value of $new_value\n"
+        echo -e "In this situation, the setup process can use the fallback value of $fallback_value instead of the user-defined value of $new_value\n"
         get_user_yes_no "Would you like to continue with the setup process using the default new value of $fallback_value instead?"
 
         # If fallback should be used, modify the speed.c file to use the fallback value instead, otherwise exit the setup script
@@ -485,7 +485,7 @@ function modify_openssl_src() {
     fi
 
     # Output modification success message to the terminal
-    echo -e "[NOTICE] - The MAX_KEM_NUM/MAX_SIG_NUM values in the OpenSSL speed.c file have been successfully modified to $new_value\n"
+    echo -e "[NOTICE] - The MAX_KEM_NUM/MAX_SIG_NUM values in the OpenSSL speed.c file has been successfully modified to $new_value\n"
 
 }
 
@@ -566,7 +566,7 @@ awk '
 
     fi
 
-    # Check if the genreate.py script needs executed
+    # Check if the generate.py script needs to be executed
     if [ $enable_disabled_algs -eq 1 ] || [ $enable_hqc -eq 1 ]; then
 
         # Run the generate.py script to enable all disabled signature algorithms in the OQS-Provider library
@@ -602,7 +602,7 @@ function modifier_entrypoint() {
         # Enable all disabled OQS-Provider algorithms
         oqs_enable_algs)
 
-            # parse the command line arguments for the enable_oqs_algs function
+            # Parse the command line arguments for the enable_oqs_algs function
             parse_args "$@"
 
             # Call the function to enable all disabled OQS-Provider algorithms

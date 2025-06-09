@@ -1,7 +1,7 @@
 # PQC Evaluation Tools <!-- omit from toc -->
 
 ## Notice: <!-- omit from toc -->
-This is the **development branch**, it may not be in a fully functioning state, and the documentation may still need to be updated. The checkboxes below indicate whether the current development version is in a basic functioning state and if the documentation is accurate for its current functionality. Regardless, please keep this in mind and use the main branch if possible. Thank you.
+This is the **development branch**; it may not be in a fully functioning state, and the documentation may still need to be updated. The checkboxes below indicate whether the current development version is in a basic functioning state and if the documentation is accurate for its current functionality. Regardless, please keep this in mind and use the main branch if possible. Thank you.
 
 - [ ] Functioning State
 - [ ] Up-to-date documentation
@@ -14,7 +14,7 @@ For full details on the project's development and the current development task l
 ## Repository Overview <!-- omit from toc -->
 
 ### Project Description
-This repository provides an automated and comprehensive evaluation framework for benchmarking Post-Quantum Cryptography (PQC) algorithms. It is designed for researchers and developers looking to evaluate the feasibility of integrating PQC into their environments. The framework streamlines the setup and testing of PQC implementations, enabling collection of computational and networking performance metrics across x86 and ARM systems through a suite of dedicated automation scripts.
+This repository provides an automated and comprehensive evaluation framework for benchmarking Post-Quantum Cryptography (PQC) algorithms. It is designed for researchers and developers looking to evaluate the feasibility of integrating PQC into their environments. The framework streamlines the setup and testing of PQC implementations, enabling the collection of computational and networking performance metrics across x86 and ARM systems through a suite of dedicated automation scripts.
 
 PQC implementations are sourced from multiple libraries, including algorithms natively supported in OpenSSL 3.5.0 and those available from the [Open Quantum Safe (OQS)](https://openquantumsafe.org/) project's `Liboqs` and `OQS-Provider` libraries. The framework also provides automated mechanisms for testing PQC TLS handshake performance across physical or virtual networks, providing valuable insight into real-world environment testing. Results are outputted as raw CSV files that are automatically processed using the provided Python parsing scripts to provide detailed metrics and averages ready for analysis.
 
@@ -85,7 +85,7 @@ For further information on the classical and PQC algorithms this project provide
 
 [Supported Algorithms](docs/supported_algorithms.md)
 
-**Notice:** The HQC KEM algorithms are disabled by default in recent versions of both Liboqs and the OQS-Provider, due to their current implementations not conforming to the latest specification, which includes important security fixes. For benchmarking purposes, the setup process includes an optional flag to enable HQC in these libraries, accompanied by a user confirmation prompt and warning. Enabling HQC is done at the user's own discretion and this project assumes no responsibility for its use. For instructions on enabling HQC, see the [Advanced Setup Configuration Guide](docs/advanced_setup_configuration.md), and refer to the [Disclaimer Document](./DISCLAIMER.md) for more information on this issue.
+**Notice:** The HQC KEM algorithms are disabled by default in recent versions of both Liboqs and the OQS-Provider, due to their current implementations not conforming to the latest specification, which includes important security fixes. For benchmarking purposes, the setup process includes an optional flag to enable HQC in these libraries, accompanied by a user confirmation prompt and warning. Enabling HQC is done at the user's own discretion, and this project assumes no responsibility for its use. For instructions on enabling HQC, see the [Advanced Setup Configuration Guide](docs/advanced_setup_configuration.md), and refer to the [Disclaimer Document](./DISCLAIMER.md) for more information on this issue.
 
 ## Installation Instructions
 The standard setup process uses the last tested commits of the project's dependency libraries to ensure compatibility with this project's automation tools. The setup script performs system detection, installs all required components, and supports multiple installation modes depending on the desired testing configuration.

@@ -62,7 +62,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
         ensuring that the user is aware of the old results and can choose 
         how to handle them before the parsing continues. """
 
-    # Check if there are any old parsed results for current Machine-ID and handle any clashes
+    # Check if there are any old parsed results for the current Machine-ID and handle any clashes
     if os.path.exists(dir_paths["type_mem_dir"]) or os.path.exists(dir_paths["type_speed_dir"]):
 
         # Determine if the user needs prompted to handle the old results or if the --replace-old-results flag is set
@@ -85,7 +85,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
             # Output the warning message to the terminal
             print(f"[WARNING] - There are already parsed computational testing results present for Machine-ID ({machine_id})\n")
 
-            # Get the decision from user on how to handle old results before parsing continues
+            # Get the decision from the user on how to handle old results before parsing continues
             while True:
 
                 # Output the potential options and handle user choice
@@ -114,7 +114,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
 
                 elif user_choice == "3":
 
-                    # Halt the script until the old results have been moved for current Machine-ID
+                    # Halt the script until the old results have been moved for the current Machine-ID
                     while True:
 
                         input(f"Halting parsing script so old parsed results for Machine-ID ({machine_id}) can be moved, press enter to continue")
@@ -133,7 +133,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
 
                 else:
 
-                    # Output warning message if the user input is not valid
+                    # Output a warning message if the user input is not valid
                     print("Incorrect value, please select (1/2/3)")
 
     else:
@@ -161,10 +161,10 @@ def get_peak(mem_file, peak_metrics):
     """ Helper function for taking the passed massif.out file and getting 
         the peak memory metrics, returning the values to continue
         processing. The function comes from the run_mem.py script 
-        found in OQS Profiling Project
+        found in the OQS Profiling Project
         https://github.com/open-quantum-safe/profiling """
 
-    # Get the max memory metric for current algorithm cryptographic operation
+    # Get the max memory metric for the current algorithm's cryptographic operation
     with open(mem_file, "r") as lines:
         peak = -1
         for line in lines:
@@ -185,7 +185,7 @@ def pre_speed_processing(dir_paths, num_runs):
     """ Function for preparing speed up-result data by removing system information, 
         making it ready for further processing. """
 
-    # Setup the destination directory in current machines up-results for pre-processed speed files
+    # Setup the destination directory in the current machine's up-results for pre-processed speed files
     if not os.path.exists(dir_paths['up_speed_dir']):
         os.makedirs(dir_paths['up_speed_dir'])
     else:
@@ -196,10 +196,10 @@ def pre_speed_processing(dir_paths, num_runs):
     kem_prefix = "test_kem_speed_"
     sig_prefix = "test_sig_speed_"
 
-    # Pre-format the KEM and sig csv speed files to remove system information from file
+    # Pre-format the KEM and sig csv speed files to remove system information from the file
     for run_count in range(1, num_runs+1):
 
-        """ Pre-format the kem csv files """
+        """ Pre-format the kem CSV files """
         # Set the filename based on current run
         kem_pre_filename = kem_prefix + str(run_count) + ".csv"
         kem_filename = os.path.join(dir_paths["raw_speed_dir"], kem_pre_filename)
@@ -217,8 +217,8 @@ def pre_speed_processing(dir_paths, num_runs):
         speed_dest_dir = os.path.join(dir_paths["up_speed_dir"], kem_pre_filename)
         kem_pre_speed_df.to_csv(speed_dest_dir, index=False, sep="|")
 
-        """ Pre-format the Digital Signature csv files """
-        # Set the filename based on current run
+        """ Pre-format the Digital Signature CSV files """
+        # Set the filename based on the current run
         sig_pre_filename = sig_prefix + str(run_count) + ".csv"
         sig_filename = os.path.join(dir_paths["raw_speed_dir"], sig_pre_filename)
 
@@ -252,12 +252,12 @@ def speed_processing(dir_paths, num_runs, kem_algs, sig_algs):
     for file_count in range(1, num_runs+1):
 
         """ Format the KEM Files """
-        # Load the KEM file into dataframe
+        # Load the KEM file into a dataframe
         filename_kem_pre = kem_prefix + str(file_count) + ".csv"
         filename_kem_pre = os.path.join(dir_paths['up_speed_dir'], filename_kem_pre)
         temp_df = pd.read_csv(filename_kem_pre, delimiter="|", index_col=False)
 
-        # Strip the trailing spaces and remove the algorithms from Operation column
+        # Strip the trailing spaces and remove the algorithms from the Operation column
         temp_df.columns = [col.strip() for col in temp_df.columns]
         temp_df = temp_df.loc[~temp_df['Operation'].str.strip().isin(kem_algs)]
         temp_df = temp_df.apply(lambda col: col.str.strip() if col.dtype == 'object' else col)
@@ -272,7 +272,7 @@ def speed_processing(dir_paths, num_runs, kem_algs, sig_algs):
         temp_df.to_csv(filename_kem, index=False)
         
         """ Formatting the Digital Signature Files """
-        # Load the kem file into dataframe and strip the trailing spaces in columns headers
+        # Load the kem file into a dataframe and strip the trailing spaces in column headers
         filename_sig_pre = sig_prefix + str(file_count) + ".csv"
         filename_sig_pre = os.path.join(dir_paths['up_speed_dir'], filename_sig_pre)
         temp_df = pd.read_csv(filename_sig_pre, delimiter="|", index_col=False)
@@ -308,7 +308,7 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
     # Define the header column names for the dataframe
     fieldnames = ["Algorithm", "Operation", "intits", "maxBytes", "maxHeap", "extHeap", "maxStack"]
     
-    # Loop through the number test runs specified
+    # Loop through the number of test runs specified
     for run_count in range(1, num_runs+1):
 
         # Create the dataframe to store memory metrics for the current run
@@ -330,13 +330,13 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
                     peak_metrics = get_peak(kem_up_filepath, peak_metrics)
                     new_row.extend([kem_alg, alg_operations['kem_operations'][operation]])
 
-                    # Assign empty values for algorithm/operation row if no memory metrics were gathered
+                    # Assign empty values for the algorithm/operation row if no memory metrics were gathered
                     if peak_metrics is None:
                         peak_metrics = []
                         for _ in range(1, (len(fieldnames) - 2)):
                             peak_metrics.append("")
                     
-                    # Fill in the row with algorithm/operation memory metrics before appending to dataframe
+                    # Fill in the row with algorithm/operation memory metrics before appending to the dataframe
                     new_row.extend(peak_metrics)
                     mem_results_df.loc[len(mem_results_df)] = new_row
 
@@ -352,7 +352,7 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
         # Check if there is a mismatch between the number of algorithms in the alg-list and the dataframe
         check_data_mismatch(len(mem_results_df), len(kem_algs), "KEM Memory Results")
         
-        # Output the KEM csv file for this run
+        # Output the KEM CSV file for this run
         kem_filename = "kem_mem_metrics_" + str(run_count) + ".csv"
         kem_filepath = os.path.join(dir_paths["type_mem_dir"], kem_filename)
         mem_results_df.to_csv(kem_filepath, index=False)
@@ -376,13 +376,13 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
                     peak_metrics = get_peak(sig_up_filepath, peak_metrics)
                     new_row.extend((sig_alg, alg_operations['sig_operations'][operation]))
 
-                    # Assign empty values for algorithm/operation row if no memory metrics were gathered
+                    # Assign empty values for the algorithm/operation row if no memory metrics were gathered
                     if peak_metrics is None:
                         peak_metrics = []
                         for _ in range(0, (len(fieldnames) - 2)):
                             peak_metrics.append("")
                         
-                    # Fill in the row with algorithm/operation memory metrics before appending to dataframe
+                    # Fill in the row with algorithm/operation memory metrics before appending to the dataframe
                     new_row.extend(peak_metrics)
                     mem_results_df.loc[len(mem_results_df)] = new_row
 
@@ -426,7 +426,7 @@ def process_tests(machine_id, num_runs, dir_paths, kem_algs, sig_algs, replace_o
         print(f"[ERROR] - Machine-ID ({machine_id}) up_results directory does not exist, please ensure the up-results directory is present before continuing")
         sys.exit(1)
 
-    # Create the required directories and handling any clashes with previously parsed results
+    # Create the required directories and handle any clashes with previously parsed results
     handle_results_dir_creation(machine_id, dir_paths, replace_old_results)
 
     # Parse the up-results for the specified Machine-ID
@@ -441,7 +441,7 @@ def process_tests(machine_id, num_runs, dir_paths, kem_algs, sig_algs, replace_o
 #------------------------------------------------------------------------------------------------------------------------------
 def parse_comp_performance(test_opts, replace_old_results):
     """ Entrypoint for parsing computational benchmarking results. 
-        Calls necessary functions to process the results. """
+        Calls the necessary functions to process the results. """
     
     # Get the test options
     machine_id = test_opts[0]

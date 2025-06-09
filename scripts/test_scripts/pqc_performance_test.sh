@@ -79,7 +79,7 @@ function parse_args() {
             --disable-result-parsing)
 
                 # Output the warning message to the user
-                echo -e "\n[WARNING] - Result parsing disabled, results will require to be parsed manually\n"
+                echo -e "\n[WARNING] - Result parsing disabled, results will need to be parsed manually\n"
 
                 # Confirm with the user if they wish to proceed with the parsing disabled
                 get_user_yes_no "Are you sure you want to continue with result parsing disabled?"
@@ -112,10 +112,10 @@ function parse_args() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function enable_arm_pmu() {
-    # Function for enabling the ARM PMU and allowing it to be used in user space. The function will also check if the system is a Raspberry-Pi
+    # Function for enabling the ARM PMU and allowing it to be used in user space. The function will also check if the system is a Raspberry Pi
     # and install the Pi kernel headers if they are not already installed. The function will then enable the PMU and set the enabled_pmu flag.
 
-    # Checking if the system is a Raspberry-Pi and install the Pi kernel headers
+    # Checking if the system is a Raspberry Pi and install the Pi kernel headers
     if ! dpkg -s "raspberrypi-kernel-headers" >/dev/null 2>&1; then
         sudo apt-get update
         sudo apt-get install raspberrypi-kernel-headers
@@ -170,7 +170,7 @@ function resolve_arm_pmu_access() {
     # Function for resolving ARM PMU access issues. Checks if PQAX is installed and attempts to enable PMU access.
     # Falls back to a clean installation if necessary.
 
-    # Check if a PQAX install is already present and if not call the function to enable it
+    # Check if a PQAX install is already present, and if not, call the function to enable it
     if [ -d "$libs_dir/pqax" ]; then
 
         # Output the current task to the terminal
@@ -241,7 +241,7 @@ function setup_base_env() {
     # Declare the internal test script path variables
     result_parser_script="$parsing_scripts/parse_results.py"
 
-    # Check if the system is ARM based and if PMU checks are required
+    # Check if the system is ARM-based and if PMU checks are required
     if [[ "$(uname -m)" = arm* || "$(uname -m)" == aarch* ]]; then
 
         # Ensure that the system still has user access to the ARM PMU
@@ -272,7 +272,7 @@ function setup_base_env() {
 function set_result_paths() {
     # Helper function for setting the result storage paths based on the assigned machine-ID
 
-    # Set the results directory paths based on assigned machine-ID for these results
+    # Set the results directory paths based on the assigned machine-ID for these results
     machine_results_path="$test_data_dir/up_results/computational_performance/machine_$machine_num"
     parsed_results_path="$test_data_dir/results/computational_performance/machine_$machine_num"
     machine_speed_results="$machine_results_path/raw_speed_results"
@@ -286,7 +286,7 @@ function set_result_paths() {
 function get_machine_num() {
     # Helper function for getting the machine-ID from the user to assign to the test results
 
-    # Prompt the use for the machine number to be assigned to the results
+    # Prompt the user for the machine number to be assigned to the results
     while true; do
 
         # Get the machine-ID from the user
@@ -325,7 +325,7 @@ function handle_machine_id_clash() {
 
         # Output the choices for handling the clash to the user
         echo -e "There are already results stored for Machine-ID ($machine_num), would you like to:"
-        echo -e "1 - Replace old results and keep same Machine-ID"
+        echo -e "1 - Replace old results and keep the same Machine-ID"
         echo -e "2 - Assign a different machine ID\n"
 
         # Read in the user's response
@@ -345,7 +345,7 @@ function handle_machine_id_clash() {
 
             2)
 
-                # Get a new machine-ID that will assigned to the results instead
+                # Get a new machine-ID that will be assigned to the results instead
                 echo -e "Assigning new Machine-ID for test results"
                 get_machine_num
 
@@ -357,7 +357,7 @@ function handle_machine_id_clash() {
                     echo -e "No previous results present for Machine-ID ($machine_num), continuing test setup"
                     break
                 else
-                    echo "There are previous results detected for new Machine-ID value, please select different value or replace old results"
+                    echo "There are previous results detected for the new Machine-ID value, please select a different value or replace the old results"
                 fi
                 ;;
         
@@ -390,7 +390,7 @@ function get_test_options() {
 
             [Nn]* ) 
 
-                # Output to the user that the default machine-ID will be used and set it to 1
+                # Output to the user that the default machine-ID will be used, and set it to 1
                 echo -e "\nUsing default Machine-ID for saving results\n"
                 machine_num="1"
                 break;;
@@ -441,10 +441,10 @@ function setup_test_suite() {
     get_test_options
     set_result_paths
 
-    # Create the un-parsed results directory for the machine-ID
+    # Create the unparsed results directory for the machine-ID
     if [ -d "$test_data_dir/up_results" ]; then
 
-        # Check if there is already results present for assigned machine-ID and handle any clashes
+        # Check if there are already results present for the assigned machine-ID and handle any clashes
         if [ -d "$machine_results_path" ]; then
             handle_machine_id_clash
             
@@ -599,7 +599,7 @@ function mem_tests() {
             # Perform the memory metrics test for each cryptographic operation
             for operation in {0..2}; do
 
-                # Get the current operation string and output to terminal
+                # Get the current operation string and output to the terminal
                 op_kem_str=${op_kem[operation]}
                 echo -e "$kem_alg - $op_kem_str Test\n"
 
@@ -619,13 +619,13 @@ function mem_tests() {
         # Output the current set of tests to the terminal
         echo -e "\nDigital Signature Memory Tests\n"
 
-        # Loop through the digital signature algorithms and the perform memory tests
+        # Loop through the digital signature algorithms and perform memory tests
         for sig_alg in "${sig_algs[@]}"; do
 
             # Perform the memory metrics test for each cryptographic operation
             for operation in {0..2}; do
 
-                # Get the current operation string and output to terminal
+                # Get the current operation string and output to the terminal
                 op_sig_str=${op_sig[operation]}
                 echo -e "$sig_alg - $op_sig_str Test\n"
 
@@ -663,10 +663,10 @@ function handle_result_parsing() {
     # Check if the automatic result parsing flag is set to enabled
     if [ $parse_results -eq 1 ]; then
 
-        # Call the automatic parsing script based on if old results need to be replaced
+        # Call the automatic parsing script based on whether old results need to be replaced
         if [ $replace_old_results -eq 0 ]; then
 
-            # Call the result parsing script to parse the results with replace flag not set
+            # Call the result parsing script to parse the results with the replace flag not set
             python3 "$result_parser_script" \
                 --parse-mode="computational"  \
                 --machine-id="$machine_num" \
@@ -675,7 +675,7 @@ function handle_result_parsing() {
 
         else
 
-            # Call the result parsing script to parse the results with replace flag set
+            # Call the result parsing script to parse the results with the replace flag set
             python3 "$result_parser_script" \
                 --parse-mode="computational"  \
                 --machine-id="$machine_num" \

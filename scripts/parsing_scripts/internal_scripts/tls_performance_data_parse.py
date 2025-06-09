@@ -29,7 +29,7 @@ def setup_parse_env(root_dir):
         print("Project root directory path file not correct, the main parse_results.py file is not able to establish the correct path!!!")
         sys.exit(1)
 
-    # Note: (at some point consider making these vars into a json file)
+    # Note: (at some point, consider making these vars into a JSON file)
 
     # Declare the algorithms dictionary that will be used by the various methods and functions
     algs_dict = {
@@ -62,7 +62,7 @@ def setup_parse_env(root_dir):
         "base_type": ["pqc_base_results", "hybrid_base_results"]
     }
 
-    # Declare the dictionary which contains testing types and defining the speed column headers
+    # Declare the dictionary which contains testing types and define the speed column headers
     speed_headers = [
         ["Algorithm", "Keygen", "encaps", "decaps", "Keygen/s", "Encaps/s", "Decaps/s"], 
         ["Algorithm", "Keygen", "Signs", "Verify", "Keygen/s", "sign/s", "verify/s"]
@@ -101,7 +101,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
     """ Function for handling the presence of older parsed results, ensuring that the user
         is aware of the old results and can choose how to handle them before the parsing continues. """
 
-    # Check if there are any old parsed results for current Machine-ID and handle any clashes
+    # Check if there are any old parsed results for the current Machine-ID and handle any clashes
     if os.path.exists(dir_paths["mach_results_dir"]):
 
         # Determine if the user needs prompted to handle the old results or if the --replace-old-results flag is set
@@ -124,7 +124,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
             # Output the warning message to the terminal
             print(f"[WARNING] - Parsed TLS performance results already exist for Machine-ID ({machine_id})\n")
 
-            # Get the decision from user on how to handle old results before parsing continues
+            # Get the decision from the user on how to handle old results before parsing continues
             while True:
 
                 # Output the potential options and handle user choice
@@ -153,7 +153,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
 
                 elif user_choice == "3":
 
-                    # Halting script until old results have been moved for current Machine-ID
+                    # Halting script until old results have been moved for the current Machine-ID
                     while True:
 
                         input(f"Halting parsing script so old parsed results for Machine-ID ({machine_id}) can be moved, press enter to continue")
@@ -177,7 +177,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
 
     else:
         
-        # No old parsed results for current machine-id present so creating new dirs
+        # No old parsed results for current machine-id present, so creating new dirs
         os.makedirs(dir_paths["mach_handshake_dir"])
         os.makedirs(dir_paths["mach_speed_results_dir"])
 
@@ -198,7 +198,7 @@ def get_metrics(current_row, test_filepath, get_reuse_metrics):
             # Loop through the file lines to pull the performance metrics
             for line in test_file:
 
-                # Check the line to see if metrics are for session id first use or reused
+                # Check the line to see if metrics are for the session ID's first use or reuse
                 if "reuse" in line:
                     session_metrics_flag = True
 
@@ -225,7 +225,7 @@ def get_metrics(current_row, test_filepath, get_reuse_metrics):
                 # Get line 2 metrics using keywords
                 elif "connections" in line and "real" in line:
 
-                    # Check if metrics is first use or reuse
+                    # Check if metrics are first use or reuse
                     if session_metrics_flag is False and get_reuse_metrics is False:
 
                         # Store line 2 first use metrics
@@ -246,7 +246,7 @@ def get_metrics(current_row, test_filepath, get_reuse_metrics):
         # Output the file not found error and the missing filename
         print(f"missing file - {test_filepath}")
 
-        # Create an empty row as placeholder for missing file
+        # Create an empty row as a placeholder for a missing file
         for _ in range(1,6):
             current_row.append("")
 
@@ -258,7 +258,7 @@ def pqc_based_pre_processing(current_run, type_index, pqc_type_vars, col_headers
         will loop through the sig/kem combinations and extract the metrics for each combination. This creates the 
         full base results for the current run which can later be separated into individual CSV files for each sig/kem combo """
     
-    # Check if the stored up-results matches the number of algorithms in the alg list files only if run 1
+    # Check if the stored up-results match the number of algorithms in the alg list files, only if run 1
     if current_run == 1:
 
         # Determine the number of expected and actual result files in the up-results directory
@@ -266,7 +266,7 @@ def pqc_based_pre_processing(current_run, type_index, pqc_type_vars, col_headers
         expected_files = len(algs_dict[pqc_type_vars["sig_alg_type"][type_index]]) * len(algs_dict[pqc_type_vars["kem_alg_type"][type_index]])
         actual_files = [file for file in os.listdir(up_results_dir) if file.startswith("tls_handshake_1_") and file.endswith(".txt")]
 
-        # Ensure that the up-results directory for current PQC type and run contains the correct number of files
+        # Ensure that the up-results directory for the current PQC type and run contains the correct number of files
         if expected_files != len(actual_files):
             print(f"\n[ERROR] - Mismatch in expected file count for {pqc_type_vars['type_prefix'][type_index].upper()} TLS Handshake results.")
             print(f"Please ensure the alg-list files have the same algorithms used in the testing, the setup process may need to be re-run")
@@ -276,7 +276,7 @@ def pqc_based_pre_processing(current_run, type_index, pqc_type_vars, col_headers
     # Declare the dataframe used in pre-processing
     sig_metrics_df = pd.DataFrame(columns=col_headers['pqc_based_headers'])
 
-    # Loop through the sig list to create the csv
+    # Loop through the sig list to create the CSV
     for sig in algs_dict[pqc_type_vars["sig_alg_type"][type_index]]:
 
         # Loop through the KEM files signed with the current sig
@@ -286,7 +286,7 @@ def pqc_based_pre_processing(current_run, type_index, pqc_type_vars, col_headers
             filename = f"tls_handshake_{current_run}_{sig}_{kem}.txt"
             test_filepath = os.path.join(pqc_type_vars["up_results_path"][type_index], filename)
             
-            # Get the session id first use metrics for the current KEM
+            # Get the session ID first, use metrics for the current KEM
             current_row = [kem, ""]
             current_row = get_metrics(current_row, test_filepath, get_reuse_metrics=False)
             current_row.insert(0, sig)
@@ -329,14 +329,14 @@ def pqc_based_processing(current_run, dir_paths, algs_dict, pqc_type_vars, col_h
         # Create the storage directory and files for separated sig/kem combo results
         for sig in algs_dict[pqc_type_vars["sig_alg_type"][type_index]]:
 
-            # Set the path for sig/kem combo directory
+            # Set the path for the sig/kem combo directory
             sig_path = os.path.join(dir_paths[pqc_type_vars["results_type"][type_index]], sig)
 
             # Create the storage dir for separated sig/kem combo results if not made
             if not os.path.exists(sig_path):
                 os.makedirs(sig_path)
             
-            # Read in the current run base results and extracting signature
+            # Read in the current run base results and extract signature
             base_df = pd.read_csv(pqc_base_filepath)
             current_sig_df = base_df[base_df["Signing Algorithm"].str.contains(sig)]
 
@@ -364,17 +364,17 @@ def classic_based_processing(current_run, dir_paths, algs_dict, col_headers):
             filename = f"tls_handshake_classic_{current_run}_{cipher}_{alg}.txt"
             test_filepath = os.path.join(classic_up_results_dir, filename)
             
-            # Get the session id first use metrics for the current signature
+            # Get the session ID first use metrics for the current signature
             current_row = [alg, ""]
             current_row = get_metrics(current_row, test_filepath, get_reuse_metrics=False)
             current_row.insert(0, cipher)
 
-            # Add the session id first use row to dataframe
+            # Add the session ID first use row to the dataframe
             new_row_df = pd.DataFrame([current_row], columns=col_headers['classic_headers'])
             cipher_metrics_df = pd.concat([cipher_metrics_df, new_row_df], ignore_index=True)
             current_row.clear()
             
-            # Get the session id reused metrics for the current signature
+            # Get the session ID reused metrics for the current signature
             current_row = [alg, "*"]
             current_row = get_metrics(current_row, test_filepath, get_reuse_metrics=True)
             current_row.insert(0, cipher)
@@ -417,7 +417,7 @@ def get_speed_metrics(speed_filepath, alg_type, speed_headers):
     with open(speed_filepath, "r") as speed_file:
         for line in speed_file:
 
-            # Check to see if result table has started
+            # Check to see if the result table has started
             if "keygens/s" in line:
                 start = True
                 continue
@@ -432,7 +432,7 @@ def get_speed_metrics(speed_filepath, alg_type, speed_headers):
     # Append the data onto the dataframe
     for data in data_lists:
 
-        # Insert the alg name to the row
+        # Insert the alg name into the row
         data_cells = data.split()
 
         # Remove any s char present in speed metric values for the row
@@ -475,7 +475,7 @@ def speed_processing(current_run, dir_paths, speed_headers, algs_dict):
                 print(f"If that is the case, please ensure to copy the up-results directory to a safe location before re-running the setup script")
                 sys.exit(1)
 
-            # Output the speed metrics csv for the current test type and algorithm
+            # Output the speed metrics CSV for the current test type and algorithm
             output_filepath = os.path.join(dir_list[1], f"{pqc_fileprefix}_{alg_type}_{str(current_run)}.csv")
             speed_metrics_df.to_csv(output_filepath, index=False)
 
@@ -533,7 +533,7 @@ def process_tests(machine_id, num_runs, dir_paths, algs_dict, pqc_type_vars, col
         print(f"[ERROR] - Machine-ID ({machine_id}) up_results directory does not exist, please ensure the up_results directory is present before continuing")
         sys.exit(1)
 
-    # Create the results directory for current machine and handle Machine-ID clashes
+    # Create the results directory for the current machine and handle Machine-ID clashes
     handle_results_dir_creation(machine_id, dir_paths, replace_old_results)
 
     # Call the processing function and the average calculation methods for the current machine

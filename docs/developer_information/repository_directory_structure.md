@@ -1,7 +1,7 @@
 # Repository Directory Structure
 
 ## Overview
-This document outlines the directory structure of the `PQC-Evaluation-Tools` repository. It includes both the default contents available upon cloning and the directories that are dynamically generated during operation. 
+This document outlines the directory structure of the `PQC-Evaluation-Tools` repository. It includes both the default contents available upon cloning and the directories that are dynamically generated during operation.
 
 Directories created by scripts during execution are marked with an asterisk (`*`) in the directory layout diagram.
 

@@ -1,4 +1,4 @@
-!/bin/bash
+#!/bin/bash
 
 # Copyright (c) 2023-2025 Callum Turino
 # SPDX-License-Identifier: MIT
@@ -49,7 +49,7 @@ function get_user_yes_no() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_base_env() {
-    # Function for initializing the global environment variables required by the utility script.
+    # Function for initialising the global environment variables required by the utility script.
     # This involves identifying the project's root directory and setting up paths for libraries,
     # test data, temporary files, and other resources.
 
@@ -74,7 +74,7 @@ function setup_base_env() {
         # If the system's root directory is reached and the file is not found, exit the script
         if [ "$current_dir" == "/" ]; then
             echo -e "[ERROR] - Root directory path file not present, please ensure the path is correct and try again."
-            echo "If the project has not been setup, the cleaner script can not be used"
+            echo "If the project has not been set up, the cleaner script can not be used"
             exit 1
         fi
 
@@ -146,7 +146,7 @@ function select_uninstall_mode() {
                 break;;
             
             2)
-                # Uninstal OQS-Provider only
+                # Uninstall OQS-Provider only
                 rm -rf "$oqs_provider_path"
                 rm $test_data_alg_lists_dir/*tls*.txt
                 echo -e "\nOQS-Provider Uninstalled"
@@ -176,7 +176,7 @@ function select_uninstall_mode() {
             *)
 
                 # Output to the user that the input is invalid and prompt again
-                echo -e "\nInvalid option, please select valid option value (1-4)\n"
+                echo -e "\nInvalid option, please select a valid option value (1-4)\n"
                 ;;
             
         esac
@@ -222,7 +222,7 @@ function remove_old_results() {
 
         read -p "Are you sure you want to remove all stored results and generated keys? This cannot be reversed if you do not have backup copies! (y/n): " user_input
 
-        # Check if user wants to remove all results and keys
+        # Check if the user wants to remove all results and keys
         if [ "$user_input" == "y" ]; then
             break
         elif [ "$user_input" == "n" ]; then
@@ -300,7 +300,7 @@ function main() {
             *)
 
                 # Output to the user that the input is invalid and prompt again
-                echo -e "\nInvalid option, please select valid option value (1-4)\n"
+                echo -e "\nInvalid option, please select a valid option value (1-4)\n"
                 ;;
             
         esac

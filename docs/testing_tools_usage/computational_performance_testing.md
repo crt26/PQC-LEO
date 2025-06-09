@@ -19,13 +19,13 @@ The automated testing tool is currently only supported on the following devices:
 - ARM Linux devices using a 64-bit Debian-based Operating System
 
 ## Supported PQC Algorithms
-This tool supports all PQC algorithms available through the Liboqs library. However there are some limitations to this that should be considered when using the computational performance testing tool. 
+This tool supports all PQC algorithms available through the Liboqs library. However, there are some limitations to this that should be considered when using the computational performance testing tool. 
 
 For a full list of algorithms currently supported in this project’s performance testing suite, see:
 
 [Supported Algorithms](../supported_algorithms.md)
 
-**Notice:** The HQC KEM algorithms are disabled by default in recent versions of both Liboqs and the OQS-Provider, due to their current implementations not conforming to the latest specification, which includes important security fixes. For benchmarking purposes, the setup process includes an optional flag to enable HQC in these libraries, accompanied by a user confirmation prompt and warning. Enabling HQC is done at the user's own discretion and this project assumes no responsibility for its use. For instructions on enabling HQC, see the [Advanced Setup Configuration Guide](../advanced_setup_configuration.md), and refer to the [Disclaimer Document](../../DISCLAIMER.md) for more information on this issue.
+**Notice:** The HQC KEM algorithms are disabled by default in recent versions of both Liboqs and the OQS-Provider, due to their current implementations not conforming to the latest specification, which includes important security fixes. For benchmarking purposes, the setup process includes an optional flag to enable HQC in these libraries, accompanied by a user confirmation prompt and warning. Enabling HQC is done at the user's own discretion, and this project assumes no responsibility for its use. For instructions on enabling HQC, see the [Advanced Setup Configuration Guide](../advanced_setup_configuration.md), and refer to the [Disclaimer Document](../../DISCLAIMER.md) for more information on this issue.
 
 ## Performing PQC Computational Performance Testing
 
@@ -75,7 +75,7 @@ These parsed results are saved in:
 
 `test_data/results/computational_performance/machine_x`
 
-To skip automatic parsing and only output the the raw test results, pass the `--disable-result-parsing` flag when launching the test script:
+To skip automatic parsing and only output the raw test results, pass the `--disable-result-parsing` flag when launching the test script:
 
 ```
 ./pqc_performance_test.sh --disable-result-parsing

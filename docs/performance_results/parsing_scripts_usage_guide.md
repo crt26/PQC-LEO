@@ -39,7 +39,7 @@ While automatic parsing is recommended in most cases, manual parsing is fully su
 
 - **Command-line arguments** — Parsing parameters are passed directly as script flags.
 
-**Note:** If performing manual parsing in a separate environment from where the tests were ran, the script requires access to the same algorithm list files used during testing. Please make sure these files are present in the expected directories before proceeding.
+**Note:** If performing manual parsing in a separate environment from where the tests were run, the script requires access to the same algorithm list files used during testing. Please make sure these files are present in the expected directories before proceeding.
 
 ### Interactive Parsing
 To use the interactive parsing method, call the parsing script using the following command:
@@ -90,7 +90,7 @@ The output is organised by test type and Machine-ID in the following directories
 
 Where `machine_x` is the Machine-ID number assigned to the results when executing the testing scripts. If no custom Machine-ID is assigned, the default ID of 1 will be used.
 
-Please refer to the [Performance Metrics Guide](./performance_metrics_guide.md) for a detailed description of the performance metrics that this project can gather, what they mean, and how these scripts structure the un-parsed and parsed data.
+Please refer to the [Performance Metrics Guide](./performance_metrics_guide.md) for a detailed description of the performance metrics that this project can gather, what they mean, and how these scripts structure the unparsed and parsed data.
 
 ## Current Parsing Limitations
 The current implementation of the parsing system includes several known limitations:
