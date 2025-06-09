@@ -1,9 +1,9 @@
 # Project Dependencies <!-- omit from toc -->
 
 ## Document Overview <!-- omit from toc -->
-This document provides a comprehensive overview of the dependencies required to build and run the PQC-Evaluation-Tools suite. Installation and management of these dependencies is fully automated and handled during execution of the main setup script.
+This document provides a comprehensive overview of the dependencies required to build and run the PQC-Evaluation-Tools suite. Installation and management of these dependencies are fully automated and handled during execution of the main setup script.
 
-While this information is primarily intended for developers and contributors who need insight into the project’s build and runtime environment, it may also be useful for users who wish to override the default cryptographic library versions.
+While this information is primarily intended for developers and contributors who need insight into the project's build and runtime environment, it may also be helpful for users who wish to override the default cryptographic library versions.
 
 This document outlines:
 - The required system hardware and operating systems
@@ -42,10 +42,10 @@ This document lists the **specific commits** used as the last tested versions of
 For setup instructions and details on using the latest cryptographic dependency versions,  please see:
 
 - [Installation Instructions](../../README.md#installation-instructions) section in the main README.
-- [Advance Setup Configuration](../advanced_setup_configuration.md)
+- [Advanced Setup Configuration](../advanced_setup_configuration.md)
 
 ## System Package Dependencies
-The following system-level packages are required for building and running the PQC-Evaluation-Tools suite. These are automatically checked and installed during the setup process using the apt package manager.
+The following system-level packages are required for building and running the PQC-Evaluation-Tools suite. These are automatically checked and installed using the apt package manager during the setup process.
 
 By default, the setup script will install the latest available versions of these packages from the distribution's package repositories if they are not already present on the system.
 
@@ -76,4 +76,4 @@ The following Python packages are required for testing and result parsing. These
 - jinja2
 - tabulate
 
-If the system’s Python environment is restricted (e.g., due to externally-managed-environment policies), the setup script will offer the option to install packages using the `--break-system-packages` flag. Manual installation is also supported if preferred.
+If the system's Python environment is restricted (e.g., due to externally-managed-environment policies), the setup script will offer the option to install packages using the `--break-system-packages` flag. Manual installation is also supported if preferred.

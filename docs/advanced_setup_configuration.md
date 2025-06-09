@@ -16,7 +16,7 @@ This option may provide access to the most recent algorithm updates and bug fixe
 
 For more information on the specific versions used by default, see the [Project Dependencies](./developer_information/dependency_libraries.md) documentation.
 
-## Adjusting OpenSSL speed Tool Hardcoded Limits
+## Adjusting OpenSSL Speed Tool Hardcoded Limits
 When using either the `full` or `TLS-only` install modes, an optional prompt will appear that allows enabling all digital signature algorithms that are disabled by default in the OQS-Provider library.
 
 By default, the main setup script will attempt to detect and patch these values automatically in the `s_speed` tool's source code to increase the hardcoded limits if needed. However, if you wish to manually set a custom value (or if auto-patching fails), you can use the following flag:
