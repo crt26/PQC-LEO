@@ -14,5 +14,5 @@ This document lists the **specific commits** used as the last tested versions of
 
 For setup instructions and details on using the latest dependency versions,  please see:
 
-- [Installation Instructions](../README.md#installation-instructions) in the main README.
+- [Installation Instructions](../../README.md#installation-instructions) section in the main README.
 - [Advance Setup Configuration](../advanced_setup_configuration.md)

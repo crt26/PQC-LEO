@@ -78,7 +78,7 @@ While this setup maximises reliability, users who need access to more recent upd
 
 If any such issues arise, please report them to this repository’s GitHub Issues page so they can be addressed promptly. Instructions for modifying the library versions used by the benchmarking suite are provided in the Installation Instructions section.
 
-**†** For information on the specific commits used for the last tested versions of the dependency libraries, see the [Dependency Libraries](./docs/developer-information/dependency-libraries.md) documentation.
+**†** For information on the specific commits used for the last tested versions of the dependency libraries, see the [Dependency Libraries](./docs/developer_information/dependency_libraries.md) documentation.
 
 ## Supported Cryptographic Algorithms
 For further information on the classical and PQC algorithms this project provides support for, including information on any exclusions, please refer to the following documentation:
@@ -123,7 +123,7 @@ When executing the setup script, you will be prompted to select one of the follo
 
 3. **TLS Testing Libraries Only** - Installs only the TLS benchmarking components. (**Requires Option 1 has already been completed**).
 
-The setup script will also build [OpenSSL 3.5.0](https://www.openssl.org/source/) inside the repository’s `lib` directory. This version is required to support the OQS libraries and is built separately from the system’s default OpenSSL installation. It will not interfere with system-level binaries.
+The setup script will also build [OpenSSL 3.5.0](https://github.com/openssl/openssl/releases/tag/openssl-3.5.0) inside the repository’s `lib` directory. This version is required to support the OQS libraries and is built separately from the system’s default OpenSSL installation. It will not interfere with system-level binaries.
 
 If the TLS testing libraries are installed (Options 2 or 3), you will be prompted with the following additional setup options:
 

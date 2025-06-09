@@ -13,8 +13,6 @@ Specifically, it covers:
 
 ### Contents <!-- omit from toc -->
 - [Description of Post-Quantum Cryptographic Operations](#description-of-post-quantum-cryptographic-operations)
-  - [Digital Signature Operations](#digital-signature-operations)
-  - [Key Encapsulation Mechanism (KEM) Operations](#key-encapsulation-mechanism-kem-operations)
 - [PQC Computational Performance metrics](#pqc-computational-performance-metrics)
   - [CPU Benchmarking](#cpu-benchmarking)
   - [Memory Benchmarking](#memory-benchmarking)
@@ -30,7 +28,7 @@ Post-Quantum Cryptography (PQC) algorithms are separated into two categories: Di
 
 This section provides a brief overview of these operations to support the performance metrics descriptions detailed later in this document.
 
-### Digital Signature Operations
+### Digital Signature Operations <!-- omit from toc --> 
 
 | **Operation Name** | **Internal Label** | **Description**                                                          |
 |--------------------|--------------------|--------------------------------------------------------------------------|
@@ -38,7 +36,7 @@ This section provides a brief overview of these operations to support the perfor
 | Signing            | sign               | Uses the private key to generate a digital signature over a message.     |
 | Verification       | Verify             | Uses the public key to verify the authenticity of a digital signature.   |
 
-### Key Encapsulation Mechanism (KEM) Operations
+### Key Encapsulation Mechanism (KEM) Operations <!-- omit from toc --> 
 
 | **Operation Name** | **Internal Label** | **Description**                                                        |
 |--------------------|--------------------|------------------------------------------------------------------------|
@@ -167,5 +165,5 @@ Where `machine_x` is the Machine-ID number assigned to the results when executin
 - [Valgrind Massif Tool](http://valgrind.org/docs/manual/ms-manual.html)
 - [OQS-Provider Webpage](https://openquantumsafe.org/applications/tls.html#oqs-openssl-provider)
 - [OQS-Provider GitHub Page](https://github.com/open-quantum-safe/oqs-provider)
+- [OpenSSL(3.5.0) Release](https://github.com/openssl/openssl/releases/tag/openssl-3.5.0)
 - [OpenSSL(3.5.0) Documentation](https://docs.openssl.org/3.5/)
-- [OQS Benchmarking Webpage](https://openquantumsafe.org/benchmarking/)

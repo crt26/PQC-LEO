@@ -1,4 +1,4 @@
-# Automated PQC TLS Performance Benchmarking Tool Usage Guide <!-- omit from toc -->
+# Automated PQC TLS Performance Benchmarking Tool - Usage Guide <!-- omit from toc -->
 
 ## Overview <!-- omit from toc -->
 This tool provides automated benchmarking for PQC-enabled TLS 1.3 handshakes and cryptographic operations within OpenSSL 3.5.0. It supports testing of both OpenSSL-native PQC algorithms and those integrated into OpenSSL via the OQS-Provider library. The benchmarking process evaluates TLS handshakes using Post-Quantum Cryptography (PQC) and Hybrid-PQC ciphersuites, as well as traditional cryptographic algorithms for a baseline comparison.
@@ -211,8 +211,9 @@ Disabling automatic parsing may be appropriate in scenarios such as:
 - Running tests in low-resource environments
 
 ## Useful External Documentation
+- [OpenSSL(3.5.0) Release](https://github.com/openssl/openssl/releases/tag/openssl-3.5.0)
+- [OpenSSL(3.5.0) Documentation](https://docs.openssl.org/3.5/)
 - [OQS-Provider Webpage](https://openquantumsafe.org/applications/tls.html#oqs-openssl-provider)
 - [OQS-Provider GitHub Page](https://github.com/open-quantum-safe/oqs-provider)
 - [Latest OQS-Provider Release Notes](https://github.com/open-quantum-safe/oqs-provider/blob/main/RELEASE.md)
 - [OQS Benchmarking Webpage](https://openquantumsafe.org/benchmarking/)
-- [OpenSSL(3.5.0) Documentation](https://docs.openssl.org/3.5/)

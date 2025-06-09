@@ -3,9 +3,9 @@
 ## Overview <!-- omit from toc --> 
 This document provides additional reference information for the various scripts in the repository. This documentation is designed primarily for developers or those who wish to better understand the core functionality of the project's various scripts.
 
-The scripts are grouped into the following categories:
+The project's scripts are grouped into the following categories:
 
-- The project's utility scripts
+- The utility scripts
 - The automated computational performance testing scripts
 - The automated TLS performance testing scripts
 - The raw performance data parsing scripts
