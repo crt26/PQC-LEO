@@ -44,7 +44,7 @@ Before testing begins, the script will prompt you to configure a few testing par
 - Should the results have a custom Machine-ID assigned to them?
 - The number of times each test should be run to allow for a more accurate average calculation.
 
-#### Machine Comparison Option <!-- omit from toc -->
+#### Machine-ID Assignment <!-- omit from toc -->
 The first testing option is:
 
 ```

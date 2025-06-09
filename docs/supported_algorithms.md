@@ -3,11 +3,7 @@
 ## Support Overview <!-- omit from toc -->
 This document outlines the Key Encapsulation Mechanisms (KEMs) and digital signature algorithms supported by this project, based on its upstream cryptographic dependencies: Liboqs, OQS-Provider, and OpenSSL. While the PQC-Evaluation-Tools project integrates nearly all algorithms from these libraries, there are a few exceptions.
 
-It contains comprehensive lists of all supported PQC algorithms, along with any exclusions and the rationale behind them. For additional reference, the upstream dependency documentation can be found here:
-
-- [Liboqs Supported Algorithms](https://github.com/open-quantum-safe/liboqs?tab=readme-ov-file#supported-algorithms)
-- [OpenSSL Supported PQC Algorithms](https://github.com/openssl/openssl/releases/tag/openssl-3.5.0)
-- [OQS-Provider Supported Algorithms](https://github.com/open-quantum-safe/oqs-provider/blob/main/ALGORITHMS.md)
+It contains comprehensive lists of all supported PQC algorithms, along with any exclusions and the rationale behind them.
 
 > **Notice:** If you use the --latest-dependency-versions flag with the main setup script to pull the most recent versions of the OQS libraries, the supported algorithms may differ from what is documented here. This documentation reflects support based on the last tested versions of the dependencies and may not be accurate for upstream updates.
 
@@ -26,6 +22,7 @@ It contains comprehensive lists of all supported PQC algorithms, along with any 
   - [Algorithm Support Summary](#algorithm-support-summary-2)
   - [Supported KEM Algorithms](#supported-kem-algorithms-2)
   - [Supported Digital Signature Algorithms](#supported-digital-signature-algorithms-2)
+- [External Documentation](#external-documentation)
 
 ## Dependency Usage by Testing Category
 Different testing categories within this project rely on distinct combinations of upstream cryptographic dependencies. The table below summarises which libraries are used in each context:
@@ -406,3 +403,9 @@ For further details on algorithm support, compatibility, HQC implementation issu
 | p521_snova60104                |             *            |                                    |                  *                 |             *             |
 | p521_snova2965                 |             *            |                  *                 |                  *                 |                           |
 
+## External Documentation
+For additional reference, the upstream dependency documentation can be found here:
+
+- [Liboqs Supported Algorithms](https://github.com/open-quantum-safe/liboqs?tab=readme-ov-file#supported-algorithms)
+- [OpenSSL Supported PQC Algorithms](https://github.com/openssl/openssl/releases/tag/openssl-3.5.0)
+- [OQS-Provider Supported Algorithms](https://github.com/open-quantum-safe/oqs-provider/blob/main/ALGORITHMS.md)
