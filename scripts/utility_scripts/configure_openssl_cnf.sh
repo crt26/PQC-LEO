@@ -4,18 +4,20 @@
 # SPDX-License-Identifier: MIT
 
 # Utility script for toggling the OpenSSL configuration settings in the openssl.cnf file to enable or 
-# disable post-quantum cryptographic key generation. It comments or uncomments default group directives #
-# required for compatibility with scheme groups supported by the OQS-Provider when integrated with OpenSSL 3.4.1.
+# disable post-quantum cryptographic key generation. It comments or uncomments default group directives
+# required for compatibility with scheme groups supported by the OQS-Provider when integrated with OpenSSL 3.5.0.
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function output_help_message() {
-    # Helper function for outputting the help message to the user when the --help flag is present or when incorrect arguments are passed
+    # Helper function for outputting the help message to the user when the --help flag is present or
+    # when incorrect arguments are passed.
 
     # Output the supported options and their usage to the user
     echo "Usage: configure-openssl-cnf.sh [options]"
     echo "Options:"
-    echo "  0                     Configure OpenSSL for standard mode"
-    echo "  1                     Configure OpenSSL for PQC testing mode"
+    echo "  0                     Modify default OpenSSL Configuration file to include OQS-Provider directives (for setup only)"
+    echo "  1                     Configure OpenSSL Configuration for Key Generation mode"
+    echo "  2                     Configure OpenSSL for TLS testing mode"
     echo "  --help                Display this help message and exit"
 
 }
@@ -23,7 +25,7 @@ function output_help_message() {
 #-------------------------------------------------------------------------------------------------------------------------------
 function parse_args() {
     # Function for parsing the command line arguments passed to the script. Based on the detected arguments, the function will 
-    # set the relevant global flags and parameter variables that are used throughout the test control process.
+    # set the relevant global flags that are used throughout the setup process.
 
     # Check if the help flag is passed at any position in the command line arguments
     if [[ "$*" =~ --help ]]; then
@@ -42,7 +44,7 @@ function parse_args() {
 
             0)
 
-                # Set the configure mode if no mode has been yet
+                # Set the configure mode if no mode has been set yet
                 if [ "$mode_selected" == "False" ]; then
                     configure_mode=0
                     mode_selected="True"
@@ -56,9 +58,25 @@ function parse_args() {
                 ;;
 
             1)
-                # Set the configure mode if no mode has been yet
+
+                # Set the configure mode if no mode has been set yet
                 if [ "$mode_selected" == "False" ]; then
                     configure_mode=1
+                    mode_selected="True"
+
+                else
+                    echo "[ERROR] - Only one mode can be selected at a time"
+                    exit 1
+                fi
+
+                shift
+                ;;
+
+            2)
+            
+                # Set the configure mode if no mode has been set yet
+                if [ "$mode_selected" == "False" ]; then
+                    configure_mode=2
                     mode_selected="True"
 
                 else
@@ -85,8 +103,9 @@ function parse_args() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_base_env() {
-    # Function for setting up the global environment variables for the test suite. This includes determining the root directory 
-    # by tracing the script's location, and configuring paths for libraries, test data, and temporary files.
+    # Function for setting up the foundational global variables required for the test suite. This includes determining the project's root directory,
+    # establishing paths for libraries, scripts, and test data, and validating the presence of required libraries. Additionally, it sets up environment
+    # variables for control ports and sleep timers, ensuring proper configuration for the test suite's execution.
 
     # Determine the directory that the script is being executed from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -117,13 +136,13 @@ function setup_base_env() {
     # Declare the main directory path variables based on the project's root dir
     libs_dir="$root_dir/lib"
     tmp_dir="$root_dir/tmp"
-    test_data_dir="$root_dir/test-data"
-    test_scripts_path="$root_dir/scripts/test-scripts"
+    test_data_dir="$root_dir/test_data"
+    test_scripts_path="$root_dir/scripts/test_scripts"
 
     # Declare the global library directory path variables
-    openssl_path="$libs_dir/openssl_3.4"
+    openssl_path="$libs_dir/openssl_3.5.0"
     liboqs_path="$libs_dir/liboqs"
-    oqs_provider_path="$libs_dir/oqs-provider"
+    oqs_provider_path="$libs_dir/oqs_provider"
 
     # Ensure that the OpenSSL library is present before proceeding
     if [ ! -d "$openssl_path" ]; then
@@ -145,27 +164,56 @@ function setup_base_env() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function configure_conf_statements() {
-    # Function to modify the OpenSSL configuration (openssl.cnf) between standard and PQC testing modes. 
-    # Standard mode comments out custom group settings, while PQC mode enables them for post-quantum 
-    # key generation with the OQS-Provider.
+    # Function to modify the OpenSSL configuration (openssl.cnf) based on the selected mode:
+    # Mode 0: Modify the default OpenSSL Configuration file to include OQS-Provider directives (for setup only).
+    # Mode 1: Configure OpenSSL Configuration for Key Generation mode.
+    # Mode 2: Configure OpenSSL for TLS testing mode.
 
     # Declare the required local variables
-    local conf_path="$openssl_path/openssl.cnf"
+    local openssl_conf_path="$openssl_path/openssl.cnf"
 
     # Set the configurations based on the configuration mode passed
     if [ "$configure_mode" -eq 0 ]; then
 
-        # Comment out the unnecessary lines for standard configuration
-        sed -i 's/ssl_conf = ssl_sect/#ssl_conf = ssl_sect/' $conf_path
-        sed -i 's/system_default = system_default_sect/#system_default = system_default_sect/' $conf_path
-        sed -i 's/Groups = \$ENV::DEFAULT_GROUPS/#Groups = \$ENV::DEFAULT_GROUPS/' $conf_path
+        # Set the OpenSSL configuration array to append onto the end of the file
+        conf_changes=(
+            "[ssl_sect]"
+            "system_default = system_default_sect"
+            "[system_default_sect]"
+            "Groups = \$ENV::DEFAULT_GROUPS"
+        )
 
-    elif [ "$configure_mode" -eq 1 ]; then 
+        # Patch the OpenSSL configuration file to have the correct provider settings
+        sed -i '/^\[openssl_init\]/,/^\[/{ 
+            s/^providers *=.*/providers  = provider_sect/
+            /ssl_conf[[:space:]]*=/d
+            /providers  = provider_sect/a\
+ssl_conf   = ssl_sect
+        }' "$openssl_conf_path"
 
-        # Uncomment the required configurations for PQC testing
-        sed -i 's/^#ssl_conf = ssl_sect/ssl_conf = ssl_sect/' $conf_path
-        sed -i 's/^#system_default = system_default_sect/system_default = system_default_sect/' $conf_path
-        sed -i 's/^#Groups = \$ENV::DEFAULT_GROUPS/Groups = \$ENV::DEFAULT_GROUPS/' $conf_path
+
+        for conf_change in "${conf_changes[@]}"; do
+            echo $conf_change >> "$openssl_conf_path"
+        done
+
+
+    elif [ "$configure_mode" -eq 1 ]; then
+
+        # Comment out PQC-related configuration lines for standard mode
+        sed -i 's/^ssl_conf   = ssl_sect$/#ssl_conf   = ssl_sect/' "$openssl_conf_path"
+        sed -i 's/^\[ssl_sect\]$/#[ssl_sect]/' "$openssl_conf_path"
+        sed -i 's/^system_default = system_default_sect$/#system_default = system_default_sect/' "$openssl_conf_path"
+        sed -i 's/^\[system_default_sect\]$/#[system_default_sect]/' "$openssl_conf_path"
+        sed -i 's/Groups = \$ENV::DEFAULT_GROUPS/#Groups = \$ENV::DEFAULT_GROUPS/' $openssl_conf_path
+
+    elif [ "$configure_mode" -eq 2 ]; then
+
+        # Uncomment PQC-related configuration lines for PQC testing mode
+        sed -i 's/^#ssl_conf   = ssl_sect$/ssl_conf   = ssl_sect/' "$openssl_conf_path"
+        sed -i 's/^#\[ssl_sect\]$/[ssl_sect]/' "$openssl_conf_path"
+        sed -i 's/^#system_default = system_default_sect$/system_default = system_default_sect/' "$openssl_conf_path"
+        sed -i 's/^#\[system_default_sect\]$/[system_default_sect]/' "$openssl_conf_path"
+        sed -i 's/^#Groups = \$ENV::DEFAULT_GROUPS/Groups = \$ENV::DEFAULT_GROUPS/' $openssl_conf_path
 
     fi
 
@@ -173,7 +221,9 @@ function configure_conf_statements() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function main() {
-    # Main function for controlling the utility script
+    # Main function that processes command-line arguments, sets up the environment, 
+    # and modifies the OpenSSL configuration based on the selected mode (key generation, 
+    # TLS testing, or OQS-Provider setup) to ensure proper configuration for the script's execution.
 
     # Declare the global configuration mode flag
     configure_mode=""

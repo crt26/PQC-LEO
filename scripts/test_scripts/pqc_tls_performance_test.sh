@@ -3,16 +3,17 @@
 # Copyright (c) 2023-2025 Callum Turino
 # SPDX-License-Identifier: MIT
 
-# Script for controlling the OQS-Provider TLS benchmarking suite using OpenSSL 3.4.1. It handles the configuration 
-# of test parameters, machine role assignment, port and environment validation, and result directory setup. Based on 
-# the selected machine role, the script calls the relevant client or server benchmarking script to perform handshake 
-# and speed tests across post-quantum, classical, and hybrid-pqc algorithm modes, storing results in machine-specific 
-# directories for later analysis.
+# Script for controlling the TLS benchmarking suite using OpenSSL 3.5.0. Supports both OpenSSL native PQC algorithms and those 
+# provided via OQS-Provider. It handles the configuration of test parameters, machine role assignment, port and environment 
+# validation, and result directory setup. Based on the selected machine role, the script calls the relevant client or 
+# server benchmarking script to perform handshake and speed tests across post-quantum, classical, and hybrid-pqc algorithm modes, 
+# storing results in machine-specific directories for later analysis.
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function get_user_yes_no() {
-    # Helper function for getting a yes or no response from the user for a given question regarding the setup process. The function
-    # will return 0 for yes and 1 for no which can be checked by the calling function.
+    # Helper function to prompt the user for a yes or no response. The function loops until
+    # a valid response ('y' or 'n') is provided and sets the global variable `user_y_n_response`
+    # to 1 for 'yes' and 0 for 'no'.
 
     # Set the local user prompt variable to what was passed to the function
     local user_prompt="$1"
@@ -23,17 +24,17 @@ function get_user_yes_no() {
         # Output the question to the user and get their response
         read -p "$user_prompt (y/n): " user_input
 
-        # Check the user input is valid and set the user response variable
+        # Validate the input and set the response
         case $user_input in
 
             [Yy]* )
                 user_y_n_response=1
-                return 0
+                break
                 ;;
 
             [Nn]* )
                 user_y_n_response=0
-                return 1
+                break
                 ;;
 
             * )
@@ -48,16 +49,18 @@ function get_user_yes_no() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function output_help_message() {
-    # Helper function for outputting the help message to the user when the --help flag is present or when incorrect arguments are passed
+    # Helper function for outputting the help message to the user when the --help flag is present or
+    # when incorrect arguments are passed.
 
     # Output the supported options and their usage to the user
-    echo "Usage: full-oqs-provider-test.sh [options]"
+    echo "Usage: pqc_tls_performance_test.sh [options]"
     echo "Options:"
     echo "  --server-control-port=<PORT>       Set the server control port             (1024-65535)"
     echo "  --client-control-port=<PORT>       Set the client control port             (1024-65535)"
     echo "  --s-server-port=<PORT>             Set the OpenSSL S_Server port           (1024-65535)"
     echo "  --control-sleep-time=<TIME>        Set the control sleep time in seconds   (integer or float)"
     echo "  --disable-control-sleep            Disable the control signal sleep time"
+    echo "  --disable-result-parsing           Disable the result parsing for the test suite."
     echo "  --help                             Display the help message"
 
 }
@@ -80,7 +83,7 @@ function is_valid_port() {
 #-------------------------------------------------------------------------------------------------------------------------------
 function parse_args {
     # Function for parsing the command line arguments passed to the script. Based on the detected arguments, the function will 
-    # set the relevant global flags and parameter variables that are used throughout the test control process.
+    # set the relevant global flags that are used throughout the setup process.
 
     # Check if the help flag is passed at any position in the command line arguments
     if [[ "$*" =~ --help ]]; then
@@ -148,7 +151,7 @@ function parse_args {
                 control_sleep_time="${1#*=}"
                 custom_control_time_flag="True"
 
-                # Check if the sleep timer is valid integer or float
+                # Check if the sleep timer is a valid integer or float
                 if [[ ! $control_sleep_time =~ ^[0-9]+([.][0-9]+)?$ ]]; then
                     echo "[ERROR] - Invalid control sleep time: $control_sleep_time"
                     exit 1
@@ -166,11 +169,31 @@ function parse_args {
                 fi
 
                 # Set the disable control sleep flag and shift
+                echo -e "[NOTICE] - Control Signal Sleep Timer Disabled\n"
                 disable_control_sleep="True"
 
                 shift
                 ;;
 
+            --disable-result-parsing)
+
+                # Output the warning message to the user
+                echo -e "\n[WARNING] - Result parsing disabled, results will need to be parsed manually\n"
+
+                # Confirm with the user if they wish to proceed with the parsing disabled
+                get_user_yes_no "Are you sure you want to continue with result parsing disabled?"
+
+                # Determine the next action based on the user's response
+                if [ $user_y_n_response -eq 0 ]; then
+                    echo "[NOTICE] - Continuing with result parsing disabled"
+                    parse_results=0
+                else
+                    echo "[NOTICE] - Continuing with result parsing enabled"
+                    parse_results=1
+                fi
+
+                shift
+                ;;
 
             *)
 
@@ -193,17 +216,17 @@ function parse_args {
     # If the custom control sleep time flag has been set, perform additional checks
     if [ "$custom_control_time_flag" == "True" ]; then
 
-        # Check if the set sleep time value falls into given special cases
+        # Check if the set sleep time value falls into the given special cases
         if (( $(echo "$control_sleep_time > 0 && $control_sleep_time < 0.25" | bc -l) )); then
 
             # Output the warning to the user
             echo "[WARNING] - Control sleep time is below the lowest tested value of 0.25 seconds"
-            echo "In most instances this should be fine, but some environments have shown testing to fail using lower values"
+            echo "In most instances, this should be fine, but some environments have shown testing to fail using lower values"
 
             # Ask the user if they wish to continue with the lower value
             get_user_yes_no "Do you wish to continue with the sleep timer set to $control_sleep_time seconds?"
 
-            # Determine if the script should based on the user response
+            # Determine the next action based on the user's response
             if [ $user_y_n_response -eq 0 ]; then
                 echo -e "\nExiting script..."
                 exit 1
@@ -215,8 +238,9 @@ function parse_args {
             echo "[NOTICE] - You have set the control sleep time to 0 seconds"
             get_user_yes_no "Do you wish to disable the control signal sleep statement?"
 
-            # Determine the next action based on the user response
+            # Determine the next action based on the user's response
             if [ $user_y_n_response -eq 1 ]; then
+                echo -e "[NOTICE] - Control Signal Sleep Timer Disabled\n"
                 disable_control_sleep="True"
             else
                 echo -e "\nExiting script..."
@@ -232,7 +256,7 @@ function parse_args {
 #-------------------------------------------------------------------------------------------------------------------------------
 function is_port_in_use() {
     # Helper function to determine if a given port is in use. The function will attempt to use various system tools to check if the port is in use.
-    # Once the available system tool has been determine, the function checks if a process is using the port, it then stores the process name 
+    # Once the available system tool has been determined, the function checks if a process is using the port; it then stores the process name 
     # in `port_process` and the process ID in `port_pid` variables.
 
     # Store the port number and initialise the process name and PID variables
@@ -251,7 +275,7 @@ function is_port_in_use() {
         port_pid=$(ss -tulnp | awk -v port=":$port" '$0 ~ port {gsub(".*pid=","",$NF); gsub(",.*","",$NF); print $NF}')
         port_process=$(ss -tulnp | awk -v port=":$port" '$0 ~ port {for (i=1; i<=NF; i++) if ($i ~ /users:\(\("/) {print $i; exit}}' | sed -E 's/users:\(\("//;s/",pid=.*//')
 
-        # Determine if the port is in use based on if a process ID is found
+        # Determine if the port is in use based on whether a process ID is found
         if [[ -n "$port_pid" ]]; then
             return 0
         fi
@@ -265,7 +289,7 @@ function is_port_in_use() {
         port_pid=$(netstat -tulnp 2>/dev/null | grep ":$port" | awk '{print $7}' | cut -d'/' -f1)
         port_process=$(netstat -tulnp 2>/dev/null | grep ":$port" | awk '{print $7}' | cut -d'/' -f2)
 
-        # Determine if the port is in use based on if a process ID is found
+        # Determine if the port is in use based on whether a process ID is found
         if [[ -n "$port_pid" ]]; then
             return 0
         fi
@@ -278,7 +302,7 @@ function is_port_in_use() {
         # Grab the process ID and process name when supplying the port number
         port_pid=$(lsof -Pi :"$port" -sTCP:LISTEN -t 2>/dev/null)
 
-        # Determine if the port is in use based on if a process ID is found
+        # Determine if the port is in use based on whether a process ID is found
         if [[ -n "$port_pid" ]]; then
             port_process=$(ps -p "$port_pid" -o comm= 2>/dev/null | awk '{$1=$1};1')
             return 0
@@ -286,11 +310,11 @@ function is_port_in_use() {
 
     else
 
-        # Output a warning that no tool was found to check port usage and get the user response
+        # Output a warning that no tool was found to check port usage, and get the user's response
         echo -e "[WARNING] - No tool found to check port usage (lsof, ss, netstat)\n"
         get_user_yes_no "Do you wish to continue without checking if the control ports are already in use?"
 
-        # Determine the next action based on the user response
+        # Determine the next action based on the user's response
         if [ $user_y_n_response -eq 1 ]; then
             skip_port_check="True"
             return 1
@@ -308,9 +332,9 @@ function is_port_in_use() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_base_env() {
-    # Function for setting up the basic global variables for the test suite. This includes setting the root directory
-    # and the global library paths for the test suite. The function establishes the root path by determining the path of the script and
-    # using this, determines the root directory of the project.
+    # Function for setting up the foundational global variables required for the test suite. This includes determining the project's root directory,
+    # establishing paths for libraries, scripts, and test data, and validating the presence of required libraries. Additionally, it sets up environment
+    # variables for control ports and sleep timers, ensuring proper configuration for the test suite's execution.
 
     # Determine the directory that the script is being run from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -341,13 +365,20 @@ function setup_base_env() {
     # Declare the main directory path variables based on the project's root dir
     libs_dir="$root_dir/lib"
     tmp_dir="$root_dir/tmp"
-    test_data_dir="$root_dir/test-data"
-    test_scripts_path="$root_dir/scripts/test-scripts"
-    util_scripts="$root_dir/scripts/utility-scripts"
+    test_data_dir="$root_dir/test_data"
+    test_scripts_path="$root_dir/scripts/test_scripts"
+    util_scripts="$root_dir/scripts/utility_scripts"
+    parsing_scripts="$root_dir/scripts/parsing_scripts"
+
+    # Declare the project scripts path variables
+    tls_handshake_server="$test_scripts_path/internal_scripts/tls_handshake_test_server.sh"
+    tls_handshake_client="$test_scripts_path/internal_scripts/tls_handshake_test_client.sh"
+    tls_speed="$test_scripts_path/internal_scripts/tls_speed_test.sh"
+    result_parser_script="$parsing_scripts/parse_results.py"
 
     # Declare the global library directory path variables
-    openssl_path="$libs_dir/openssl_3.4"
-    oqs_provider_path="$libs_dir/oqs-provider"
+    openssl_path="$libs_dir/openssl_3.5.0"
+    oqs_provider_path="$libs_dir/oqs_provider"
 
     # Ensure that the OQS-Provider and OpenSSL libraries are present before proceeding
     if [ ! -d "$oqs_provider_path" ]; then
@@ -398,10 +429,10 @@ function setup_base_env() {
     # Ensure that control ports are not in use by other processes in the system
     for custom_port_index in "${!ports_to_check[@]}"; do
 
-        # Check if the port is in use in the system if the user has not chosen to skip the check due to missing tools
+        # Check if the port is in use in the system, if the user has not chosen to skip the check due to missing tools
         if [ "$skip_port_check" != "True" ] && is_port_in_use "${ports_to_check[$custom_port_index]}"; then
 
-            # Extract where the process pid is being ran from for the port being checked
+            # Extract where the process pid is being run from for the port being checked
             process_cmdline=$(readlink -f /proc/$port_pid/cwd)
 
             # Check if the conflicting process is from this test suite
@@ -412,7 +443,7 @@ function setup_base_env() {
                     continue
 
                 elif [ "$custom_port_index" -eq 2 ] && [ "$port_process" == "openssl" ]; then
-                    echo "[WARNING] - ${port_names[$custom_port_index]} is active from a previous test, killing the process"
+                    echo -e "[WARNING] - ${port_names[$custom_port_index]} is active from a previous test, killing the process\n"
                     kill -9 "$port_pid"
 
                 else
@@ -442,12 +473,12 @@ function set_tls_paths() {
     # Function for setting the results paths based on the machine-ID assigned to the test results and exporting the paths 
     # to the environment for the server/client script.
 
-    # Set the result directory paths based on assigned machine-ID for results
-    export MACHINE_RESULTS_PATH="$test_data_dir/up-results/oqs-provider/machine-$MACHINE_NUM"
-    export MACHINE_HANDSHAKE_RESULTS="$MACHINE_RESULTS_PATH/handshake-results"
-    export MACHINE_SPEED_RESULTS="$MACHINE_RESULTS_PATH/speed-results"
+    # Set the result directory paths based on the assigned machine-ID for results
+    export MACHINE_RESULTS_PATH="$test_data_dir/up_results/tls_performance/machine_$MACHINE_NUM"
+    export MACHINE_HANDSHAKE_RESULTS="$MACHINE_RESULTS_PATH/handshake_results"
+    export MACHINE_SPEED_RESULTS="$MACHINE_RESULTS_PATH/speed_results"
 
-    # Set the specific test types result directory paths
+    # Set the specific test types' result directory paths
     export PQC_HANDSHAKE="$MACHINE_HANDSHAKE_RESULTS/pqc"
     export CLASSIC_HANDSHAKE="$MACHINE_HANDSHAKE_RESULTS/classic"
     export HYBRID_HANDSHAKE="$MACHINE_HANDSHAKE_RESULTS/hybrid"
@@ -505,11 +536,11 @@ function clean_environment() {
 function get_machine_num() {
     # Helper function for getting the machine-ID from the user to assign to the test results
 
-    # Prompt the use for the machine number to be assigned to the results
+    # Prompt the user for the machine-ID to be assigned to the results
     while true; do
 
         # Get the machine-ID from the user
-        read -p "What machine-ID would you like to assign to these results? - " user_response
+        read -p "What Machine-ID would you like to assign to these results?: " user_response
         
         # Check that the input from the user is a valid integer and store it
         case "$user_response" in
@@ -522,7 +553,7 @@ function get_machine_num() {
                 ;;
             
             *)
-                # Store the machine-ID  from the user and break out of the loop
+                # Store the machine-ID from the user and break out of the loop
                 MACHINE_NUM="$user_response"
                 echo -e "\nMachine-ID set to $user_response\n"
                 break
@@ -543,8 +574,8 @@ function handle_machine_id_clash() {
     while true; do
 
         # Output the choices for handling the clash to the user
-        echo -e "There are already results stored for Machine-ID ($MACHINE_NUM), would you like to:"
-        echo -e "1 - Replace old results and keep same Machine-ID"
+        echo -e "[WARNING] - There are already results stored for Machine-ID ($MACHINE_NUM), would you like to:"
+        echo -e "1 - Replace old results and keep the same Machine-ID"
         echo -e "2 - Assign a different machine ID"
 
         # Read in the user's response
@@ -568,8 +599,8 @@ function handle_machine_id_clash() {
 
             2)
 
-                # Get a new machine-ID that will assigned to the results instead
-                echo -e "Assigning new Machine-ID for test results"
+                # Get a new machine-ID that will be assigned to the results instead
+                echo -e "\nAssigning new Machine-ID for test results"
                 get_machine_num
 
                 # Set the results directory paths based on the newly assigned machine-ID
@@ -580,14 +611,14 @@ function handle_machine_id_clash() {
                     echo -e "No previous results present for Machine-ID ($MACHINE_NUM), continuing test setup"
                     break
                 else
-                    echo "There are previous results detected for new Machine-ID value, please select different value or replace old results"
+                    echo "There are previous results detected for the new Machine-ID value, please select a different value or replace the old results"
                 fi
                 ;;
 
             *)
 
                 # Output to the user that the input is invalid
-                echo "Invalid option, please select valid option value (1-2)"
+                echo "Invalid option, please select a valid option value (1-2)"
                 ;;
 
         esac
@@ -598,15 +629,17 @@ function handle_machine_id_clash() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function configure_results_dir() {
-    # Function for configuring the results directories for the test results
+    # Function responsible for setting up and managing the results directories for the test suite.
+    # This includes handling potential clashes with existing results, creating new directories for 
+    # unparsed and parsed results, and ensuring proper configuration for storing test outputs.
 
     # Set the results paths based on the machine-ID
     set_tls_paths
 
-    # Create the un-parsed result directories for the machine-ID and and handle any clashes
-    if [ -d "$test_data_dir/up-results" ]; then
+    # Create the unparsed result directories for the machine-ID and handle any clashes
+    if [ -d "$test_data_dir/up_results" ]; then
     
-        # Check if there is already results present for assigned machine-ID and handle any clashes
+        # Check if there are already results present for the assigned machine-ID and handle any clashes
         if [ -d "$MACHINE_RESULTS_PATH" ]; then
             handle_machine_id_clash
         
@@ -628,71 +661,56 @@ function configure_results_dir() {
 
     fi
 
-}
+    # Set the parsed results directory path based on the decided machine-ID
+    parsed_results_path="$test_data_dir/results/tls_performance/machine_$MACHINE_NUM"
 
-#-------------------------------------------------------------------------------------------------------------------------------
-function get_test_comparison_choice() {
-    # Function for getting the user choice on whether the test results will be compared to other machine results
+    # Check if Parsed results already exist for the Machine-ID
+    if [ -d "$parsed_results_path" ]; then
 
-    # Prompt the user for their choice until a valid response is given
-    while true; do
+        # Output to the user that the parsed results already exist
+        echo -e "[WARNING] - Parsed results already exist for Machine-ID ($MACHINE_NUM)"
+        get_user_yes_no "Would you like to replace the existing parsed results?"
 
-        # Outputting the test comparison options to the user and reading in the user response
-        echo -e "\nPlease select on of the following test comparison options"
-        echo "1-This test will not be used in result-parsing with other machines"
-        echo "2-This machine will be used in result-parsing with other machine results"
+        # Determine the next action based on the user's response
+        if [ $user_y_n_response -eq 0 ]; then
 
-        # Read in the user's response
-        read -p "Enter your choice (1-2): " usr_test_option
+            # Output to the user that the parsed results will not be replaced
+            echo -e "[NOTICE] - Keeping existing parsed results, manual parsing is now required\n"
+            sleep 2
 
-        # Determine the action based on the user's response
-        case $usr_test_option in
+            # Set the automatic result parsing flag to disabled
+            parse_results=0
 
-            1)
+        elif [ $user_y_n_response -eq 1 ]; then
 
-                # Set the default machine-ID and configure the results directory
-                echo -e "\nTest will not be parsed with other machine data\n"
-                export MACHINE_NUM="1"
-                configure_results_dir
-                break
-                ;;
+            # Output to the user that the parsed results will be replaced
+            echo -e "[NOTICE] - Existing Parsed Results for Machine-ID ($MACHINE_NUM) will be replaced\n"
+            sleep 2
 
-            2)
+            # Set the automatic result parsing flag to enabled
+            replace_old_results=1
+            
+        fi
 
-                # Set the user specified Machine-ID and configure the results directory
-                echo -e "\nTest will will be parsed with other machine data\n"
-                get_machine_num
-                configure_results_dir
-                export MACHINE_NUM="$MACHINE_NUM"
-                break
-                ;;
-
-            *)
-
-                # Output to the user that the input is invalid
-                echo "Invalid option, please select valid option value (1-2)"
-                ;;
-
-        esac
-
-    done
+    fi
 
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function configure_test_options {
-    # Function for configuring the test parameters, including machine type, number of test runs, and TLS test lengths, based on user input
+    # Function for configuring the test parameters based on user input. This includes selecting the machine type (server or client),
+    # specifying the number of test runs, and setting the TLS handshake and speed test durations.
 
     # Output the current task to the terminal
     echo -e "#########################"
     echo "Configure Test Parameters"
     echo -e "#########################\n"
 
-    # Prompt the user for the test machine selection until a valid response is given
+    # Prompt the user for the test machine type selection until a valid response is given
     while true; do
 
         # Outputting the test machine options to the user
-        echo "Please select on of the following test machine options to configure machine type:"
+        echo "Please select one of the following test machine options to configure machine type:"
         echo "1-This machine will be the server"
         echo "2-This machine will be the client"
         echo "3-Exit"
@@ -732,34 +750,39 @@ function configure_test_options {
             *)
 
                 # Output to the user that the input is invalid
-                echo "Invalid option, please select valid option value (1-3)"
+                echo "Invalid option, please select a valid option value (1-3)"
                 ;;
 
         esac
 
     done
 
-    # Prompt the user for the number of test runs until a valid response is given
-    while true; do
-
-        # Prompt the user for their response and read it in
-        read -p "Enter the number of test runs required: " user_run_num
-
-        # Check if the input is a valid integer and export it to the environment if valid
-        if [[ $user_run_num =~ ^[1-9][0-9]*$ ]]; then
-            export NUM_RUN="$user_run_num"
-            break
-        else
-            echo -e "Invalid input. Please enter a valid integer above 0.\n"
-        fi
-    
-    done
-
-    # If test machine is client, get the TLS handshake and speed test lengths from user
+    # If the test machine is a client, get the TLS handshake and speed test lengths from the user
     if [ $machine_type == "Client" ]; then
 
-        # Get the machine-ID for the results if comparing to other machine results
-        get_test_comparison_choice
+        # Ask the user if they wish to assign a machine-ID to the performance results
+        echo -e "\n=== Setting test results Machine-ID ===\n"
+        get_user_yes_no "Do you wish to assign a custom Machine-ID to the performance results?"
+
+        # Determine whether to assign a custom machine-ID or not based on the user response
+        if [ $user_y_n_response -eq 1 ]; then
+
+            # Get the machine-ID from the user and configure the results directory
+            get_machine_num
+            configure_results_dir
+            export MACHINE_NUM="$MACHINE_NUM"
+
+        else
+
+            # Set the machine-ID to the default value and configure the results directory
+            echo -e "\nUsing default Machine-ID (1) for test results\n"
+            configure_results_dir
+            export MACHINE_NUM="1"
+
+        fi
+
+        # Output the test parameters message to the user
+        echo -e "=== Setting test parameters for the TLS Handshake and Speed tests ===\n"
 
         # Prompt the user for the TLS test length until a valid response is given
         while true; do
@@ -795,12 +818,33 @@ function configure_test_options {
 
     fi
 
+    # Prompt the user for the number of test runs until a valid response is given
+    while true; do
+
+        # Output task to the terminal only if the machine is a server
+        if [ $machine_type == "Server" ]; then
+            echo -e "\n=== Setting Test Parameters ===\n"
+        fi
+
+        # Prompt the user for their response and read it in
+        read -p "Enter the number of test runs required: " user_run_num
+
+        # Check if the input is a valid integer and export it to the environment if valid
+        if [[ $user_run_num =~ ^[1-9][0-9]*$ ]]; then
+            export NUM_RUN="$user_run_num"
+            break
+        else
+            echo -e "Invalid input. Please enter a valid integer above 0.\n"
+        fi
+    
+    done
+
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function check_transferred_keys() {
-    # Function for checking with the user they have generated and transferred the server certificates and private-keys
-    # to the client machine before starting tests
+    # Function to ensure the user has generated and transferred the necessary server certificates and private keys
+    # to the client machine before proceeding with the tests.
 
     # Check with the user if cert/keys have been transferred
     while true; do
@@ -808,12 +852,12 @@ function check_transferred_keys() {
         # Prompt the user for their response
         get_user_yes_no "Have you generated and transferred the testing keys to the client machine?"
 
-        # Determine the next action based on the user response
+        # Determine the next action based on the user's response
         if [ $user_y_n_response -eq 1 ]; then
             break
 
         else
-            echo -e "\nPlease generate the certs and keys needed for testing using oqsprovider-generate-keys.sh and transfer to client machine before testing"
+            echo -e "\nPlease generate the certificates and keys needed for testing (e.g., via tls_generate_keys.sh) and transfer them to the client machine."
             echo -e "\nExiting test..."
             sleep 2
             exit 0
@@ -826,21 +870,21 @@ function check_transferred_keys() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function run_tests() {
-    # Function for performing the TLS handshake and speed tests. It will get the IP address of the other machine from the user
-    # and check that the IP address is in the correct format. The function will then call the relevant test scripts based on
-    # the machine type selected.
+    # Function responsible for executing TLS handshake and speed tests. It prompts the user to provide the IP address of the 
+    # other machine, and validates the format of the provided IP address. Based on the machine type (server or client), it invokes 
+    # the appropriate test scripts to perform the tests and handles any errors that may occur during execution.
    
-    # Set the regex variable for checking the IP address format entered by user
+    # Set the regex variable for checking the IP address format entered by the user
     ipv4_regex_check="^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$"
 
     # Prompt the user for the IP address of the other machine until a valid response is given
     while true; do
 
         # Prompt the user for their response and read it in
-        echo -e "\nConfigure IP Parameters:"
+        echo -e "\n=== Configure IP Parameters ===\n"
         read -p "Please enter the $ip_request_string machine's IP address: " usr_ip_input
 
-        # Format the user ip input by removing trailing spaces
+        # Format the user IP input by removing trailing spaces
         ip_address=$(echo $usr_ip_input | tr -d ' ')
 
         # Check if the IP address entered is in the correct format
@@ -862,75 +906,139 @@ function run_tests() {
     
     done
 
-    # Output the reminder to move keys before starting test (will automate in future)
-    echo -e "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-    echo -e "Please ensure that you have generated and transferred keys before starting test"
-    echo -e "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
+    # Output the reminder to move keys before starting the test (will automate in future)
+    echo -e "\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    echo -e "Please ensure that you have generated and transferred keys before starting the test"
+    echo -e "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
 
-    # Prompt the user to see if they have transferred the certs/keys and clearing the screen
+    # Prompt the user to see if they have transferred the certs/keys, and clear the screen
     check_transferred_keys
     clear
 
     # Call the TLS handshake test script based on the machine type selected
     if [ $machine_type == "Server" ]; then
 
-        # Output the current task to the terminal
-        echo -e "\n####################################"
-        echo "Performing TLS Handshake Tests"
-        echo -e "####################################\n"
-
         # Export the client IP to the environment
         export CLIENT_IP="$machine_ip"
 
         # Call the server machine test script
-        $test_scripts_path/oqsprovider-test-server.sh 
-        #>> "$root_dir/server-test-output.txt" - uncomment to save output for debugging
+        $tls_handshake_server
+        exit_code=$?
+
+        # Ensure that the server test script completed successfully
+        if [ $exit_code -ne 0 ]; then
+            echo "[ERROR] - TLS handshake test failed."
+            exit 1
+        fi
 
     else
     
         # Export the server IP to the environment
         export SERVER_IP="$machine_ip"
-
-        # Output the current task to the terminal
-        echo -e "\n####################################"
-        echo "Performing TLS Handshake Tests"
-        echo -e "####################################\n"
-
-        # Call the server machine test script
-        $test_scripts_path/oqsprovider-test-client.sh
-        #>> "$root_dir/client-test-output.txt" - uncomment to save output for debugging
-
-        # Output the current task to the terminal
-        echo -e "\n##########################"
-        echo "Performing TLS Speed Tests"
-        echo -e "##########################\n"
         
+        # Call the server machine test script
+        $tls_handshake_client
+        exit_code=$?
+
+        # Ensure that the client test script completed successfully
+        if [ $exit_code -ne 0 ]; then
+            echo "[ERROR] - TLS handshake test failed."
+            exit 1
+        fi
+
         # Call the TLS speed test script
-        $test_scripts_path/oqsprovider-test-speed.sh
-    
+        $tls_speed
+        exit_code=$?
+
+        # Ensure that the speed test script completed successfully
+        if [ $exit_code -ne 0 ]; then
+            echo "[ERROR] - TLS speed test failed."
+            exit 1
+        fi
+
+        # Set the parsing checks needed, as this is the client machine
+        parsing_check_needed=1
+
+    fi
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
+function handle_result_parsing() {
+    # Function for handling automatic result parsing based on user-defined flags. This function determines whether 
+    # to parse results automatically, replace old results, or skip parsing based on the flags set during the test 
+    # setup. It calls the parsing script with the appropriate arguments and verifies the success of the parsing process.
+
+    # Parse the results if the flag is set to enabled
+    if [ $parse_results -eq 1 ]; then
+
+        # Call the automatic parsing script based on whether old results need to be replaced
+        if [ $replace_old_results -eq 0 ]; then
+
+            # Call the result parsing script to parse the results with the replace flag not set
+            python3 "$result_parser_script" \
+                --parse-mode="tls"  \
+                --machine-id="$MACHINE_NUM" \
+                --total-runs=$NUM_RUN
+            exit_status=$?
+
+        else
+
+            # Call the result parsing script to parse the results with the replace flag set
+            python3 "$result_parser_script" \
+                --parse-mode="tls"  \
+                --machine-id="$MACHINE_NUM" \
+                --total-runs=$NUM_RUN \
+                --replace-old-results
+            exit_status=$?
+
+        fi
+
+        # Ensure that the parsing script completed successfully
+        if [ $exit_status -eq 0 ]; then
+            echo -e "\nParsed results can be found in the following directory:"
+            echo "$parsed_results_path"
+
+        else
+            echo -e "\n[WARNING] - Result parsing failed, manual calling of parsing script is now required\n"
+        fi
+
+    elif [ $parse_results -eq 0 ]; then
+
+        # Output the complete message with the test results path to the user
+        echo -e "All performance testing complete, the unparsed results for Machine-ID ($MACHINE_NUM) can be found in:"
+        echo "$MACHINE_RESULTS_PATH"
+        
+    else
+        echo -e "\n[ERROR] - parse_results flag not set correctly, manual calling of parsing script is now required\n"
+        exit 1
+        
     fi
 
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function main() {
-    # Main function for controlling the automated OQS-Provider PQC TLS performance testing
+    # Main function for controlling automated TLS performance testing using PQC algorithms supported by OpenSSL and OQS-Provider
 
     # Output the welcome message to the terminal
-    echo "#####################################################################"
-    echo "PQC-Evaluation-Tools - Automated OQS-Provider TLS Performance Testing"
-    echo -e "#####################################################################\n"
+    echo "############################################################"
+    echo "PQC-Evaluation-Tools - Automated PQC TLS Performance Testing"
+    echo -e "############################################################\n"
 
     # Set the default global flag variables
     custom_control_time_flag="False"
     disable_control_sleep="False"
+    parsing_check_needed=0
+    parse_results=1
+    replace_old_results=0
 
     # Set the default TCP port values
     server_control_port="25000"
     client_control_port="25001"
     s_server_port="4433"
 
-    # Parse the command line arguments passed to the script if any
+    # Parse the command line arguments passed to the script, if any
     if [[ $# -gt 0 ]]; then
         parse_args "$@"
     fi
@@ -941,6 +1049,11 @@ function main() {
     # Get the test options and perform the PQC TLS tests 
     configure_test_options
     run_tests
+
+    # Handle automatic result parsing if the client machine
+    if [ "$parsing_check_needed" -eq 1 ]; then
+        handle_result_parsing
+    fi
 
     # Clean the environment before exiting the script
     clean_environment
