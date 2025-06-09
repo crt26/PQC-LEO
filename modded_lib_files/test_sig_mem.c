@@ -5,7 +5,7 @@
  * Original copyright:
  *   Copyright (c) 2016-2024 The Open Quantum Safe project authors
  *
- * Modifications by Callum Turino on 01/04/2025.
+ * Modifications by Callum Turino on 09/06/2025.
  * SPDX-License-Identifier: MIT
  */
 
