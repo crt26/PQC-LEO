@@ -14,7 +14,7 @@ By default, the setup process uses specific pinned commits of the OQS libraries 
 
 This option may provide access to the most recent algorithm updates and bug fixes, but it may also introduce breaking changes due to upstream modifications. The setup script will display a warning and require explicit confirmation before proceeding with the latest versions.
 
-For more information on the specific versions used by default, see the [Project Dependencies](./developer_information/dependency_libraries.md) documentation.
+For more information on the specific versions used by default, see the [Project Dependencies](./developer_information/project_dependencies.md) documentation.
 
 ## Adjusting OpenSSL Speed Tool Hardcoded Limits
 When using either the `full` or `TLS-only` install modes, an optional prompt will appear that allows enabling all digital signature algorithms that are disabled by default in the OQS-Provider library.
