@@ -19,7 +19,7 @@ import argparse
 
 #------------------------------------------------------------------------------------------------------------------------------
 def handle_args():
-    """ Function for Handling command-line arguments for the script, validates them, and returns the parsed arguments. 
+    """ Function for handling command-line arguments for the script, validates them, and returns the parsed arguments. 
         Raises errors and exits if arguments are invalid. """
     
     # Define the argument parser and the valid options for the script
@@ -103,7 +103,7 @@ def get_mode_selection():
     # Get the mode selection from the user
     while True:
 
-        # Output the parsing options to user and store the response
+        # Output the parsing options to the user and store the response
         print("Please select one of the following Parsing options:")
         print("1 - Parse computational performance results")
         print("2 - Parse TLS performance results")
@@ -169,7 +169,7 @@ def main():
     # Set the default value for the replace_old_results variable
     replace_old_results = False
 
-    # Determine which method is being used to the run the script
+    # Determine which method is being used to run the script
     if len (sys.argv) > 1:
 
         # Parse the command line arguments provided to the script

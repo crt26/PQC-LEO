@@ -13,7 +13,7 @@ Accepted arguments:
     1 - Computational performance testing only (Liboqs algorithms)
     2 - Computational and TLS performance testing (Liboqs, OpenSSL, and OQS-Provider algorithms)
     3 - TLS performance testing only (OpenSSL and OQS-Provider algorithms)
-    4 - Parse ALGORITHMS.md in OQS-Provider source to count the total number of supported algorithms
+    4 - Parse ALGORITHMS.md in the OQS-Provider source to count the total number of supported algorithms
 """
 
 #------------------------------------------------------------------------------------------------------------------------------
@@ -25,7 +25,7 @@ import re
 # Set the root directory path variable
 root_dir = ""
 
-# Set the path to the liboqs build directory and the openssl path
+# Set the path to the liboqs build directory and the OpenSSL path
 liboqs_build_dir = ""
 openssl_path = ""
 oqs_provider_path = ""
@@ -49,7 +49,7 @@ def output_help_message():
 #------------------------------------------------------------------------------------------------------------------------------
 def setup_base_env():
     """ Function for setting up the global environment variables for the test suite. This includes determining the root directory 
-        by tracing the script's location, and configuring paths for libraries, test data, and temporary files. """
+        by tracing the script's location and configuring paths for libraries, test data, and temporary files. """
 
     global root_dir, liboqs_build_dir, openssl_path, openssl_lib_dir, oqs_provider_path, oqs_provider_src_dir
 
@@ -95,7 +95,7 @@ def setup_base_env():
     # Set the path to the ALGORITHMS.md file
     oqs_provider_src_dir = os.path.join(root_dir, "tmp", "oqs_provider_source")
 
-    # Ensure that there are no previous list files present (mainly for if this script is ran manually, setup.sh will handle this)
+    # Ensure that there are no previous list files present (mainly for if this script is run manually, setup.sh will handle this)
     alg_list_dir = os.path.join(root_dir, "test_data", "alg_lists")
 
     if os.path.isdir(alg_list_dir):
@@ -107,7 +107,7 @@ def setup_base_env():
 #------------------------------------------------------------------------------------------------------------------------------
 def write_to_file(alg_list, file_name):
     """ Helper function to write the algorithms to a specified text file. The function 
-        takes the algorithm list and filename as arguments. """
+        takes the algorithm list and the filename as arguments. """
 
     # Write the algorithms to the specified text file
     with open(file_name, "w") as f:
@@ -152,7 +152,7 @@ def liboqs_extract_algs(output_str):
 #------------------------------------------------------------------------------------------------------------------------------
 def get_liboqs_algs():
     """ Function to get the algorithms supported by the Liboqs library. The function will run the test
-        binaries with no arguments to trigger the help output which will contain the algorithms supported. """
+        binaries with no arguments to trigger the help output, which will contain the algorithms supported. """
     
     # Set the test_bins and output directory for algorithm lists
     test_bins = [f"{liboqs_build_dir}/test_kem", f"{liboqs_build_dir}/test_sig"]
@@ -196,7 +196,7 @@ def get_liboqs_algs():
 
 #------------------------------------------------------------------------------------------------------------------------------
 def extract_tls_algs(test_type, provider_type, output_str):
-    """ Helper function for Extracting PQC and Hybrid-PQC algorithms supported by OpenSSL and OQS-Provider from the output string, 
+    """ Helper function for extracting PQC and Hybrid-PQC algorithms supported by OpenSSL and OQS-Provider from the output string, 
         filtering based on the test type (PQC or Hybrid-PQC) and the provider type (OpenSSL or OQS-Provider). """
 
     # Set the algorithm lists used for the PQC and Hybrid-PQC algorithms
@@ -206,12 +206,20 @@ def extract_tls_algs(test_type, provider_type, output_str):
     # Set the filter and match variables used in the test types checks
     hybrid_prefix_pattern = re.compile(r'^(rsa[0-9]+|p[0-9]+|x[0-9]+|X25519|X448|SecP256r1|SecP384r1|SecP521r1)[a-zA-Z0-9_-]+$')
     excluded_algs = ["CROSSrsdp256small", "X448MLKEM1024"]
-    # leave commented until SLH-DSA is supported for TLS handshakes in OpenSSL
+    # Leave commented until SLH-DSA is supported for TLS handshakes in OpenSSL
     #native_pqc_pattern = re.compile(r'^(MLKEM[0-9]+|MLDSA[0-9]+|SLH-DSA-[A-Z0-9-]+[a-z]*)$')
 
-    # Set the UOV exclude and include patterns
-    uov_exclude_pattern = re.compile(r'^(p(256|384|521)_)?OV_.*')
-    uov_include = ["OV_Ip_pkc", "p256_OV_Ip_pkc", "OV_Ip_pkc_skc", "p256_OV_Ip_pkc_skc"]
+    # Set the UOV and SNOVA exclude and include patterns
+    exclude_pattern = re.compile(r'^(p(256|384|521)_)?(OV_|snova)')
+    include_list = [
+        "OV_Ip_pkc", "p256_OV_Ip_pkc",
+        "OV_Ip_pkc_skc", "p256_OV_Ip_pkc_skc",
+        "snova2454", "p256_snova2454",
+        "snova2454esk", "p256_snova2454esk",
+        "snova37172", "p256_snova37172",
+        "snova2455", "p384_snova2455",
+        "snova2965", "p521_snova2965"
+    ]
 
     # Set the regex pattern to match OpenSSL native PQC algorithms depending on the test type
     if test_type == 0:
@@ -242,16 +250,16 @@ def extract_tls_algs(test_type, provider_type, output_str):
             alg = alg.split(" @ ")[0]
 
         # Skip over algorithms that are to be excluded from the list
-        if test_type == 0 and ((uov_exclude_pattern.match(alg) and alg not in uov_include) or alg in excluded_algs):
+        if test_type == 0 and ((exclude_pattern.match(alg) and alg not in include_list) or alg in excluded_algs):
             continue
 
         # Determine what filters are needed based on the provider type
         if provider_type == "default":
 
-            # Determine if the algorithm is a PQC or Hybrid-PQC algorithm
+            # Determine if the algorithm is a PQC or a Hybrid-PQC algorithm
             if native_pqc_pattern.match(alg):
 
-                # If the algorithm is ML-KEM and test type is speed, reformat the algorithm name
+                # If the algorithm is ML-KEM and the test type is speed, reformat the algorithm name
                 if test_type == 1:
                     if "MLKEM" in alg:
                         alg = re.sub(r'^MLKEM(\d+)$', r'ML-KEM-\1', alg)
@@ -266,7 +274,7 @@ def extract_tls_algs(test_type, provider_type, output_str):
 
         elif provider_type == "oqsprovider":
 
-            # Determine if the algorithm is a PQC or Hybrid-PQC algorithm
+            # Determine if the algorithm is a PQC or a Hybrid-PQC algorithm
             if hybrid_prefix_pattern.match(alg):
                 hybrid_algs.append(alg.strip())
             else:
@@ -283,7 +291,7 @@ def get_tls_pqc_algs():
     """ Retrieves the PQC and Hybrid-PQC algorithms supported by both OpenSSL and OQS-Provider for TLS benchmarking. """
 
     # Set required path variables, algorithm categories, and provider flags
-    openssl_bin = os.path.join(openssl_path, "bin","openssl")
+    openssl_bin = os.path.join(openssl_path, "bin", "openssl")
     output_dir = os.path.join(root_dir, "test_data", "alg_lists")
     alg_cats = ["kem", "signature"]
     provider_flags = {
@@ -363,9 +371,9 @@ def parse_oqs_provider_algorithms_md():
     """ Function for parsing the ALGORITHMS.md file of the OQS-Provider library to extract the total number of algorithms supported
         This is only called when all algorithms are selected to be enabled by the main setup.sh script, as the OpenSSL speed.c source
         file needs to be altered so that a larger number of algorithms can be supported. This function will return the total number of algorithms
-        supported by the OQS-Provider library and if parsing fails returns -1 to indicate that the hardcoded high value should be set in the speed.c file. """
+        supported by the OQS-Provider library, and if parsing fails returns -1 to indicate that the hardcoded high value should be set in the speed.c file. """
 
-    # Set the filepaths for the ALGORITHMS.md file and declare main_algs list
+    # Set the filepaths for the ALGORITHMS.md file and declare the main_algs list
     algs_md_filepath = os.path.join(oqs_provider_src_dir, "ALGORITHMS.md")
     main_algs = []
 
@@ -391,7 +399,7 @@ def parse_oqs_provider_algorithms_md():
                 elif "<!--- OQS_TEMPLATE_FRAGMENT_IDS_END -->" in line:
                     break
                 
-                # If in the table extract the algorithm names
+                # If in the table, extract the algorithm names
                 if in_table:
 
                     # Only extract the algorithms if not in the first lines of the table
@@ -437,7 +445,7 @@ def main():
         # Set up the base environment for the utility script
         setup_base_env()
 
-        # Determine which algorithm lists are required based on the argument passed and create them
+        # Determine which algorithm lists are required based on the argument passed, and create them
         if sys.argv[1] == "1":
 
             # Ensure that the Liboqs library is present before continuing

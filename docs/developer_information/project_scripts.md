@@ -3,12 +3,12 @@
 ## Overview <!-- omit from toc --> 
 This document provides additional reference information for the various scripts in the repository. This documentation is designed primarily for developers or those who wish to better understand the core functionality of the project's various scripts.
 
-The scripts are grouped into the following categories:
+The project's scripts are grouped into the following categories:
 
-- The project's utility scripts
-- The Liboqs automated testing scripts
-- The OQS-Provider automated testing scripts
-- The performance data parsing scripts
+- The utility scripts
+- The automated computational performance testing scripts
+- The automated TLS performance testing scripts
+- The raw performance data parsing scripts
 
 It provides overviews of each script’s purpose, functionality, and any relevant parameters required when running the scripts manually.
 
@@ -18,6 +18,7 @@ It provides overviews of each script’s purpose, functionality, and any relevan
   - [cleaner.sh](#cleanersh)
   - [get\_algorithms.py](#get_algorithmspy)
   - [configure\_openssl\_cnf.sh](#configure_openssl_cnfsh)
+  - [source\_code\_modifier.sh](#source_code_modifiersh)
 - [Automated Computational Performance Testing Scripts](#automated-computational-performance-testing-scripts)
   - [pqc\_performance\_test.sh](#pqc_performance_testsh)
 - [Automated TLS Performance Testing Scripts](#automated-tls-performance-testing-scripts)
@@ -40,10 +41,11 @@ The project utility scripts include the following:
 - setup.sh
 - cleaner.sh
 - get_algorithms.py
-- configure-openssl-cnf.sh
+- configure_openssl_cnf.sh
+- source_code_modifier.sh
 
 ### setup.sh
-This script automates the full environment setup for running the PQC benchmarking tools. It supports installing Liboqs, OQS-Provider, or both, based on user input, and configures the system accordingly.
+This script automates the full environment setup required to run the PQC benchmarking tools. It provides setup options for the different types of automated testing supported (computational, TLS, or both), and handles all necessary system configuration and dependency installation.
 
 Key tasks performed include:
 
@@ -67,21 +69,24 @@ The script also handles the automatic detection of the system architecture and a
 
 The script is run interactively but supports the following optional arguments for advanced use:
 
-| **Flag**                       | **Description**                                                                         |
-|--------------------------------|-----------------------------------------------------------------------------------------|
-| `--latest-dependency-versions` | Use the latest available versions of the OQS libraries (may cause compatibility issues) |
-| `--set-speed-new-value=<int>`  | Manually set `MAX_KEM_NUM` and `MAX_SIG_NUM` in OpenSSL’s `speed.c`                     |
-| `--enable-hqc-algs`            | Enable HQC KEM algorithms in Liboqs (default: disabled due to known vulnerability)      |
+| **Flag**                       | **Description**                                                                                                 |
+|--------------------------------|-----------------------------------------------------------------------------------------------------------------|
+| `--latest-dependency-versions` | Use the latest upstream versions of Liboqs and OQS-Provider (may cause compatibility issues with this project). |
+| `--set-speed-new-value=<int>`  | Manually set `MAX_KEM_NUM` and `MAX_SIG_NUM` values in OpenSSL’s speed.c source file.                           |
+| `--enable-liboqs-hqc-algs`     | Enable HQC KEM algorithms in Liboqs. Disabled by default due to spec non-conformance and security concerns.     |
+| `--enable-oqs-hqc-algs`        | Enable HQC KEM algorithms in OQS-Provider. Requires Liboqs HQC to also be enabled.                              |
+| `--enable-all-hqc-algs`        | Enable HQC KEM algorithms in both Liboqs and OQS-Provider. Overrides the other two HQC flags if present.        |
+| `--help`                       | Display the help message for all supported options.                                                             |
 
-For further information on the main setup script's usage, please refer to the main [README](../../README.md) file.
+For further information on the main setup script's usage, please refer to the main [README](../../README.md) and [Advanced Setup Configuration](../advanced_setup_configuration.md) file.
 
 ### cleaner.sh
-This is a utility script for cleaning the various project files from the compiling and benchmarking operations. The script provides functionality for either uninstalling the OQS and other dependency libraries from the system, clearing the old results, algorithm list files, and generated TLS keys, or both.
+This utility script is used for cleaning up files generated during the compiling and benchmarking processes. It provides options for uninstalling libraries (which includes deleting generated `__pycache__` directories), clearing old benchmarking results, and removing generated TLS keys. Users can choose to perform individual cleanup actions or both, based on their needs.
 
 ### get_algorithms.py
-This Python utility script generates lists of supported cryptographic algorithms based on the currently installed versions of the Liboqs, OpenSSL (classic + PQC), and OQS-Provider libraries. These lists are stored under the `test_data/alg_lists` directory and are used by benchmarking and parsing tools to determine which algorithms to run for computational performance testing and TLS handshakes testing.
+This Python utility script generates lists of supported cryptographic algorithms based on the currently installed versions of the Liboqs, OpenSSL (classic + PQC), and OQS-Provider libraries. These lists are stored under the `test_data/alg_lists` directory and are used by benchmarking and parsing tools to determine which algorithms to run and parse for the computational and TLS performance testing.
 
-Primarily intended to be invoked by the `setup.sh` script, this utility accepts an argument that specifies the installation and testing context. However, it can also be run manually to regenerate the algorithm list files
+Primarily intended to be invoked by the `setup.sh` script, this utility accepts an argument that specifies the installation and testing context. However, it can also be run manually to regenerate the algorithm list files.
 
 The script supports the following functionality:
 
@@ -91,7 +96,7 @@ The script supports the following functionality:
 
 - Generates hardcoded lists of classical TLS algorithms for baseline performance comparisons.
 
-- Parses the OQS-Provider’s `ALGORITHMS.md` file to determine the total number of supported algorithms (used by setup.sh when configuring OpenSSL’s `speed.c`).
+- Parses the OQS-Provider’s `ALGORITHMS.md` file to determine the total number of supported algorithms (used by `setup.sh` and `source_code_modifier.sh` when configuring OpenSSL’s `speed.c`).
 
 The utility script accepts the following arguments:
 
@@ -102,7 +107,7 @@ The utility script accepts the following arguments:
 | 3            | Extracts algorithms for **TLS performance testing** (OpenSSL and OQS-Provider algorithms only).                            |
 | 4            | Parses `ALGORITHMS.md` from OQS-Provider to determine the total number of supported algorithms (used only by `setup.sh`).  |
 
-While running option `4` manually will work, it is unnecessary. This function is used exclusively by the `setup.sh` script to modify OpenSSL’s `speed.c` file when all OQS-Provider algorithms are enabled. Unlike the other arguments, it does not alter or create files in the repository; it only returns the algorithm count for use during setup.
+While running option `4` manually will work, it is unnecessary. This function is used exclusively by the `source_code_modifier.sh` script to modify OpenSSL’s `speed.c` file when all OQS-Provider algorithms are enabled. Unlike the other arguments, it does not alter or create files in the repository; it only returns the algorithm count for use during setup.
 
 Example usage when running manually:
 
@@ -116,9 +121,9 @@ This utility script manages the modification of the OpenSSL 3.5.0 openssl.cnf co
 
 - Initial setup
 
-- Key generation benchmarking
+- Server certificate and private-key generation used in the TLS handshake testing
 
-- TLS handshake benchmarking
+- TLS handshake performance benchmarking
 
 These adjustments ensure compatibility with both OpenSSL's native PQC support and the OQS-Provider, depending on the testing context.
 
@@ -132,11 +137,47 @@ When called, the utility script accepts the following arguments:
 | `1`          | Configures the OpenSSL environment for **key generation benchmarking** by commenting out PQC-related configuration lines.                                                                     |
 | `2`          | Configures the OpenSSL environment for **TLS handshake benchmarking** by uncommenting PQC-related configuration lines.                                                                        |
 
+### source_code_modifier.sh
+This internal utility script automates source code modifications for OpenSSL and OQS-Provider during the setup process. **It is not intended to be run manually from the terminal.** The `setup.sh` script automatically invokes it to adjust hardcoded OpenSSL constants, enable HQC algorithms, and re-enable signature algorithms disabled by default in OQS-Provider, depending on the setup configuration. It is located in the `scripts/utility_scripts/` directory. 
+
+It provides the following internal modification tools, each of which accepts its own set of arguments:
+
+- **oqs_enable_algs** - Used for enabling HQC KEM algorithms, enabling signature algorithms disabled by default, or both.
+- **modify_openssl_src** - Used to modify the OpenSSL `speed.c` source code to increase hardcoded values. Only called if disabled signature algorithms are re-enabled in OQS-Provider.
+
+When calling the utility script, the first argument must always be the modification tool to use. Subsequent arguments can be in any order, but must include all of the accepted arguments listed below for each tool.
+
+**Accepted Arguments for oqs_enable_algs**:
+
+| **Flag**                        | **Description**                                                                                       |
+|---------------------------------|-------------------------------------------------------------------------------------------------------|
+| `--enable-hqc-algs=[0\|1]`      | Set to `1` to enable HQC KEM algorithms in OQS-Provider by modifying the generate.yml file.           |
+| `--enable-disabled-algs=[0\|1]` | Set to `1` to enable signature algorithms that are disabled by default in OQS-Provider.               |
+| `--help`                        | Displays the help message for this tool. Intended primarily for debugging from within another script. |
+
+**Accepted Arguments for modify_openssl_src**:
+
+| **Flag**                           | **Description**                                                                                                                                                                                        |
+|------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--user-defined-flag=[0\|1]`       | Set to `1` to use a manually specified value (via --user-defined-speed-value) instead of an automatically calculated value.                                                                             |
+| `--user-defined-speed-value=[int]` | Specifies the new value to set for `MAX_KEM_NUM` and `MAX_SIG_NUM` in OpenSSL's `speed.c`. Must be a positive integer if `--user-defined-flag` is set to `1`. Use `0` if `--user-defined-flag` is `0`. |
+| `--help`                           | Displays the help message for this tool. Intended primarily for debugging from within another script.                                                                                                  |
+
+
+Example Usage includes:
+```
+source_code_modifier.sh "oqs_enable_algs" "--enable-hqc-algs=1" "--enable-disabled-algs=1"
+```
+
+```
+source_code_modifier.sh "modify_openssl_src" "--user-defined-flag=1" "--user-defined-speed-value=500"
+```
+
 ## Automated Computational Performance Testing Scripts
-The computational performance testing suite benchmarks standalone PQC cryptographic operations for CPU and memory usage. It currently uses the Liboqs library and its testing tools to evaluate all supported KEM and digital signature algorithms. It is provided through a singular automation script which handles CPU and memory performance testing for PQC schemes. It is designed to be run interactively, prompting the user for test parameters such as the machine ID and number of test iterations.
+The computational performance testing suite benchmarks standalone PQC cryptographic operations for CPU and memory usage. It currently uses the Liboqs library and its testing tools to evaluate all supported KEM and digital signature algorithms. It is provided through a singular automation script which handles CPU and memory performance testing for PQC schemes. It is designed to be run interactively, prompting the user for test parameters such as the machine-ID to be assigned to the results and the number of test iterations.
 
 ### pqc_performance_test.sh
-This script performs fully automated CPU and memory performance benchmarking of the algorithms included in the Liboqs library. It runs speed tests using Liboqs' built-in benchmarking binaries and uses Valgrind with the massif tool to capture detailed memory usage metrics for each cryptographic operation. The results are stored in dedicated directories, organised by machine ID.
+This script performs fully automated CPU and memory performance benchmarking of the algorithms included in the Liboqs library. It runs speed tests using Liboqs' built-in benchmarking binaries and uses Valgrind's massif tool to capture detailed memory usage metrics for each cryptographic operation. The results are stored in dedicated directories, organised by machine ID.
 
 The script handles:
 
@@ -144,20 +185,22 @@ The script handles:
 
 - Prompting the user for test parameters (machine ID and number of runs)
 
-- Performing repeated speed and memory tests for each algorithm
+- Performing speed and memory tests for each algorithm for the specified number of runs
 
 - Organising raw result files for easy parsing
+  
+- Automatically calling the Python parsing scripts to process the raw performance results
 
 #### Speed Test Functionality <!-- omit from toc -->
-The speed test functionality benchmarks the execution time of KEM and digital signature algorithms using the Liboqs `speed-kem` and `speed-sig` tools. Results are saved to the `test_data/up_results/computational_performance/machine_x/raw_speed_results` directory.
+The speed test functionality benchmarks the execution time of KEM and digital signature algorithms using the Liboqs `speed-kem` and `speed-sig` tools. Raw performance results are saved to the `test_data/up_results/computational_performance/machine_x/raw_speed_results` directory.
 
 #### Memory Testing Functionality <!-- omit from toc -->
-Memory usage is profiled using the Liboqs `test-kem-mem` and `test-sig-mem` tools in combination with Valgrind’s Massif profiler. This setup captures detailed memory statistics for each cryptographic operation. Profiling data is initially stored in a temporary directory, then moved to `test_data/up_results/computational_performance/machine_x/mem_results`.
+Memory usage is profiled using the Liboqs `test-kem-mem` and `test-sig-mem` tools in combination with Valgrind’s Massif profiler. This setup captures detailed memory statistics for each cryptographic operation. Raw profiling data is initially stored in a temporary directory, then moved to `test_data/up_results/computational_performance/machine_x/mem_results`.
 
 All results are saved in the `test_data/up_results/computational_performance/machine_x` directory, where x corresponds to the assigned machine ID. By default, these raw performance results will be parsed using the Python parsing scripts included within this project.
 
 ## Automated TLS Performance Testing Scripts
-The Full PQC TLS Test tool uses several scripts to conduct the TLS performance tests. These include:
+The PQC TLS performance testing suite relies on several scripts to carry out TLS benchmarking, including:
 
 - pqc_tls_performance_test.sh
 - tls_handshake_test_server.sh (Internal Script)
@@ -168,11 +211,11 @@ The Full PQC TLS Test tool uses several scripts to conduct the TLS performance t
 Testing scripts are stored in the `scripts/testing_scripts` directory, whilst internal scripts are stored in the `scripts/testing_scripts/internal_scripts` directory. Internal scripts are intended to be called by the main testing scripts and do not support being called in isolation.
 
 ### pqc_tls_performance_test.sh
-This is the main controller script used to execute the full TLS performance benchmarking suite. This provides both TLS handshake and TLS speed testing for PQC, Hybrid-PQC and classical encryption algorithms supported in both the OpenSSL 3.5.0 and OQS-Provider libraries. It automatically coordinates the execution of the TLS handshake and cryptographic speed tests by calling the appropriate subordinate scripts. All results are organised and stored under the relevant machine directory using the provided Machine-ID. It is designed to be run on both the client and server machines and prompts the user for required parameters such as machine role, IP addresses, test duration, and number of runs. It coordinates the execution of all relevant test scripts (`tls_handshake_test_server.sh`, `tls_handshake_test_client.sh`, and `tls_speed_test.sh`). It ensures the results are stored correctly based on the assigned machine ID. When running on the client, it configures the TLS handshake and speed benchmarking test parameters.
+This is the main controller script for executing the full TLS performance benchmarking suite. It performs both TLS handshake and cryptographic speed testing for PQC, Hybrid-PQC, and classical algorithms supported by OpenSSL 3.5.0 and the OQS-Provider. The script coordinates all required test operations by invoking subordinate scripts (`tls_handshake_test_server.sh`, `tls_handshake_test_client.sh`, and `tls_speed_test.sh`) and ensures that results are stored correctly under the appropriate machine directory based on the assigned Machine ID. Designed to run on both client and server machines, the script prompts the user for necessary parameters such as machine role, IP addresses, test duration, and number of runs. When run on the client, it configures both the handshake and speed benchmarking parameters accordingly.
 
 It is important to note that when conducting testing, the `pqc_tls_performance_test.sh` script will prompt the user for parameters regarding the handling of storing and managing test results if the machine or current shell has been designated as the client (depending on whether single machine or separate machine testing is being performed).
 
-The script accepts the passing of various arguments when called, which allows the user to configure components of the automated testing functionality. Please refer to the [TLS Performance Testing Instructions](../testing_tools_usage/tls_performance_testing.md) documentation file for further information on their usage.
+The script accepts the passing of various command-line arguments when called, which allows the user to configure components of the automated testing functionality. Please refer to the [TLS Performance Testing Instructions](../testing_tools_usage/tls_performance_testing.md) documentation file for further information on their usage.
 
 **Accepted Script Arguments:**
 
@@ -199,7 +242,7 @@ This script generates all the certificates and private keys needed for TLS hands
 This script must be called before conducting the automated TLS handshake performance testing.
 
 ## Performance Data Parsing Scripts
-Various Python files included in the project provide the automatic result parsing functionality. These include:
+The project includes several Python scripts that handle automatic parsing of benchmarking results:
 
 - parse_results.py
 - performance_data_parse.py
@@ -210,7 +253,7 @@ These scripts support automated invocation (triggered by the automated test scri
 
 By default, parsing is triggered automatically at the end of each test run. The test scripts directly pass the necessary parameters (Machine-ID, number of runs, and test type) to the parsing system.
 
-While several scripts are utilised for the result parsing process, only the `parse_results.py` is intended to be called. The main parsing script calls the remaining scripts depending on which parameters the user supplies to the script when prompted. The main parsing script is stored in the `scripts/parsing_scripts` directory, whilst internal scripts are stored in the `scripts/parsing_scripts/internal_scripts` directory.
+While several scripts are utilised for the result parsing process, only the `parse_results.py` is intended to be run directly. The main parsing script calls the remaining scripts depending on which parameters the user supplies to the script when prompted. The main parsing script is stored in the `scripts/parsing_scripts` directory, whilst internal scripts are stored in the `scripts/parsing_scripts/internal_scripts` directory.
 
 For full documentation on how the parsing system works, including usage instructions and a breakdown of the performance metrics collected, please refer to the following documentation:
 
@@ -251,10 +294,10 @@ The table below outlines each of the accepted commands that are required for ope
 **Note:** The command-line mode does not support parsing both result types in one call. Use interactive mode to combine the parsing of computational performance and TLS performance data in a single session.
 
 ### performance_data_parse.py
-This script contains functions for parsing un-parsed computational benchmarking data, transforming unstructured speed and memory test data into clean, structured CSV files. It processes CPU performance results and memory usage metrics gathered from Liboqs for each algorithm and operation across multiple test runs and machines. This script is **not to be called manually** and is only invoked by the `parse_results.py` script.
+This script contains functions for parsing raw computational benchmarking data, transforming unstructured speed and memory test data into clean, structured CSV files. It processes CPU performance results and memory usage metrics gathered from Liboqs for each algorithm and operation across multiple test runs and machines. This script is **not to be called manually** and is only invoked by the `parse_results.py` script.
 
 ### tls_performance_data_parse.py
 This script processes TLS performance data collected from handshake and OpenSSL speed benchmarking using PQC, Hybrid-PQC, and classical algorithms. It extracts timing and cycle count metrics from both TLS communication and cryptographic operations, outputting the results into clean CSV files for analysis. This script is **not to be called manually** and is only invoked by the `parse_results.py` script.
 
 ### results_averager.py
-This script provides the internal classes used to generate average benchmarking results across multiple test runs for the two testing types. It is used by both `performance_data_parse.py` and `tls_performance_data_parse.py` to generate per-algorithm averages across multiple test runs. For computational performance tests, it handles the collection of CPU speed and memory profiling metrics collected using Liboqs. For TLS performance tests, it calculates average handshake durations and cryptographic operation timings gathered from OpenSSL with the OQS-Provider. This script is **not to be called manually** and only executes internally by the result parsing scripts.
+This script provides the internal classes used to generate average benchmarking results across multiple test runs for the two testing types. It is used by both `performance_data_parse.py` and `tls_performance_data_parse.py` to generate per-algorithm averages across multiple test runs. For computational performance tests, it handles the collection of CPU speed and memory profiling metrics collected using Liboqs. For TLS performance tests, it calculates average handshake durations and cryptographic operation timings gathered from OpenSSL and OQS-Provider. This script is **not to be called manually** and only executes internally by the result parsing scripts.

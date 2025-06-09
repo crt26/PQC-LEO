@@ -9,7 +9,7 @@
 # cryptographic operations for each algorithm. The script evaluates both native PQC implementations available in 
 # OpenSSL and those integrated via OQS-Provider. The results are stored in machine-specific directories according 
 # to the selected test type (PQC, Hybrid-PQC, or Classic). Test parameters are passed from the main OQS-Provider 
-# benchmarking control script, which coordinates the execution and ensures synchronization of the tests.
+# benchmarking control script, which coordinates the execution and ensures synchronisation of the tests.
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_test_env() {
@@ -103,7 +103,7 @@ function setup_test_env() {
         hybrid_sig_algs+=("$line")
     done < $hybrid_sig_alg_file
 
-    # Create the result output directories and removing old if needed
+    # Create the result output directories and remove old ones if needed
     if [ -d $PQC_SPEED ]; then
         rm -rf $PQC_SPEED
     fi
