@@ -37,5 +37,5 @@ If HQC is enabled:
 For more information, see:
 - [Liboqs Pull Request #2122](https://github.com/open-quantum-safe/liboqs/pull/2122)
 - [Liboqs Issue #2118](https://github.com/open-quantum-safe/liboqs/issues/2118)
-- [PQC-Evaluation-Tools Issue #46](https://github.com/crt26/pqc-evaluation-tools/issues/46)
-- [PQC-Evaluation-Tools Issue #60](https://github.com/crt26/pqc-evaluation-tools/issues/60)
+- [PQC-LEO Issue #46](https://github.com/crt26/PQC-LEO/issues/46)
+- [PQC-LEO Issue #60](https://github.com/crt26/PQC-LEO/issues/60)
