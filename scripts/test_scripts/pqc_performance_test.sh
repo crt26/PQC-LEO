@@ -712,9 +712,9 @@ function main() {
     # Main function for controlling the automated PQC computational performance testing using the Liboqs library.
 
     # Output the welcome message to the terminal
-    echo "###############################################################"
-    echo "PQC-Evaluation-Tools - Computational Performance Testing Suite"
-    echo -e "###############################################################\n"
+    echo "#################################################"
+    echo "PQC-LEO - Computational Performance Testing Suite"
+    echo -e "#################################################\n"
 
     # Set the default automatic result parsing flags
     parse_results=1

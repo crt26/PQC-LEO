@@ -4,9 +4,9 @@
 # SPDX-License-Identifier: MIT
 
 # This utility script provides internal source code modification utilities used exclusively by the main setup script 
-# in the PQC-evaluation-tools benchmarking suite. It is not intended to be executed manually. Instead, it is automatically
-# invoked during the setup process to modify source files in the OQS-Provider and OpenSSL libraries as required for
-# benchmarking configuration.
+# in the PQC-LEO benchmarking suite. It is not intended to be executed manually. Instead, it is automatically invoked 
+# during the setup process to modify source files in the OQS-Provider and OpenSSL libraries as required for benchmarking 
+# configuration.
 
 # The first argument passed to this script must always specify the modification tool to use (e.g., `oqs_enable_algs`
 # or `modify_openssl_src`). Subsequent arguments must include the required flags and values specific to the selected

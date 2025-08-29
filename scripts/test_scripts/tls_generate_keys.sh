@@ -347,7 +347,7 @@ function main() {
 
     # Output the welcome message to the terminal
     echo "#########################################################"
-    echo "PQC-Evaluation-Tools - TLS Certificate & Key Generator"
+    echo "PQC-LEO - TLS Certificate & Key Generator"
     echo "Classic | PQC | Hybrid-PQC (OpenSSL 3.5.0 + OQS-Provider)"
     echo -e "#########################################################\n"
 

@@ -1022,9 +1022,9 @@ function main() {
     # Main function for controlling automated TLS performance testing using PQC algorithms supported by OpenSSL and OQS-Provider
 
     # Output the welcome message to the terminal
-    echo "############################################################"
-    echo "PQC-Evaluation-Tools - Automated PQC TLS Performance Testing"
-    echo -e "############################################################\n"
+    echo "###############################################"
+    echo "PQC-LEO - Automated PQC TLS Performance Testing"
+    echo -e "###############################################\n"
 
     # Set the default global flag variables
     custom_control_time_flag="False"

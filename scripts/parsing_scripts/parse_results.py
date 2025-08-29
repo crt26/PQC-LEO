@@ -23,7 +23,7 @@ def handle_args():
         Raises errors and exits if arguments are invalid. """
     
     # Define the argument parser and the valid options for the script
-    parser = argparse.ArgumentParser(description="PQC-Evaluation-Tools Results Parsing Tool")
+    parser = argparse.ArgumentParser(description="PQC-LEO Results Parsing Tool")
     parser.add_argument('--parse-mode', type=str, help='The parsing mode to be used (computational or tls)')
     parser.add_argument('--machine-id', type=int, help='The Machine-ID of the results to be parsed')
     parser.add_argument('--total-runs', type=int, help='The number of test runs to be parsed')
@@ -195,7 +195,7 @@ def main():
     else:
 
         # Output the greeting message to the terminal
-        print(f"PQC-Evaluation-Tools Results Parsing Tool\n")
+        print(f"PQC-LEO Results Parsing Tool\n")
 
         # Get the parsing mode from the user
         user_parse_mode = get_mode_selection()

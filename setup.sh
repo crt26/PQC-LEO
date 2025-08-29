@@ -3,7 +3,7 @@
 # Copyright (c) 2023-2025 Callum Turino
 # SPDX-License-Identifier: MIT
 
-# This script automates the setup process for the PQC-evaluation-tools benchmarking suite. It provides options to build and configure
+# This script automates the setup process for the PQC-LEO benchmarking framework. It provides options to build and configure
 # the required cryptographic libraries (Liboqs, OQS-Provider, and OpenSSL) and their dependencies. The script handles directory
 # creation, dependency installation, library downloads, and compilation. It also allows customisation of build options,
 # such as enabling additional algorithms or modifying OpenSSL configurations. The script ensures compatibility
@@ -119,7 +119,7 @@ function output_help_message() {
 #-------------------------------------------------------------------------------------------------------------------------------
 function confirm_enable_hqc_algs() {
     # Temporary helper function for warning the user about the disabled HQC KEM algorithms as discussed in the issue
-    # (https://github.com/crt26/pqc-evaluation-tools/issues/46). The function will display a security warning and provide
+    # (https://github.com/crt26/PQC-LEO/issues/46). The function will display a security warning and provide
     # background information about why HQC KEM algorithms are disabled by default in Liboqs and OQS-Provider. It then 
     # prompts the user to decide whether to proceed with enabling HQC for benchmarking purposes. This function will be 
     # removed in the future when Liboqs version 0.14.0 is released and the HQC KEM algorithms are re-enabled by default.
@@ -142,8 +142,8 @@ function confirm_enable_hqc_algs() {
     
     echo -e "For more information, see:"
     echo -e "- https://github.com/open-quantum-safe/liboqs/issues/2118"
-    echo -e "- https://github.com/crt26/pqc-evaluation-tools/issues/46"
-    echo -e "- https://github.com/crt26/pqc-evaluation-tools/issues/60\n"
+    echo -e "- https://github.com/crt26/PQC-LEO/issues/46"
+    echo -e "- https://github.com/crt26/PQC-LEO/issues/60\n"
 
     # Prompt the user to acknowledge the risks and decide whether to proceed with enabling HQC KEM algorithms
     get_user_yes_no "Do you acknowledge the risks and wish to proceed with enabling HQC KEM algorithms?"
@@ -1095,13 +1095,13 @@ function setup_controller() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function main() {
-    # Entry point for the PQC-Evaluation-Tools setup script. Initialises the environment, parses command-line arguments,
+    # Entry point for the PQC-LEO setup script. Initialises the environment, parses command-line arguments,
     # and delegates the setup process to the setup_controller function.
 
     # Output the welcome message to the terminal
-    echo "#################################"
-    echo "PQC-Evaluation-Tools Setup Script"
-    echo -e "#################################\n"
+    echo "####################"
+    echo "PQC-LEO Setup Script"
+    echo -e "####################\n"
 
     # Setup the base environment, global variables, and directory paths
     setup_base_env

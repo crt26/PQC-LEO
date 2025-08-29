@@ -1,7 +1,7 @@
 # Parsing Scripts Usage Guide <!-- omit from toc -->
 
 ## Document Overview <!-- omit from toc -->
-This document provides a comprehensive guide to the usage of the result parsing functionality included in the PQC-Evaluation-Tools project. It explains how the parsing system processes raw benchmarking output data into structured results, and how users can interact with the parsing system in both automated and manual modes.
+This document provides a comprehensive guide to the usage of the result parsing functionality included in the PQC-LEO project. It explains how the parsing system processes raw benchmarking output data into structured results, and how users can interact with the parsing system in both automated and manual modes.
 
 It also outlines the expected directory structure for test results, limitations of the current implementation, and how to manually invoke the parsing process using the provided Python scripts.
 
@@ -15,7 +15,7 @@ It also outlines the expected directory structure for test results, limitations 
 - [Current Parsing Limitations](#current-parsing-limitations)
 
 ## Parsing Overview
-The parsing system in PQC-Evaluation-Tools transforms raw test output into structured CSV files that are ready for analysis. Parsing can happen automatically at the end of each test run or be invoked manually later using the provided controller script. Parsed results are categorised by test type (computational performance or TLS performance) and Machine-ID, and are saved into separate result folders under the main `test_data` directory.
+The parsing system in PQC-LEO transforms raw test output into structured CSV files that are ready for analysis. Parsing can happen automatically at the end of each test run or be invoked manually later using the provided controller script. Parsed results are categorised by test type (computational performance or TLS performance) and Machine-ID, and are saved into separate result folders under the main `test_data` directory.
 
 The automated testing scripts provided by this project will automatically call the Python parsing scripts once testing is completed and supply the testing parameters used. However, the user may decide to disable this feature and call the parsing scripts manually.
 
