@@ -142,7 +142,7 @@ Once all the relevant options have been selected, the setup script will download
 > † Enabling all signature algorithms may cause the OpenSSL speed tool to fail due to internal limits in its source code. The setup script attempts to patch this automatically, but you can configure this process manually. Please refer to the [Advanced Setup Configuration](docs/advanced_setup_configuration.md) for further details.
 
 ### Ensuring Root Dir Path Marker is Present
-A hidden file named `.pqc_eval_dir_marker.tmp` is created in the project's root directory during setup. Automation scripts use this marker to reliably identify the root path, which is essential for their correct operation.
+A hidden file named `.pqc_leo_dir_marker.tmp` is created in the project's root directory during setup. Automation scripts use this marker to reliably identify the root path, which is essential for their correct operation.
 
 When running the setup script, it is vital that this is done from the root of the repository so that this file is placed correctly. 
 
@@ -157,7 +157,7 @@ ls -la
 To manually recreate the file, run the following command from the project's root directory:
 
 ```
-touch .pqc_eval_dir_marker.tmp
+touch .pqc_leo_dir_marker.tmp
 ```
 
 ### Optional Setup Flags

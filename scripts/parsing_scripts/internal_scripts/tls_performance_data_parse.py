@@ -25,7 +25,7 @@ def setup_parse_env(root_dir):
     dir_paths = {}
 
     # Ensure the root_dir path is correct before continuing
-    if not os.path.isfile(os.path.join(root_dir, ".pqc_eval_dir_marker.tmp")):
+    if not os.path.isfile(os.path.join(root_dir, ".pqc_leo_dir_marker.tmp")):
         print("Project root directory path file not correct, the main parse_results.py file is not able to establish the correct path!!!")
         sys.exit(1)
 

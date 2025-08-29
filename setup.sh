@@ -394,8 +394,8 @@ function configure_dirs() {
 
     done
 
-    # Create the hidden pqc_eval_dir_marker.tmp file that is used by the test scripts to determine the root directory path
-    touch "$root_dir/.pqc_eval_dir_marker.tmp"
+    # Create the hidden pqc_leo_dir_marker.tmp file that is used by the test scripts to determine the root directory path
+    touch "$root_dir/.pqc_leo_dir_marker.tmp"
 
     # If HQC is to be enabled, create the hqc_algorithms marker file in the temp directory
     if [ $enable_liboqs_hqc -eq 1 ] || [ $enable_oqs_hqc -eq 1 ]; then
