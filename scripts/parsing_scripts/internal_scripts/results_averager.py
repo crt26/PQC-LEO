@@ -40,7 +40,7 @@ class ComputationalAverager:
         sig_mem_file_prefix = os.path.join(self.dir_paths['type_mem_dir'], "sig_mem_metrics_")
 
         # Declare the dataframes and fieldnames
-        mem_fieldnames = ["Algorithm", "Operation", "intits", "maxBytes", "maxHeap", "extHeap", "maxStack"]
+        mem_fieldnames = ["Algorithm", "Operation", "intits", "peakBytes", "Heap", "extHeap", "Stack"]
         kem_mem_avg = pd.DataFrame(columns=mem_fieldnames)
         sig_mem_avg = pd.DataFrame(columns=mem_fieldnames)
 

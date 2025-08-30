@@ -164,7 +164,7 @@ def get_peak(mem_file, peak_metrics):
         found in the OQS Profiling Project
         https://github.com/open-quantum-safe/profiling """
 
-    # Get the max memory metric for the current algorithm's cryptographic operation
+    # Get the peak memory metric for the current algorithm's cryptographic operation
     with open(mem_file, "r") as lines:
         peak = -1
         for line in lines:
@@ -306,7 +306,7 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
     peak_metrics = []
 
     # Define the header column names for the dataframe
-    fieldnames = ["Algorithm", "Operation", "intits", "maxBytes", "maxHeap", "extHeap", "maxStack"]
+    fieldnames = ["Algorithm", "Operation", "intits", "peakBytes", "Heap", "extHeap", "Stack"]
     
     # Loop through the number of test runs specified
     for run_count in range(1, num_runs+1):

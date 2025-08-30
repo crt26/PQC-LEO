@@ -31,7 +31,7 @@ The project provides automation for:
 
 - Compiling and configuring the OpenSSL, OQS, and ARM PMU dependency libraries.
 
-- Collecting PQC computational performance data, including CPU and memory usage metrics, using the Liboqs library.
+- Collecting PQC computational performance data, including CPU and peak memory usage metrics, using the Liboqs library.
 
 - Gathering networking performance data for PQC schemes integrated into the TLS 1.3 protocol using the PQC support available natively in OpenSSL 3.5.0 and via the OQS-Provider.
 
@@ -171,14 +171,14 @@ Please refer to the [Advanced Setup Configuration Guide](docs/advanced_setup_con
 ## Automated Testing Tools
 The repository provides two categories of automated PQC benchmarking:
 
-- **Computational Performance Testing** – Benchmarks the standalone performance of PQC cryptographic operations, gathering data on CPU and memory usage.
+- **Computational Performance Testing** – Benchmarks the standalone performance of PQC cryptographic operations, gathering data on CPU and peak memory usage.
 
 - **TLS Performance Testing** – Benchmarks PQC, Hybrid-PQC, and classic algorithms integrated into the TLS 1.3 protocol, including handshake and cryptographic operation performance.
 
 The testing tools are located in the `scripts/test_scripts` directory and are fully automated. The tools support assigning custom machine-IDs to the gathered results to make it easy to compare performance on differing systems.
 
 ### Computational Performance Testing
-This tool benchmarks CPU and memory usage for various PQC algorithms supported by the Liboqs library. It produces detailed performance metrics for each tested algorithm.
+This tool benchmarks CPU and peak memory usage for various PQC algorithms supported by the Liboqs library. It produces detailed performance metrics for each tested algorithm.
 
 For detailed usage instructions, please refer to:
 
