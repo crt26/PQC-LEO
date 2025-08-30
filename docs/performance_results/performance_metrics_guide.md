@@ -45,7 +45,7 @@ This section provides a brief overview of these operations to support the perfor
 | Decapsulation      | decaps             | Uses the private key to recover the shared secret from the ciphertext. |
 
 ## PQC Computational Performance metrics
-The computational performance tests collect detailed CPU and memory usage metrics for PQC digital signature and KEM algorithms. Using the Liboqs library, the automated testing tool performs each cryptographic operation and outputs the results, which are separated into two categories: CPU benchmarking and memory benchmarking.
+The computational performance tests collect detailed CPU and peak memory usage metrics for PQC digital signature and KEM algorithms. Using the Liboqs library, the automated testing tool performs each cryptographic operation and outputs the results, which are separated into two categories: CPU benchmarking and memory benchmarking.
 
 ### CPU Benchmarking
 The CPU benchmarking results measure the execution time and efficiency of various cryptographic operations for each PQC algorithm. Using the Liboqs `speed_kem` and `speed_sig` benchmarking tools, each operation is run repeatedly within a fixed time window (3 seconds by default). The tool performs as many iterations as possible in that time frame and records detailed performance metrics.
@@ -62,17 +62,17 @@ The table below describes the metrics included in the CPU benchmarking results:
 | pop. stdev (cycles) | Standard deviation of CPU cycles per operation, indicating consistency.   |
 
 ### Memory Benchmarking
-The memory benchmarking tool evaluates how much memory individual PQC cryptographic operations consume when executed on the system. This is accomplished by running the `test-kem-mem` and `test-sig-mem` Liboqs tools for each PQC algorithm and its respective operations with the Valgrind Massif profiler. Each operation is performed once with the Valgrind Massif profiler to gather peak memory usage and can be tested across multiple runs to ensure consistency.
+The memory benchmarking tool evaluates how much memory individual PQC cryptographic operations consume when executed on the system. This is accomplished by running the `test_kem_mem` and `test_sig_mem` Liboqs tools for each PQC algorithm and its respective operations with the Valgrind Massif profiler. Each operation is performed once with the Valgrind Massif profiler to gather memory usage values at the point of peak total memory consumption. Tests can be repeated across multiple runs to ensure consistency.
 
 The following table describes the memory-related metrics captured after the result parsing process has been completed:
 
 | **Metric** | **Description**                                                                 |
 |------------|---------------------------------------------------------------------------------|
 | inits      | Number of memory snapshots (or samples) collected by Valgrind during profiling. |
-| maxBytes   | Peak total memory usage across all memory segments (heap + stack + others).     |
-| maxHeap    | Maximum memory allocated on the heap during the execution of the operation.     |
-| extHeap    | Heap memory allocated externally (e.g., through system libraries).              |
-| maxStack   | Maximum stack memory usage recorded during the test.                            |
+| peakBytes  | Total memory usage across all memory segments (heap + stack + others) at peak.  |
+| Heap       | Heap memory usage at the time of peak total memory consumption.                 |
+| extHeap    | Externally allocated heap memory (e.g., from system libraries) at peak usage.   |
+| Stack      | Stack memory usage at the time of peak total memory consumption.                |
 
 ## Computational Performance Result Data Storage Structure
 All performance data is initially stored as unparsed output when using the computational performance benchmarking script (`pqc_performance_test.sh`). This raw data is then automatically processed using the Python parsing script to generate structured CSV files for analysis, including averages across test runs.
