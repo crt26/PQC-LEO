@@ -3,8 +3,8 @@
 ## Notice: <!-- omit from toc -->
 This is the **development branch**; it may not be in a fully functioning state, and the documentation may still need to be updated. The checkboxes below indicate whether the current development version is in a basic functioning state and if the documentation is accurate for its current functionality. Regardless, please keep this in mind and use the main branch if possible. Thank you.
 
-- [ ] Functioning State
-- [ ] Up-to-date documentation
+- [x] Functioning State
+- [x] Up-to-date documentation
 
 ### Main Development Branch Task Tracking
 For full details on the project's development and the current development task lists, please refer to the repository's Github Projects Page here:
