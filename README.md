@@ -1,4 +1,4 @@
-# PQC-Evaluation-Tools <!-- omit from toc -->
+# PQC-LEO <!-- omit from toc -->
 
 ## Notice: <!-- omit from toc -->
 This is the **development branch**; it may not be in a fully functioning state, and the documentation may still need to be updated. The checkboxes below indicate whether the current development version is in a basic functioning state and if the documentation is accurate for its current functionality. Regardless, please keep this in mind and use the main branch if possible. Thank you.
@@ -9,14 +9,20 @@ This is the **development branch**; it may not be in a fully functioning state, 
 ### Main Development Branch Task Tracking
 For full details on the project's development and the current development task lists, please refer to the repository's Github Projects Page here:
 
-[PQC-Evaluation-Tools Project Page](https://github.com/users/crt26/projects/2)
+[PQC-LEO Project Page](https://github.com/users/crt26/projects/2)
 
 ### Project Description
-This repository provides an automated and comprehensive evaluation framework for benchmarking Post-Quantum Cryptography (PQC) algorithms. It is designed for researchers and developers looking to evaluate the feasibility of integrating PQC into their environments. The framework streamlines the setup and testing of PQC implementations, enabling the collection of computational and networking performance metrics across x86 and ARM systems through a suite of dedicated automation scripts.
+PQC-LEO (PQC-Library Evaluation Operator) provides an automated and comprehensive evaluation framework for benchmarking Post-Quantum Cryptography (PQC) algorithms. It is designed for researchers and developers looking to evaluate the feasibility of integrating PQC into their environments. The framework streamlines the setup and testing of PQC implementations, enabling the collection of computational and networking performance metrics across x86 and ARM systems through a suite of dedicated automation scripts.
 
 PQC implementations are sourced from multiple libraries, including algorithms natively supported in OpenSSL 3.5.0 and those available from the [Open Quantum Safe (OQS)](https://openquantumsafe.org/) project's `Liboqs` and `OQS-Provider` libraries. The framework also provides automated mechanisms for testing PQC TLS handshake performance across physical or virtual networks, providing valuable insight into real-world environment testing. Results are outputted as raw CSV files that are automatically processed using the provided Python parsing scripts to provide detailed metrics and averages ready for analysis.
 
 Future versions of the project aim to support additional PQC libraries, further expanding the scope of supported benchmarking.
+
+>**Migration Notice:** 
+>
+>This project has been **renamed** from pqc-evaluation-tools to PQC-LEO.
+>
+> **Please update** any existing local clones to reference the new repository name. This notice will be removed at the release of the next major version. 
 
 ### Supported Automation Functionality
 The project provides automation for:
@@ -36,7 +42,7 @@ The project provides automation for:
 ### Project Development
 For details on the project's development and upcoming features, see the project's GitHub Projects page:
 
-[PQC-Evaluation-Tools Project Page](https://github.com/users/crt26/projects/2)
+[PQC-LEO Project Page](https://github.com/users/crt26/projects/2)
 
 ## Contents <!-- omit from toc -->
 - [Supported Hardware and Software](#supported-hardware-and-software)
@@ -98,13 +104,13 @@ The following instructions describe the standard setup process, which is the def
 Clone the current stable version:
 
 ```
-git clone https://github.com/crt26/pqc-evaluation-tools.git
+git clone https://github.com/crt26/PQC-LEO.git
 ```
 
 Move into the cloned repository directory and execute the setup script:
 
 ```
-cd pqc-evaluation-tools
+cd PQC-LEO
 ./setup.sh
 ```
 
@@ -136,7 +142,7 @@ Once all the relevant options have been selected, the setup script will download
 > † Enabling all signature algorithms may cause the OpenSSL speed tool to fail due to internal limits in its source code. The setup script attempts to patch this automatically, but you can configure this process manually. Please refer to the [Advanced Setup Configuration](docs/advanced_setup_configuration.md) for further details.
 
 ### Ensuring Root Dir Path Marker is Present
-A hidden file named `.pqc_eval_dir_marker.tmp` is created in the project's root directory during setup. Automation scripts use this marker to reliably identify the root path, which is essential for their correct operation.
+A hidden file named `.pqc_leo_dir_marker.tmp` is created in the project's root directory during setup. Automation scripts use this marker to reliably identify the root path, which is essential for their correct operation.
 
 When running the setup script, it is vital that this is done from the root of the repository so that this file is placed correctly. 
 
@@ -151,7 +157,7 @@ ls -la
 To manually recreate the file, run the following command from the project's root directory:
 
 ```
-touch .pqc_eval_dir_marker.tmp
+touch .pqc_leo_dir_marker.tmp
 ```
 
 ### Optional Setup Flags
@@ -235,7 +241,7 @@ Links below provide access to the various internal project documentation. Howeve
 ### Project Wiki Page <!-- omit from toc -->
 The information provided in the internal documentation is also available through the project's GitHub Wiki:
 
-[PQC-Evaluation-Tools Wiki](https://github.com/crt26/pqc-evaluation-tools/wiki)
+[PQC-LEO Wiki](https://github.com/crt26/PQC-LEO/wiki)
 
 ### Helpful External Documentation Links <!-- omit from toc -->
 - [Liboqs Webpage](https://openquantumsafe.org/liboqs/)

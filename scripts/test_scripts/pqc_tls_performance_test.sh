@@ -342,11 +342,11 @@ function setup_base_env() {
     # Try and find the .dir_marker.tmp file to determine the project's root directory
     current_dir="$script_dir"
 
-    # Continue moving up the directory tree until the .pqc_eval_dir_marker.tmp file is found
+    # Continue moving up the directory tree until the .pqc_leo_dir_marker.tmp file is found
     while true; do
 
-        # Check if the .pqc_eval_dir_marker.tmp file is present
-        if [ -f "$current_dir/.pqc_eval_dir_marker.tmp" ]; then
+        # Check if the .pqc_leo_dir_marker.tmp file is present
+        if [ -f "$current_dir/.pqc_leo_dir_marker.tmp" ]; then
             root_dir="$current_dir"
             break
         fi
@@ -1022,9 +1022,9 @@ function main() {
     # Main function for controlling automated TLS performance testing using PQC algorithms supported by OpenSSL and OQS-Provider
 
     # Output the welcome message to the terminal
-    echo "############################################################"
-    echo "PQC-Evaluation-Tools - Automated PQC TLS Performance Testing"
-    echo -e "############################################################\n"
+    echo "###############################################"
+    echo "PQC-LEO - Automated PQC TLS Performance Testing"
+    echo -e "###############################################\n"
 
     # Set the default global flag variables
     custom_control_time_flag="False"

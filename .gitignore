@@ -12,5 +12,5 @@ tmp/
 /temp_storage/
 __pycache__/
 /test_data/
-/.pqc_eval_dir_marker.tmp
+/.pqc_leo_dir_marker.tmp
 /dev-scripts

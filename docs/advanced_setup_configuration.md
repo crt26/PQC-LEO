@@ -27,7 +27,7 @@ By default, the main setup script will attempt to detect and patch these values 
 
 Replace [integer] with the desired value. The setup script will then patch the `speed.c` source file to set both `MAX_KEM_NUM` and `MAX_SIG_NUM` to this value before compiling OpenSSL.
 
-For further details on this issue and the plans to address the problem in the future, please refer to this [git issue](https://github.com/crt26/pqc-evaluation-tools/issues/25) on the repositories page.
+For further details on this issue and the plans to address the problem in the future, please refer to this [git issue](https://github.com/crt26/PQC-LEO/issues/25) on the repositories page.
 
 ## Enabling HQC KEM Algorithms in Liboqs and OQS-Provider
 Recent versions of both Liboqs and OQS-Provider disable HQC KEM algorithms by default, due to their current implementations not conforming to the latest specification, which includes important security fixes. This project provides optional setup flags to re-enable HQC **strictly for benchmarking purposes**, with full user awareness and consent. When enabling HQC, the setup script will display a security warning and require confirmation before continuing. If declined, HQC remains disabled.
@@ -58,6 +58,6 @@ If HQC is enabled (depending on which enable type is selected):
 For additional context, please see:
 - [Liboqs Pull Request #2122](https://github.com/open-quantum-safe/liboqs/pull/2122)
 - [Liboqs Issue #2118](https://github.com/open-quantum-safe/liboqs/issues/2118)
-- [PQC-Evaluation-Tools Issue #46](https://github.com/crt26/pqc-evaluation-tools/issues/46)
-- [PQC-Evaluation-Tools Issue #60](https://github.com/crt26/pqc-evaluation-tools/issues/60)
+- [PQC-LEO Issue #46](https://github.com/crt26/PQC-LEO/issues/46)
+- [PQC-LEO Issue #60](https://github.com/crt26/PQC-LEO/issues/60)
 - [Disclaimer Document](../DISCLAIMER.md)

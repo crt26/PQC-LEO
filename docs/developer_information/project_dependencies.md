@@ -1,7 +1,7 @@
 # Project Dependencies <!-- omit from toc -->
 
 ## Document Overview <!-- omit from toc -->
-This document provides a comprehensive overview of the dependencies required to build and run the PQC-Evaluation-Tools suite. Installation and management of these dependencies are fully automated and handled during execution of the main setup script.
+This document provides a comprehensive overview of the dependencies required to build and run the PQC-LEO suite. Installation and management of these dependencies are fully automated and handled during execution of the main setup script.
 
 While this information is primarily intended for developers and contributors who need insight into the project's build and runtime environment, it may also be helpful for users who wish to override the default cryptographic library versions.
 
@@ -26,7 +26,7 @@ The automated testing tool is currently only supported in the following environm
 - ARM Linux devices using a 64-bit Debian-based Operating System
 
 ## Cryptographic Dependency Libraries
-This document lists the **specific commits** used as the last tested versions of the project's core dependencies. These versions are pinned by default during setup to ensure compatibility with the PQC-Evaluation-Tools benchmarking framework.
+This document lists the **specific commits** used as the last tested versions of the project's core dependencies. These versions are pinned by default during setup to ensure compatibility with the PQC-LEO benchmarking framework.
 
 ### Last Tested Versions <!-- omit from toc -->
 
@@ -45,7 +45,7 @@ For setup instructions and details on using the latest cryptographic dependency 
 - [Advanced Setup Configuration](../advanced_setup_configuration.md)
 
 ## System Package Dependencies
-The following system-level packages are required for building and running the PQC-Evaluation-Tools suite. These are automatically checked and installed using the apt package manager during the setup process.
+The following system-level packages are required for building and running the PQC-LEO framework. These are automatically checked and installed using the apt package manager during the setup process.
 
 By default, the setup script will install the latest available versions of these packages from the distribution's package repositories if they are not already present on the system.
 

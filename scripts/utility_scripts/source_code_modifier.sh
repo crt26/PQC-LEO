@@ -4,9 +4,9 @@
 # SPDX-License-Identifier: MIT
 
 # This utility script provides internal source code modification utilities used exclusively by the main setup script 
-# in the PQC-evaluation-tools benchmarking suite. It is not intended to be executed manually. Instead, it is automatically
-# invoked during the setup process to modify source files in the OQS-Provider and OpenSSL libraries as required for
-# benchmarking configuration.
+# in the PQC-LEO benchmarking suite. It is not intended to be executed manually. Instead, it is automatically invoked 
+# during the setup process to modify source files in the OQS-Provider and OpenSSL libraries as required for benchmarking 
+# configuration.
 
 # The first argument passed to this script must always specify the modification tool to use (e.g., `oqs_enable_algs`
 # or `modify_openssl_src`). Subsequent arguments must include the required flags and values specific to the selected
@@ -242,11 +242,11 @@ function setup_base_env() {
     # Try and find the .dir_marker.tmp file to determine the project's root directory
     current_dir="$script_dir"
 
-    # Continue moving up the directory tree until the .pqc_eval_dir_marker.tmp file is found
+    # Continue moving up the directory tree until the .pqc_leo_dir_marker.tmp file is found
     while true; do
 
-        # Check if the .pqc_eval_dir_marker.tmp file is present
-        if [ -f "$current_dir/.pqc_eval_dir_marker.tmp" ]; then
+        # Check if the .pqc_leo_dir_marker.tmp file is present
+        if [ -f "$current_dir/.pqc_leo_dir_marker.tmp" ]; then
             root_dir="$current_dir"  # Set root_dir to the directory, not including the file name
             break
         fi
