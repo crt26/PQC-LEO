@@ -1,7 +1,7 @@
 # Supported PQC Algorithms <!-- omit from toc -->
 
 ## Support Overview <!-- omit from toc -->
-This document outlines the Key Encapsulation Mechanisms (KEMs) and digital signature algorithms supported by this project, based on its upstream cryptographic dependencies: Liboqs, OQS-Provider, and OpenSSL. While the PQC-Evaluation-Tools project integrates nearly all algorithms from these libraries, there are a few exceptions.
+This document outlines the Key Encapsulation Mechanisms (KEMs) and digital signature algorithms supported by this project, based on its upstream cryptographic dependencies: Liboqs, OQS-Provider, and OpenSSL. While the PQC-LEO project integrates nearly all algorithms from these libraries, there are a few exceptions.
 
 It contains comprehensive lists of all supported PQC algorithms, along with any exclusions and the rationale behind them.
 
@@ -38,7 +38,7 @@ Although the OQS-Provider depends on Liboqs for algorithm implementations, it ex
 ## Liboqs Algorithms
 
 ### Algorithm Support Summary
-The PQC-Evaluation-Tools project supports all key encapsulation mechanisms (KEMs) and digital signature algorithms provided by Liboqs, with three notable exceptions:
+The PQC-LEO project supports all key encapsulation mechanisms (KEMs) and digital signature algorithms provided by Liboqs, with three notable exceptions:
 
 - **HQC** -  its variants are disabled by default in both Liboqs and the OQS-Provider due to their current implementations not conforming to the latest specification, which includes important security fixes. As a result, HQC algorithms are excluded from all performance benchmarking unless explicitly enabled by the user using dedicated flags during the setup process.
 
@@ -226,7 +226,7 @@ Certain variations of the supported digital signature schemes are excluded from 
 - **SNOVA Scheme Variations**
 - **CROSSrsdp256small**
 
-These schemes remain available for use in the TLS speed tests that the PQC-Evaluation-Tools provides using the OpenSSL `speed` tool. 
+These schemes remain available for use in the TLS speed tests that the PQC-LEO provides using the OpenSSL `speed` tool. 
 
 Whilst a significant number of these scheme variations can not be used in TLS Handshake testing, there are the following exceptions:
 

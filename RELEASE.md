@@ -1,14 +1,12 @@
-# Version v0.4.0 Release
-Welcome to the version 0.4.0 release of the PQC-Evaluation-Tools project!
+# Version v0.4.1 Release
+Welcome to the version 0.4.1 release of the PQC-LEO project!
 
 ##  Release Overview
-The version 0.4.0 release of the PQC-Evaluation-Tools suite delivers expanded functionality, improved stability, and better alignment with the latest set of PQC implementations available. This release upgrades the project to support OpenSSL 3.5.0 and the native PQC algorithms it supports, improves project stability with changes to the automated setup process, and updates all OQS-related dependencies to their latest stable versions.
+The v0.4.1 release focuses on project restructuring and clarity improvements. Most notably, the repository has been renamed from pqc-evaluation-tools to PQC-LEO (PQC-Library Evaluation Operator). All documentation, script comments, and references have been updated to reflect the new name.
 
-Script naming and structure have been streamlined to reflect the broader set of PQC schemes that are now supported. Parsing of performance results has also been enhanced to provide greater flexibility and now runs automatically after testing has completed. Dependency management is now more robust, with verified versions used by default to avoid upstream instability.
+A migration notice has been added to the main README to assist users in updating their local clones. This notice will remain until the release of v0.5.0.
 
-Finally, project documentation has been reviewed and expanded to reflect recent changes in PQC sources and now includes additional guidance to improve usability.
-
-These updates strengthen the project's stability and extend its support for a broader range of PQC implementations.
+Additionally, minor updates were made to the project documentation and script files to provide greater clarity on the memory metrics collected by the framework.
 
 ## Project Features
 The project provides automation for:
@@ -24,18 +22,14 @@ The project provides automation for:
 - Automatic or manual parsing of raw performance data, including calculating averages across multiple test runs.
 
 ## Change Log 
-* Upgrade OpenSSL Dependency to Version 3.5.0 in [#55](https://github.com/crt26/pqc-evaluation-tools/pull/55)
-* Improve Dependency Stability by Defaulting to Verified Version in [#56](https://github.com/crt26/pqc-evaluation-tools/pull/56)
-* Improve Result Parsing Functionality and Flexibility in [#57](https://github.com/crt26/pqc-evaluation-tools/pull/57)
-* Align script names and documentation with expanded PQC sources in [#59](https://github.com/crt26/pqc-evaluation-tools/pull/59)
-* Update OQS Dependencies to Latest Versions and Add Optional HQC Support for TLS Testing in [#61](https://github.com/crt26/pqc-evaluation-tools/pull/61)
-* Finalise Documentation for v0.4.0 Release by in [#63](https://github.com/crt26/pqc-evaluation-tools/pull/63)
+* Rename repository to PQC-LEO and update references in [#70](https://github.com/crt26/PQC-LEO/pull/70)
+* Clarify memory metric terminology across docs and scripts in [#73](https://github.com/crt26/PQC-LEO/pull/73)
 
-**Full Changelog**: https://github.com/crt26/pqc-evaluation-tools/compare/v0.3.1...v0.4.0
+**Full Changelog**: https://github.com/crt26/PQC-LEO/compare/v0.4.0...v0.4.1
 
 ## Important Notes
 
-- HQC algorithms are disabled by default in both liboqs and OQS-Provider due to non-conformance with the latest algorithm implementation, which includes crucial security fixes. The PQC-Evaluation-Tools project includes an optional mechanism to enable HQC for **benchmarking purposes only**, with explicit user confirmation required. For more information, refer to the [Advanced Setup Configuration](docs/advanced_setup_configuration.md) guide and the project's [DISCLAIMER](./DISCLAIMER.md) document.
+- HQC algorithms are disabled by default in both liboqs and OQS-Provider due to non-conformance with the latest algorithm implementation, which includes crucial security fixes. The PQC-LEO framework includes an optional mechanism to enable HQC for **benchmarking purposes only**, with explicit user confirmation required. For more information, refer to the [Advanced Setup Configuration](docs/advanced_setup_configuration.md) guide and the project's [DISCLAIMER](./DISCLAIMER.md) document.
 
 - Functionality is limited to Debian-based operating systems.
 
@@ -44,7 +38,6 @@ The project provides automation for:
 ## Future Development
 For details on the project's development and upcoming features, see the project's GitHub Projects page:
 
-[PQC-Evaluation-Tools Project Page](https://github.com/users/crt26/projects/2)
-
+[PQC-LEO Project Page](https://github.com/users/crt26/projects/2)
 
 We look forward to your feedback and contributions to this project!

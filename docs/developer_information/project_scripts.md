@@ -174,10 +174,10 @@ source_code_modifier.sh "modify_openssl_src" "--user-defined-flag=1" "--user-def
 ```
 
 ## Automated Computational Performance Testing Scripts
-The computational performance testing suite benchmarks standalone PQC cryptographic operations for CPU and memory usage. It currently uses the Liboqs library and its testing tools to evaluate all supported KEM and digital signature algorithms. It is provided through a singular automation script which handles CPU and memory performance testing for PQC schemes. It is designed to be run interactively, prompting the user for test parameters such as the machine-ID to be assigned to the results and the number of test iterations.
+The computational performance testing suite benchmarks standalone PQC cryptographic operations for CPU and peak memory usage. It currently uses the Liboqs library and its testing tools to evaluate all supported KEM and digital signature algorithms. It is provided through a singular automation script which handles CPU and memory performance testing for PQC schemes. It is designed to be run interactively, prompting the user for test parameters such as the machine-ID to be assigned to the results and the number of test iterations.
 
 ### pqc_performance_test.sh
-This script performs fully automated CPU and memory performance benchmarking of the algorithms included in the Liboqs library. It runs speed tests using Liboqs' built-in benchmarking binaries and uses Valgrind's massif tool to capture detailed memory usage metrics for each cryptographic operation. The results are stored in dedicated directories, organised by machine ID.
+This script performs fully automated CPU and memory performance benchmarking of the algorithms included in the Liboqs library. It runs speed tests using Liboqs' built-in benchmarking binaries and uses Valgrind's massif tool to capture detailed peak memory usage metrics for each cryptographic operation. The results are stored in dedicated directories, organised by machine ID.
 
 The script handles:
 
@@ -192,10 +192,10 @@ The script handles:
 - Automatically calling the Python parsing scripts to process the raw performance results
 
 #### Speed Test Functionality <!-- omit from toc -->
-The speed test functionality benchmarks the execution time of KEM and digital signature algorithms using the Liboqs `speed-kem` and `speed-sig` tools. Raw performance results are saved to the `test_data/up_results/computational_performance/machine_x/raw_speed_results` directory.
+The speed test functionality benchmarks the execution time of KEM and digital signature algorithms using the Liboqs `speed_kem` and `speed_sig` tools. Raw performance results are saved to the `test_data/up_results/computational_performance/machine_x/raw_speed_results` directory.
 
 #### Memory Testing Functionality <!-- omit from toc -->
-Memory usage is profiled using the Liboqs `test-kem-mem` and `test-sig-mem` tools in combination with Valgrind’s Massif profiler. This setup captures detailed memory statistics for each cryptographic operation. Raw profiling data is initially stored in a temporary directory, then moved to `test_data/up_results/computational_performance/machine_x/mem_results`.
+Memory usage is profiled using the Liboqs `test_kem_mem` and `test_sig_mem` tools in combination with Valgrind’s Massif profiler. This setup captures detailed memory statistics for each cryptographic operation, recording values at the point of peak total memory consumption.. Raw profiling data is initially stored in a temporary directory, then moved to `test_data/up_results/computational_performance/machine_x/mem_results`.
 
 All results are saved in the `test_data/up_results/computational_performance/machine_x` directory, where x corresponds to the assigned machine ID. By default, these raw performance results will be parsed using the Python parsing scripts included within this project.
 
@@ -294,7 +294,7 @@ The table below outlines each of the accepted commands that are required for ope
 **Note:** The command-line mode does not support parsing both result types in one call. Use interactive mode to combine the parsing of computational performance and TLS performance data in a single session.
 
 ### performance_data_parse.py
-This script contains functions for parsing raw computational benchmarking data, transforming unstructured speed and memory test data into clean, structured CSV files. It processes CPU performance results and memory usage metrics gathered from Liboqs for each algorithm and operation across multiple test runs and machines. This script is **not to be called manually** and is only invoked by the `parse_results.py` script.
+This script contains functions for parsing raw computational benchmarking data, transforming unstructured speed and memory test data into clean, structured CSV files. It processes CPU performance results and peak memory usage metrics gathered from Liboqs for each algorithm and operation across multiple test runs and machines. This script is **not to be called manually** and is only invoked by the `parse_results.py` script.
 
 ### tls_performance_data_parse.py
 This script processes TLS performance data collected from handshake and OpenSSL speed benchmarking using PQC, Hybrid-PQC, and classical algorithms. It extracts timing and cycle count metrics from both TLS communication and cryptographic operations, outputting the results into clean CSV files for analysis. This script is **not to be called manually** and is only invoked by the `parse_results.py` script.
