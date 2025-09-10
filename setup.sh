@@ -32,7 +32,7 @@ function setup_base_env() {
     openssl_download_url="https://github.com/openssl/openssl/releases/download/openssl-3.5.0/openssl-3.5.0.tar.gz"
 
     # Declare the global last tested version SHA variables
-    liboqs_tested_sha="9aa76bc1309a9bc10061ec3aa07d727c030c9a86"
+    liboqs_tested_sha="94b421ebb82405c843dba4e9aa521a56ee5a333d"
     oqs_provider_tested_sha="2cc8dd3d3ef8764fa432f87a0ae15431d86bfa90"
 
     # Declare the global library directory path variables
