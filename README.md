@@ -72,7 +72,7 @@ The automated testing tool is currently only supported in the following environm
 ### Tested Cryptographic Dependency Libraries <!-- omit from toc -->
 This version of the repository has been fully tested with the following library versions:
 
-- Liboqs Version: Post-0.13.0 commit **†**
+- Liboqs Version: 0.15.0
 
 - OQS-Provider Version 0.9.0
 
@@ -84,7 +84,7 @@ While this setup maximises reliability, users who need access to more recent upd
 
 If any such issues arise, please report them to this repository’s GitHub Issues page so they can be addressed promptly. Instructions for modifying the library versions used by the benchmarking suite are provided in the Installation Instructions section.
 
-**†** For information on the specific commits used for the last tested versions of the dependency libraries, see the [Project Dependencies](./docs/developer_information/project_dependencies.md) documentation.
+For information on the specific project dependencies libraries used by PQC-LEO, see the [Project Dependencies](./docs/developer_information/project_dependencies.md) documentation.
 
 ## Supported Cryptographic Algorithms
 For further information on the classical and PQC algorithms this project provides support for, including information on any exclusions, please refer to the following documentation:

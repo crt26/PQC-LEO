@@ -122,7 +122,7 @@ function confirm_enable_hqc_algs() {
     # (https://github.com/crt26/PQC-LEO/issues/46). The function will display a security warning and provide
     # background information about why HQC KEM algorithms are disabled by default in Liboqs and OQS-Provider. It then 
     # prompts the user to decide whether to proceed with enabling HQC for benchmarking purposes. This function will be 
-    # removed in the future when Liboqs version 0.14.0 is released and the HQC KEM algorithms are re-enabled by default.
+    # removed in the future when Liboqs version 0.16.0 is released and the HQC KEM algorithms are re-enabled by default.
 
     # Displays a clear warning about HQC vulnerabilities and disclaims all responsibility for its use.
     echo -e "\nEnable HQC KEM Algorithms Flag Detected:\n"
