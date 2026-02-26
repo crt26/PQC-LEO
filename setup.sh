@@ -868,9 +868,6 @@ function liboqs_build() {
         cmake --build "$liboqs_path/build" -- -j $threads
         cmake --build "$liboqs_path/build" --target install -- -j $threads
 
-        # Create the test-data storage directories
-        mkdir -p "$liboqs_path/mem_results/kem_mem_metrics/" && mkdir -p "$liboqs_path/mem_results/sig_mem_metrics/" && mkdir "$liboqs_path/speed_results"
-
         # Output the install success message to the terminal
         echo -e "\nLiboqs Install Complete"
 
