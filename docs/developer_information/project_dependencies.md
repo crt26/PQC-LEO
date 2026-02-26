@@ -30,10 +30,10 @@ This document lists the **specific commits** used as the last tested versions of
 
 ### Last Tested Versions <!-- omit from toc -->
 
-| **Dependency** | **Version Context**    | **Commit SHA**                             | **Notes**                                      |
+| **Dependency** | **Version Number**     | **Commit SHA**                             | **Notes**                                      |
 |----------------|------------------------|--------------------------------------------|------------------------------------------------|
-| Liboqs         | Post-0.13.0            | `9aa76bc1309a9bc10061ec3aa07d727c030c9a86` | Commit after 0.13.0 release, before 0.14.0     |
-| OQS-Provider   | Post-0.9.0             | `2cc8dd3d3ef8764fa432f87a0ae15431d86bfa90` | Commit after 0.9.0 release                     |
+| Liboqs         | 0.15.0                 | `97f6b86b1b6d109cfd43cf276ae39c2e776aed80` |                                                |
+| OQS-Provider   | Post-0.9.0             | `2cc8dd3d3ef8764fa432f87a0ae15431d86bfa90` |                                                |
 | OpenSSL        | Official release 3.5.0 | N/A                                        | Downloaded as a fixed release tarball          |
 | pqax           | Always latest          | N/A                                        | Pulled from latest main branch at install time |
 

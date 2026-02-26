@@ -32,7 +32,7 @@ function setup_base_env() {
     openssl_download_url="https://github.com/openssl/openssl/releases/download/openssl-3.5.0/openssl-3.5.0.tar.gz"
 
     # Declare the global last tested version SHA variables
-    liboqs_tested_sha="9aa76bc1309a9bc10061ec3aa07d727c030c9a86"
+    liboqs_tested_sha="97f6b86b1b6d109cfd43cf276ae39c2e776aed80"
     oqs_provider_tested_sha="2cc8dd3d3ef8764fa432f87a0ae15431d86bfa90"
 
     # Declare the global library directory path variables
@@ -122,7 +122,7 @@ function confirm_enable_hqc_algs() {
     # (https://github.com/crt26/PQC-LEO/issues/46). The function will display a security warning and provide
     # background information about why HQC KEM algorithms are disabled by default in Liboqs and OQS-Provider. It then 
     # prompts the user to decide whether to proceed with enabling HQC for benchmarking purposes. This function will be 
-    # removed in the future when Liboqs version 0.14.0 is released and the HQC KEM algorithms are re-enabled by default.
+    # removed in the future when Liboqs version 0.16.0 is released and the HQC KEM algorithms are re-enabled by default.
 
     # Displays a clear warning about HQC vulnerabilities and disclaims all responsibility for its use.
     echo -e "\nEnable HQC KEM Algorithms Flag Detected:\n"
@@ -867,9 +867,6 @@ function liboqs_build() {
 
         cmake --build "$liboqs_path/build" -- -j $threads
         cmake --build "$liboqs_path/build" --target install -- -j $threads
-
-        # Create the test-data storage directories
-        mkdir -p "$liboqs_path/mem_results/kem_mem_metrics/" && mkdir -p "$liboqs_path/mem_results/sig_mem_metrics/" && mkdir "$liboqs_path/speed_results"
 
         # Output the install success message to the terminal
         echo -e "\nLiboqs Install Complete"
