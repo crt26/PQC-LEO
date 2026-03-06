@@ -399,9 +399,9 @@ Whilst a significant number of these scheme variations can not be used in TLS Ha
 With the introduction of native PQC support in OpenSSL 3.5.0, the OQS-Provider automatically disables its implementations of overlapping algorithms (e.g., ML-KEM, ML-DSA, SLH-DSA) to prevent provider conflicts during initialisation. For more information, see the relevant OQS-Provider documentation below.
 
 #### Additional Information
-For further details on algorithm support, compatibility, HQC implementation issues, or enabling algorithms disabled by default, see:
+For further details on algorithm support, compatibility, HQC implementation issues, or enabling OQS-Provider algorithms suppourted by PQC-LEO that are disabled by default, see:
 
-- [OQS-Provider Notice](https://github.com/open-quantum-safe/oqs-provider?tab=readme-ov-file#35-and-greater)
+- [OQS-Provider Notice](https://github.com/open-quantum-safe/oqs-provider/tree/a635e341d6a4624d9bba36d158804762f316fe5e#35-and-greater)
 - [Advanced Setup Configuration Guide](./advanced_setup_configuration.md)
 - [Disclaimer Document](../DISCLAIMER.md)
 
@@ -409,11 +409,11 @@ For further details on algorithm support, compatibility, HQC implementation issu
 
 | **Algorithm Name**   | **Hybrid Algorithm (*)** | **TLS Handshake Test Support (*)** | **OpenSSL Speed Test Support (*)** | **Requires Enabling (*)** |
 |----------------------|:------------------------:|:----------------------------------:|:----------------------------------:|:-------------------------:|
-| bikel1               |                          |                  *                 |                  *                 |                           |
+| bikel1               |                          |                  *                 |                  *                 |             *             |
 | bikel3               |                          |                  *                 |                  *                 |                           |
 | bikel5               |                          |                  *                 |                  *                 |                           |
-| p256_bikel1          |             *            |                  *                 |                  *                 |                           |
-| x25519_bikel1        |             *            |                  *                 |                  *                 |                           |
+| p256_bikel1          |             *            |                  *                 |                  *                 |             *             |
+| x25519_bikel1        |             *            |                  *                 |                  *                 |             *             |
 | p384_bikel3          |             *            |                  *                 |                  *                 |                           |
 | x448_bikel3          |             *            |                  *                 |                  *                 |                           |
 | p521_bikel5          |             *            |                  *                 |                  *                 |                           |
@@ -571,8 +571,8 @@ For further details on algorithm support, compatibility, HQC implementation issu
 | p521_snova2965                 |             *            |                  *                 |                  *                 |                           |
 
 ## External Documentation
-For additional reference, the upstream dependency documentation can be found here:
+For additional reference, the upstream dependency documentation corresponding to the pinned versions used by PQC-LEO can be found below:
 
-- [Liboqs Supported Algorithms](https://github.com/open-quantum-safe/liboqs?tab=readme-ov-file#supported-algorithms)
-- [OpenSSL Supported PQC Algorithms](https://github.com/openssl/openssl/releases/tag/openssl-3.5.0)
-- [OQS-Provider Supported Algorithms](https://github.com/open-quantum-safe/oqs-provider/blob/main/ALGORITHMS.md)
+- [Liboqs v0.15.0 – Supported Algorithms](https://github.com/open-quantum-safe/liboqs/tree/97f6b86b1b6d109cfd43cf276ae39c2e776aed80?tab=readme-ov-file#supported-algorithms)
+- [OpenSSL 3.5.0 – Supported PQC Algorithms](https://github.com/openssl/openssl/releases/tag/openssl-3.5.0)
+- [OQS-Provider v0.11.0 – Supported Algorithms](https://github.com/open-quantum-safe/oqs-provider/blob/a635e341d6a4624d9bba36d158804762f316fe5e/ALGORITHMS.md)

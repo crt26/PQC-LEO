@@ -133,13 +133,13 @@ The setup script will also build [OpenSSL 3.5.0](https://github.com/openssl/open
 
 If the TLS testing libraries are installed (Options 2 or 3), you will be prompted with the following additional setup options:
 
-- **Enable all disabled signature algorithms** – Includes all digital signature algorithms in the OQS-Provider library that are disabled by default. This ensures the full range of supported algorithms can be tested in the TLS performance testing **†**.
+- **Enable all disabled OQS-Provider algorithms supported by PQC-LEO** – Enables OQS-Provider algorithms supported by PQC-LEO that are disabled by default. This ensures the full range of supported algorithms can be tested in the TLS performance benchmarking **†**.
 
 - **Enable KEM encoders** – Adds support for OpenSSL’s optional KEM encoder functionality. The benchmarking suite does not currently use this feature, but it is available for developers who wish to experiment with it.
 
 Once all the relevant options have been selected, the setup script will download, configure and build each library. It will also tailor the builds for your system architecture by applying appropriate build flags.
 
-> † Enabling all signature algorithms may cause the OpenSSL speed tool to fail due to internal limits in its source code. The setup script attempts to patch this automatically, but you can configure this process manually. Please refer to the [Advanced Setup Configuration](docs/advanced_setup_configuration.md) for further details.
+> † Enabling all disabled OQS-Provider algorithms may cause the OpenSSL speed tool to fail due to internal limits in its source code. The setup script attempts to patch this automatically, but you can configure this process manually. Please refer to the [Advanced Setup Configuration](docs/advanced_setup_configuration.md) for further details.
 
 ### Ensuring Root Dir Path Marker is Present
 A hidden file named `.pqc_leo_dir_marker.tmp` is created in the project's root directory during setup. Automation scripts use this marker to reliably identify the root path, which is essential for their correct operation.
