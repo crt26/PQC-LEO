@@ -403,6 +403,7 @@ For further details on algorithm support, compatibility, HQC implementation issu
 
 - [OQS-Provider Notice](https://github.com/open-quantum-safe/oqs-provider/tree/a635e341d6a4624d9bba36d158804762f316fe5e#35-and-greater)
 - [Advanced Setup Configuration Guide](./advanced_setup_configuration.md)
+- [README - Choosing Installation Mode](../README.md#choosing-installation-mode)
 - [Disclaimer Document](../DISCLAIMER.md)
 
 ### Supported KEM Algorithms
