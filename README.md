@@ -14,7 +14,7 @@ For full details on the project's development and the current development task l
 ### Project Description
 PQC-LEO (PQC-Library Evaluation Operator) provides an automated and comprehensive evaluation framework for benchmarking Post-Quantum Cryptography (PQC) algorithms. It is designed for researchers and developers looking to evaluate the feasibility of integrating PQC into their environments. The framework streamlines the setup and testing of PQC implementations, enabling the collection of computational and networking performance metrics across x86 and ARM systems through a suite of dedicated automation scripts.
 
-PQC implementations are sourced from multiple libraries, including algorithms natively supported in OpenSSL 3.5.0 and those available from the [Open Quantum Safe (OQS)](https://openquantumsafe.org/) project's `Liboqs` and `OQS-Provider` libraries. The framework also provides automated mechanisms for testing PQC TLS handshake performance across physical or virtual networks, providing valuable insight into real-world environment testing. Results are outputted as raw CSV files that are automatically processed using the provided Python parsing scripts to provide detailed metrics and averages ready for analysis.
+PQC implementations are sourced from multiple libraries, including algorithms natively supported in OpenSSL 3.6.1 and those available from the [Open Quantum Safe (OQS)](https://openquantumsafe.org/) project's `Liboqs` and `OQS-Provider` libraries. The framework also provides automated mechanisms for testing PQC TLS handshake performance across physical or virtual networks, providing valuable insight into real-world environment testing. Results are outputted as raw CSV files that are automatically processed using the provided Python parsing scripts to provide detailed metrics and averages ready for analysis.
 
 Future versions of the project aim to support additional PQC libraries, further expanding the scope of supported benchmarking.
 
@@ -33,7 +33,7 @@ The project provides automation for:
 
 - Collecting PQC computational performance data, including CPU and peak memory usage metrics, using the Liboqs library.
 
-- Gathering networking performance data for PQC schemes integrated into the TLS 1.3 protocol using the PQC support available natively in OpenSSL 3.5.0 and via the OQS-Provider.
+- Gathering networking performance data for PQC schemes integrated into the TLS 1.3 protocol using the PQC support available natively in OpenSSL 3.6.1 and via the OQS-Provider.
 
 - Coordinated PQC TLS handshake tests run over the loopback interface or across physical networks between a server and client device.
 
@@ -76,9 +76,9 @@ This version of the repository has been fully tested with the following library 
 
 - OQS-Provider Version 0.11.0
 
-- OpenSSL Version 3.5.0
+- OpenSSL Version 3.6.1
 
-By default, this repository is configured to use the **last tested versions** of the OQS libraries. This helps ensure that all automation scripts operate reliably with known working versions. The listed OpenSSL version remains fixed at 3.5.0 to maintain compatibility with the OQS-Provider and the project's performance testing tools. 
+By default, this repository is configured to use the **last tested versions** of the OQS libraries. This helps ensure that all automation scripts operate reliably with known working versions. The listed OpenSSL version remains fixed at 3.6.1 to maintain compatibility with the OQS-Provider library and the project's performance testing tools.
 
 While this setup maximises reliability, users who need access to more recent updates may configure the setup process accordingly. However, please note that the OQS libraries are still in active development, and upstream changes may occasionally break compatibility with this project’s automation scripts. This is detailed further in the [Installation Instructions](#installation-instructions) section.
 
@@ -129,7 +129,7 @@ When executing the setup script, you will be prompted to select one of the follo
 
 3. **TLS Testing Libraries Only** - Installs only the TLS benchmarking components. (**Requires Option 1 has already been completed**).
 
-The setup script will also build [OpenSSL 3.5.0](https://github.com/openssl/openssl/releases/tag/openssl-3.5.0) inside the repository’s `lib` directory. This version is required to support the OQS libraries and is built separately from the system’s default OpenSSL installation. It will not interfere with system-level binaries.
+The setup script will also build [OpenSSL 3.6.1](https://github.com/openssl/openssl/releases/tag/openssl-3.6.1) inside the repository’s `lib` directory. This version is required to support the OQS libraries and is built separately from the system’s default OpenSSL installation. It will not interfere with system-level binaries.
 
 If the TLS testing libraries are installed (Options 2 or 3), you will be prompted with the following additional setup options:
 
@@ -187,7 +187,7 @@ For detailed usage instructions, please refer to:
 > **Notice:** Memory profiling for Falcon algorithm variants is currently non-functional on **ARM** systems due to issues with the scheme and the Valgrind Massif tool. Please see the [bug report](https://github.com/open-quantum-safe/liboqs/issues/1761) for details. Testing and parsing remain fully functional for all other algorithms.
 
 ### TLS Performance Testing
-This tool benchmarks the performance of PQC, Hybrid-PQC, and classical algorithms when used in the TLS 1.3 protocol. It utilises the PQC implementations natively available in OpenSSL 3.5.0 and those added via the OQS-Provider.
+This tool benchmarks the performance of PQC, Hybrid-PQC, and classical algorithms when used in the TLS 1.3 protocol. It utilises the PQC implementations natively available in OpenSSL 3.6.1 and those added via the OQS-Provider.
 
 It conducts two types of testing:
 
@@ -250,7 +250,7 @@ The information provided in the internal documentation is also available through
 - [OQS-Provider GitHub Page](https://github.com/open-quantum-safe/oqs-provider)
 - [Latest Liboqs Release Notes](https://github.com/open-quantum-safe/liboqs/blob/main/RELEASE.md)
 - [Latest OQS-Provider Release Notes](https://github.com/open-quantum-safe/oqs-provider/blob/main/RELEASE.md)
-- [OpenSSL(3.5.0) Documentation](https://docs.openssl.org/3.5/)
+- [OpenSSL(3.6.1) Documentation](https://docs.openssl.org/3.6/)
 - [TLS 1.3 RFC 8446](https://www.rfc-editor.org/rfc/rfc8446)
 
 ## Licence

@@ -15,7 +15,7 @@ The project provides automation for:
 
 - Gathering PQC computational performance data, including CPU and memory usage metrics using the Liboqs library.
 
-- Gathering Networking performance data for the integration of PQC schemes in the TLS 1.3  protocol by utilising the OpenSSL 3.5.0 and OQS-Provider libraries.
+- Gathering Networking performance data for the integration of PQC schemes in the TLS 1.3  protocol by utilising the OpenSSL 3.6.1 and OQS-Provider libraries.
 
 - Coordinated testing of PQC TLS handshakes using either the loopback interface or a physical network connection between a server and client device.
 

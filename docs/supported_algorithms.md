@@ -30,8 +30,8 @@ Different testing categories within this project rely on distinct combinations o
 | **Testing Category**              | **Dependencies Used**       |
 |-----------------------------------|-----------------------------|
 | Computational Performance Testing | Liboqs                      |
-| TLS Handshake Testing             | OpenSSL 3.5.0, OQS-Provider |
-| OpenSSL speed Benchmarking        | OpenSSL 3.5.0, OQS-Provider |
+| TLS Handshake Testing             | OpenSSL 3.6.1, OQS-Provider |
+| OpenSSL speed Benchmarking        | OpenSSL 3.6.1, OQS-Provider |
 
 Although the OQS-Provider depends on Liboqs for algorithm implementations, it exposes a different set of algorithms. As such, its supported algorithms are documented separately in this guide.
 
@@ -322,7 +322,7 @@ For further context and guidance:
 ## OpenSSL Algorithms
 
 ### Algorithm Support Summary
-OpenSSL 3.5.0 introduces native support for the NIST-standardised PQC algorithms **ML-KEM**, **ML-DSA**, and **SLH-DSA**. This project integrates these algorithms for TLS benchmarking where possible. However, some limitations affect their usage in performance testing and handshake scenarios:
+OpenSSL 3.6.1 includes native support for the NIST-standardised PQC algorithms **ML-KEM**, **ML-DSA**, and **SLH-DSA**. This project integrates these algorithms for TLS benchmarking where possible. However, some limitations affect their usage in performance testing and handshake scenarios:
 
 #### Known Limitations
 - **ML-DSA** and **SLH-DSA** are currently not supported by the OpenSSL `speed` utility, making them unavailable for cryptographic performance benchmarking.
@@ -395,8 +395,8 @@ Whilst a significant number of these scheme variations can not be used in TLS Ha
 | SNOVA      | snova2454, p256_snova2454, snova2454esk, p256_snova2454esk, snova37172, p256_snova37172, snova2455, p384_snova2455, snova2965, p521_snova2965 |
 | CROSSrsdp  | CROSSrsdp256small                                                                                                                             |
 
-#### OpenSSL 3.5.0 Compatibility
-With the introduction of native PQC support in OpenSSL 3.5.0, the OQS-Provider automatically disables its implementations of overlapping algorithms (e.g., ML-KEM, ML-DSA, SLH-DSA) to prevent provider conflicts during initialisation. For more information, see the relevant OQS-Provider documentation below.
+#### OpenSSL 3.6.1 Compatibility
+With natice support of various PQC algorithms in OpenSSL 3.6.1, the OQS-Provider automatically disables its implementations of overlapping algorithms (e.g., ML-KEM, ML-DSA, SLH-DSA) to prevent provider conflicts during initialisation. For more information, see the relevant OQS-Provider documentation below.
 
 #### Additional Information
 For further details on algorithm support, compatibility, HQC implementation issues, or enabling OQS-Provider algorithms suppourted by PQC-LEO that are disabled by default, see:
@@ -575,5 +575,5 @@ For further details on algorithm support, compatibility, HQC implementation issu
 For additional reference, the upstream dependency documentation corresponding to the pinned versions used by PQC-LEO can be found below:
 
 - [Liboqs v0.15.0 – Supported Algorithms](https://github.com/open-quantum-safe/liboqs/tree/97f6b86b1b6d109cfd43cf276ae39c2e776aed80?tab=readme-ov-file#supported-algorithms)
-- [OpenSSL 3.5.0 – Supported PQC Algorithms](https://github.com/openssl/openssl/releases/tag/openssl-3.5.0)
+- [OpenSSL 3.6.1 – PQC Listed in Documenation Overviews](https://docs.openssl.org/3.6/man7/)
 - [OQS-Provider v0.11.0 – Supported Algorithms](https://github.com/open-quantum-safe/oqs-provider/blob/a635e341d6a4624d9bba36d158804762f316fe5e/ALGORITHMS.md)

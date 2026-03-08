@@ -34,7 +34,7 @@ This document lists the **specific commits** used as the last tested versions of
 |----------------|------------------------|--------------------------------------------|------------------------------------------------|
 | Liboqs         | 0.15.0                 | `97f6b86b1b6d109cfd43cf276ae39c2e776aed80` |                                                |
 | OQS-Provider   | 0.11.0                 | `a635e341d6a4624d9bba36d158804762f316fe5e` |                                                |
-| OpenSSL        | Official release 3.5.0 | N/A                                        | Downloaded as a fixed release tarball          |
+| OpenSSL        | Official release 3.6.1 | N/A                                        | Downloaded as a fixed release tarball          |
 | pqax           | Always latest          | N/A                                        | Pulled from latest main branch at install time |
 
 **Note:** These versions are used by default unless the `--latest-dependency-versions` flag is explicitly set during setup.

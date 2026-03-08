@@ -1,7 +1,7 @@
 # Automated PQC TLS Performance Benchmarking Tool - Usage Guide <!-- omit from toc -->
 
 ## Overview <!-- omit from toc -->
-This tool provides automated benchmarking for PQC-enabled TLS 1.3 handshakes and cryptographic operations within OpenSSL 3.5.0. It supports testing of both OpenSSL-native PQC algorithms and those integrated into OpenSSL via the OQS-Provider library. The benchmarking process evaluates TLS handshakes using Post-Quantum Cryptography (PQC) and Hybrid-PQC ciphersuites, as well as traditional cryptographic algorithms for a baseline comparison.
+This tool provides automated benchmarking for PQC-enabled TLS 1.3 handshakes and cryptographic operations within OpenSSL 3.6.1. It supports testing of both OpenSSL-native PQC algorithms and those integrated into OpenSSL via the OQS-Provider library. The benchmarking process evaluates TLS handshakes using Post-Quantum Cryptography (PQC) and Hybrid-PQC ciphersuites, as well as traditional cryptographic algorithms for a baseline comparison.
 
 Tests can be conducted either on a single machine (localhost) or across two networked machines, using a physical or virtual connection. The tool records detailed performance and timing metrics for each algorithm pairing evaluated during testing.
 
@@ -32,7 +32,7 @@ The automated testing tool is currently only supported on the following devices:
 - ARM Linux devices using a 64-bit Debian-based Operating System
 
 ## Supported PQC Algorithms
-This tool supports all PQC and Hybrid-PQC algorithms available through OpenSSL 3.5.0 and the OQS-Provider. However, due to known incompatibilities and dependency limitations, a small number of algorithms are excluded from testing.
+This tool supports all PQC and Hybrid-PQC algorithms available through OpenSSL 3.6.1 and the OQS-Provider. However, due to known incompatibilities and dependency limitations, a small number of algorithms are excluded from testing.
 
 Additional information on the excluded algorithms can be found in the OpenSSL and OQS-Provider subsections in the following project documentation:
 
@@ -211,8 +211,8 @@ Disabling automatic parsing may be appropriate in scenarios such as:
 - Running tests in low-resource environments
 
 ## Useful External Documentation
-- [OpenSSL(3.5.0) Release](https://github.com/openssl/openssl/releases/tag/openssl-3.5.0)
-- [OpenSSL(3.5.0) Documentation](https://docs.openssl.org/3.5/)
+- [OpenSSL(3.6.1) Release](https://github.com/openssl/openssl/releases/tag/openssl-3.6.1)
+- [OpenSSL(3.6.1) Documentation](https://docs.openssl.org/3.6/)
 - [OQS-Provider Webpage](https://openquantumsafe.org/applications/tls.html#oqs-openssl-provider)
 - [OQS-Provider GitHub Page](https://github.com/open-quantum-safe/oqs-provider)
 - [Latest OQS-Provider Release Notes](https://github.com/open-quantum-safe/oqs-provider/blob/main/RELEASE.md)
