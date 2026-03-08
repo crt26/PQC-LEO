@@ -204,7 +204,7 @@ def extract_tls_algs(test_type, provider_type, output_str):
     hybrid_algs = []
 
     # Set the filter and match variables used in the test types checks
-    hybrid_prefix_pattern = re.compile(r'^(rsa[0-9]+|p[0-9]+|x[0-9]+|X25519|X448|SecP256r1|SecP384r1|SecP521r1)[a-zA-Z0-9_-]+$')
+    hybrid_prefix_pattern = re.compile(r'^(rsa[0-9]+|p[0-9]+|x[0-9]+|bp[0-9]+|X25519|X448|SecP256r1|SecP384r1|SecP521r1)[a-zA-Z0-9_-]+$')
     excluded_algs = ["CROSSrsdp256small", "X448MLKEM1024"]
     # Leave commented until SLH-DSA is supported for TLS handshakes in OpenSSL
     #native_pqc_pattern = re.compile(r'^(MLKEM[0-9]+|MLDSA[0-9]+|SLH-DSA-[A-Z0-9-]+[a-z]*)$')

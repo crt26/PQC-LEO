@@ -399,16 +399,25 @@ Whilst a significant number of these scheme variations can not be used in TLS Ha
 With the introduction of native PQC support in OpenSSL 3.5.0, the OQS-Provider automatically disables its implementations of overlapping algorithms (e.g., ML-KEM, ML-DSA, SLH-DSA) to prevent provider conflicts during initialisation. For more information, see the relevant OQS-Provider documentation below.
 
 #### Additional Information
-For further details on algorithm support, compatibility, HQC implementation issues, or enabling algorithms disabled by default, see:
+For further details on algorithm support, compatibility, HQC implementation issues, or enabling OQS-Provider algorithms suppourted by PQC-LEO that are disabled by default, see:
 
-- [OQS-Provider Notice](https://github.com/open-quantum-safe/oqs-provider?tab=readme-ov-file#35-and-greater)
+- [OQS-Provider Notice](https://github.com/open-quantum-safe/oqs-provider/tree/a635e341d6a4624d9bba36d158804762f316fe5e#35-and-greater)
 - [Advanced Setup Configuration Guide](./advanced_setup_configuration.md)
+- [README - Choosing Installation Mode](../README.md#choosing-installation-mode)
 - [Disclaimer Document](../DISCLAIMER.md)
 
 ### Supported KEM Algorithms
 
 | **Algorithm Name**   | **Hybrid Algorithm (*)** | **TLS Handshake Test Support (*)** | **OpenSSL Speed Test Support (*)** | **Requires Enabling (*)** |
 |----------------------|:------------------------:|:----------------------------------:|:----------------------------------:|:-------------------------:|
+| bikel1               |                          |                  *                 |                  *                 |             *             |
+| bikel3               |                          |                  *                 |                  *                 |                           |
+| bikel5               |                          |                  *                 |                  *                 |                           |
+| p256_bikel1          |             *            |                  *                 |                  *                 |             *             |
+| x25519_bikel1        |             *            |                  *                 |                  *                 |             *             |
+| p384_bikel3          |             *            |                  *                 |                  *                 |                           |
+| x448_bikel3          |             *            |                  *                 |                  *                 |                           |
+| p521_bikel5          |             *            |                  *                 |                  *                 |                           |
 | frodo640aes          |                          |                  *                 |                  *                 |                           |
 | frodo640shake        |                          |                  *                 |                  *                 |                           |
 | frodo976aes          |                          |                  *                 |                  *                 |                           |
@@ -425,28 +434,32 @@ For further details on algorithm support, compatibility, HQC implementation issu
 | x448_frodo976shake   |             *            |                  *                 |                  *                 |                           |
 | p521_frodo1344aes    |             *            |                  *                 |                  *                 |                           |
 | p521_frodo1344shake  |             *            |                  *                 |                  *                 |                           |
-| bikel1               |                          |                  *                 |                  *                 |                           |
-| bikel3               |                          |                  *                 |                  *                 |                           |
-| bikel5               |                          |                  *                 |                  *                 |                           |
-| p256_bikel1          |             *            |                  *                 |                  *                 |                           |
-| x25519_bikel1        |             *            |                  *                 |                  *                 |                           |
-| p384_bikel3          |             *            |                  *                 |                  *                 |                           |
-| x448_bikel3          |             *            |                  *                 |                  *                 |                           |
-| p521_bikel5          |             *            |                  *                 |                  *                 |                           |
 | p256_mlkem512        |             *            |                  *                 |                  *                 |                           |
 | x25519_mlkem512      |             *            |                  *                 |                  *                 |                           |
+| bp256_mlkem512       |             *            |                  *                 |                  *                 |                           |
 | p384_mlkem768        |             *            |                  *                 |                  *                 |                           |
 | x448_mlkem768        |             *            |                  *                 |                  *                 |                           |
+| bp384_mlkem768       |             *            |                  *                 |                  *                 |                           |
 | p521_mlkem1024       |             *            |                  *                 |                  *                 |                           |
+| bp512_mlkem1024      |             *            |                  *                 |                  *                 |                           |
 | hqc128               |                          |                  *                 |                  *                 |             *             |
 | hqc192               |                          |                  *                 |                  *                 |             *             |
 | hqc256               |                          |                  *                 |                  *                 |             *             |
+| p256_hqc128          |             *            |                  *                 |                  *                 |             *             |
+| x25519_hqc128        |             *            |                  *                 |                  *                 |             *             |
+| p384_hqc192          |             *            |                  *                 |                  *                 |             *             |
+| x448_hqc192          |             *            |                  *                 |                  *                 |             *             |
+| p521_hqc256          |             *            |                  *                 |                  *                 |             *             |
 
 
 ### Supported Digital Signature Algorithms
 
 | **Algorithm Name**             | **Hybrid Algorithm (*)** | **TLS Handshake Test Support (*)** | **OpenSSL Speed Test Support (*)** | **Requires Enabling (*)** |
 |--------------------------------|:------------------------:|:----------------------------------:|:----------------------------------:|:-------------------------:|
+| p256_mldsa44                   |             *            |                  *                 |                  *                 |                           |
+| rsa3072_mldsa44                |             *            |                  *                 |                  *                 |                           |
+| p384_mldsa65                   |             *            |                  *                 |                  *                 |                           |
+| p521_mldsa87                   |             *            |                  *                 |                  *                 |                           |
 | falcon512                      |                          |                  *                 |                  *                 |                           |
 | falconpadded512                |                          |                  *                 |                  *                 |                           |
 | falcon1024                     |                          |                  *                 |                  *                 |                           |
@@ -463,20 +476,20 @@ For further details on algorithm support, compatibility, HQC implementation issu
 | sphincssha2192ssimple          |                          |                  *                 |                  *                 |             *             |
 | sphincssha2256fsimple          |                          |                  *                 |                  *                 |             *             |
 | sphincssha2256ssimple          |                          |                  *                 |                  *                 |             *             |
+| p256_sphincssha2128fsimple     |             *            |                  *                 |                  *                 |                           |
+| rsa3072_sphincssha2128fsimple  |             *            |                  *                 |                  *                 |                           |
+| p256_sphincssha2128ssimple     |             *            |                  *                 |                  *                 |                           |
+| rsa3072_sphincssha2128ssimple  |             *            |                  *                 |                  *                 |                           |
+| p384_sphincssha2192fsimple     |             *            |                  *                 |                  *                 |                           |
+| p384_sphincssha2192ssimple     |             *            |                  *                 |                  *                 |             *             |
+| p521_sphincssha2256fsimple     |             *            |                  *                 |                  *                 |             *             |
+| p521_sphincssha2256ssimple     |             *            |                  *                 |                  *                 |             *             |
 | sphincsshake128fsimple         |                          |                  *                 |                  *                 |                           |
 | sphincsshake128ssimple         |                          |                  *                 |                  *                 |             *             |
 | sphincsshake192fsimple         |                          |                  *                 |                  *                 |             *             |
 | sphincsshake192ssimple         |                          |                  *                 |                  *                 |             *             |
 | sphincsshake256fsimple         |                          |                  *                 |                  *                 |             *             |
 | sphincsshake256ssimple         |                          |                  *                 |                  *                 |             *             |
-| p256_sphincssha2128fsimple     |             *            |                  *                 |                  *                 |                           |
-| rsa3072_sphincssha2128fsimple  |             *            |                  *                 |                  *                 |                           |
-| p256_sphincssha2128ssimple     |             *            |                  *                 |                  *                 |                           |
-| rsa3072_sphincssha2128ssimple  |             *            |                  *                 |                  *                 |                           |
-| p384_sphincssha2192fsimple     |             *            |                  *                 |                  *                 |                           |
-| p384_sphincssha2192ssimple     |             *            |                  *                 |                  *                 |                           |
-| p521_sphincssha2256fsimple     |             *            |                  *                 |                  *                 |             *             |
-| p521_sphincssha2256ssimple     |             *            |                  *                 |                  *                 |             *             |
 | p256_sphincsshake128fsimple    |             *            |                  *                 |                  *                 |                           |
 | rsa3072_sphincsshake128fsimple |             *            |                  *                 |                  *                 |                           |
 | p256_sphincsshake128ssimple    |             *            |                  *                 |                  *                 |             *             |
@@ -499,7 +512,7 @@ For further details on algorithm support, compatibility, HQC implementation issu
 | CROSSrsdp192balanced           |                          |                  *                 |                  *                 |             *             |
 | CROSSrsdp192fast               |                          |                  *                 |                  *                 |             *             |
 | CROSSrsdp192small              |                          |                  *                 |                  *                 |             *             |
-| CROSSrsdp256small              |                          |                  *                 |                  *                 |             *             |
+| CROSSrsdp256small              |                          |                                    |                  *                 |             *             |
 | CROSSrsdpg128balanced          |                          |                  *                 |                  *                 |             *             |
 | CROSSrsdpg128fast              |                          |                  *                 |                  *                 |             *             |
 | CROSSrsdpg128small             |                          |                  *                 |                  *                 |             *             |
@@ -508,16 +521,16 @@ For further details on algorithm support, compatibility, HQC implementation issu
 | CROSSrsdpg192small             |                          |                  *                 |                  *                 |             *             |
 | CROSSrsdpg256balanced          |                          |                  *                 |                  *                 |             *             |
 | CROSSrsdpg256fast              |                          |                  *                 |                  *                 |             *             |
-| CROSSrsdpg256small             |                          |                                    |                  *                 |             *             |
+| CROSSrsdpg256small             |                          |                  *                 |                  *                 |             *             |
 | OV_Is                          |                          |                                    |                  *                 |             *             |
 | OV_Ip                          |                          |                                    |                  *                 |             *             |
 | OV_III                         |                          |                                    |                  *                 |             *             |
 | OV_V                           |                          |                                    |                  *                 |             *             |
-| OV_Is_pkc                      |                          |                                    |                  *                 |                           |
+| OV_Is_pkc                      |                          |                                    |                  *                 |             *             |
 | OV_Ip_pkc                      |                          |                  *                 |                  *                 |                           |
 | OV_III_pkc                     |                          |                                    |                  *                 |             *             |
 | OV_V_pkc                       |                          |                                    |                  *                 |             *             |
-| OV_Is_pkc_skc                  |                          |                                    |                  *                 |                           |
+| OV_Is_pkc_skc                  |                          |                                    |                  *                 |             *             |
 | OV_Ip_pkc_skc                  |                          |                  *                 |                  *                 |                           |
 | OV_III_pkc_skc                 |                          |                                    |                  *                 |             *             |
 | OV_V_pkc_skc                   |                          |                                    |                  *                 |             *             |
@@ -525,18 +538,14 @@ For further details on algorithm support, compatibility, HQC implementation issu
 | p256_OV_Ip                     |             *            |                                    |                  *                 |             *             |
 | p384_OV_III                    |             *            |                                    |                  *                 |             *             |
 | p521_OV_V                      |             *            |                                    |                  *                 |             *             |
-| p256_OV_Is_pkc                 |             *            |                                    |                  *                 |                           |
+| p256_OV_Is_pkc                 |             *            |                                    |                  *                 |             *             |
 | p256_OV_Ip_pkc                 |             *            |                  *                 |                  *                 |                           |
 | p384_OV_III_pkc                |             *            |                                    |                  *                 |             *             |
 | p521_OV_V_pkc                  |             *            |                                    |                  *                 |             *             |
-| p256_OV_Is_pkc_skc             |             *            |                                    |                  *                 |                           |
+| p256_OV_Is_pkc_skc             |             *            |                                    |                  *                 |             *             |
 | p256_OV_Ip_pkc_skc             |             *            |                  *                 |                  *                 |                           |
 | p384_OV_III_pkc_skc            |             *            |                                    |                  *                 |             *             |
 | p521_OV_V_pkc_skc              |             *            |                                    |                  *                 |             *             |
-| p256_mldsa44                   |             *            |                  *                 |                  *                 |             *             |
-| rsa3072_mldsa44                |             *            |                  *                 |                  *                 |             *             |
-| p384_mldsa65                   |             *            |                  *                 |                  *                 |             *             |
-| p521_mldsa87                   |             *            |                  *                 |                  *                 |             *             |
 | snova2454                      |                          |                  *                 |                  *                 |                           |
 | snova2454shake                 |                          |                                    |                  *                 |             *             |
 | snova2454esk                   |                          |                  *                 |                  *                 |                           |
@@ -563,8 +572,8 @@ For further details on algorithm support, compatibility, HQC implementation issu
 | p521_snova2965                 |             *            |                  *                 |                  *                 |                           |
 
 ## External Documentation
-For additional reference, the upstream dependency documentation can be found here:
+For additional reference, the upstream dependency documentation corresponding to the pinned versions used by PQC-LEO can be found below:
 
-- [Liboqs Supported Algorithms](https://github.com/open-quantum-safe/liboqs?tab=readme-ov-file#supported-algorithms)
-- [OpenSSL Supported PQC Algorithms](https://github.com/openssl/openssl/releases/tag/openssl-3.5.0)
-- [OQS-Provider Supported Algorithms](https://github.com/open-quantum-safe/oqs-provider/blob/main/ALGORITHMS.md)
+- [Liboqs v0.15.0 – Supported Algorithms](https://github.com/open-quantum-safe/liboqs/tree/97f6b86b1b6d109cfd43cf276ae39c2e776aed80?tab=readme-ov-file#supported-algorithms)
+- [OpenSSL 3.5.0 – Supported PQC Algorithms](https://github.com/openssl/openssl/releases/tag/openssl-3.5.0)
+- [OQS-Provider v0.11.0 – Supported Algorithms](https://github.com/open-quantum-safe/oqs-provider/blob/a635e341d6a4624d9bba36d158804762f316fe5e/ALGORITHMS.md)

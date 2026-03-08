@@ -33,7 +33,7 @@ function setup_base_env() {
 
     # Declare the global last tested version SHA variables
     liboqs_tested_sha="97f6b86b1b6d109cfd43cf276ae39c2e776aed80"
-    oqs_provider_tested_sha="2cc8dd3d3ef8764fa432f87a0ae15431d86bfa90"
+    oqs_provider_tested_sha="a635e341d6a4624d9bba36d158804762f316fe5e"
 
     # Declare the global library directory path variables
     openssl_path="$libs_dir/openssl_$openssl_version"
@@ -413,8 +413,8 @@ function configure_oqs_provider_build() {
     # Output the current task to the terminal
     echo -e "\nConfiguring Optional OQS-Provider Build Options:\n"
 
-    # Determine if the user wishes to enable all disabled signature algorithms in the OQS-Provider library
-    get_user_yes_no "Would you like to enable all the digital signature algorithms in the OQS-Provider library that are disabled by default?"
+    # Determine if the user wishes to enable all supported algorithms disabled by default in the OQS-Provider library
+    get_user_yes_no "Would you like to enable all algorithms supported by PQC-LEO in the OQS-Provider library that are disabled by default?"
 
     # Set the oqs_enable_algs build flag option based on the user's response
     if [ $user_y_n_response -eq 1 ]; then
