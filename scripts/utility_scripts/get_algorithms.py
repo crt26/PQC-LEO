@@ -76,7 +76,7 @@ def setup_base_env():
 
     # Declare the global library directory path variables
     liboqs_build_dir = os.path.join(root_dir, "lib", "liboqs", "build", "tests")
-    openssl_path = os.path.join(root_dir, "lib", "openssl_3.5.0")
+    openssl_path = os.path.join(root_dir, "lib", "openssl_3.6.1")
     oqs_provider_path = os.path.join(root_dir, "lib", "oqs_provider")
     openssl_lib_dir = ""
 

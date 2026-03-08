@@ -269,7 +269,7 @@ function setup_base_env() {
     util_scripts="$root_dir/scripts/utility_scripts"
 
     # Declare the global dependency library version variables
-    openssl_version="3.5.0"
+    openssl_version="3.6.1"
 
     # Declare the global source-code directory path variables
     liboqs_source="$tmp_dir/liboqs_source"
