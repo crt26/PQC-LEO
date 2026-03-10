@@ -366,7 +366,7 @@ function modify_openssl_src() {
     fi
 
     # Set the default fallback value and emergency padding value for the MAX_KEM_NUM/MAX_SIG_NUM values in case of automatic detection failure
-    fallback_value=200
+    fallback_value=356
     emergency_padding=100
 
     # Determine the highest value between the default MAX_KEM_NUM and MAX_SIG_NUM values (they should be the same, but just in case)
