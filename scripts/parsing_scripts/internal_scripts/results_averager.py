@@ -350,7 +350,7 @@ class TLSAverager:
                         curve_reused_combined_df = curve_df.iloc[1:2]
                     else:
                         curve_first_combined_df = pd.concat([curve_first_combined_df, curve_df.iloc[0:1]])
-                        curve_reused_combined_df = pd.concat([curve_first_combined_df, curve_df.iloc[1:2]])
+                        curve_reused_combined_df = pd.concat([curve_reused_combined_df, curve_df.iloc[1:2]])
 
                 # Calculating Averages
                 curve_first_combined_row = [cipher, alg, ""]
