@@ -11,7 +11,7 @@ This release corrects the averaging behaviour so that session ID reuse results a
 No new features or structural changes are included in this release.
 
 ## Change Log
-- Fix incorrect averaging of TLS classical session reuse results.
+- Fix incorrect averaging of TLS classical session reuse results in [#84](https://github.com/crt26/PQC-LEO/pull/84)
 
 **Full Changelog**: https://github.com/crt26/PQC-LEO/compare/v0.4.1...v0.4.2
 
