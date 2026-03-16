@@ -46,11 +46,14 @@ def setup_parse_env(root_dir):
     }
 
     # Declare the column headers dictionary that will be used by the various methods and functions
+    base_data_columns = ["Reused Session ID", "Connections in User Time", "User Time (s)", "Connections Per User Second", "Connections in Real Time", "Real Time (s)"]
     col_headers = {
-        'pqc_based_headers': ["Signing Algorithm", "KEM Algorithm", "Reused Session ID", "Connections in User Time", "User Time (s)", "Connections Per User Second", "Connections in Real Time", "Real Time (s)"],
-        'classic_headers': ["Ciphersuite", "Classic Algorithm", "Reused Session ID", "Connections in User Time", "User Time (s)", "Connections Per User Second", "Connections in Real Time", "Real Time (s)"]
-
+        'pqc_based_headers': ["Signing Algorithm", "KEM Algorithm", *base_data_columns],
+        'pqc_based_avg_headers': ["Signing Algorithm", "KEM Algorithm", *base_data_columns, "Runs used for Averages", "Total Runs"],
+        'classic_headers': ["Ciphersuite", "Classic Algorithm", *base_data_columns],
+        'classic_avg_headers': ["Ciphersuite", "Classic Algorithm", *base_data_columns, "Runs used for Averages", "Total Runs"]
     }
+    del base_data_columns
 
     # Declare the dictionary which will contain the respective keys for alg_dict and dir_paths for PQC and PQC-Hybrid results
     pqc_type_vars = {
