@@ -114,6 +114,19 @@ The table below describes the performance metrics gathered during this testing:
 | Connections per User Second (Session Reuse) | Handshake rate per CPU second with session ID reuse. Measures efficiency with session resumption.                 |
 | Connections in Real Time (Session Reuse)    | Handshakes per real-world time with session reuse. Reflects practical performance with resumed sessions.          |
 
+When averaged TLS handshake result files are generated, additional columns are included alongside the standard metrics:
+
+| **Column**            | **Description**                                                      |
+|-----------------------|----------------------------------------------------------------------|
+| Runs used for Average | The number of test runs included in the average calculation.         |
+| Total Runs            | The total number of test runs performed for the given configuration. |
+
+These columns are used to indicate how many test runs were included in each average calculation. This is necessary because, in some cases, a value of `inf` may be produced for the **"Connections per User Second"** metric when using shorter TLS handshake test durations.
+
+If an `inf` value occurs in a run, that run is excluded from the average calculation for the affected signature/KEM combination. The additional columns allow users to determine whether any runs were excluded and how many valid runs contributed to the final averaged result. This information on the number of runs used is only present for TLS Handshake results as all other types of testing are always able to use all test runs performed for average calculations.
+
+Further information on this behaviour and how it can be avoided is provided in the [TLS Handshake Inf Result Handling](./tls_handshake_inf_result_handling.md) documentation.
+
 ### TLS Speed Testing
 TLS speed testing benchmarks the raw cryptographic performance of PQC, Hybrid-PQC, and classical algorithms when integrated into OpenSSL for both natively supported algorithms and those provided by the OQS-Provider library. This is done using the OpenSSL `s_speed` tool, which measures the execution time and throughput of cryptographic operations for each algorithm.
 

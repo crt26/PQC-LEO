@@ -49,9 +49,9 @@ def setup_parse_env(root_dir):
     base_data_columns = ["Reused Session ID", "Connections in User Time", "User Time (s)", "Connections Per User Second", "Connections in Real Time", "Real Time (s)"]
     col_headers = {
         'pqc_based_headers': ["Signing Algorithm", "KEM Algorithm", *base_data_columns],
-        'pqc_based_avg_headers': ["Signing Algorithm", "KEM Algorithm", *base_data_columns, "Runs used for Averages", "Total Runs"],
+        'pqc_based_avg_headers': ["Signing Algorithm", "KEM Algorithm", *base_data_columns, "Runs used for Average", "Total Runs"],
         'classic_headers': ["Ciphersuite", "Classic Algorithm", *base_data_columns],
-        'classic_avg_headers': ["Ciphersuite", "Classic Algorithm", *base_data_columns, "Runs used for Averages", "Total Runs"]
+        'classic_avg_headers': ["Ciphersuite", "Classic Algorithm", *base_data_columns, "Runs used for Average", "Total Runs"]
     }
     del base_data_columns
 

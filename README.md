@@ -201,6 +201,8 @@ For detailed usage instructions, please refer to:
 
 [Automated TLS Performance Testing Instructions](docs/testing_tools_usage/tls_performance_testing.md)
 
+>**Notice:** The versions of project dependencies used in PQC-LEO version 0.5.0 contains a known issue where certain signature/KEM combinations may produce values of `inf` for "Connections Per User Second" results in TLS handshake testing when using smaller testing windows. Please refer to the [TLS Handshake Inf Result Handling](./docs/performance_results/tls_handshake_inf_result_handling.md) documentation for further information.
+
 ### Testing Output Files
 After the testing has been completed, unparsed results and automatically parsed results will be stored in the generated `test_data/` directory:
 
