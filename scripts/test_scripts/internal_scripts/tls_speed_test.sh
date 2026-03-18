@@ -5,7 +5,7 @@
 
 # Client-side script for benchmarking the performance of cryptographic algorithms used in TLS, including 
 # Post-Quantum Cryptography (PQC), and Hybrid-PQC signature and Key Encapsulation Mechanism (KEM) algorithms.
-# This benchmarking is performed using OpenSSL 3.5.0's s_speed utility, which measures the execution time of 
+# This benchmarking is performed using OpenSSL 3.6.1's s_speed utility, which measures the execution time of 
 # cryptographic operations for each algorithm. The script evaluates both native PQC implementations available in 
 # OpenSSL and those integrated via OQS-Provider. The results are stored in machine-specific directories according 
 # to the selected test type (PQC, Hybrid-PQC, or Classic). Test parameters are passed from the main OQS-Provider 
@@ -51,7 +51,7 @@ function setup_test_env() {
     util_scripts="$root_dir/scripts/utility_scripts"
 
     # Declare the global library directory path variables
-    openssl_path="$libs_dir/openssl_3.5.0"
+    openssl_path="$libs_dir/openssl_3.6.1"
     oqs_provider_path="$libs_dir/oqs_provider"
     provider_path="$oqs_provider_path/lib"
 
@@ -119,7 +119,7 @@ function setup_test_env() {
 #-------------------------------------------------------------------------------------------------------------------------------
 function tls_speed_test() {
     # Function for running TLS speed tests on various algorithm types, measuring cryptographic performance using OpenSSL 
-    # 3.5.0's `s_speed` utility. The utility benchmarks signature and key exchange algorithms, supporting both native 
+    # 3.6.1's `s_speed` utility. The utility benchmarks signature and key exchange algorithms, supporting both native 
     # PQC algorithms and those provided via the OQS-Provider.
 
     # Set the test parameter arrays

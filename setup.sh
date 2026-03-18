@@ -24,12 +24,12 @@ function setup_base_env() {
     util_scripts="$root_dir/scripts/utility_scripts"
 
     # Declare the global dependency library version variables
-    openssl_version="3.5.0"
+    openssl_version="3.6.1"
 
     # Declare the global library download URL variables
     liboqs_download_url="https://github.com/open-quantum-safe/liboqs.git"
     oqs_provider_download_url="https://github.com/open-quantum-safe/oqs-provider.git"
-    openssl_download_url="https://github.com/openssl/openssl/releases/download/openssl-3.5.0/openssl-3.5.0.tar.gz"
+    openssl_download_url="https://github.com/openssl/openssl/releases/download/openssl-3.6.1/openssl-3.6.1.tar.gz"
 
     # Declare the global last tested version SHA variables
     liboqs_tested_sha="97f6b86b1b6d109cfd43cf276ae39c2e776aed80"
@@ -446,7 +446,7 @@ function download_libraries() {
     echo "Downloading Required Cryptographic Libraries"
     echo -e "############################################\n"
 
-    # Download OpenSSL 3.5.0 and extract it into the tmp directory
+    # Download OpenSSL 3.6.1 and extract it into the tmp directory
     wget -O "$tmp_dir/openssl_$openssl_version.tar.gz" "$openssl_download_url"
     tar -xf "$tmp_dir/openssl_$openssl_version.tar.gz" -C $tmp_dir
     mv "$tmp_dir/openssl-$openssl_version" "$openssl_source"
@@ -665,7 +665,7 @@ function dependency_install() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function openssl_build() {
-    # Function for handling the build of the OpenSSL library (version 3.5.0). The function will check if the library is already built
+    # Function for handling the build of the OpenSSL library (version 3.6.1). The function will check if the library is already built
     # and if not, it will build the library using the specified configuration options. The function will call the modify_openssl_src function
     # to modify the speed.c source code file if the OQS-Provider library is being built with the enable all disabled algorithms flag.
 
@@ -726,7 +726,7 @@ function openssl_build() {
         # Testing if OpenSSL has been correctly installed
         test_output=$("$openssl_path/bin/openssl" version)
 
-        if [[ "$test_output" != "OpenSSL 3.5.0 8 Apr 2025 (Library: OpenSSL 3.5.0 8 Apr 2025)" ]]; then
+        if [[ "$test_output" != "OpenSSL 3.6.1 27 Jan 2026 (Library: OpenSSL 3.6.1 27 Jan 2026)" ]]; then
             echo -e "\n\n[ERROR] - Installing required OpenSSL version failed, please verify the installation process"
             exit 1
         fi
@@ -1017,7 +1017,7 @@ function setup_controller() {
                 configure_oqs_provider_build
                 dependency_install
 
-                # Build OpenSSL 3.5.0
+                # Build OpenSSL 3.6.1
                 openssl_build
 
                 # Check if a Liboqs install is already present and install if not

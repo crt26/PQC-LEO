@@ -88,14 +88,14 @@ function setup_base_env() {
     parsing_scripts_dir="$root_dir/scripts/parsing_scripts"
 
     # Declare the global library directory path variables
-    openssl_path="$libs_dir/openssl_3.5.0"
+    openssl_path="$libs_dir/openssl_3.6.1"
     liboqs_path="$libs_dir/liboqs"
     oqs_provider_path="$libs_dir/oqs_provider"
 
     # Declaring the global source-code directory path variables
     liboqs_source="$tmp_dir/liboqs_source"
     oqs_provider_source="$tmp_dir/oqs_provider_source"
-    openssl_source="$tmp_dir/openssl_3.5.0"
+    openssl_source="$tmp_dir/openssl_3.6.1"
 
     # Declaring the global test-data directory path variables
     test_data_results="$test_data_dir/results"
@@ -127,7 +127,7 @@ function select_uninstall_mode() {
         echo -e "\nPlease Select one of the following uninstall options"
         echo "1 - Uninstall Liboqs Library Only"
         echo "2 - Uninstall OQS-Provider Library only"
-        echo "3 - Uninstall OpenSSL 3.5.0 Only"
+        echo "3 - Uninstall OpenSSL 3.6.1 Only"
         echo "4 - Uninstall all Libraries"
         echo "5 - Exit Setup"
 
@@ -153,9 +153,9 @@ function select_uninstall_mode() {
                 break;;
 
             3)
-                # Uninstall OpenSSL 3.5.0 only
+                # Uninstall OpenSSL 3.6.1 only
                 rm -rf "$openssl_path"
-                echo -e "\nOpenSSL 3.5.0 Uninstalled"
+                echo -e "\nOpenSSL 3.6.1 Uninstalled"
                 break;;
 
             4)

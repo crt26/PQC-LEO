@@ -269,7 +269,7 @@ function setup_base_env() {
     util_scripts="$root_dir/scripts/utility_scripts"
 
     # Declare the global dependency library version variables
-    openssl_version="3.5.0"
+    openssl_version="3.6.1"
 
     # Declare the global source-code directory path variables
     liboqs_source="$tmp_dir/liboqs_source"
@@ -366,7 +366,7 @@ function modify_openssl_src() {
     fi
 
     # Set the default fallback value and emergency padding value for the MAX_KEM_NUM/MAX_SIG_NUM values in case of automatic detection failure
-    fallback_value=200
+    fallback_value=356
     emergency_padding=100
 
     # Determine the highest value between the default MAX_KEM_NUM and MAX_SIG_NUM values (they should be the same, but just in case)

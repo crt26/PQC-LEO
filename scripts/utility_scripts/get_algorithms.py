@@ -76,7 +76,7 @@ def setup_base_env():
 
     # Declare the global library directory path variables
     liboqs_build_dir = os.path.join(root_dir, "lib", "liboqs", "build", "tests")
-    openssl_path = os.path.join(root_dir, "lib", "openssl_3.5.0")
+    openssl_path = os.path.join(root_dir, "lib", "openssl_3.6.1")
     oqs_provider_path = os.path.join(root_dir, "lib", "oqs_provider")
     openssl_lib_dir = ""
 
@@ -221,11 +221,8 @@ def extract_tls_algs(test_type, provider_type, output_str):
         "snova2965", "p521_snova2965"
     ]
 
-    # Set the regex pattern to match OpenSSL native PQC algorithms depending on the test type
-    if test_type == 0:
-        native_pqc_pattern = re.compile(r'^(MLKEM[0-9]+|MLDSA[0-9]+)$')
-    else:
-        native_pqc_pattern = re.compile(r'^(MLKEM[0-9]+)$')
+    # Regex pattern to match OpenSSL's native NIST PQC algorithms (ML-KEM and ML-DSA)
+    native_pqc_pattern = re.compile(r'^(MLKEM[0-9]+|MLDSA[0-9]+)$')
 
     # Pre-format the output string to remove newlines and split into a list
     pre_algs = output_str.split("\n")
@@ -259,10 +256,12 @@ def extract_tls_algs(test_type, provider_type, output_str):
             # Determine if the algorithm is a PQC or a Hybrid-PQC algorithm
             if native_pqc_pattern.match(alg):
 
-                # If the algorithm is ML-KEM and the test type is speed, reformat the algorithm name
+                # If the algorithm is ML-KEM or ML-DSA and the test type is speed, reformat the algorithm name
                 if test_type == 1:
                     if "MLKEM" in alg:
                         alg = re.sub(r'^MLKEM(\d+)$', r'ML-KEM-\1', alg)
+                    elif "MLDSA" in alg:
+                        alg = re.sub(r'^MLDSA(\d+)$', r'ML-DSA-\1', alg)
 
                 # Add the algorithm to the algorithms list
                 algs.append(alg.strip())

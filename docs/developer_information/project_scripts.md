@@ -51,7 +51,7 @@ Key tasks performed include:
 
 - Installing all required system and Python dependencies (e.g., OpenSSL dev packages, CMake, Valgrind)
 
-- Downloading and compiling OpenSSL 3.5.0
+- Downloading and compiling OpenSSL 3.6.1
 
 - Cloning and building the last-tested or latest versions of Liboqs and OQS-Provider
 
@@ -117,7 +117,7 @@ python3 get_algorithms.py 1
 ```
 
 ### configure_openssl_cnf.sh
-This utility script manages the modification of the OpenSSL 3.5.0 openssl.cnf configuration file to support different stages of the PQC testing pipeline. It adjusts cryptographic provider settings and default group directives as required for:
+This utility script manages the modification of the OpenSSL 3.6.1 openssl.cnf configuration file to support different stages of the PQC testing pipeline. It adjusts cryptographic provider settings and default group directives as required for:
 
 - Initial setup
 
@@ -211,7 +211,7 @@ The PQC TLS performance testing suite relies on several scripts to carry out TLS
 Testing scripts are stored in the `scripts/testing_scripts` directory, whilst internal scripts are stored in the `scripts/testing_scripts/internal_scripts` directory. Internal scripts are intended to be called by the main testing scripts and do not support being called in isolation.
 
 ### pqc_tls_performance_test.sh
-This is the main controller script for executing the full TLS performance benchmarking suite. It performs both TLS handshake and cryptographic speed testing for PQC, Hybrid-PQC, and classical algorithms supported by OpenSSL 3.5.0 and the OQS-Provider. The script coordinates all required test operations by invoking subordinate scripts (`tls_handshake_test_server.sh`, `tls_handshake_test_client.sh`, and `tls_speed_test.sh`) and ensures that results are stored correctly under the appropriate machine directory based on the assigned Machine ID. Designed to run on both client and server machines, the script prompts the user for necessary parameters such as machine role, IP addresses, test duration, and number of runs. When run on the client, it configures both the handshake and speed benchmarking parameters accordingly.
+This is the main controller script for executing the full TLS performance benchmarking suite. It performs both TLS handshake and cryptographic speed testing for PQC, Hybrid-PQC, and classical algorithms supported by OpenSSL 3.6.1 and the OQS-Provider. The script coordinates all required test operations by invoking subordinate scripts (`tls_handshake_test_server.sh`, `tls_handshake_test_client.sh`, and `tls_speed_test.sh`) and ensures that results are stored correctly under the appropriate machine directory based on the assigned Machine ID. Designed to run on both client and server machines, the script prompts the user for necessary parameters such as machine role, IP addresses, test duration, and number of runs. When run on the client, it configures both the handshake and speed benchmarking parameters accordingly.
 
 It is important to note that when conducting testing, the `pqc_tls_performance_test.sh` script will prompt the user for parameters regarding the handling of storing and managing test results if the machine or current shell has been designated as the client (depending on whether single machine or separate machine testing is being performed).
 
