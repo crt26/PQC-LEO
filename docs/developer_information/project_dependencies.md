@@ -73,6 +73,7 @@ By default, the setup script will install the latest available versions of these
 The following Python packages are required for testing and result parsing. These are automatically checked and installed via pip during setup:
 
 - pandas
+- numpy (installed with pandas)
 - jinja2
 - tabulate
 

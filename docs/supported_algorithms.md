@@ -396,7 +396,7 @@ Whilst a significant number of these scheme variations can not be used in TLS Ha
 | CROSSrsdp  | CROSSrsdp256small                                                                                                                             |
 
 #### OpenSSL 3.6.1 Compatibility
-With natice support of various PQC algorithms in OpenSSL 3.6.1, the OQS-Provider automatically disables its implementations of overlapping algorithms (e.g., ML-KEM, ML-DSA, SLH-DSA) to prevent provider conflicts during initialisation. For more information, see the relevant OQS-Provider documentation below.
+With native support of various PQC algorithms in OpenSSL 3.6.1, the OQS-Provider library automatically disables its implementations of overlapping algorithms (e.g., ML-KEM, ML-DSA, SLH-DSA) to prevent provider conflicts during initialisation. For more information, see the relevant OQS-Provider documentation below.
 
 #### Additional Information
 For further details on algorithm support, compatibility, HQC implementation issues, or enabling OQS-Provider algorithms suppourted by PQC-LEO that are disabled by default, see:

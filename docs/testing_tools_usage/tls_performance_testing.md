@@ -94,7 +94,7 @@ The testing tool will prompt you to enter the parameters for the test. These par
 
 **†** Defines the duration (in seconds) the OpenSSL `s_time` tool will use for each handshake test window. The client will attempt as many TLS handshakes as possible for each algorithm combination during this period. 
 
-**Note:** Using durations below 5 seconds may produce `inf` values for some algorithm combinations. It is recommended to use ≥ 5 seconds for consistent results. See the [Inf Result Value Occurrence Details](#inf-result-value-occurrence-details) section for more information.
+**Note:** Using durations below 5 seconds may produce `inf` result values for some algorithm combinations. It is recommended to use higher test durations for more consistent results. See the [Inf Result Value Occurrence Details](#inf-result-value-occurrence-details) section for more information.
 
 **††** Defines the duration (in seconds) for benchmarking individual cryptographic operations (e.g., signing or key encapsulation) using the OpenSSL `s_speed` tool.
 
@@ -217,7 +217,6 @@ Disabling automatic parsing may be appropriate in scenarios such as:
 
 
 ## Inf Result Value Occurrence Details
-
 Certain signature/KEM combinations may produce `inf` values for the **"Connections Per User Second"** metric during TLS handshake testing when using shorter test durations (typically below 5 seconds).
 
 PQC-LEO includes safeguards to:
