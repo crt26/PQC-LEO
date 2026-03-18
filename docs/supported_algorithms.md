@@ -325,7 +325,7 @@ For further context and guidance:
 OpenSSL 3.6.1 includes native support for the NIST-standardised PQC algorithms **ML-KEM**, **ML-DSA**, and **SLH-DSA**. This project integrates these algorithms for TLS benchmarking where possible. However, some limitations affect their usage in performance testing and handshake scenarios:
 
 #### Known Limitations
-- **ML-DSA** and **SLH-DSA** are currently not supported by the OpenSSL `speed` utility, making them unavailable for cryptographic performance benchmarking.
+- **SLH-DSA** is currently not supported by the OpenSSL `speed` utility, making it unavailable for cryptographic performance benchmarking.
 
 - **SLH-DSA** while supported at the provider level (e.g., for certificate generation), has not yet been integrated into OpenSSL's TLS stack (`s_client`, `s_server`, `speed`). Its inclusion in TLS 1.3 is under consideration via this [IETF draft](https://datatracker.ietf.org/doc/html/draft-reddy-tls-slhdsa-01). Until then, SPHINCS+ from the OQS-Provider will be used as a placeholder for stateless hash-based signatures in TLS tests.
   
@@ -355,9 +355,9 @@ These schemes help assess the overhead and feasibility of PQC adoption in real-w
 
 | **Algorithm Name** | **Hybrid Algorithm (*)** | **TLS Handshake Test Support (*)** | **OpenSSL Speed Test Support (*)** |
 |--------------------|:------------------------:|:----------------------------------:|:----------------------------------:|
-| MLDSA44            |                          |                  *                 |                                    |
-| MLDSA65            |                          |                  *                 |                                    |
-| MLDSA87            |                          |                  *                 |                                    |
+| MLDSA44            |                          |                  *                 |                  *                 |
+| MLDSA65            |                          |                  *                 |                  *                 |
+| MLDSA87            |                          |                  *                 |                  *                 |
 
 ### Supported Classical Algorithms
 

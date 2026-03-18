@@ -806,7 +806,8 @@ function configure_test_options {
                     warning_text+="If you proceed with a lower test length, experimentation will continue to function, but there is a possibility that not all testing runs can be used in average calculations due to the "
                     warning_text+="presence of inf in a given test run."
                     printf "\n%s\n" "$warning_text" | fold -s -w "$terminal_width"
-                    echo -e "\nDetails on what this means, how it occurs, and how this impacts result average calculations are described in the following PQC-LEO documentation:\n[INSERT LINK]\n"
+                    echo -e "\nDetails on what this means, how it occurs, and how this impacts result average calculations are described in the following PQC-LEO documentation:\n"
+                    echo -e "https://github.com/crt26/PQC-LEO/blob/main/docs/performance_results/tls_handshake_inf_result_handling.md\n"
 
                     # Set the warning printed flag to true
                     inf_warning_printed="True"
