@@ -257,10 +257,20 @@ def speed_processing(dir_paths, num_runs, kem_algs, sig_algs):
         filename_kem_pre = os.path.join(dir_paths['up_speed_dir'], filename_kem_pre)
         temp_df = pd.read_csv(filename_kem_pre, delimiter="|", index_col=False)
 
-        # Strip the trailing spaces and remove the algorithms from the Operation column
-        temp_df.columns = [col.strip() for col in temp_df.columns]
-        temp_df = temp_df.loc[~temp_df['Operation'].str.strip().isin(kem_algs)]
-        temp_df = temp_df.apply(lambda col: col.str.strip() if col.dtype == 'object' else col)
+        # Perform the initial value whitespace strip 
+        temp_df.columns = temp_df.columns.str.strip()
+
+        # Determine which pandas mapping method to use and strip the trailing spaces in the dataframe cells
+        if hasattr(temp_df, "map"):
+            temp_df = temp_df.map(lambda value: value.strip() if isinstance(value, str) else value)
+        elif hasattr(temp_df, "applymap"):
+            temp_df = temp_df.applymap(lambda value: value.strip() if isinstance(value, str) else value)
+        else:
+            print(f"[ERROR] - The version of pandas available to the parsing scripts is not supported")
+            sys.exit(1)
+
+        # Remove the algorithms from the Operation column
+        temp_df = temp_df.loc[~temp_df['Operation'].isin(kem_algs)]
 
         # Check if there is a mismatch between the number of algorithms in the alg-list and the dataframe
         check_data_mismatch(len(temp_df), len(kem_algs), "KEM Speed Results")
@@ -277,10 +287,20 @@ def speed_processing(dir_paths, num_runs, kem_algs, sig_algs):
         filename_sig_pre = os.path.join(dir_paths['up_speed_dir'], filename_sig_pre)
         temp_df = pd.read_csv(filename_sig_pre, delimiter="|", index_col=False)
 
-        # Strip the trailing spaces and remove the algorithms from the Operation column
-        temp_df.columns = [col.strip() for col in temp_df.columns]
-        temp_df = temp_df.loc[~temp_df['Operation'].str.strip().isin(sig_algs)]
-        temp_df = temp_df.apply(lambda col: col.str.strip() if col.dtype == 'object' else col)
+        # Perform the initial value whitespace strip 
+        temp_df.columns = temp_df.columns.str.strip()
+
+        # Determine which pandas mapping method to use and strip the trailing spaces in the dataframe cells
+        if hasattr(temp_df, "map"):
+            temp_df = temp_df.map(lambda value: value.strip() if isinstance(value, str) else value)
+        elif hasattr(temp_df, "applymap"):
+            temp_df = temp_df.applymap(lambda value: value.strip() if isinstance(value, str) else value)
+        else:
+            print(f"[ERROR] - The version of pandas available to the parsing scripts is not supported")
+            sys.exit(1)
+
+        # Remove the algorithms from the Operation column
+        temp_df = temp_df.loc[~temp_df['Operation'].isin(sig_algs)]
 
         # Check if there is a mismatch between the number of algorithms in the alg-list and the dataframe
         check_data_mismatch(len(temp_df), len(sig_algs), "Sig Speed Results")
