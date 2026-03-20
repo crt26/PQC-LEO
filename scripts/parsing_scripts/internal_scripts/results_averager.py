@@ -254,6 +254,9 @@ class TLSAverager:
         # Process the result averages for both PQC (0) and PQC-Hybrid (1) TLS test types
         for type_index in range (0,2):
 
+            # Define the base average dataframe used to store all the signature/KEM averages for the current test type
+            base_avg_df = pd.DataFrame(columns=self.col_headers['pqc_based_avg_headers'])
+
             # Loop through each signing algorithm
             for sig in self.algs_dict[self.pqc_type_vars["sig_alg_type"][type_index]]:
 
@@ -337,10 +340,18 @@ class TLSAverager:
                     sig_avg_df.loc[len(sig_avg_df)] = sig_first_average_row
                     sig_avg_df.loc[len(sig_avg_df)] = sig_reused_average_row
 
+                # Append the current signing algorithm averages to the base average dataframe for the current test type
+                base_avg_df = pd.concat([base_avg_df, sig_avg_df], ignore_index=True, sort=False)
+
                 # Output the averages for the current signing algorithm to csv file
                 avg_out_filename = f"tls_handshake_{sig}_avg.csv"
                 avg_out_filepath = os.path.join(sig_path, avg_out_filename)
                 sig_avg_df.to_csv(avg_out_filepath, index=False)
+
+            # Output the base averages for the current test type to csv file
+            base_avg_filename = f"{self.pqc_type_vars['type_prefix'][type_index]}_base_results_avg.csv"
+            base_avg_filepath = os.path.join(self.dir_paths[self.pqc_type_vars["base_type"][type_index]], base_avg_filename)
+            base_avg_df.to_csv(base_avg_filepath, index=False)
 
     #------------------------------------------------------------------------------
     def gen_classic_avgs(self):
