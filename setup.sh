@@ -100,6 +100,23 @@ function get_user_yes_no() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
+function build_status_checker() {
+    # Helper function for checking the exit status of build commands. The function takes the exit status and an string with 
+    # the build step name as arguments, and checks if the exit status is non-zero.
+
+    # Define local variables to store the passed function arguments
+    local return_status="$1"
+    local build_step="$2"
+    
+    # Check if the passed return status is failed exit code
+    if [ "$return_status" -ne 0 ]; then
+        echo -e "\n[ERROR] - $build_step failed, please verify the installation and rerun the setup script"
+        exit 1
+    fi
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
 function output_help_message() {
     # Helper function for outputting the help message to the user when the --help flag is present or
     # when incorrect arguments are passed.
@@ -704,12 +721,26 @@ function openssl_build() {
 
         fi
 
-        # Build the required version of OpenSSL in the project's directory structure only, not system-wide
+        # Output the current task to the terminal and move into the OpenSSL source directory
         echo "Building OpenSSL Library"
         cd $openssl_source
+
+        # Configure the OpenSSL build to be used by PQC-LEO
         ./config --prefix="$openssl_path" --openssldir="$openssl_path" shared >/dev/null
+        exit_status=$?
+        build_status_checker "$exit_status" "OpenSSL configuration"
+
+        # Build the OpenSSL library
         make -j $threads >/dev/null
+        exit_status=$?
+        build_status_checker "$exit_status" "OpenSSL build"
+
+        # Install the OpenSSL library to the PQC-LEO lib directory
         make -j $threads install >/dev/null
+        exit_status=$?
+        build_status_checker "$exit_status" "OpenSSL installation"
+
+        # Return to the project root directory and output the build completion message to the user
         cd $root_dir
         echo -e "OpenSSL build complete"
 
@@ -763,18 +794,16 @@ function enable_arm_pmu() {
     git clone --branch main https://github.com/mupq/pqax.git
     cd "$libs_dir/pqax/enable_ccr"
 
-    # Enable user space access to the ARM PMU
+    # Build the enable_ccr module to allow user space access to the ARM PMU
     make
-    make_status=$?
-    make install
-    make_install_status=$?
-    cd $root_dir
+    exit_status=$?
+    build_status_checker "$exit_status" "ARM PMU enable - build"
 
-    # Check if the make and make install commands were successful
-    if [ "$make_status" -ne 0 ] || [ "$make_install_status" -ne 0 ]; then
-        echo -e "\n[ERROR] - PMU build failed, please check the system and try again\n"
-        exit 1
-    fi
+    # Install the enable_ccr module and return to the root directory
+    make install
+    exit_status=$?
+    build_status_checker "$exit_status" "ARM PMU enable - install"
+    cd $root_dir
 
     # Ensure that the system has user access to the ARM PMU
     if lsmod | grep -q 'enable_ccr'; then
@@ -855,7 +884,7 @@ function liboqs_build() {
             hqc_flag=""
         fi
 
-        # Build Liboqs using CMake
+        # Configure the Liboqs build with CMake using the specified build options and flags
         cmake -GNinja \
             -S "$liboqs_source/" \
             -B "$liboqs_path/build" \
@@ -864,9 +893,18 @@ function liboqs_build() {
             -DOPENSSL_ROOT_DIR="$openssl_path" \
             $build_flags \
             $hqc_flag
+        exit_status=$?
+        build_status_checker "$exit_status" "Liboqs configuration"
 
+        # Build the Liboqs library
         cmake --build "$liboqs_path/build" -- -j $threads
+        exit_status=$?
+        build_status_checker "$exit_status" "Liboqs build"
+
+        # Install the Liboqs library to the specified install path
         cmake --build "$liboqs_path/build" --target install -- -j $threads
+        exit_status=$?
+        build_status_checker "$exit_status" "Liboqs installation"
 
         # Output the install success message to the terminal
         echo -e "\nLiboqs Install Complete"
@@ -907,16 +945,25 @@ function oqs_provider_build() {
 
     fi
 
-    # Build the OQS-Provider library
+    # Configure the OQS-Provider build with CMake using the specified build options and flags
     cmake -S $oqs_provider_source \
         -B "$oqs_provider_path" \
         -DCMAKE_INSTALL_PREFIX="$oqs_provider_path" \
         -DOPENSSL_ROOT_DIR="$openssl_path" \
         -Dliboqs_DIR="$liboqs_path/lib/cmake/liboqs" \
         -DOQS_KEM_ENCODERS="$encoder_flag"
+    exit_status=$?
+    build_status_checker "$exit_status" "OQS-Provider configuration"
 
+    # Build the OQS-Provider library
     cmake --build "$oqs_provider_path" -- -j $(nproc)
+    exit_status=$?
+    build_status_checker "$exit_status" "OQS-Provider build"
+
+    # Install the OQS-Provider library to the specified install path
     cmake --install "$oqs_provider_path"
+    exit_status=$?
+    build_status_checker "$exit_status" "OQS-Provider installation"
 
     # Output the install complete message to the terminal
     echo "OQS-Provider Install Complete"
