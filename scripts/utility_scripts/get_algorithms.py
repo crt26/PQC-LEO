@@ -457,7 +457,7 @@ def main():
 
         elif sys.argv[1] == "2":
 
-            #Ensure that the Liboqs, OpenSSL, and OQS-Provider libraries are present before continuing
+            # Ensure that the Liboqs, OpenSSL, and OQS-Provider libraries are present before continuing
             if not os.path.isdir(liboqs_build_dir):
                 print("[ERROR]- Liboqs library not found")
                 sys.exit(1)

@@ -167,14 +167,12 @@ function select_uninstall_mode() {
                 break;;
 
             5)
-
                 # Exit the script
                 echo "Exiting Uninstall Script!"
                 exit 0
                 ;;
 
             *)
-
                 # Output to the user that the input is invalid and prompt again
                 echo -e "\nInvalid option, please select a valid option value (1-4)\n"
                 ;;
@@ -204,6 +202,7 @@ function select_uninstall_mode() {
 
     else
         echo "Skipping removal of parsing scripts __pycache__ directories."
+
     fi
 
 }
@@ -291,14 +290,12 @@ function main() {
                 break;;
 
             4)
-
                 # Exit the script
                 echo "Exiting Uninstall Script!"
                 exit 1
                 ;;
 
             *)
-
                 # Output to the user that the input is invalid and prompt again
                 echo -e "\nInvalid option, please select a valid option value (1-4)\n"
                 ;;

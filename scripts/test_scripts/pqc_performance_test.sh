@@ -144,9 +144,6 @@ function enable_arm_pmu() {
     make_install_status=$?
     cd $root_dir
 
-    echo "make status: $make_status"
-    echo "make install status: $make_install_status"
-
     # Check if the make and make install commands were successful
     if [ "$make_status" -ne 0 ] || [ "$make_install_status" -ne 0 ]; then
         echo -e "\n[ERROR] - PMU build failed, please check the system and try again\n"

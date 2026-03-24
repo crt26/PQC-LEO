@@ -50,12 +50,12 @@ function setup_base_env() {
     use_latest_version=0
     user_defined_speed_flag=0
     user_defined_speed_value=0
+    special_cmake_handling=0
     enable_liboqs_hqc=0 # temp flag for hqc bug fix
     enable_oqs_hqc=0 # temp flag for hqc bug fix
     warning_given=0 # temp flag to indicate if the user has accepted the warning about HQC KEM algorithms
     allow_hqc=0 # temp flag to indicate if the user has accepted the warning about HQC KEM algorithms
-    special_cmake_handling=0
-
+    
     # Declare the global flags for enabling OQS-Provider build options
     oqs_enable_algs=0
     encoder_flag="OFF" # string as needed for inserting value into OQS-Provider cmake command

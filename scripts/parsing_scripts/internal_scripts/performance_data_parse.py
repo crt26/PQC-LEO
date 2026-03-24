@@ -320,7 +320,6 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
     kem_up_dir = os.path.join(dir_paths["up_mem_dir"], "kem_mem_metrics")
     sig_up_dir = os.path.join(dir_paths["up_mem_dir"], "sig_mem_metrics")
 
-
     # Declare the list variables used in memory processing
     new_row = []
     peak_metrics = []
@@ -415,7 +414,7 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
                     print(f"error - {e}")
                     print(f"Filename {sig_up_filename}\n")
 
-        # # Check if there is a mismatch between the number of algorithms in the alg-list and the dataframe
+        # Check if there is a mismatch between the number of algorithms in the alg-list and the dataframe
         check_data_mismatch(len(mem_results_df), len(sig_algs), "Sig Memory Results")
 
         # Output the digital signature csv file for this run

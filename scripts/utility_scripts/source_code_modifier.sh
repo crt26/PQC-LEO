@@ -542,7 +542,6 @@ function enable_oqs_algs() {
 
         # Modify the generate.yml file to enable all the disabled signature algorithms
         sed -i -E 's/enable:[[:space:]]*false/enable: true/g' "$oqs_provider_generate_file"
-        #sed -i 's/enable: false/enable: true/g' "$oqs_provider_generate_file"
 
         # Enable TLS operations for bikel1 its hybrid variants
         sed -i "/name_group: 'bikel1'/,/family:/ s/enable_tls:[[:space:]]*false/enable_tls: true/" "$oqs_provider_generate_file"

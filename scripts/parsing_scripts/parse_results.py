@@ -73,7 +73,6 @@ def setup_base_env():
     """ Function for setting up the global environment by determining the root path. It recursively moves up the directory 
         tree until it finds the .pqc_leo_dir_marker.tmp file, then returns the root path. """
 
-    
     # Determine the directory that the script is being executed from and set the marker filename
     script_dir = os.path.dirname(os.path.abspath(__file__))
     current_dir = script_dir
