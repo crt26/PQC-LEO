@@ -13,7 +13,7 @@ This document outlines:
 
 This information helps clarify which software components the project relies on and how the setup script maintains a consistent, reproducible environment. It also includes notes on default versions and how to use alternatives if needed.
 
-## Contents <!-- omit from toc -->
+### Contents <!-- omit from toc -->
 - [Required Hardware and Operating Systems](#required-hardware-and-operating-systems)
 - [Cryptographic Dependency Libraries](#cryptographic-dependency-libraries)
 - [System Package Dependencies](#system-package-dependencies)
