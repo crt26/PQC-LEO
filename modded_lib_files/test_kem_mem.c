@@ -5,7 +5,7 @@
  * Original copyright:
  *   Copyright (c) 2016-2024 The Open Quantum Safe project authors
  *
- * Modifications by Callum Turino on 09/06/2025.
+ * Modifications by Callum Turino on 26/02/2026.
  * SPDX-License-Identifier: MIT
  */
 
@@ -175,6 +175,7 @@ cleanup:
 }
 
 int main(int argc, char **argv) {
+	OQS_STATUS rc;
 	OQS_init();
 
 	if (argc != 3) {
@@ -201,11 +202,20 @@ int main(int argc, char **argv) {
 	}
 
 	// Use system RNG in this program
-	OQS_randombytes_switch_algorithm(OQS_RAND_alg_system);
+	rc = OQS_randombytes_switch_algorithm(OQS_RAND_alg_system);
+	if (rc != OQS_SUCCESS) {
+		printf("Could not generate random data with system RNG\n");
+		OQS_destroy();
+		return EXIT_FAILURE;
+	}
 
-	oqs_fstore_init();
+	rc = oqs_fstore_init();
+	if (rc != OQS_SUCCESS) {
+		OQS_destroy();
+		return EXIT_FAILURE;
+	}
 
-	OQS_STATUS rc = kem_test_correctness(alg_name, (unsigned int)atoi(argv[2]));
+	rc = kem_test_correctness(alg_name, (unsigned int)atoi(argv[2]));
 
 	if (rc != OQS_SUCCESS) {
 		OQS_destroy();

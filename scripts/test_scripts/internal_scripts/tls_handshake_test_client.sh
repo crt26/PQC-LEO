@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Copyright (c) 2023-2025 Callum Turino
+# Copyright (c) 2023-2026 Callum Turino
 # SPDX-License-Identifier: MIT
 
 # Client-side script for executing TLS handshake performance tests in coordination with a remote server.
 # It evaluates all supported combinations of classic, Post-Quantum Cryptography (PQC), and Hybrid-PQC signature
-# and Key Encapsulation Mechanism (KEM) algorithms using OpenSSL 3.5.0, with support for both native PQC 
+# and Key Encapsulation Mechanism (KEM) algorithms using OpenSSL 3.6.1, with support for both native PQC 
 # implementations and those integrated via OQS-Provider. The script performs three main test suites: 
 # PQC-only, Hybrid-PQC, and Classic handshake tests. It is called by the TLS benchmarking controller script 
 # and uses globally defined test parameters, certificate files, and control signalling for synchronisation with the server.
@@ -52,7 +52,7 @@ function setup_base_env() {
     util_scripts="$root_dir/scripts/utility_scripts"
 
     # Declare the global library directory path variables
-    openssl_path="$libs_dir/openssl_3.5.0"
+    openssl_path="$libs_dir/openssl_3.6.1"
     provider_path="$libs_dir/oqs_provider/lib"
 
     # Declare global key storage directory paths
@@ -327,6 +327,7 @@ function pqc_tests() {
                     elif [ "$test_type" -eq 1 ]; then
                         cert_file="$hybrid_cert_dir/""${sig/:/_}""_srv.crt"
                         handshake_dir=$HYBRID_HANDSHAKE
+                        
                     fi
 
                     # Set the output filename based on the current combination and run

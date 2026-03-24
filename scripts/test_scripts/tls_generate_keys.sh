@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Copyright (c) 2023-2025 Callum Turino
+# Copyright (c) 2023-2026 Callum Turino
 # SPDX-License-Identifier: MIT
 
 # Script for generating server certificates and keys for TLS handshake benchmarking.
-# Generates classic, Post-Quantum, and Hybrid-PQC certificates using OpenSSL 3.5.0, 
+# Generates classic, Post-Quantum, and Hybrid-PQC certificates using OpenSSL 3.6.1, 
 # using PQC implementations natively available in OpenSSL and those integrated via OQS-Provider.
 # The generated key material must be copied to the client machine unless both client and server run on the same system.
 
@@ -47,7 +47,7 @@ function setup_base_env() {
     util_scripts="$root_dir/scripts/utility_scripts"
 
     # Declare the global library directory path variables
-    openssl_path="$libs_dir/openssl_3.5.0"
+    openssl_path="$libs_dir/openssl_3.6.1"
     oqs_provider_path="$libs_dir/oqs_provider"
 
     # Ensure that the OQS-Provider and OpenSSL libraries are present before proceeding
@@ -348,7 +348,7 @@ function main() {
     # Output the welcome message to the terminal
     echo "#########################################################"
     echo "PQC-LEO - TLS Certificate & Key Generator"
-    echo "Classic | PQC | Hybrid-PQC (OpenSSL 3.5.0 + OQS-Provider)"
+    echo "Classic | PQC | Hybrid-PQC (OpenSSL 3.6.1 + OQS-Provider)"
     echo -e "#########################################################\n"
 
     # Setup the base environment for the script

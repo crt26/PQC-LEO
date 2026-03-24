@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Copyright (c) 2023-2025 Callum Turino
+# Copyright (c) 2023-2026 Callum Turino
 # SPDX-License-Identifier: MIT
 
-# Script for controlling the TLS benchmarking suite using OpenSSL 3.5.0. Supports both OpenSSL native PQC algorithms and those 
+# Script for controlling the TLS benchmarking suite using OpenSSL 3.6.1. Supports both OpenSSL native PQC algorithms and those 
 # provided via OQS-Provider. It handles the configuration of test parameters, machine role assignment, port and environment 
 # validation, and result directory setup. Based on the selected machine role, the script calls the relevant client or 
 # server benchmarking script to perform handshake and speed tests across post-quantum, classical, and hybrid-pqc algorithm modes, 
@@ -377,7 +377,7 @@ function setup_base_env() {
     result_parser_script="$parsing_scripts/parse_results.py"
 
     # Declare the global library directory path variables
-    openssl_path="$libs_dir/openssl_3.5.0"
+    openssl_path="$libs_dir/openssl_3.6.1"
     oqs_provider_path="$libs_dir/oqs_provider"
 
     # Ensure that the OQS-Provider and OpenSSL libraries are present before proceeding
@@ -784,21 +784,67 @@ function configure_test_options {
         # Output the test parameters message to the user
         echo -e "=== Setting test parameters for the TLS Handshake and Speed tests ===\n"
 
+        # Set inf test length flags to their default value of false
+        inf_warning_printed="False"
+        enforce_safe_time_window="False"
+
         # Prompt the user for the TLS test length until a valid response is given
         while true; do
 
             # Prompt the user for their response and read it in
             read -p "Enter the desired length for each TLS Handshake test in seconds: " user_time_num
 
-            # Check if the input is a valid integer and export it to the environment if valid
+            # Check if the input is a valid integer before performing additional checks
             if [[ $user_time_num =~ ^[1-9][0-9]*$ ]]; then
-                export TIME_NUM="$user_time_num"
-                break
+
+                # Checks to handle instances of test length being in a range likely to cause inf values
+                if [ "$enforce_safe_time_window" == "False" ] && [ $user_time_num -lt 5 ]; then
+
+                    # Determine terminal width, create the warning message, and output the warning to the user
+                    local terminal_width=$(tput cols)
+                    warning_text="[WARNING] - TLS handshake test lengths less than 5 seconds may produce inf values for \"Connections Per User Second\" when testing certain signature/KEM combinations. "
+                    warning_text+="If you proceed with a lower test length, experimentation will continue to function, but there is a possibility that not all testing runs can be used in average calculations due to the "
+                    warning_text+="presence of inf in a given test run."
+                    printf "\n%s\n" "$warning_text" | fold -s -w "$terminal_width"
+                    echo -e "\nDetails on what this means, how it occurs, and how this impacts result average calculations are described in the following PQC-LEO documentation:\n"
+                    echo -e "https://github.com/crt26/PQC-LEO/blob/main/docs/performance_results/tls_handshake_inf_result_handling.md\n"
+
+                    # Set the warning printed flag to true
+                    inf_warning_printed="True"
+
+                    # Get the users response on how to proceed and determine next actions
+                    get_user_yes_no "Do you wish to assign a new TLS handshake test length?"
+
+                    if [ $user_y_n_response -eq 1 ]; then
+                        enforce_safe_time_window="True"
+                        echo -e "\n"
+                        continue
+                    else
+                        export TIME_NUM="$user_time_num"
+                        break
+                    fi
+
+                elif [ "$enforce_safe_time_window" == "True" ] && [ $user_time_num -lt 5 ]; then
+                    echo "[WARNING] - Please enter a test length of 5 or more seconds to avoid possible inf value occurrences"
+                    continue
+                
+                else
+                    export TIME_NUM="$user_time_num"
+                    break
+
+                fi
+
             else
-                echo -e "Invalid input. Please enter a valid integer above 0.\n"
+                echo -e "[WARNING] - Invalid input. Please enter a valid integer above 0.\n"
+
             fi
         
         done
+
+        # Add spacing if the inf warning was printed out
+        if [ "$inf_warning_printed" == "True" ]; then
+            echo -e "\n"
+        fi
 
         # Prompt the user for the TLS speed test length until a valid response is given
         while true; do

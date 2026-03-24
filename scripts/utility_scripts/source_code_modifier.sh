@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (c) 2023-2025 Callum Turino
+# Copyright (c) 2023-2026 Callum Turino
 # SPDX-License-Identifier: MIT
 
 # This utility script provides internal source code modification utilities used exclusively by the main setup script 
@@ -269,7 +269,7 @@ function setup_base_env() {
     util_scripts="$root_dir/scripts/utility_scripts"
 
     # Declare the global dependency library version variables
-    openssl_version="3.5.0"
+    openssl_version="3.6.1"
 
     # Declare the global source-code directory path variables
     liboqs_source="$tmp_dir/liboqs_source"
@@ -366,7 +366,7 @@ function modify_openssl_src() {
     fi
 
     # Set the default fallback value and emergency padding value for the MAX_KEM_NUM/MAX_SIG_NUM values in case of automatic detection failure
-    fallback_value=200
+    fallback_value=356
     emergency_padding=100
 
     # Determine the highest value between the default MAX_KEM_NUM and MAX_SIG_NUM values (they should be the same, but just in case)
@@ -518,15 +518,15 @@ function enable_oqs_algs() {
 
     fi
 
-    # Determine if the disabled signature algorithms should be enabled
+    # Determine if the algorithms disabled by default should be enabled
     if [ $enable_disabled_algs -eq 1 ]; then
 
-        # Ensure that the generate.yml file still follows the enable: true/enable: false format before proceeding
-        if ! grep -q "enable: true" "$oqs_provider_generate_file" || ! grep -q "enable: false" "$oqs_provider_generate_file"; then
+        # Ensure that the generate.yml file follows the expected enable: true/false and enable_tls: true/false format field before proceeding
+        if ! grep -Eq "enable:[[:space:]]*(true|false)" "$oqs_provider_generate_file" || ! grep -Eq "enable_tls:[[:space:]]*(true|false)" "$oqs_provider_generate_file"; then
 
             # Output the error message to the user and prompt for their choice on proceeding
-            echo -e "\n[WARNING] - The generate.yml file in the OQS-Provider library does not follow the expected format"
-            echo -e "this setup script cannot automatically enable all disabled signature algorithms\n"
+            echo -e "\n[WARNING] - The generate.yml file in the OQS-Provider library does not follow the expected enable:[True/False] or enable_tls:[True/False] format"
+            echo -e "this setup script cannot automatically enable all disabled signature algorithms or enable TLS for bikel1\n"
             get_user_yes_no "Would you like to continue with the setup process anyway?"
 
             # Determine the next action based on the user's response
@@ -541,12 +541,20 @@ function enable_oqs_algs() {
         fi
 
         # Modify the generate.yml file to enable all the disabled signature algorithms
-        sed -i 's/enable: false/enable: true/g' "$oqs_provider_generate_file"
-        #sed -i 's/enable_kem: false/enable_kem: true/g' "$oqs_provider_generate_file"
+        sed -i -E 's/enable:[[:space:]]*false/enable: true/g' "$oqs_provider_generate_file"
+
+        # Enable TLS operations for bikel1 its hybrid variants
+        sed -i "/name_group: 'bikel1'/,/family:/ s/enable_tls:[[:space:]]*false/enable_tls: true/" "$oqs_provider_generate_file"
 
         # Check if the generate.yml file was successfully modified
         if ! grep -q "enable: true" "$oqs_provider_generate_file"; then
             echo -e "\n[ERROR] - Enabling all disabled signature algorithms in the OQS-Provider library failed, please verify the setup and run a clean install"
+            exit 1
+        fi
+
+        # Check if bikel1 TLS was enabled successfully
+        if ! grep -A15 "name_group: 'bikel1'" "$oqs_provider_generate_file" | grep -q "enable_tls: true"; then
+            echo -e "\n[ERROR] - Enabling TLS for bikel1 failed (could not find enable_tls: true under name_group: 'bikel1')"
             exit 1
         fi
 

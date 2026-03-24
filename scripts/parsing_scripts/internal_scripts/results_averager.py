@@ -1,5 +1,5 @@
 """
-Copyright (c) 2023-2025 Callum Turino
+Copyright (c) 2023-2026 Callum Turino
 SPDX-License-Identifier: MIT
 
 Result averaging module for PQC benchmarking tools. Defines classes for calculating average metrics 
@@ -11,6 +11,7 @@ for memory, CPU speed, and TLS handshake, and TLS speed results, and exports the
 #------------------------------------------------------------------------------------------------------------------------------
 import pandas as pd
 import os
+import numpy as np
 
 #------------------------------------------------------------------------------------------------------------------------------
 class ComputationalAverager:
@@ -249,9 +250,12 @@ class TLSAverager:
         """ Method for taking in the provided PQC TLS handshake
             results and generating an average for all the runs for
             the machine-ID included in the results paths """
-       
+               
         # Process the result averages for both PQC (0) and PQC-Hybrid (1) TLS test types
         for type_index in range (0,2):
+
+            # Define the base average dataframe used to store all the signature/KEM averages for the current test type
+            base_avg_df = pd.DataFrame(columns=self.col_headers['pqc_based_avg_headers'])
 
             # Loop through each signing algorithm
             for sig in self.algs_dict[self.pqc_type_vars["sig_alg_type"][type_index]]:
@@ -260,10 +264,14 @@ class TLSAverager:
                 sig_path = os.path.join(self.dir_paths[self.pqc_type_vars['results_type'][type_index]], sig)
 
                 # Create the dataframe and filepaths
-                sig_avg_df = pd.DataFrame(columns=self.col_headers['pqc_based_headers'])
+                sig_avg_df = pd.DataFrame(columns=self.col_headers['pqc_based_avg_headers'])
                 
                 # Get the sig/kem averages by reading in the average for a specific kem across all runs
                 for kem in self.algs_dict[self.pqc_type_vars["kem_alg_type"][type_index]]:
+
+                    # Set runs used to default to the total number of runs
+                    first_runs_used = self.num_runs
+                    reused_runs_used = self.num_runs
 
                     # Reset the combined sig dataframe
                     sig_first_combined_df = pd.DataFrame(columns=self.col_headers['pqc_based_headers'])
@@ -294,22 +302,56 @@ class TLSAverager:
                         sig_first_average_row = [sig, kem, ""]
                         sig_reused_average_row = [sig, kem, "*"]
                     
+                    # Remove any runs that contain an inf value for the current sig/kem combo
+                    valid_sig_first_combined_df = sig_first_combined_df[~sig_first_combined_df.isin([np.inf, -np.inf]).any(axis=1)]
+                    valid_sig_reused_combined_df = sig_reused_combined_df[~sig_reused_combined_df.isin([np.inf, -np.inf]).any(axis=1)]
+
+                    # Calculate the number of runs used in the average for the current sig/kem combo
+                    first_runs_used = len(valid_sig_first_combined_df)
+                    reused_runs_used = len(valid_sig_reused_combined_df)
+
                     # Get the average value for each column and append to new row var
                     for column in self.col_headers['pqc_based_headers']:
+
+                        # Check if the current column is one that should be averaged
                         if column in self.col_headers['pqc_based_headers'][:3]:
                             continue
+
                         else:
-                            sig_first_average_row.append(float(sig_first_combined_df[column].mean()))
-                            sig_reused_average_row.append(float(sig_reused_combined_df[column].mean()))
-                    
+
+                            # Handle instances where there are no valid runs for the current sig/kem combo
+                            if valid_sig_first_combined_df.empty:
+                                sig_first_average_row.append("N/A")
+                            else:
+                                sig_first_average_row.append(float(valid_sig_first_combined_df[column].mean()))
+
+                            if valid_sig_reused_combined_df.empty:
+                                sig_reused_average_row.append("N/A")
+                            else:
+                                sig_reused_average_row.append(float(valid_sig_reused_combined_df[column].mean()))
+
+                    # Add the total runs and runs used in average to the end of the average rows
+                    sig_first_average_row.append(first_runs_used)
+                    sig_first_average_row.append(self.num_runs)
+                    sig_reused_average_row.append(reused_runs_used)
+                    sig_reused_average_row.append(self.num_runs)
+
                     # Append the average rows onto the averages dataframe
                     sig_avg_df.loc[len(sig_avg_df)] = sig_first_average_row
                     sig_avg_df.loc[len(sig_avg_df)] = sig_reused_average_row
+
+                # Append the current signing algorithm averages to the base average dataframe for the current test type
+                base_avg_df = pd.concat([base_avg_df, sig_avg_df], ignore_index=True, sort=False)
 
                 # Output the averages for the current signing algorithm to csv file
                 avg_out_filename = f"tls_handshake_{sig}_avg.csv"
                 avg_out_filepath = os.path.join(sig_path, avg_out_filename)
                 sig_avg_df.to_csv(avg_out_filepath, index=False)
+
+            # Output the base averages for the current test type to csv file
+            base_avg_filename = f"{self.pqc_type_vars['type_prefix'][type_index]}_base_results_avg.csv"
+            base_avg_filepath = os.path.join(self.dir_paths[self.pqc_type_vars["base_type"][type_index]], base_avg_filename)
+            base_avg_df.to_csv(base_avg_filepath, index=False)
 
     #------------------------------------------------------------------------------
     def gen_classic_avgs(self):

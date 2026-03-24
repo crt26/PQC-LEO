@@ -1,11 +1,13 @@
 # Automated PQC TLS Performance Benchmarking Tool - Usage Guide <!-- omit from toc -->
 
 ## Overview <!-- omit from toc -->
-This tool provides automated benchmarking for PQC-enabled TLS 1.3 handshakes and cryptographic operations within OpenSSL 3.5.0. It supports testing of both OpenSSL-native PQC algorithms and those integrated into OpenSSL via the OQS-Provider library. The benchmarking process evaluates TLS handshakes using Post-Quantum Cryptography (PQC) and Hybrid-PQC ciphersuites, as well as traditional cryptographic algorithms for a baseline comparison.
+This tool provides automated benchmarking for PQC-enabled TLS 1.3 handshakes and cryptographic operations within OpenSSL 3.6.1. It supports testing of both OpenSSL-native PQC algorithms and those integrated into OpenSSL via the OQS-Provider library. The benchmarking process evaluates TLS handshakes using Post-Quantum Cryptography (PQC) and Hybrid-PQC ciphersuites, as well as traditional cryptographic algorithms for a baseline comparison.
 
 Tests can be conducted either on a single machine (localhost) or across two networked machines, using a physical or virtual connection. The tool records detailed performance and timing metrics for each algorithm pairing evaluated during testing.
 
 The relevant PQC TLS Performance testing scripts can be found in the `scripts/test_scripts` directory from the project's root.
+
+>**Notice:** The versions of project dependencies used in PQC-LEO version 0.5.0 contains a known issue where certain signature/KEM combinations may produce values of `inf` for "Connections Per User Second" results in TLS handshake testing when using smaller testing windows. Please refer to the [Inf Result Value Occurrence Details](#inf-result-value-occurrence-details) section in this document for further information.
 
 ### Contents <!-- omit from toc -->
 - [Supported Hardware](#supported-hardware)
@@ -23,6 +25,7 @@ The relevant PQC TLS Performance testing scripts can be found in the `scripts/te
   - [Customising Testing Suite TCP Ports](#customising-testing-suite-tcp-ports)
   - [Adjusting Control Signalling](#adjusting-control-signalling)
 - [Disabling Automatic Result Parsing](#disabling-automatic-result-parsing)
+- [Inf Result Value Occurrence Details](#inf-result-value-occurrence-details)
 - [Useful External Documentation](#useful-external-documentation)
 
 ## Supported Hardware
@@ -32,7 +35,7 @@ The automated testing tool is currently only supported on the following devices:
 - ARM Linux devices using a 64-bit Debian-based Operating System
 
 ## Supported PQC Algorithms
-This tool supports all PQC and Hybrid-PQC algorithms available through OpenSSL 3.5.0 and the OQS-Provider. However, due to known incompatibilities and dependency limitations, a small number of algorithms are excluded from testing.
+This tool supports all PQC and Hybrid-PQC algorithms available through OpenSSL 3.6.1 and the OQS-Provider. However, due to known incompatibilities and dependency limitations, a small number of algorithms are excluded from testing.
 
 Additional information on the excluded algorithms can be found in the OpenSSL and OQS-Provider subsections in the following project documentation:
 
@@ -89,7 +92,9 @@ The testing tool will prompt you to enter the parameters for the test. These par
 - Number of test runs to be performed (must match on both machines)
 - IP address of the other machine (use 127.0.0.1 for single-machine testing)
 
-**†** Defines the duration (in seconds) the OpenSSL `s_time` tool will use for each handshake test window. The client will attempt as many TLS handshakes as possible for each algorithm combination during this period.
+**†** Defines the duration (in seconds) the OpenSSL `s_time` tool will use for each handshake test window. The client will attempt as many TLS handshakes as possible for each algorithm combination during this period. 
+
+**Note:** Using durations below 5 seconds may produce `inf` result values for some algorithm combinations. It is recommended to use higher test durations for more consistent results. See the [Inf Result Value Occurrence Details](#inf-result-value-occurrence-details) section for more information.
 
 **††** Defines the duration (in seconds) for benchmarking individual cryptographic operations (e.g., signing or key encapsulation) using the OpenSSL `s_speed` tool.
 
@@ -210,9 +215,24 @@ Disabling automatic parsing may be appropriate in scenarios such as:
 
 - Running tests in low-resource environments
 
+
+## Inf Result Value Occurrence Details
+Certain signature/KEM combinations may produce `inf` values for the **"Connections Per User Second"** metric during TLS handshake testing when using shorter test durations (typically below 5 seconds).
+
+PQC-LEO includes safeguards to:
+- warn users when a selected test duration may produce `inf` values
+- exclude affected runs from average calculations while tracking the number of valid runs used
+
+It is recommended to use TLS handshake test durations of **5 seconds or greater** to ensure all runs can be used in average calculations.
+
+For a detailed explanation of this behaviour and how it is handled, please refer to:
+
+- [Inf Result Value Occurrence Details](../performance_results/tls_handshake_inf_result_handling.md)
+
+
 ## Useful External Documentation
-- [OpenSSL(3.5.0) Release](https://github.com/openssl/openssl/releases/tag/openssl-3.5.0)
-- [OpenSSL(3.5.0) Documentation](https://docs.openssl.org/3.5/)
+- [OpenSSL(3.6.1) Release](https://github.com/openssl/openssl/releases/tag/openssl-3.6.1)
+- [OpenSSL(3.6.1) Documentation](https://docs.openssl.org/3.6/)
 - [OQS-Provider Webpage](https://openquantumsafe.org/applications/tls.html#oqs-openssl-provider)
 - [OQS-Provider GitHub Page](https://github.com/open-quantum-safe/oqs-provider)
 - [Latest OQS-Provider Release Notes](https://github.com/open-quantum-safe/oqs-provider/blob/main/RELEASE.md)

@@ -1,19 +1,13 @@
 # PQC-LEO <!-- omit from toc -->
 
-### Project Description
+## Project Description <!-- omit from toc -->
 PQC-LEO (PQC-Library Evaluation Operator) provides an automated and comprehensive evaluation framework for benchmarking Post-Quantum Cryptography (PQC) algorithms. It is designed for researchers and developers looking to evaluate the feasibility of integrating PQC into their environments. The framework streamlines the setup and testing of PQC implementations, enabling the collection of computational and networking performance metrics across x86 and ARM systems through a suite of dedicated automation scripts.
 
-PQC implementations are sourced from multiple libraries, including algorithms natively supported in OpenSSL 3.5.0 and those available from the [Open Quantum Safe (OQS)](https://openquantumsafe.org/) project's `Liboqs` and `OQS-Provider` libraries. The framework also provides automated mechanisms for testing PQC TLS handshake performance across physical or virtual networks, providing valuable insight into real-world environment testing. Results are outputted as raw CSV files that are automatically processed using the provided Python parsing scripts to provide detailed metrics and averages ready for analysis.
+PQC implementations are sourced from multiple libraries, including algorithms natively supported in OpenSSL 3.6.1 and those available from the [Open Quantum Safe (OQS)](https://openquantumsafe.org/) project's `Liboqs` and `OQS-Provider` libraries. The framework also provides automated mechanisms for testing PQC TLS handshake performance across physical or virtual networks, providing valuable insight into real-world environment testing. Results are outputted as raw CSV files that are automatically processed using the provided Python parsing scripts to provide detailed metrics and averages ready for analysis.
 
 Future versions of the project aim to support additional PQC libraries, further expanding the scope of supported benchmarking.
 
->**Migration Notice:** 
->
->This project has been **renamed** from pqc-evaluation-tools to PQC-LEO.
->
-> **Please update** any existing local clones to reference the new repository name. This notice will be removed at the release of the next major version. 
-
-### Supported Automation Functionality
+### Supported Automation Functionality <!-- omit from toc -->
 The project provides automation for:
 
 - Verifying and installing required system packages and Python PIP dependencies.
@@ -22,16 +16,32 @@ The project provides automation for:
 
 - Collecting PQC computational performance data, including CPU and peak memory usage metrics, using the Liboqs library.
 
-- Gathering networking performance data for PQC schemes integrated into the TLS 1.3 protocol using the PQC support available natively in OpenSSL 3.5.0 and via the OQS-Provider.
+- Gathering networking performance data for PQC schemes integrated into the TLS 1.3 protocol using the PQC support available natively in OpenSSL 3.6.1 and via the OQS-Provider.
 
 - Coordinated PQC TLS handshake tests run over the loopback interface or across physical networks between a server and client device.
 
 - Automatic or manual parsing of raw performance data, including calculating averages across multiple test runs.
 
-### Project Development
+### Project Development <!-- omit from toc -->
 For details on the project's development and upcoming features, see the project's GitHub Projects page:
 
 [PQC-LEO Project Page](https://github.com/users/crt26/projects/2)
+
+### Citation and Academic Use <!-- omit from toc -->
+If using PQC-LEO within academic research or publication, please cite the following paper which formally introduces the framework:
+
+```
+@inproceedings{turino2025pqc,
+  title={PQC-LEO: An Evaluation Framework for Post-Quantum Cryptographic Algorithms},
+  author={Turino, Callum and Buchanan, William J and Lo, Owen and Th{\"u}mmler, Christoph},
+  booktitle={2025 IEEE 7th International Conference on Trust, Privacy and Security in Intelligent Systems, and Applications (TPS-ISA)},
+  pages={237--247},
+  year={2025},
+  organization={IEEE}
+}
+```
+
+Paper DOI: [10.1109/TPS-ISA67132.2025.00033](https://doi.org/10.1109/TPS-ISA67132.2025.00033)
 
 ## Contents <!-- omit from toc -->
 - [Supported Hardware and Software](#supported-hardware-and-software)
@@ -61,19 +71,19 @@ The automated testing tool is currently only supported in the following environm
 ### Tested Cryptographic Dependency Libraries <!-- omit from toc -->
 This version of the repository has been fully tested with the following library versions:
 
-- Liboqs Version: Post-0.13.0 commit **†**
+- Liboqs Version: 0.15.0
 
-- OQS-Provider Version 0.9.0
+- OQS-Provider Version 0.11.0
 
-- OpenSSL Version 3.5.0
+- OpenSSL Version 3.6.1
 
-By default, this repository is configured to use the **last tested versions** of the OQS libraries. This helps ensure that all automation scripts operate reliably with known working versions. The listed OpenSSL version remains fixed at 3.5.0 to maintain compatibility with the OQS-Provider and the project's performance testing tools. 
+By default, this repository is configured to use the **last tested versions** of the OQS libraries. This helps ensure that all automation scripts operate reliably with known working versions. The listed OpenSSL version remains fixed at 3.6.1 to maintain compatibility with the OQS-Provider library and the project's performance testing tools.
 
 While this setup maximises reliability, users who need access to more recent updates may configure the setup process accordingly. However, please note that the OQS libraries are still in active development, and upstream changes may occasionally break compatibility with this project’s automation scripts. This is detailed further in the [Installation Instructions](#installation-instructions) section.
 
 If any such issues arise, please report them to this repository’s GitHub Issues page so they can be addressed promptly. Instructions for modifying the library versions used by the benchmarking suite are provided in the Installation Instructions section.
 
-**†** For information on the specific commits used for the last tested versions of the dependency libraries, see the [Project Dependencies](./docs/developer_information/project_dependencies.md) documentation.
+For information on the specific project dependencies libraries used by PQC-LEO, see the [Project Dependencies](./docs/developer_information/project_dependencies.md) documentation.
 
 ## Supported Cryptographic Algorithms
 For further information on the classical and PQC algorithms this project provides support for, including information on any exclusions, please refer to the following documentation:
@@ -118,17 +128,17 @@ When executing the setup script, you will be prompted to select one of the follo
 
 3. **TLS Testing Libraries Only** - Installs only the TLS benchmarking components. (**Requires Option 1 has already been completed**).
 
-The setup script will also build [OpenSSL 3.5.0](https://github.com/openssl/openssl/releases/tag/openssl-3.5.0) inside the repository’s `lib` directory. This version is required to support the OQS libraries and is built separately from the system’s default OpenSSL installation. It will not interfere with system-level binaries.
+The setup script will also build [OpenSSL 3.6.1](https://github.com/openssl/openssl/releases/tag/openssl-3.6.1) inside the repository’s `lib` directory. This version is required to support the OQS libraries and is built separately from the system’s default OpenSSL installation. It will not interfere with system-level binaries.
 
 If the TLS testing libraries are installed (Options 2 or 3), you will be prompted with the following additional setup options:
 
-- **Enable all disabled signature algorithms** – Includes all digital signature algorithms in the OQS-Provider library that are disabled by default. This ensures the full range of supported algorithms can be tested in the TLS performance testing **†**.
+- **Enable all disabled OQS-Provider algorithms supported by PQC-LEO** – Enables OQS-Provider algorithms supported by PQC-LEO that are disabled by default. This ensures the full range of supported algorithms can be tested in the TLS performance benchmarking **†**.
 
 - **Enable KEM encoders** – Adds support for OpenSSL’s optional KEM encoder functionality. The benchmarking suite does not currently use this feature, but it is available for developers who wish to experiment with it.
 
 Once all the relevant options have been selected, the setup script will download, configure and build each library. It will also tailor the builds for your system architecture by applying appropriate build flags.
 
-> † Enabling all signature algorithms may cause the OpenSSL speed tool to fail due to internal limits in its source code. The setup script attempts to patch this automatically, but you can configure this process manually. Please refer to the [Advanced Setup Configuration](docs/advanced_setup_configuration.md) for further details.
+> † Enabling all disabled OQS-Provider algorithms may cause the OpenSSL speed tool to fail due to internal limits in its source code. The setup script attempts to patch this automatically, but you can configure this process manually. Please refer to the [Advanced Setup Configuration](docs/advanced_setup_configuration.md) for further details.
 
 ### Ensuring Root Dir Path Marker is Present
 A hidden file named `.pqc_leo_dir_marker.tmp` is created in the project's root directory during setup. Automation scripts use this marker to reliably identify the root path, which is essential for their correct operation.
@@ -176,7 +186,7 @@ For detailed usage instructions, please refer to:
 > **Notice:** Memory profiling for Falcon algorithm variants is currently non-functional on **ARM** systems due to issues with the scheme and the Valgrind Massif tool. Please see the [bug report](https://github.com/open-quantum-safe/liboqs/issues/1761) for details. Testing and parsing remain fully functional for all other algorithms.
 
 ### TLS Performance Testing
-This tool benchmarks the performance of PQC, Hybrid-PQC, and classical algorithms when used in the TLS 1.3 protocol. It utilises the PQC implementations natively available in OpenSSL 3.5.0 and those added via the OQS-Provider.
+This tool benchmarks the performance of PQC, Hybrid-PQC, and classical algorithms when used in the TLS 1.3 protocol. It utilises the PQC implementations natively available in OpenSSL 3.6.1 and those added via the OQS-Provider.
 
 It conducts two types of testing:
 
@@ -189,6 +199,8 @@ Testing can be performed on a single machine or across two machines connected vi
 For detailed usage instructions, please refer to:
 
 [Automated TLS Performance Testing Instructions](docs/testing_tools_usage/tls_performance_testing.md)
+
+>**Notice:** The versions of project dependencies used in PQC-LEO version 0.5.0 contains a known issue where certain signature/KEM combinations may produce values of `inf` for "Connections Per User Second" results in TLS handshake testing when using smaller testing windows. Please refer to the [TLS Handshake Inf Result Handling](./docs/performance_results/tls_handshake_inf_result_handling.md) documentation for further information.
 
 ### Testing Output Files
 After the testing has been completed, unparsed results and automatically parsed results will be stored in the generated `test_data/` directory:
@@ -239,7 +251,7 @@ The information provided in the internal documentation is also available through
 - [OQS-Provider GitHub Page](https://github.com/open-quantum-safe/oqs-provider)
 - [Latest Liboqs Release Notes](https://github.com/open-quantum-safe/liboqs/blob/main/RELEASE.md)
 - [Latest OQS-Provider Release Notes](https://github.com/open-quantum-safe/oqs-provider/blob/main/RELEASE.md)
-- [OpenSSL(3.5.0) Documentation](https://docs.openssl.org/3.5/)
+- [OpenSSL(3.6.1) Documentation](https://docs.openssl.org/3.6/)
 - [TLS 1.3 RFC 8446](https://www.rfc-editor.org/rfc/rfc8446)
 
 ## Licence

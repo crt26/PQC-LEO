@@ -1,5 +1,5 @@
 # Advanced Setup Configurations
-This document outlines additional configuration options when running the `setup.sh` script. The main setup supports the following advanced configurations:
+This document outlines additional configuration options available when running the `setup.sh` script. The script supports the following advanced configurations:
 
 - Use the latest versions of the OQS dependency libraries
 - Manually adjusting OpenSSL's `s_speed` tool hardcoded limits
@@ -17,7 +17,7 @@ This option may provide access to the most recent algorithm updates and bug fixe
 For more information on the specific versions used by default, see the [Project Dependencies](./developer_information/project_dependencies.md) documentation.
 
 ## Adjusting OpenSSL Speed Tool Hardcoded Limits
-When using either the `full` or `TLS-only` install modes, an optional prompt will appear that allows enabling all digital signature algorithms that are disabled by default in the OQS-Provider library.
+When using either the `full` or `TLS-only` install modes, an optional prompt will appear that allows enabling all algorithms in the OQS-Provider library supported by PQC-LEO that are disabled by default.
 
 By default, the main setup script will attempt to detect and patch these values automatically in the `s_speed` tool's source code to increase the hardcoded limits if needed. However, if you wish to manually set a custom value (or if auto-patching fails), you can use the following flag:
 
