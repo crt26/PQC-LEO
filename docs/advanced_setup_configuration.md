@@ -1,5 +1,5 @@
 # Advanced Setup Configurations
-This document outlines additional configuration options when running the `setup.sh` script. The main setup supports the following advanced configurations:
+This document outlines additional configuration options available when running the `setup.sh` script. The script supports the following advanced configurations:
 
 - Use the latest versions of the OQS dependency libraries
 - Manually adjusting OpenSSL's `s_speed` tool hardcoded limits

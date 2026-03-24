@@ -1,7 +1,7 @@
 # Project Dependencies <!-- omit from toc -->
 
 ## Document Overview <!-- omit from toc -->
-This document provides a comprehensive overview of the dependencies required to build and run the PQC-LEO suite. Installation and management of these dependencies are fully automated and handled during execution of the main setup script.
+This document provides a comprehensive overview of the dependencies used by the PQC-LEO framework. Installation and management of these dependencies are fully automated and handled during execution of the main setup script.
 
 While this information is primarily intended for developers and contributors who need insight into the project's build and runtime environment, it may also be helpful for users who wish to override the default cryptographic library versions.
 
@@ -13,20 +13,20 @@ This document outlines:
 
 This information helps clarify which software components the project relies on and how the setup script maintains a consistent, reproducible environment. It also includes notes on default versions and how to use alternatives if needed.
 
-### Contents <!-- omit from toc -->
+## Contents <!-- omit from toc -->
 - [Required Hardware and Operating Systems](#required-hardware-and-operating-systems)
 - [Cryptographic Dependency Libraries](#cryptographic-dependency-libraries)
 - [System Package Dependencies](#system-package-dependencies)
 - [Python PIP Dependencies](#python-pip-dependencies)
 
 ## Required Hardware and Operating Systems
-The automated testing tool is currently only supported in the following environments:
+PQC-LEO is currently only supported in the following environments:
 
 - x86 Linux Machines using a Debian-based operating system
 - ARM Linux devices using a 64-bit Debian-based Operating System
 
 ## Cryptographic Dependency Libraries
-This document lists the **specific commits** used as the last tested versions of the project's core dependencies. These versions are pinned by default during setup to ensure compatibility with the PQC-LEO benchmarking framework.
+This section lists the **last tested versions** of the project's core dependencies. These versions are pinned by default during setup to ensure compatibility with the PQC-LEO benchmarking framework.
 
 ### Last Tested Versions <!-- omit from toc -->
 
@@ -41,7 +41,7 @@ This document lists the **specific commits** used as the last tested versions of
 
 For setup instructions and details on using the latest cryptographic dependency versions,  please see:
 
-- [Installation Instructions](../../README.md#installation-instructions) section in the main README.
+- [README Installation Instructions](../../README.md#installation-instructions)
 - [Advanced Setup Configuration](../advanced_setup_configuration.md)
 
 ## System Package Dependencies
