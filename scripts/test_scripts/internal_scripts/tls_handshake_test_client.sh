@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (c) 2023-2025 Callum Turino
+# Copyright (c) 2023-2026 Callum Turino
 # SPDX-License-Identifier: MIT
 
 # Client-side script for executing TLS handshake performance tests in coordination with a remote server.
@@ -327,6 +327,7 @@ function pqc_tests() {
                     elif [ "$test_type" -eq 1 ]; then
                         cert_file="$hybrid_cert_dir/""${sig/:/_}""_srv.crt"
                         handshake_dir=$HYBRID_HANDSHAKE
+                        
                     fi
 
                     # Set the output filename based on the current combination and run

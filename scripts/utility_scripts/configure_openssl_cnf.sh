@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (c) 2023-2025 Callum Turino
+# Copyright (c) 2023-2026 Callum Turino
 # SPDX-License-Identifier: MIT
 
 # Utility script for toggling the OpenSSL configuration settings in the openssl.cnf file to enable or 

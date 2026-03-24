@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (c) 2023-2025 Callum Turino
+# Copyright (c) 2023-2026 Callum Turino
 # SPDX-License-Identifier: MIT
 
 # Script for controlling the TLS benchmarking suite using OpenSSL 3.6.1. Supports both OpenSSL native PQC algorithms and those 

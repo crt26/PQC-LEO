@@ -1,5 +1,5 @@
 """
-Copyright (c) 2023-2025 Callum Turino
+Copyright (c) 2023-2026 Callum Turino
 SPDX-License-Identifier: MIT
 
 Utility script for retrieving supported cryptographic algorithms from the Liboqs, OpenSSL (classic + PQC), and OQS-Provider libraries. 
@@ -457,7 +457,7 @@ def main():
 
         elif sys.argv[1] == "2":
 
-            #Ensure that the Liboqs, OpenSSL, and OQS-Provider libraries are present before continuing
+            # Ensure that the Liboqs, OpenSSL, and OQS-Provider libraries are present before continuing
             if not os.path.isdir(liboqs_build_dir):
                 print("[ERROR]- Liboqs library not found")
                 sys.exit(1)
