@@ -54,6 +54,7 @@ function setup_base_env() {
     enable_oqs_hqc=0 # temp flag for hqc bug fix
     warning_given=0 # temp flag to indicate if the user has accepted the warning about HQC KEM algorithms
     allow_hqc=0 # temp flag to indicate if the user has accepted the warning about HQC KEM algorithms
+    special_cmake_handling=0
 
     # Declare the global flags for enabling OQS-Provider build options
     oqs_enable_algs=0
@@ -96,6 +97,23 @@ function get_user_yes_no() {
         esac
 
     done
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
+function build_status_checker() {
+    # Helper function for checking the exit status of build commands. The function takes the exit status and an string with 
+    # the build step name as arguments, and checks if the exit status is non-zero.
+
+    # Define local variables to store the passed function arguments
+    local return_status="$1"
+    local build_step="$2"
+    
+    # Check if the passed return status is failed exit code
+    if [ "$return_status" -ne 0 ]; then
+        echo -e "\n[ERROR] - $build_step failed, please verify the installation and rerun the setup script"
+        exit 1
+    fi
 
 }
 
@@ -655,6 +673,42 @@ function dependency_install() {
         python_bin="python"
     fi
 
+    # Get the version of CMake that is installed on the system
+    cmake_version=$(cmake --version | head -n 1 | awk '{print $3}')
+    exit_status=$?
+    
+    if [ "$exit_status" -ne 0 ] || [ -z "$cmake_version" ] || ! [[ "$cmake_version" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+
+        # Output the warning message to the user about the failure to determine the CMake version
+        local terminal_width=$(tput cols)
+        warning_text="[WARNING] - Failed to determine the version of CMake installed on the system. This will limit the setup script's ability to handle older versions of CMake. "
+        warning_text+="This will only cause issues if using a CMake version older than 3.23.0."
+        printf "\n%s\n" "$warning_text" | fold -s -w "$terminal_width"
+
+        # Ask the user if they would like to continue with the setup process and determine the next steps based on their response
+        get_user_yes_no "Would you like to continue with the setup process anyway?"
+
+        if [ "$user_y_n_response" -eq 1 ]; then
+            echo -e "\nContinuing with the setup process...\n"
+            special_cmake_handling=0
+        else
+            echo -e "\nExiting setup process, please update CMake to version 3.23.0 or later and re-run the setup script...\n"
+            exit 0
+        fi
+
+    else
+
+        # Enable special handling if the installed CMake version is older than 3.23.0
+        if [ "$cmake_version" != "3.23.0" ] && printf '%s\n%s\n' "$cmake_version" "3.23.0" | sort -V -C; then
+            echo "[NOTICE] - Detected CMake version is older than 3.23.0, enabling special handling for older CMake versions in the setup process"
+            sleep 1
+            special_cmake_handling=1
+        else
+            special_cmake_handling=0
+        fi
+
+    fi
+
     # Output the system dependency check completion message
     echo "Dependency checks complete"
 
@@ -704,12 +758,26 @@ function openssl_build() {
 
         fi
 
-        # Build the required version of OpenSSL in the project's directory structure only, not system-wide
+        # Output the current task to the terminal and move into the OpenSSL source directory
         echo "Building OpenSSL Library"
         cd $openssl_source
+
+        # Configure the OpenSSL build to be used by PQC-LEO
         ./config --prefix="$openssl_path" --openssldir="$openssl_path" shared >/dev/null
+        exit_status=$?
+        build_status_checker "$exit_status" "OpenSSL configuration"
+
+        # Build the OpenSSL library
         make -j $threads >/dev/null
+        exit_status=$?
+        build_status_checker "$exit_status" "OpenSSL build"
+
+        # Install the OpenSSL library to the PQC-LEO lib directory
         make -j $threads install >/dev/null
+        exit_status=$?
+        build_status_checker "$exit_status" "OpenSSL installation"
+
+        # Return to the project root directory and output the build completion message to the user
         cd $root_dir
         echo -e "OpenSSL build complete"
 
@@ -763,18 +831,16 @@ function enable_arm_pmu() {
     git clone --branch main https://github.com/mupq/pqax.git
     cd "$libs_dir/pqax/enable_ccr"
 
-    # Enable user space access to the ARM PMU
+    # Build the enable_ccr module to allow user space access to the ARM PMU
     make
-    make_status=$?
-    make install
-    make_install_status=$?
-    cd $root_dir
+    exit_status=$?
+    build_status_checker "$exit_status" "ARM PMU enable - build"
 
-    # Check if the make and make install commands were successful
-    if [ "$make_status" -ne 0 ] || [ "$make_install_status" -ne 0 ]; then
-        echo -e "\n[ERROR] - PMU build failed, please check the system and try again\n"
-        exit 1
-    fi
+    # Install the enable_ccr module and return to the root directory
+    make install
+    exit_status=$?
+    build_status_checker "$exit_status" "ARM PMU enable - install"
+    cd $root_dir
 
     # Ensure that the system has user access to the ARM PMU
     if lsmod | grep -q 'enable_ccr'; then
@@ -792,6 +858,9 @@ function liboqs_build() {
     # Function to build the Liboqs dependency library. Detects system architecture and configures the build process accordingly.
     # On ARM devices, enables user space access to the ARM PMU if needed. Handles optional enabling of HQC algorithms and 
     # replaces default test_mem files with project-specific versions for benchmarking.
+
+    # Set the default value for the custom build flags
+    build_flags=""
 
     # Building Liboqs if the install type selected is 0 or 1
     if [ "$install_type" -eq 0 ] || [ "$install_type" -eq 1 ]; then
@@ -855,7 +924,16 @@ function liboqs_build() {
             hqc_flag=""
         fi
 
-        # Build Liboqs using CMake
+        # Determine if the CMake command requires a custom lib suffix
+        if [ $special_cmake_handling -eq 1 ]; then
+            if [ "$build_flags" == "" ]; then
+                build_flags="-DCMAKE_FIND_LIBRARY_CUSTOM_LIB_SUFFIX=64"
+            else
+                build_flags="$build_flags -DCMAKE_FIND_LIBRARY_CUSTOM_LIB_SUFFIX=64"
+            fi
+        fi
+
+        # Configure the Liboqs build with CMake using the specified build options and flags
         cmake -GNinja \
             -S "$liboqs_source/" \
             -B "$liboqs_path/build" \
@@ -864,9 +942,18 @@ function liboqs_build() {
             -DOPENSSL_ROOT_DIR="$openssl_path" \
             $build_flags \
             $hqc_flag
+        exit_status=$?
+        build_status_checker "$exit_status" "Liboqs configuration"
 
+        # Build the Liboqs library
         cmake --build "$liboqs_path/build" -- -j $threads
+        exit_status=$?
+        build_status_checker "$exit_status" "Liboqs build"
+
+        # Install the Liboqs library to the specified install path
         cmake --build "$liboqs_path/build" --target install -- -j $threads
+        exit_status=$?
+        build_status_checker "$exit_status" "Liboqs installation"
 
         # Output the install success message to the terminal
         echo -e "\nLiboqs Install Complete"
@@ -880,6 +967,9 @@ function oqs_provider_build() {
     # Function for building the OQS-Provider dependency library. Configures the build process, enables disabled signature algorithms 
     # if requested, patches the generate.yml file, and runs the code generator. Ensures correct paths for OpenSSL and Liboqs, 
     # applies the KEM encoder option, and handles errors for missing or malformed configuration files.
+
+    # Set the default value for the custom build flags
+    build_flags=""
 
     # Output the current task to the terminal
     echo -e "\n#######################"
@@ -907,16 +997,35 @@ function oqs_provider_build() {
 
     fi
 
-    # Build the OQS-Provider library
+    # Determine if the CMake command requires a custom lib suffix
+    if [ $special_cmake_handling -eq 1 ]; then
+        if [ "$build_flags" == "" ]; then
+            build_flags="-DCMAKE_FIND_LIBRARY_CUSTOM_LIB_SUFFIX=64"
+        else
+            build_flags="$build_flags -DCMAKE_FIND_LIBRARY_CUSTOM_LIB_SUFFIX=64"
+        fi
+    fi
+
+    # Configure the OQS-Provider build with CMake using the specified build options and flags
     cmake -S $oqs_provider_source \
         -B "$oqs_provider_path" \
         -DCMAKE_INSTALL_PREFIX="$oqs_provider_path" \
         -DOPENSSL_ROOT_DIR="$openssl_path" \
         -Dliboqs_DIR="$liboqs_path/lib/cmake/liboqs" \
-        -DOQS_KEM_ENCODERS="$encoder_flag"
+        -DOQS_KEM_ENCODERS="$encoder_flag" \
+        $build_flags
+    exit_status=$?
+    build_status_checker "$exit_status" "OQS-Provider configuration"
 
+    # Build the OQS-Provider library
     cmake --build "$oqs_provider_path" -- -j $(nproc)
+    exit_status=$?
+    build_status_checker "$exit_status" "OQS-Provider build"
+
+    # Install the OQS-Provider library to the specified install path
     cmake --install "$oqs_provider_path"
+    exit_status=$?
+    build_status_checker "$exit_status" "OQS-Provider installation"
 
     # Output the install complete message to the terminal
     echo "OQS-Provider Install Complete"
