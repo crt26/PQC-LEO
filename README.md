@@ -18,12 +18,6 @@ PQC implementations are sourced from multiple libraries, including algorithms na
 
 Future versions of the project aim to support additional PQC libraries, further expanding the scope of supported benchmarking.
 
->**Migration Notice:** 
->
->This project has been **renamed** from pqc-evaluation-tools to PQC-LEO.
->
-> **Please update** any existing local clones to reference the new repository name. This notice will be removed at the release of the next major version. 
-
 ### Supported Automation Functionality
 The project provides automation for:
 
