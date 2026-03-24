@@ -11,14 +11,14 @@ For full details on the project's development and the current development task l
 
 [PQC-LEO Project Page](https://github.com/users/crt26/projects/2)
 
-### Project Description
+## Project Description <!-- omit from toc -->
 PQC-LEO (PQC-Library Evaluation Operator) provides an automated and comprehensive evaluation framework for benchmarking Post-Quantum Cryptography (PQC) algorithms. It is designed for researchers and developers looking to evaluate the feasibility of integrating PQC into their environments. The framework streamlines the setup and testing of PQC implementations, enabling the collection of computational and networking performance metrics across x86 and ARM systems through a suite of dedicated automation scripts.
 
 PQC implementations are sourced from multiple libraries, including algorithms natively supported in OpenSSL 3.6.1 and those available from the [Open Quantum Safe (OQS)](https://openquantumsafe.org/) project's `Liboqs` and `OQS-Provider` libraries. The framework also provides automated mechanisms for testing PQC TLS handshake performance across physical or virtual networks, providing valuable insight into real-world environment testing. Results are outputted as raw CSV files that are automatically processed using the provided Python parsing scripts to provide detailed metrics and averages ready for analysis.
 
 Future versions of the project aim to support additional PQC libraries, further expanding the scope of supported benchmarking.
 
-### Supported Automation Functionality
+### Supported Automation Functionality <!-- omit from toc -->
 The project provides automation for:
 
 - Verifying and installing required system packages and Python PIP dependencies.
@@ -33,10 +33,26 @@ The project provides automation for:
 
 - Automatic or manual parsing of raw performance data, including calculating averages across multiple test runs.
 
-### Project Development
+### Project Development <!-- omit from toc -->
 For details on the project's development and upcoming features, see the project's GitHub Projects page:
 
 [PQC-LEO Project Page](https://github.com/users/crt26/projects/2)
+
+### Citation and Academic Use <!-- omit from toc -->
+If using PQC-LEO within academic research or publication, please cite the following paper which formally introduces the framework:
+
+```
+@inproceedings{turino2025pqc,
+  title={PQC-LEO: An Evaluation Framework for Post-Quantum Cryptographic Algorithms},
+  author={Turino, Callum and Buchanan, William J and Lo, Owen and Th{\"u}mmler, Christoph},
+  booktitle={2025 IEEE 7th International Conference on Trust, Privacy and Security in Intelligent Systems, and Applications (TPS-ISA)},
+  pages={237--247},
+  year={2025},
+  organization={IEEE}
+}
+```
+
+Paper DOI: [10.1109/TPS-ISA67132.2025.00033](https://doi.org/10.1109/TPS-ISA67132.2025.00033)
 
 ## Contents <!-- omit from toc -->
 - [Supported Hardware and Software](#supported-hardware-and-software)
