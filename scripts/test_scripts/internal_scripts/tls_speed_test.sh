@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (c) 2023-2025 Callum Turino
+# Copyright (c) 2023-2026 Callum Turino
 # SPDX-License-Identifier: MIT
 
 # Client-side script for benchmarking the performance of cryptographic algorithms used in TLS, including 

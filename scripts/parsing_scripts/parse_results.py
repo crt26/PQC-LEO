@@ -1,5 +1,5 @@
 """
-Copyright (c) 2023-2025 Callum Turino
+Copyright (c) 2023-2026 Callum Turino
 SPDX-License-Identifier: MIT
 
 Controller script for parsing PQC performance results produced by the computational and TLS testing tools.
