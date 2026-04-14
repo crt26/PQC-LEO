@@ -344,7 +344,7 @@ These schemes help assess the overhead and feasibility of PQC adoption in real-w
 | **Algorithm Name** | **Hybrid Algorithm (*)** | **TLS Handshake Test Support (*)** | **OpenSSL Speed Test Support (*)** |
 |--------------------|:------------------------:|:----------------------------------:|:----------------------------------:|
 | MLKEM512           |                          |                  *                 |                  *                 |
-| MLKEM768           |                          |                  *                 |                                    |
+| MLKEM768           |                          |                  *                 |                  *                 |
 | MLKEM1024          |                          |                  *                 |                  *                 |
 | X25519MLKEM768     |             *            |                  *                 |                  *                 |
 | X448MLKEM1024      |             *            |                                    |                  *                 |
