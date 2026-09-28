@@ -49,7 +49,7 @@ The controller API provides an abstraction layer for controlling the energy usag
 
 The following library file is produced when the energy collector tools are built, which contains the controller API functions:
 
-- libcontroller.a
+- `libcontroller_api.a`
 
 It consists of the following header files which contain the function prototypes for the controller API functions:
 
@@ -455,7 +455,7 @@ typedef struct {
 - `float polling_rate`: Energy polling rate in miliseconds.
 
 ## Controller Utils Functions
-The following are various utility functions that are included within the `libcontroller.a` library and are defined in the `controller_utils.h` header file. These functions are used to assist with various tasks related to the controller API functions, such as parsing control signal messages, validating control signal messages, and converting between different data types. The following utility functions are available:
+The following are various utility functions that are included within the `libcontroller_api.a` library and are defined in the `controller_utils.h` header file. These functions are used to assist with various tasks related to the controller API functions, such as parsing control signal messages, validating control signal messages, and converting between different data types. The following utility functions are available:
 
 - list_com_ports()
 - get_ip_address()

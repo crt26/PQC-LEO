@@ -12,7 +12,7 @@ Please ensure you have read through the information provided within the main [En
 - [Outputted Results](#outputted-results)
 
 ## Testing Tool Overview
-The automated testing script for evaluating the PQC computational energy usage is located in the `scripts/testing_scripts` directory. Please ensure that the basic environment setup has been performed before proceeding with this category of testing. This information can found in the [Energy Usage Testing Guide](../../testing_tools_usage/pqc_energy_usage_testing.md).
+The automated testing script for evaluating the PQC computational energy usage is located in the `scripts/test_scripts` directory. Please ensure that the basic environment setup has been performed before proceeding with this category of testing. This information can found in the [Energy Usage Testing Guide](../../testing_tools_usage/pqc_energy_usage_testing.md).
 
 This testing script provides an automation layer for the [comp_energy_tester](../../project_tools_guides/comp_energy_tester_usage_guide.md) tool, a C-based executable that performs post-quantum cryptographic operations while measuring energy consumption. The script allows users to configure the testing parameters and launch the executable, which utilises the PQC implementations available in the Liboqs library to execute the selected cryptographic operations for a user-specified number of iterations.
 
@@ -40,7 +40,7 @@ Please then select the `PQC Performance Energy Testing` collection type and proc
 Once the environment is ready and the collection machine has been activated, the testing machine script can be launched using the following command:
 
 ```
-./pqc_energy_usage_test.sh
+./pqc_performance_energy_test.sh
 ```
 
 Additional command line arguments can be passed to the testing script which enable advanced customisation of the automated testing process. For details of all advanced testing options, please refer to the [Energy Usage Testing Guide](../pqc_energy_usage_testing.md#advanced-testing-options). Of these advanced options, the ones supported by the PQC computational energy usage script are:

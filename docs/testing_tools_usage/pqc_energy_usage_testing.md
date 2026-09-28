@@ -49,11 +49,13 @@ This testing category evaluates the energy usage of PQC, Hybrid-PQC, and classic
 ### General Requirements
 To utilise the automated testing script for PQC energy usage evaluation, there are a few general requirements and details to be aware of:
 
-- Installation mode `1` or `2` of the setup script must be selected, with yes being selected when prompted to install the energy usage testing tools and dependencies.
+- On the testing machine, select installation mode `1` or `2` for computational testing, or mode `2` (or `3` with an existing computational setup) for TLS testing, and enable the energy usage testing tools when prompted. Use mode `4` for a collector-only machine.
 
 - A supported energy meter must be properly set up and configured for use with the testing scripts. For details on supported energy meters and testing environment setup instructions, please refer to the [Supported Energy Meters](../energy_meter_guides/energy_meter_support.md).
 
 - A sufficient form of communication between the testing and collection machine must be available and operational for control signalling to effectively take place. For details on the required communication setup and configuration, please refer to the [Enabling Support for Test Control Signalling](#enabling-support-for-test-control-signalling) section.
+
+All setup modes use the [OpenSSL selection process for energy tools](../developer_information/project_dependencies.md#openssl-compatibility-for-energy-tools). The automated collector and computational energy scripts configure `LD_LIBRARY_PATH` for the project build when selected during setup; manual tool execution requires the library path configuration described in the tool usage guides.
 
 ### Supported Hardware
 The automated testing tool is currently only supported on the following devices:

@@ -3,7 +3,7 @@
 # Copyright (c) 2023-2026 Callum Turino
 # SPDX-License-Identifier: MIT
 
-# Client-side script for benchmarking cryptographic operations used in TLS. It uses OpenSSL 4.0.1's `speed`
+# Client-side script for benchmarking cryptographic operations used in TLS. It uses OpenSSL 4.0.2's `speed`
 # command to test PQC and Hybrid-PQC signatures and KEMs, classical RSA/EC/Ed signatures, and classical
 # ECDH/XDH key exchange. PQC implementations may be native to OpenSSL or provided by the OQS-Provider.
 # Results are stored in machine-specific PQC, Hybrid-PQC, and classical directories. The main TLS benchmarking
@@ -49,7 +49,7 @@ function setup_test_env() {
     util_scripts="$root_dir/scripts/utility_scripts"
 
     # Declare the global library directory path variables
-    openssl_path="$libs_dir/openssl_4.0.1"
+    openssl_path="$libs_dir/openssl_4.0.2"
     oqs_provider_path="$libs_dir/oqs_provider"
     provider_path="$oqs_provider_path/lib"
 
@@ -140,7 +140,7 @@ function setup_test_env() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function tls_speed_test() {
-    # Function for running TLS speed tests across PQC, Hybrid-PQC, and classical algorithm types using OpenSSL 4.0.1's
+    # Function for running TLS speed tests across PQC, Hybrid-PQC, and classical algorithm types using OpenSSL 4.0.2's
     # `speed` command. It benchmarks signature, KEM, and key-exchange operations supported by OpenSSL and the OQS-Provider.
 
     # Set the test parameter arrays

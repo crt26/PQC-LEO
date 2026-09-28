@@ -65,28 +65,39 @@ The energy usage collector tools are built by default when energy usage testing 
 Unlike the computational energy usage testing tool, the energy usage collector tools do not rely on any other components of the PQC-LEO framework to be built, with the exception of a path to a OpenSSL installation.
 
 The energy usage collector tools rely on the following libraries:
-- OpenSSL Version 3.0 or higher
-- Lib-serial-dev
 
-The tools can be built by either running the main makefile from the `tools` directory or by running the makefile located in the `tools/energy_collector` directory. Both of these makefiles will use the system's OpenSSL installation by default.
+- OpenSSL Version 3.3.0 or higher
+- libserialport (`libserialport-dev`)
+
+The tools can be built by running the makefile located in the `tools/energy_collector` directory. The main makefile in `tools` builds both energy tools and also requires Liboqs. Both makefiles use the system OpenSSL by default; see [OpenSSL Compatibility for Energy Tools](../developer_information/project_dependencies.md#openssl-compatibility-for-energy-tools) for the requirements.
 
 To build with the system's OpenSSL installation, you can run the following command from the PQC-LEO project root directory:
 
 ```bash
-cd tools
+cd tools/energy_collector
 make
 ```
 
 To specify a custom OpenSSL installation path, you can run the following command from the PQC-LEO project root directory:
 
 ```bash
-cd tools
+cd tools/energy_collector
 make OPENSSL_PATH=/path/to/openssl
 ```
+
+Use an absolute path for `OPENSSL_PATH`; for the PQC-LEO build, this is the project's `lib/openssl_4.0.2` directory.
 
 The compiled binaries will then be located in the `tools/energy_collector/build/bin` directory.
 
 In addition to the compiled tools, the build process will create library object files for the meter API and controller API, which can be found in the `tools/energy_collector/build/lib` directory. These library object files can be used to link against when using the APIs provided by the energy usage collector tools in external tools, such as the computational energy usage testing tool.
+
+Before running `collector` or `control_sender` manually with the project or custom OpenSSL, add its library directory to `LD_LIBRARY_PATH` in the same shell:
+
+```bash
+export LD_LIBRARY_PATH="/path/to/openssl/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+```
+
+Replace `/path/to/openssl` with the selected installation's absolute path. Use `lib` instead of `lib64` if `libcrypto.so` is only present there. The automated `energy_metric_collector.sh` script configures this path for the project build automatically.
 
 ## Collector Program Usage
 

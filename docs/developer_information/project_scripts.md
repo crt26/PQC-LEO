@@ -66,7 +66,7 @@ Key tasks performed include:
 
 - Installing all required system and Python dependencies (e.g., OpenSSL dev packages, CMake, Valgrind)
 
-- Downloading and compiling OpenSSL 4.0.1
+- Downloading and compiling OpenSSL 4.0.2 when required for the selected setup
 
 - Cloning and building the last-tested or latest versions of Liboqs and OQS-Provider
 
@@ -99,7 +99,7 @@ For further information on the main setup script's usage, please refer to the ma
 This utility script is used for cleaning up files generated during the compiling and benchmarking processes. It provides options for uninstalling libraries (which includes deleting generated `__pycache__` directories), clearing old benchmarking results, and removing generated TLS keys. Users can choose to perform individual cleanup actions or both, based on their needs.
 
 ### configure_openssl_cnf.sh
-This utility script manages the modification of the OpenSSL 4.0.1 openssl.cnf configuration file to support different stages of the PQC testing pipeline. It adjusts cryptographic provider settings and default group directives as required for:
+This utility script manages the modification of the OpenSSL 4.0.2 openssl.cnf configuration file to support different stages of the PQC testing pipeline. It adjusts cryptographic provider settings and default group directives as required for:
 
 - Initial setup
 
@@ -247,7 +247,7 @@ The PQC TLS performance testing suite relies on several scripts to carry out TLS
 Testing scripts are stored in the `scripts/test_scripts` directory, whilst internal scripts are stored in the `scripts/test_scripts/internal_scripts` directory. Internal scripts are intended to be called by the main testing scripts and do not support being called in isolation.
 
 ### pqc_tls_performance_test.sh
-This is the main controller script for executing the full TLS performance benchmarking suite. It performs TLS handshake testing for PQC, Hybrid-PQC, and classical configurations, together with cryptographic speed testing for PQC, Hybrid-PQC, and classical algorithms supported by OpenSSL 4.0.1 and the OQS-Provider. The script coordinates all required test operations by invoking subordinate scripts (`tls_handshake_test_server.sh`, `tls_handshake_test_client.sh`, and `tls_speed_test.sh`) and ensures that results are stored correctly under the appropriate machine directory based on the assigned Machine ID. Designed to run on both client and server machines, the script prompts the user for necessary parameters such as machine role, IP addresses, test duration, and number of runs. When run on the client, it configures both the handshake and speed benchmarking parameters accordingly.
+This is the main controller script for executing the full TLS performance benchmarking suite. It performs TLS handshake testing for PQC, Hybrid-PQC, and classical configurations, together with cryptographic speed testing for PQC, Hybrid-PQC, and classical algorithms supported by OpenSSL 4.0.2 and the OQS-Provider. The script coordinates all required test operations by invoking subordinate scripts (`tls_handshake_test_server.sh`, `tls_handshake_test_client.sh`, and `tls_speed_test.sh`) and ensures that results are stored correctly under the appropriate machine directory based on the assigned Machine ID. Designed to run on both client and server machines, the script prompts the user for necessary parameters such as machine role, IP addresses, test duration, and number of runs. When run on the client, it configures both the handshake and speed benchmarking parameters accordingly.
 
 It is important to note that when conducting testing, the `pqc_tls_performance_test.sh` script will prompt the user for parameters regarding the handling of storing and managing test results if the machine or current shell has been designated as the client (depending on whether single machine or separate machine testing is being performed).
 
@@ -304,7 +304,7 @@ Additionally, functionality is included within the `pqc_tls_performance_test.sh`
 ### energy_metric_collector.sh
 This controller script provides automation for the energy metric collector device using the `collector` binary included within the `energy_collector` tool. The script provides an interactive configuration interface for collection parameters (test type, machine ID, test runs), manages result directories and pre-existing result handling, and invokes the energy collector binary. It supports PQC performance, TLS handshake, and TLS operations collection types. The script will also automatically call the parsing script to parse results into structured CSV files via the central parser once testing has completed. Whilst the `collector` binary can be used by itself, this script provides an easy solution for result collection, handling, and parsing compared to manual use of the binary.
 
-The `energy_collector` tool must be present within the PQC-LEO testing environment when calling this script, so please ensure that the relevant tools have been built using the `setup.sh` script.
+The `energy_collector` tool must be present within the PQC-LEO testing environment when calling this script, so please ensure that the relevant tools have been built using the `setup.sh` script. If the setup process sets that the energy tools should use the PQC-LEO OpenSSL build, the script will automatically configure the `LD_LIBRARY_PATH` to include the PQC-LEO OpenSSL build used by the energy tools.
 
 **Accepted Script Arguments:**
 
@@ -315,6 +315,8 @@ The `energy_collector` tool must be present within the PQC-LEO testing environme
 
 ### pqc_performance_energy_test.sh
 This controller script provides automation for the PQC computational performance energy benchmarking. The script utilises the `comp_energy_tester` binary included within `comp_energy_tester` tool to perform PQC cryptographic operations using the Liboqs library whilst sending control signals to the collector machine, allowing energy usage metrics to be gathered for each individual KEM/sig algorithm's respective operations. The script will call the `comp_energy_tester` after configuring the environment and system performance state using the `system_state_configurer.sh` utility script. The script accepts command line flags to enable custom system state configuration and custom network control ports for energy collector communication, and restores system state upon completion or interruption.
+
+If the setup process sets that the energy tools should use the PQC-LEO OpenSSL build, the script will automatically configure the `LD_LIBRARY_PATH` to include the PQC-LEO OpenSSL build used by the energy tools.
 
 **Accepted Script Arguments:**
 

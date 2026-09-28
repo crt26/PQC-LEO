@@ -27,13 +27,14 @@ function setup_base_env() {
     test_scripts="$root_dir/scripts/test_scripts"
 
     # Declare the global dependency library version variables
-    openssl_version="4.0.1"
+    openssl_version="4.0.2"
+    min_sys_openssl_version="3.3.0"
 
     # Declare the global library download URL variables
     liboqs_download_url="https://github.com/open-quantum-safe/liboqs.git"
     oqs_provider_download_url="https://github.com/open-quantum-safe/oqs-provider.git"
-    openssl_download_url="https://github.com/openssl/openssl/releases/download/openssl-4.0.1/openssl-4.0.1.tar.gz"
-
+    openssl_download_url="https://github.com/openssl/openssl/releases/download/openssl-4.0.2/openssl-4.0.2.tar.gz"
+    
     # Declare the global last tested version SHA variables
     liboqs_tested_sha="5a1a854b0dc9f2141bdc771c555ee60c37950183"
     oqs_provider_tested_sha="1670a8a91bbca997d33e6b6851309d6241cc224c"
@@ -61,6 +62,7 @@ function setup_base_env() {
     special_cmake_handling=0
     use_energy_tools=0
     eng_openssl_download=0
+    use_pqc_leo_openssl=0
     liboqs_alg_memory_optimisation=0
 
     # Declare the global flags for enabling OQS-Provider build options
@@ -220,7 +222,8 @@ function parse_args() {
 function configure_dirs() {
     # Function for creating the required directory structure for the setup process and handling previous installations.
     # Detects existing installations based on the selected install type, prompts the user for reinstallation, and ensures
-    # a clean setup by removing old directories. Also creates a marker file for identifying the root directory path.
+    # a clean setup by removing generated setup directories while preserving benchmark results. Also creates a root directory 
+    # marker.
 
     # Declare the required directories array used in the directory check and creation
     required_dirs=("$libs_dir" "$oqs_provider_source" "$tmp_dir" "$test_data_dir" "$alg_lists_dir")
@@ -228,8 +231,7 @@ function configure_dirs() {
     # Set the default value for the previous install flag
     previous_install=0
 
-    # Track whether a previous energy-tools build is present in the project lib directory
-    previous_energy_tools_install=0
+    # Check for previous installations based on the selected install type and set the previous_install flag accordingly
     if [ $install_type -ne 3 ] && ([ -d "$comp_energy_tester_path" ] || [ -d "$energy_collector_path" ]); then
         previous_install=1
     elif [ $install_type -eq 3 ] && [ -d "$energy_collector_path" ]; then
@@ -238,10 +240,10 @@ function configure_dirs() {
 
     # Check if the dependency libraries have already been installed based on the install type selected
     case $install_type in
-        0) [ -d "$liboqs_path" ] || [ "$previous_energy_tools_install" -eq 1 ] && previous_install=1 ;;
-        1) [ -d "$liboqs_path" ] || [ -d "$oqs_provider_path" ] || [ "$previous_energy_tools_install" -eq 1 ] && previous_install=1 ;;
+        0) [ -d "$liboqs_path" ] && previous_install=1 ;;
+        1) [ -d "$liboqs_path" ] || [ -d "$oqs_provider_path" ] && previous_install=1 ;;
         2) [ -d "$oqs_provider_path" ] && previous_install=1 ;;
-        3) [ "$previous_energy_tools_install" -eq 1 ] && previous_install=1 ;;
+        3) : ;;
     esac
 
     # If a previous install is detected, get the user's choice for reinstalling the dependency libraries
@@ -261,22 +263,37 @@ function configure_dirs() {
 
     fi
 
-    # Remove old directories depending on the install type selected
+    # Refresh setup directories depending on the install type selected, preserving recorded test data
     for dir in "${required_dirs[@]}"; do
 
         # Check if the directory exists and remove it for a clean install
         if [ -d "$dir" ]; then
 
-            # If install type is 2, remove the old OQS-Provider install directory and any existing Liboqs install directory
-            if [ "$dir" == "$libs_dir" ] && [ "$install_type" -eq 2 ]; then
+            # Perform the various checks to determine which directories to remove and which to preserve based on the install type selected
+            if [ "$dir" == "$test_data_dir" ]; then
+                # Preserve benchmark results; generated algorithm lists are refreshed separately
+                mkdir -p "$dir"
+                
+            elif [ "$dir" == "$libs_dir" ] && [ "$install_type" -eq 3 ]; then
+                # Preserve existing libraries for the energy collector-only setup
+                mkdir -p "$dir"
+
+            elif [ "$dir" == "$libs_dir" ] && [ "$install_type" -eq 2 ]; then
+                # If the install type is 2, remove the old OQS-Provider install directory and any existing Liboqs install directory
                 rm -rf "$oqs_provider_path" && mkdir -p "$oqs_provider_path"
+
             elif [ "$dir" == "$tmp_dir" ] && [ "$install_type" -eq 2 ]; then
+                # If the install type is 2, remove the old OQS-Provider source directory and any existing Liboqs source directory
                 rm -rf "$oqs_provider_path"
+
             else
+                # For all other directories, remove the old directory and create a new one
                 rm -rf "$dir" && mkdir -p "$dir"
+
             fi
 
         else
+            # If the directory doesn't exist, create it
             rm -rf "$dir" && mkdir -p "$dir"
 
         fi
@@ -293,7 +310,9 @@ function configure_oqs_provider_build() {
     # Function for configuring the OQS-Provider build process by setting optional build flags based on user input.
 
     # Output the current task to the terminal
-    echo -e "\nConfiguring Optional OQS-Provider Build Options:\n"
+    echo -e "\n######################################"
+    echo "Configuring OQS-Provider Build Options"
+    echo -e "######################################\n"
 
     # Determine if the user wishes to enable all supported algorithms disabled by default in the OQS-Provider library
     get_user_yes_no "Would you like to enable all algorithms supported by PQC-LEO in the OQS-Provider library that are disabled by default?"
@@ -340,7 +359,7 @@ function download_libraries() {
     # Check if the install mode requires downloading the OpenSSL library
     if [ $install_type -ne 3 ] || [ $eng_openssl_download -eq 1 ]; then
 
-        # Download OpenSSL 4.0.1 and extract it into the tmp directory
+        # Download OpenSSL 4.0.2 and extract it into the tmp directory
         wget -O "$tmp_dir/openssl_$openssl_version.tar.gz" "$openssl_download_url"
         tar -xf "$tmp_dir/openssl_$openssl_version.tar.gz" -C $tmp_dir
         mv "$tmp_dir/openssl-$openssl_version" "$openssl_source"
@@ -629,7 +648,7 @@ function energy_tools_checker() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function openssl_build() {
-    # Function for handling the build of the OpenSSL library (version 4.0.1). The function will check if the library is already
+    # Function for handling the build of the OpenSSL library (version 4.0.2). The function will check if the library is already
     # built and if not, it will build the library using the specified configuration options. The function will call the 
     # modify_openssl_src function to modify the speed.c source code file if the OQS-Provider library is being built with the 
     # enable all disabled algorithms flag.
@@ -705,7 +724,7 @@ function openssl_build() {
         # Testing if OpenSSL has been correctly installed
         test_output=$("$openssl_path/bin/openssl" version)
 
-        if [[ "$test_output" != "OpenSSL 4.0.1 9 Jun 2026 (Library: OpenSSL 4.0.1 9 Jun 2026)" ]]; then
+        if [[ "$test_output" != "OpenSSL 4.0.2 25 Aug 2026 (Library: OpenSSL 4.0.2 25 Aug 2026)" ]]; then
             echo -e "\n\n[ERROR] - Installing required OpenSSL version failed, please verify the installation process"
             exit 1
         fi
@@ -948,18 +967,202 @@ function oqs_provider_build() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
+function check_sys_openssl_version() {
+    # Helper function for checking whether the native system OpenSSL development package meets the minimum version required by
+    # the energy tools. The function takes the minimum version as its first argument, stores the detected version in the global
+    # sys_openssl_version variable, and stores the compatibility result in the global eng_sys_openssl_ok flag.
+
+    # Define the default flag value for the system OpenSSL version check
+    eng_sys_openssl_ok=0
+
+    # Define the local variables for the minimum version, native architecture, package status, and version
+    local minimum_version="$1"
+    local native_arch
+    local openssl_package_status
+    local openssl_package_version
+    local installed_version
+
+    # Ensure that the minimum version was provided to the function before proceeding
+    if [[ -z "$minimum_version" ]]; then
+        echo "[ERROR] - The minimum system OpenSSL version was not provided."
+        exit 1
+    fi
+
+    # Query the OpenSSL development package for the native architecture to avoid returning multiple package records
+    native_arch=$(dpkg --print-architecture)
+    openssl_package_status=$(dpkg-query -W -f='${db:Status-Eflag} ${db:Status-Status}' "libssl-dev:$native_arch" 2>/dev/null)
+    openssl_package_version=$(dpkg-query -W -f='${Version}' "libssl-dev:$native_arch" 2>/dev/null)
+
+    # Check that the package is fully installed and error-free without rejecting packages held against upgrades
+    if [[ "$openssl_package_status" != "ok installed" ]] || [[ -z "$openssl_package_version" ]]; then
+
+        # Set the sys_openssl_version variable to "unavailable" if the package version cannot be determined
+        sys_openssl_version="unavailable"
+        return 0
+
+    fi
+
+    # Remove any Debian epoch so that it does not override the upstream minimum version during comparison
+    installed_version="${openssl_package_version#*:}"
+
+    # Store the detected version so that it can be reported by the calling function
+    sys_openssl_version="$installed_version"
+
+    # Compare the versions using Debian version semantics to determine if the installed version meets or exceeds the minimum required version
+    if dpkg --compare-versions "$installed_version" ge "$minimum_version"; then
+        eng_sys_openssl_ok=1
+    else
+        eng_sys_openssl_ok=0
+    fi
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
+function determine_energy_tools_openssl_choice() {
+    # Function for determining which OpenSSL installation to use for the energy measurement tools. The function checks the system
+    # OpenSSL version and provides options for the user to select the appropriate installation. Based on the user's selection, 
+    # the function sets the use_pqc_leo_openssl flag to indicate which OpenSSL installation to use. If the system OpenSSL version 
+    # is incompatible, the function will prompt the user to proceed with the PQC-LEO OpenSSL build, setting the use_pqc_leo_openssl
+    # flag accordingly, or exit the setup script if the user chooses not to proceed.
+
+    # Output the current task to the terminal
+    echo -e "\n##############################################"
+    echo "Configure OpenSSL for Energy Measurement Tools"
+    echo -e "##############################################\n"
+
+    # Keep the OpenSSL choice separate from the setup mode used by download_libraries
+    local energy_openssl_choice
+
+    # Default to using the system OpenSSL development library for the energy tools
+    use_pqc_leo_openssl=0
+
+    # Track whether the PQC-LEO OpenSSL build is required by an incompatible system installation
+    local forced_use_of_pqc_leo_openssl=0
+
+    # Check if the system OpenSSL version meets the minimum requirement for the energy measurement tools
+    check_sys_openssl_version "$min_sys_openssl_version"
+
+    # Based on the system OpenSSL version check, determine which OpenSSL selection prompts are needed for this install
+    if [ "$eng_sys_openssl_ok" -eq 1 ]; then
+
+        # Prompt the user with the OpenSSL install options until a valid choice is provided
+        while true; do 
+
+            # Output the OpenSSL install options for the energy tools
+            echo "Please select from the following OpenSSL Install options for the energy evaluation tools:"
+            echo "1) - Use system OpenSSL install with energy evaluation tools"
+            echo "2) - Use the PQC-LEO OpenSSL 4.0.2 build with the energy evaluation tools (please refer to project documentation for manual use of tools with this option)"
+
+            # Prompt the user for their selection
+            read -p "Enter your choice (1-2): " energy_openssl_choice
+
+            # Set the install flags accordingly
+            if [ "$energy_openssl_choice" == "1" ]; then
+                use_pqc_leo_openssl=0
+                break
+
+            elif [ "$energy_openssl_choice" == "2" ]; then
+                use_pqc_leo_openssl=1
+                break
+
+            else
+                echo "[WARNING] - Invalid option provided, try again."
+
+            fi
+
+        done
+
+    else
+
+        # Determine which initial warning message needs to be outputted to the user based on if a version was detected or not
+        if [ "$sys_openssl_version" == "unavailable" ]; then
+            echo "[WARNING] - A compatible system OpenSSL development library version could not be found for the energy measurement tools."
+        else
+            local sys_version_num="${sys_openssl_version%%[-+]*}"
+            echo "[WARNING] - System OpenSSL $sys_version_num is older than the required version $min_sys_openssl_version for the energy measurement tools."
+        fi
+
+        # Warn that the system library cannot support the energy tools and explain the fallback build
+        echo "The energy measurement tools must be built with the PQC-LEO OpenSSL build to ensure correct functionality."
+        echo -e "The setup script will use the existing OpenSSL 4.0.2 build, or build it if needed.\n"
+
+        # Ask the user if they wish to proceed with the OpenSSL build for the energy measurement tools
+        get_user_yes_no "Would you like to proceed linking the PQC-LEO OpenSSL 4.0.2 build to the energy measurement tools?"
+
+        # Determine the next steps based on the user's response
+        if [ $user_y_n_response -eq 1 ]; then
+
+            # Output the message to the user and proceed with the OpenSSL build for the energy measurement tools
+            echo -e "\n[NOTICE] - Proceeding with PQC-LEO OpenSSL 4.0.2 for the energy measurement tools..."
+            use_pqc_leo_openssl=1
+            forced_use_of_pqc_leo_openssl=1
+
+        else
+
+            # Output the message to the user and exit the setup script
+            echo -e "\n[NOTICE] - Exiting setup script. Update libssl-dev to version $min_sys_openssl_version or newer, or rerun setup and allow the OpenSSL 4.0.2 fallback build."
+            exit 1
+
+        fi
+
+    fi
+
+    # If the PQC-LEO OpenSSL build is selected, output a notice about the runtime library path requirements for manual runs
+    if [ $use_pqc_leo_openssl -eq 1 ]; then
+
+        # Output the warning message to the user
+        echo -e "\n[NOTICE] - Manual runs require the PQC-LEO OpenSSL lib64 or lib directory in LD_LIBRARY_PATH."
+        echo "The automated energy scripts configure this path; please refer to the tool usage guides for manual configuration."
+
+        # Require acknowledgement when the system installation cannot be used, otherwise just pause for a moment to allow the user to read the message
+        if [ $forced_use_of_pqc_leo_openssl -eq 1 ]; then
+            read -r -p "Press Enter to continue..." _
+        else
+            sleep 5
+        fi
+
+    fi
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
 function energy_tools_build() {
-    # Function for handling the build of the energy measurement tools used in the benchmarking process. The function will 
-    # check if the tools are already built, and if not, it will build the tools using the specified configuration options. 
-    
+    # Build the energy measurement tools against the previously selected OpenSSL installation. Build the project OpenSSL
+    # installation if required, then copy the completed energy tools into the project library directory.
+
     # Output the current task to the terminal
     echo -e "\n#################################"
     echo "Building Energy Measurement Tools"
     echo -e "#################################\n"
 
-    # Ensure that the build filepath is clean before proceeding
-    if [ -d "$comp_energy_tester_path" ] || [ -d "$energy_collector_path" ]; then
-        sudo rm -r "$comp_energy_tester_path" "$energy_collector_path"
+    # Set the number of CPU threads to use for the build process
+    threads=$(nproc)
+
+    # Configure the make argument for the selected OpenSSL installation
+    local openssl_build_flag=""
+
+    # Use the selected PQC-LEO installation, building it only when it is not already present
+    if [ $use_pqc_leo_openssl -eq 1 ]; then
+
+        # Install the OpenSSL build if it is not already present
+        if [ ! -d "$openssl_path" ]; then
+            eng_openssl_download=1
+            download_libraries
+            openssl_build
+        fi
+
+        # Set the openssl build flag used in energy tools make call
+        openssl_build_flag="OPENSSL_PATH=$openssl_path"
+
+    fi
+
+    # Remove only the installed tools that will be rebuilt by the selected install type
+    if [ -d "$energy_collector_path" ]; then
+        sudo rm -r "$energy_collector_path"
+    fi
+
+    if [ $install_type -ne 3 ] && [ -d "$comp_energy_tester_path" ]; then
+        sudo rm -r "$comp_energy_tester_path"
     fi
 
     # Determine which lib directories need made for the energy tools based on install type
@@ -967,15 +1170,6 @@ function energy_tools_build() {
         mkdir -p $energy_collector_path
     else
         mkdir -p $comp_energy_tester_path $energy_collector_path
-    fi
-
-    # Set the number of CPU threads to use for the build process
-    threads=$(nproc)
-
-    # Prepare OpenSSL path for build (if available)
-    openssl_build_flag=""
-    if [ -d "$openssl_path" ]; then
-        openssl_build_flag="OPENSSL_PATH=$openssl_path"
     fi
 
     # Determine which type of energy tools install needs to be performed
@@ -987,31 +1181,50 @@ function energy_tools_build() {
             exit 1
         fi
         
-        # Move into the tools directory and build the tools with custom OpenSSL path (if available)
+        # Move into the tools directory to build the energy measurement tools
         cd "$tools_dir"
-        make -j $threads $openssl_build_flag
+
+        # Remove an potential stale build artifacts before building the energy tools
+        make clean
+        exit_status=$?
+        build_status_checker "$exit_status" "tools cleanup"
+
+        # Build the energy measurement tools using the selected OpenSSL installation (system or PQC-LEO)
+        make -j "$threads" "$openssl_build_flag"
         exit_status=$?
         build_status_checker "$exit_status" "tools build"
 
         # Copy over the compiled binaries and libs to the project lib directory
         cp -r "$tools_dir/comp_energy_tester/build" "$comp_energy_tester_path/"
+        exit_status=$?
+        build_status_checker "$exit_status" "comp_energy_tester installation"
+
         cp -r "$tools_dir/energy_collector/build" "$energy_collector_path/"
+        exit_status=$?
+        build_status_checker "$exit_status" "energy_collector installation"
 
         # Clean the tools directory to remove the build files
         make clean
 
     else 
 
-        # Move into the energy_collector directory
+        # Move into the energy_collector directory to build the energy collector tools only
         cd "$tools_dir/energy_collector"
 
-        # Build only the energy collector tools with custom OpenSSL path (if available)
-        make -j $threads $openssl_build_flag
+        # Remove an potential stale build artifacts before building the collector tools
+        make clean
+        exit_status=$?
+        build_status_checker "$exit_status" "energy_collector cleanup"
+
+        # Build only the energy collector tools using the selected OpenSSL installation (system or PQC-LEO)
+        make -j "$threads" "$openssl_build_flag"
         exit_status=$?
         build_status_checker "$exit_status" "energy_collector build"
 
         # Copy over the the compiled energy collector binaries
         cp -r "$tools_dir/energy_collector/build" "$energy_collector_path/"
+        exit_status=$?
+        build_status_checker "$exit_status" "energy_collector installation"
 
         # Clean the energy_collector directory to remove the build files
         make clean
@@ -1065,6 +1278,11 @@ function setup_controller() {
                 # Determine if user wishes to enable energy measurement tools in the benchmarking process
                 energy_tools_checker
 
+                # If the energy tools are to be used, determine which OpenSSL installation should be used for the energy tools
+                if [ $use_energy_tools -eq 1 ]; then
+                    determine_energy_tools_openssl_choice
+                fi
+
                 # Configure the setup environment and install the required dependencies
                 install_type=0
                 configure_dirs
@@ -1099,6 +1317,11 @@ function setup_controller() {
 
                 # Determine if user wishes to enable energy measurement tools in the benchmarking process
                 energy_tools_checker
+
+                # If the energy tools are to be used, determine which OpenSSL installation should be used for the energy tools
+                if [ $use_energy_tools -eq 1 ]; then
+                    determine_energy_tools_openssl_choice
+                fi
 
                 # Configure the setup environment and install the required dependencies
                 install_type=1
@@ -1136,14 +1359,19 @@ function setup_controller() {
 
                 # Determine if user wishes to enable energy measurement tools in the benchmarking process
                 energy_tools_checker
-
+                
+                # If the energy tools are to be used, determine which OpenSSL installation should be used for the energy tools
+                if [ $use_energy_tools -eq 1 ]; then
+                    determine_energy_tools_openssl_choice
+                fi
+                
                 # Configure the setup environment and install the required dependencies
                 install_type=2
                 configure_dirs
                 configure_oqs_provider_build
                 dependency_install
 
-                # Build OpenSSL 4.0.1
+                # Build OpenSSL 4.0.2
                 openssl_build
 
                 # Check if a Liboqs install is already present and install if not
@@ -1157,18 +1385,10 @@ function setup_controller() {
                 # Build the OQS-Provider library
                 oqs_provider_build
 
-                # Handle energy tools usage for TLS-only setup. Reuse existing tools when present, otherwise build the tools
+                # Rebuild requested energy tools so they link against the OpenSSL and Liboqs versions configured by this setup
                 if [ $use_energy_tools -eq 1 ]; then
-
-                    # Check if a previous computational install already provides both tools
-                    if [ -d "$comp_energy_tester_path" ] && [ -d "$energy_collector_path" ]; then
-                        echo -e "\n[NOTICE] - Existing energy measurement tools detected, skipping energy tools build."
-                    else
-                        echo -e "\n[NOTICE] - Energy tools requested but not found from a previous computational setup."
-                        echo -e "Attempting to build energy measurement tools now...\n"
-                        energy_tools_build
-                    fi
-
+                    echo -e "\n[NOTICE] - Building energy measurement tools against the configured dependency libraries.\n"
+                    energy_tools_build
                 fi
 
                 # Clean up the tmp directory
@@ -1196,45 +1416,13 @@ function setup_controller() {
                 echo "Energy Collector Machine Setup Selected"
                 echo -e "#######################################\n"
 
+                # Determine the OpenSSL choice for the energy tools
+                determine_energy_tools_openssl_choice
+
                 # Configure the setup environment and install the required dependencies
                 install_type=3
                 configure_dirs
                 dependency_install
-
-                # Check if a previous install of OpenSSL is available
-                if [ ! -d "$openssl_path" ]; then
-
-                    # Ask the user if they wish to build OpenSSL 4.0.1 or use the system install for the energy collector
-                    echo "[NOTICE] - The PQC-LEO install of OpenSSL 4.0.1 is not currently present."
-
-                    # Prompt the user for their selection until a valid choice is made
-                    while true; do
-
-                        # Output the options to the user
-                        echo "The following options are available:"
-                        echo "1) - Download and build OpenSSL 4.0.1 for the energy collector"
-                        echo "2) - Use the system OpenSSL install for the energy collector"
-                        read -p "Enter selected option (1/2): " eng_openssl_user_choice
-
-                        # Check and validate the selected option
-                        if [ "$eng_openssl_user_choice" -eq 1 ]; then
-                            eng_openssl_download=1
-                            echo -e "\nProceeding with OpenSSL 4.0.1 build for the energy collector..."
-                            download_libraries
-                            openssl_build
-                            break
-
-                        elif [ "$eng_openssl_user_choice" -eq 2 ]; then
-                            echo -e "\nProceeding with system OpenSSL install for the energy collector..."
-                            break
-
-                        else
-                            echo -e "\n[WARNING] - Invalid option selected, please select either option 1 or option 2\n"
-                        fi
-                    
-                    done
-
-                fi
 
                 # Build the energy measurement tools
                 energy_tools_build
@@ -1243,14 +1431,12 @@ function setup_controller() {
                 ;;
 
             5)
-
                 # Output the selection choice to the terminal
                 echo "Exiting Setup!"
                 exit 1
                 ;;
 
             *)
-
                 # Output the invalid option message to the user
                 echo "Invalid option, please select a valid option value (1-4)"
                 ;;
@@ -1272,18 +1458,29 @@ function setup_controller() {
 
     fi
 
-    # Configure the flag file for the energy tools option in the benchmarking process for use by the testing scripts
+    # Configure the flag file for the energy tools and energy tools OpenSSL selection for use by the testing scripts
     if [ $use_energy_tools -eq 1 ]; then
+
+        # Create the flag files to indicate that the energy measurement tools are enabled
         touch "$tmp_dir/energy_tools_enabled.flag"
-    else
-    
-        # Remove the flag file if present in the tmp directory, as the energy measurement tools are not enabled
-        if [ -f "$tmp_dir/energy_tools_enabled.flag" ]; then
-            rm "$tmp_dir/energy_tools_enabled.flag"
-        fi
 
     fi
 
+    # Record the OpenSSL choice independently so collector-only setup also configures automated runtime loading
+    if [ $use_pqc_leo_openssl -eq 1 ]; then
+        touch "$tmp_dir/energy_tools_pqc_leo_openssl.flag"
+    fi
+
+    # Remove the energy tools enabled flag file if energy testing is disabled and the flag is present
+    if [ $use_energy_tools -eq 0 ] && [ -f "$tmp_dir/energy_tools_enabled.flag" ]; then
+        rm "$tmp_dir/energy_tools_enabled.flag"
+    fi
+
+    # Remove the energy tools PQC-LEO OpenSSL flag file if the flag is present and the PQC-LEO OpenSSL build is not being used for the energy tools
+    if [ $use_pqc_leo_openssl -eq 0 ] && [ -f "$tmp_dir/energy_tools_pqc_leo_openssl.flag" ]; then
+        rm "$tmp_dir/energy_tools_pqc_leo_openssl.flag"
+    fi
+    
     # Output that there was an issue with the Python utility script that creates the alg-list files
     if [ "$py_exit_status" -ne 0 ]; then
         echo -e "\n[ERROR] - creating algorithm list files failed, please verify both setup and python scripts and rerun setup!!!"
@@ -1291,6 +1488,7 @@ function setup_controller() {
 
     elif [ -z "$py_exit_status" ]; then
         echo -e "\nThe Python get_algorithms script did not return an exit status, please verify the script and rerun setup\n"
+
     fi
 
 }

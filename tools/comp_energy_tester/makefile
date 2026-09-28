@@ -1,5 +1,9 @@
 CC := gcc
 OPENSSL_PATH ?= /usr
+OPENSSL_CRYPTO := -lcrypto
+ifneq ($(OPENSSL_PATH),/usr)
+OPENSSL_CRYPTO := $(firstword $(wildcard $(OPENSSL_PATH)/lib64/libcrypto.so) $(wildcard $(OPENSSL_PATH)/lib/libcrypto.so))
+endif
 LIBOQS_PATH ?= ../../lib/liboqs/build
 
 CFLAGS := -Wall -Wextra -std=c11 \
@@ -19,7 +23,7 @@ ENERGY_LIBS := \
 
 LIBOQS_LIB_DIR := $(LIBOQS_PATH)/lib
 LDFLAGS := -L$(LIBOQS_LIB_DIR) -L$(OPENSSL_PATH)/lib
-LIBOQS_LDLIBS := -loqs -lserialport -lcrypto -lpthread
+LIBOQS_LDLIBS := -loqs -lserialport $(OPENSSL_CRYPTO) -lpthread
 COMMON_LDLIBS := -lpthread
 
 COMP_ENERGY_TESTER_OBJS := \
