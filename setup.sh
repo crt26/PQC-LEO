@@ -35,7 +35,7 @@ function setup_base_env() {
     openssl_download_url="https://github.com/openssl/openssl/releases/download/openssl-3.6.1/openssl-3.6.1.tar.gz"
 
     # Declare the global last tested version SHA variables
-    liboqs_tested_sha="97f6b86b1b6d109cfd43cf276ae39c2e776aed80"
+    liboqs_tested_sha="5a1a854b0dc9f2141bdc771c555ee60c37950183"
     oqs_provider_tested_sha="a635e341d6a4624d9bba36d158804762f316fe5e"
 
     # Declare the global library directory path variables
@@ -61,6 +61,7 @@ function setup_base_env() {
     special_cmake_handling=0
     use_energy_tools=0
     eng_openssl_download=0
+    liboqs_alg_memory_optimisation=0
     enable_liboqs_hqc=0 # temp flag for hqc bug fix
     enable_oqs_hqc=0 # temp flag for hqc bug fix
     warning_given=0 # temp flag to indicate if the user has accepted the warning about HQC KEM algorithms
@@ -137,6 +138,7 @@ function output_help() {
     echo "Options:"
     echo "--latest-dependency-versions     Use the latest available versions of the OQS libraries (may cause compatibility issues)."
     echo "--set-speed-new-value=[int]      Set a new value for MAX_KEM_NUM and MAX_SIG_NUM in OpenSSL's speed.c file."
+    echo "--liboqs-memory-optimisation     Enable liboqs algorithm memory optimisation feature for supported algorithms (disabled by default)."
     echo "--enable-liboqs-hqc-algs         Enable HQC KEM algorithms in liboqs (disabled by default due to spec non-conformance)."
     echo "--enable-oqs-hqc-algs            Enable HQC KEM algorithms in OQS-Provider (requires HQC to also be enabled in liboqs)."
     echo "--enable-all-hqc-algs            Enable all HQC KEM algorithms in both liboqs and OQS-Provider (overrides individual HQC flags)."
@@ -251,6 +253,14 @@ function parse_args() {
                     output_help
                     exit 1
                 fi
+
+                shift
+                ;;
+
+            --liboqs-memory-optimisation)
+
+                # Set the Liboqs memory optimisation flag to indicate the flag has been passed
+                liboqs_alg_memory_optimisation=1
 
                 shift
                 ;;
@@ -984,6 +994,11 @@ function liboqs_build() {
         # Replace the default Liboqs test_mem source-code files with the modded versions
         cp "$root_dir/modded_lib_files/test_sig_mem.c" "$liboqs_source/tests/test_sig_mem.c"
         cp "$root_dir/modded_lib_files/test_kem_mem.c" "$liboqs_source/tests/test_kem_mem.c"
+
+        # Check if the memory optimisation flag should be passed to the Liboqs build process
+        if [ $liboqs_alg_memory_optimisation -eq 1 ]; then
+            build_flags="${build_flags:-} -DOQS_MEMOPT_BUILD=ON"
+        fi
 
         # Set the HQC enabled cmake flag if the user has selected to enable HQC
         if [ $enable_liboqs_hqc -eq 1 ]; then

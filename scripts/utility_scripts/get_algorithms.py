@@ -179,10 +179,6 @@ def get_liboqs_algs():
                     alg_list_file = os.path.join(output_dir, "kem_algs.txt")
                 else:
                     alg_list_file = os.path.join(output_dir, "sig_algs.txt")
-
-                # Filter out HQC KEM algorithms from the list if the HQC enabled flag is not set (temp fix for HQC bug)
-                if not os.path.exists(os.path.join(root_dir, "tmp", ".hqc_enabled.flag")):
-                    algs = [alg for alg in algs if not alg.startswith("HQC")]
                 
                 # Write out the algorithms to the list file
                 write_to_file(algs, alg_list_file)
