@@ -194,6 +194,8 @@ The repository provides four categories of automated PQC benchmarking:
 
 - **TLS Handshake Transmission Cost Testing** – Measures the bytes sent and received during one-way and mutually authenticated TLS 1.3 handshakes.
 
+- **TLS Handshake Transmission Cost Testing** – Measures the bytes sent and received during one-way and mutually authenticated TLS 1.3 handshakes.
+
 - **PQC Energy Usage Testing** – Benchmarks the energy consumption of PQC algorithms during computational and TLS performance testing using supported energy meters.
 
 The testing tools are located in the `scripts/test_scripts` directory and are fully automated. The tools support assigning custom machine-IDs to the gathered results to make it easy to compare performance on differing systems.
