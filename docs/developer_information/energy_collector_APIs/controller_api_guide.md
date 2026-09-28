@@ -709,7 +709,7 @@ Example usage of the `control_handler()` function is shown below:
 TestParams test_params;
 test_params.control_method = "serial";
 test_params.control_type = 1;
-test_params.test_type = "tls_speed";
+test_params.test_type = "tls_operations_kem_keygen";
 test_params.test_algs = "ML-KEM-512";
 test_params.total_runs = 5;
 test_params.run_num = 1;

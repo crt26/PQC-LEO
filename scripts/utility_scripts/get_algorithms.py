@@ -4,7 +4,7 @@ SPDX-License-Identifier: MIT
 
 Utility script for retrieving supported cryptographic algorithms from the Liboqs, OpenSSL (classical and PQC), and
 OQS-Provider libraries. It outputs algorithm lists used by the computational performance, TLS handshake,
-transmission-cost, TLS speed, energy-testing, and result-parsing scripts.
+transmission-cost, TLS speed, TLS operations energy-testing, and result-parsing scripts.
 
 Primarily intended to be called by the main setup.sh script, this utility accepts an argument that specifies 
 the installation type and determines which algorithm lists should be generated. It can also be executed manually.
@@ -259,7 +259,7 @@ def extract_tls_algs(test_type, provider_type, output_str, oqs_algs_enabled):
             # Determine if the algorithm is a PQC or a Hybrid-PQC algorithm
             if native_pqc_pattern.match(alg):
 
-                # If the algorithm is ML-KEM or ML-DSA and the test type is speed, reformat the algorithm name
+                # Reformat native ML-KEM and ML-DSA names for OpenSSL speed and direct-operation commands
                 if test_type == 1:
                     if "MLKEM" in alg:
                         alg = re.sub(r'^MLKEM(\d+)$', r'ML-KEM-\1', alg)
@@ -335,7 +335,7 @@ def get_tls_pqc_algs():
             algs.extend(provider_algs)
             hybrid_algs.extend(provider_hybrid_algs)
 
-            # Extract the speed algorithms for the current algorithm type
+            # Extract the OpenSSL aliases used by the speed and TLS operations energy tests
             test_type = 1
             provider_algs, provider_hybrid_algs = extract_tls_algs(test_type, provider_type, stdout, oqs_algs_enabled)
 
@@ -348,12 +348,16 @@ def get_tls_pqc_algs():
         hybrid_alg_list_file = os.path.join(output_dir, f"tls_hybr_{alg_type[:3]}_algs.txt")
         speed_list_file = os.path.join(output_dir, f"tls_speed_{alg_type[:3]}_algs.txt")
         speed_hybrid_alg_list_file = os.path.join(output_dir, f"tls_speed_hybr_{alg_type[:3]}_algs.txt")
+        operations_list_file = os.path.join(output_dir, f"tls_operations_{alg_type[:3]}_algs.txt")
+        operations_hybrid_alg_list_file = os.path.join(output_dir, f"tls_operations_hybr_{alg_type[:3]}_algs.txt")
 
         # Write out the algorithms to the list files
         write_to_file(algs, alg_list_file)
         write_to_file(hybrid_algs, hybrid_alg_list_file)
         write_to_file(speed_algs, speed_list_file)
         write_to_file(speed_hybrid_algs, speed_hybrid_alg_list_file)
+        write_to_file(speed_algs, operations_list_file)
+        write_to_file(speed_hybrid_algs, operations_hybrid_alg_list_file)
 
 #------------------------------------------------------------------------------------------------------------------------------
 def set_tls_classic_algs():

@@ -31,7 +31,7 @@ Specifically, it covers:
   - [Collected Energy Usage Metrics](#collected-energy-usage-metrics)
   - [PQC Computational Energy Usage](#pqc-computational-energy-usage)
   - [TLS Handshake Energy Usage](#tls-handshake-energy-usage)
-  - [TLS Speed Energy Usage](#tls-speed-energy-usage)
+  - [TLS Operations Energy Usage](#tls-operations-energy-usage)
 - [Energy Usage Metrics Result Data Storage Structure](#energy-usage-metrics-result-data-storage-structure)
 - [Useful External Documentation](#useful-external-documentation)
 
@@ -223,7 +223,7 @@ The energy usage metrics collected by the project’s automated testing tools pr
 PQC-LEO provides automation scripts for collecting energy usage data for the following testing categories:
 - PQC computational energy usage
 - TLS handshake energy usage
-- TLS speed energy usage
+- TLS operations energy usage
 
 However, as the tools provided by the framework for gathering these metrics can be used outwith the automated testing suite, it is possible to gather energy usage metrics outwith the context of the provided testing scripts. This documentation will provide information on the above mentioned categories and provides a description of what values can be collected in general when using the energy usage collection tools outwith the context of the provided testing scripts.
 
@@ -295,14 +295,14 @@ For classical results, the following metadata fields are included:
 The baseline energy usage file for this testing category will be named:
 `tls_handshake_energy_usage_baseline.csv`
 
-### TLS Speed Energy Usage
-TLS speed energy usage metrics evaluate the energy consumption of cryptographic operations for PQC, Hybrid-PQC, and classical algorithms within OpenSSL. The test performs individual operations using the OpenSSL command-line tools while energy monitoring is enabled. It measures key generation, encapsulation, and decapsulation for PQC/Hybrid-PQC KEMs; key generation, signing, and verification for PQC/Hybrid-PQC and classical signatures; and key generation and shared-secret derivation for classical key-exchange algorithms.
+### TLS Operations Energy Usage
+TLS operations energy usage metrics evaluate the energy consumption of cryptographic operations for PQC, Hybrid-PQC, and classical algorithms within OpenSSL. The test performs individual operations using the OpenSSL command-line tools while energy monitoring is enabled. It measures key generation, encapsulation, and decapsulation for PQC/Hybrid-PQC KEMs; key generation, signing, and verification for PQC/Hybrid-PQC and classical signatures; and key generation and shared-secret derivation for classical key-exchange algorithms.
 
 Because this test invokes OpenSSL operations directly rather than relying on the predefined `openssl speed` result categories, it can explicitly request RSA-PSS signing and verification. For its RSA results, the `RSA_*` categories use generic RSA keys and the `RSA-PSS_*` categories use RSA-PSS-restricted keys; both categories use PSS padding for the measured signing and verification operations.
 
-Similar to computational energy usage testing, the TLS speed energy usage tests are performed by running the each algorithm's respective cryptographic operations for a user defined number of iterations while collecting energy usage data. The rate at which the energy meter is polled for data during this period is also user defined.
+Similar to computational energy usage testing, the TLS operations energy usage tests run each algorithm's respective cryptographic operations for a user-defined number of iterations while collecting energy usage data. The rate at which the energy meter is polled for data during this period is also user-defined.
 
-In addition to the standard energy usage metrics, the TLS speed energy usage result files will also include the following metadata fields to provide context for the energy usage data:
+In addition to the standard energy usage metrics, the TLS operations energy usage result files will also include the following metadata fields to provide context for the energy usage data:
 
 | **Metadata Field** | **Description**                                                       |
 |--------------------|-----------------------------------------------------------------------|
@@ -310,25 +310,26 @@ In addition to the standard energy usage metrics, the TLS speed energy usage res
 | Operation          | The cryptographic operation being performed.                          |
 
 The baseline energy usage file for this testing category will be named:
-`tls_speed_energy_usage_baseline.csv`
+
+`tls_operations_energy_usage_baseline.csv`
 
 ## Energy Usage Metrics Result Data Storage Structure
 Both the un-parsed and parsed energy usage results data will be stored on the collector machine which polls the energy meter during testing rather than the device which performs the cryptographic operations. When using the automated collector and testing scripts provided by the project, the following directory structure will be used for storing the energy usage metrics data. If the energy usage collection tools are used outwith the context of the provided testing scripts, the way result data is stored will depend on how the respective programmes were configured during setup and execution.
 
 **Energy Usage Metrics Data Storage:**
 
-| **Testing Category** | **State** | **Description**                                                                                     | **Location** *(relative to `test_data/`)*                                                      |
-|----------------------|-----------|-----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
-| Computational Energy | Un-parsed | Raw text files containing energy usage data for PQC cryptographic operations.                       | `up_results/energy_test_results/pqc_performance_energy_results/machine_x/`                     |
-| Computational Energy | Parsed    | Processed per-run CSV result files, plus condensed per-run CSV summaries.                           | `results/energy_test_results/pqc_performance_energy_results/machine_x/`                        |
-| TLS Handshake Energy | Un-parsed | Raw text files for each PQC/Hybrid SIG/KEM or classical signature/group/ciphersuite handshake test. | `up_results/energy_test_results/tls_handshake_energy_results/machine_x/`                       |
-| TLS Handshake Energy | Parsed    | Processed per-run CSV result files grouped into classic, pqc, and hybrid_pqc, plus condensed files. | `results/energy_test_results/tls_handshake_energy_results/machine_x/{classic/pqc/hybrid_pqc}/` |
-| TLS Speed Energy     | Un-parsed | Raw text files containing energy usage data for each algorithm and operation.                       | `up_results/energy_test_results/tls_speed_energy_results/machine_x/`                           |
-| TLS Speed Energy     | Parsed    | Per-run PQC, Hybrid-PQC, and classical CSVs by algorithm type, plus condensed files.                | `results/energy_test_results/tls_speed_energy_results/machine_x/{pqc/hybrid/classic}/`         |
+| **Testing Category**  | **State** | **Description**                                                                                     | **Location** *(relative to `test_data/`)*                                                      |
+|-----------------------|-----------|-----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
+| Computational Energy  | Un-parsed | Raw text files containing energy usage data for PQC cryptographic operations.                       | `up_results/energy_test_results/pqc_performance_energy_results/machine_x/`                     |
+| Computational Energy  | Parsed    | Processed per-run CSV result files, plus condensed per-run CSV summaries.                           | `results/energy_test_results/pqc_performance_energy_results/machine_x/`                        |
+| TLS Handshake Energy  | Un-parsed | Raw text files for each PQC/Hybrid SIG/KEM or classical signature/group/ciphersuite handshake test. | `up_results/energy_test_results/tls_handshake_energy_results/machine_x/`                       |
+| TLS Handshake Energy  | Parsed    | Processed per-run CSV result files grouped into classic, pqc, and hybrid_pqc, plus condensed files. | `results/energy_test_results/tls_handshake_energy_results/machine_x/{classic/pqc/hybrid_pqc}/` |
+| TLS Operations Energy | Un-parsed | Raw text files containing energy usage data for each algorithm and operation.                       | `up_results/energy_test_results/tls_operations_energy_results/machine_x/`                      |
+| TLS Operations Energy | Parsed    | Per-run PQC, Hybrid-PQC, and classical CSVs by algorithm type, plus condensed files.                | `results/energy_test_results/tls_operations_energy_results/machine_x/{pqc/hybrid/classic}/`    |
 
 Where `machine_x` is the Machine-ID number assigned to the results when executing the testing scripts. If no custom Machine-ID is assigned, the default ID of 1 will be set for the results.
 
-TLS speed energy parsing produces `pqc` and `hybrid_pqc` KEM/signature result files and `classic` signature/key-exchange result files. These are stored in the `pqc`, `hybrid`, and `classic` sub-directories, respectively. The filename format is `tls_speed_(algorithm-group)_(algorithm-type)_(run-number).csv`, with a matching `_condensed.csv` summary for each file. The baseline CSV remains directly under the machine directory.
+TLS operations energy parsing produces `pqc` and `hybrid_pqc` KEM/signature result files and `classic` signature/key-exchange result files. These are stored in the `pqc`, `hybrid`, and `classic` sub-directories, respectively. The filename format is `tls_operations_(algorithm-group)_(algorithm-type)_(run-number).csv`, with a matching `_condensed.csv` summary for each file. The baseline CSV remains directly under the machine directory.
 
 ## Useful External Documentation
 - [Liboqs Webpage](https://openquantumsafe.org/liboqs/)

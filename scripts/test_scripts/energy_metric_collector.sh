@@ -6,7 +6,7 @@
 # Controller script for collecting energy consumption metrics from PQC-LEO testing suites. Provides an interactive
 # configuration interface for collection parameters (test type, machine ID, test runs), manages result directories 
 # and pre-existing result handling, and invokes the energy collector binary. Supports computational performance, TLS handshake,
-# and TLS speed collection types, including their PQC, Hybrid-PQC, and classical coverage, plus custom workflows. The script
+# and TLS operations collection types, including their PQC, Hybrid-PQC, and classical coverage, plus custom workflows. The script
 # can also call the central parser automatically to structure the collected results as CSV files.
 
 #-------------------------------------------------------------------------------------------------------------------------------
@@ -290,7 +290,7 @@ function get_collection_options() {
         echo "Available options for test collection type:"
         echo "1) PQC Performance Energy Testing"
         echo "2) TLS Handshake Performance Energy Testing"
-        echo "3) TLS Speed Performance Energy Testing"
+        echo "3) TLS Operations Energy Testing"
         echo "4) Custom Option"
         read -p "Please select collection type (1-4): " collection_response
 
@@ -315,10 +315,10 @@ function get_collection_options() {
 
             3)
 
-                # Set the collection type variable to TLS speed testing
+                # Set the collection type variable to TLS operations energy testing
                 collection_type=3
-                result_dir_name="tls_speed_energy_results"
-                echo -e "\nCollection type set to TLS Speed Performance Energy Testing\n"
+                result_dir_name="tls_operations_energy_results"
+                echo -e "\nCollection type set to TLS Operations Energy Testing\n"
                 break;;
 
             4)  
