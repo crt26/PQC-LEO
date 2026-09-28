@@ -26,7 +26,7 @@ def setup_parse_env(root_dir):
 
     # Ensure the root_dir path is correct before continuing
     if not os.path.isfile(os.path.join(root_dir, ".pqc_leo_dir_marker.tmp")):
-        print("Project root directory path file not correct, the main parse_results.py file is not able to establish the correct path!!!")
+        print("[ERROR] - Project root directory path file not correct, the main parse_results.py file is not able to establish the correct path!!!")
         sys.exit(1)
 
     # Note: (at some point, consider making these vars into a JSON file)
@@ -161,13 +161,14 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results, skip
             # Get the decision from the user on how to handle old results before parsing continues
             while True:
 
-                # Output the potential options and handle user choice
+                # Output the potential options available to the user for handling the old results and get their input
                 print(f"\nFrom the following options, choose how you would like to handle the existing TLS performance results:")
                 print("Option 1 - Replace old parsed results with new ones")
                 print("Option 2 - Exit parsing programme to move old results and rerun after (if you choose this option, please move the entire folder not just its contents)")
                 print("Option 3 - Make parsing script programme wait until you have move files before continuing")
                 user_choice = input("Enter option: ")
 
+                # Based on the user input, handle the old results accordingly and break out of the loop to continue parsing
                 if user_choice == "1":
 
                     # Replace all old results and create a new empty directory to store the parsed results
@@ -371,7 +372,7 @@ def pqc_based_processing(current_run, dir_paths, algs_dict, pqc_type_vars, col_h
             
             # Read in the current run base results and extract signature
             base_df = pd.read_csv(pqc_base_filepath)
-            current_sig_df = base_df[base_df["Signing Algorithm"].str.contains(sig)]
+            current_sig_df = base_df[base_df["Signing Algorithm"] == sig]
 
             # Output the current sig filtered df to csv
             output_filename = f"tls_handshake_{sig}_run_{current_run}.csv"
@@ -406,7 +407,6 @@ def classic_based_processing(current_run, dir_paths, algs_dict, col_headers):
                 new_row_df = pd.DataFrame([current_row], columns=col_headers['classic_headers'])
                 cipher_metrics_df = pd.concat([cipher_metrics_df, new_row_df], ignore_index=True)
                 
-
                 # Get the session ID reused metrics for the current combination
                 current_row = [classic_sig, key_exchange_group, ciphersuite, "*"]
                 current_row = get_metrics(current_row, test_filepath, get_reuse_metrics=True)
@@ -540,7 +540,7 @@ def get_classic_speed_metrics(speed_filepath, alg_type, sub_test_alg, headers):
             result_name_mapping = {
                 "rsa2048": "RSA_2048",
                 "rsa3072": "RSA_3072",
-                "rsa4096": "RSA_4096",
+                "rsa4096": "RSA_4096"
             }
             table_header = ["keygen", "signs", "verify", "keygens/s", "sign/s", "verify/s"]
             metric_count = 6
@@ -561,7 +561,7 @@ def get_classic_speed_metrics(speed_filepath, alg_type, sub_test_alg, headers):
                 "secp521r1": "secp521r1",
                 "brainpoolp256r1": "brainpoolP256r1tls13",
                 "brainpoolp384r1": "brainpoolP384r1tls13",
-                "brainpoolp512r1": "brainpoolP512r1tls13",
+                "brainpoolp512r1": "brainpoolP512r1tls13"
             }
             table_header = ["op", "op/s"]
             metric_count = 2
@@ -569,10 +569,7 @@ def get_classic_speed_metrics(speed_filepath, alg_type, sub_test_alg, headers):
 
         elif sub_test_alg == "xdh":
             desired_alg_strings = ["X25519", "X448"]
-            result_name_mapping = {
-                "x25519": "x25519",
-                "x448": "x448",
-            }
+            result_name_mapping = {"x25519": "x25519", "x448": "x448"}
             table_header = ["keygen", "encaps", "decaps", "keygens/s", "encaps/s", "decaps/s"]
             metric_count = 6
             parenthesised_alg_name = False

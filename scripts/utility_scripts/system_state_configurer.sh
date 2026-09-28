@@ -5,15 +5,15 @@
 
 # Utility script for configuring and restoring the testing machine system state. It accepts one
 # command line argument to set the default state, set custom state values, or restore the original
-# configuration. Supports CPU governor selection, CPU core selection, and fan control settings for
-# the test environment. This script is intended to be used in conjunction with the the energy 
+# configuration. Supports CPU governor and CPU core selection; fan settings are prompted for but
+# are not yet applied. This script is intended to be used in conjunction with the energy
 # usage testing scripts to ensure a consistent and controlled testing environment for accurate energy 
 # usage measurements. Based on the detected command line arguments, the script will either set the system state 
 # to a default configuration optimised for testing, or it will prompt the user to input custom values for the system 
 # state configuration.
 
 # TODO - Improve the scripts ability to automatically determine which CPU core to use for testing
-# TODO - Implment fan control functionality
+# TODO - Implement fan control functionality
 
 # Define the global variables
 configure_type=""
@@ -32,9 +32,10 @@ function output_help() {
     # Output the supported options and their usage to the user
     echo "Usage: system_state_configurer.sh [options]"
     echo "Options:"
-    echo "--custom   Set custom system state values. Prompts for CPU governor, CPU core, and fan settings"
-    echo "--default  Set the system state to the default configuration optimised for testing."
-    echo "--help     Display the help message."
+    echo "--set-custom   Set custom CPU governor and CPU core values. Fan settings are prompted for but not yet applied."
+    echo "--set-default  Set the system state to the default configuration optimised for testing."
+    echo "--restore      Restore the saved CPU governor setting."
+    echo "--help         Display the help message."
 
 }
 
@@ -70,6 +71,13 @@ function parse_args() {
 
             --set-custom)
 
+                # Ensure that configure type is not already set
+                if [[ -n "$configure_type" ]]; then
+                    echo "[ERROR] - Multiple configuration types detected. Please specify only one configuration type per execution."
+                    exit 1
+                fi
+
+                # Set the configuration type to custom
                 configure_type="set"
                 configure_value_type="custom"
                 shift
@@ -77,11 +85,21 @@ function parse_args() {
 
 
             --restore)
+
+                # Ensure that configure type is not already set
+                if [[ -n "$configure_type" ]]; then
+                    echo "[ERROR] - Multiple configuration types detected. Please specify only one configuration type per execution"
+                    exit 1
+                fi
+
+                # Set the configuration type to restore
                 configure_type="restore"
                 shift
                 ;;
 
             *)
+
+                # Output an error message for any invalid arguments and display the help message
                 echo "[ERROR] - Invalid argument detected: $1. Please verify the function call and try again."
                 output_help
                 exit 1
@@ -96,8 +114,7 @@ function parse_args() {
 #-------------------------------------------------------------------------------------------------------------------------------
 function cpu_core_detector() {
     # Function for determining which CPU core to run the tests on. By default, it will select the second core if more than one is 
-    # available to avoid running tests on the core more likely to be used by system processes, but it will prompt the user to select 
-    # a core if the custom configuration option is selected.
+    # available to avoid running tests on the core more likely to be used by system processes.
 
     # TO-DO improve to automatically determine the best CPU core to use based on the system topology
 
@@ -153,7 +170,7 @@ function get_custom_state_values() {
 
     # Determine the number of cores available on the system, including virtual threads
     local core_count=$(nproc)
-    echo "The system has the a total of $core_count CPU cores (including virtual threads)."
+    echo "The system has a total of $core_count CPU cores (including virtual threads)."
 
     # Prompt the user for a CPU core to run the tests on until a valid value is selected
     while true; do
@@ -184,10 +201,10 @@ function get_custom_state_values() {
         echo "Available fan speed targets:"
         echo "1) Max Speed"
         echo "2) Off"
-        read -p "Please select the desired fan speed target (1-3): " user_fan_target
+        read -p "Please select the desired fan speed target (1-2): " user_fan_target
 
         # Ensure that the entered value is a valid integer
-        if ! [[ "$user_fan_target" =~ ^[1-3]$ ]]; then
+        if ! [[ "$user_fan_target" =~ ^[1-2]$ ]]; then
             echo -e "[WARNING] - Invalid input, please enter a valid integer for the fan speed target.\n"
             continue
         fi
@@ -208,6 +225,7 @@ function get_custom_state_values() {
                 ;;
 
             *)
+                # Output a warning message for any invalid selections and prompt the user to enter a valid option
                 echo -e "[WARNING] - Invalid selection for fan speed target, please enter a valid option number.\n"
                 continue
                 ;;
@@ -325,7 +343,7 @@ function sys_state_modifier_entrypoint() {
     if [[ $# -gt 0 ]]; then
         parse_args "$@"
     else
-        echo "[ERROR] - No arguments passed to configure-openssl-cnf.sh"
+        echo "[ERROR] - No arguments passed to system_state_configurer.sh"
         output_help
         exit 1
     fi
@@ -340,7 +358,10 @@ function sys_state_modifier_entrypoint() {
 
         # Call the relevant system state configuration functions in set mode
         set_cpu_freq "cpu_governor_set"
-        cpu_core_detector
+        
+        if [[ "$configure_value_type" == "default" ]]; then
+            cpu_core_detector
+        fi
 
         # If the any of the system state configuration functions failed, restore the original state for the function that did not fail if any
         if [[ "$cpu_gov_set_fail" -eq 1 ]]; then

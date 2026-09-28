@@ -1,7 +1,7 @@
 # Automated TLS Handshake Transmission Cost Testing - Usage Guide  <!-- omit from toc -->
 
 ## Overview <!-- omit from toc -->
-This tool provides automated testing for TLS 1.3 handshake transmission costs using Post-Quantum Cryptography (PQC), Hybrid-PQC, and classical algorithms. It measures the number of bytes sent and received during one-way and mutually authenticated TLS handshakes for every supported signing-algorithm/KEM pairing and classical signing-algorithm/key-exchange-group/ciphersuite combination. It utilises the PQC, Hybrid-PQC, and classical algorithms integrated into OpenSSL 4.0.1 and the OQS-Provider library.
+This tool provides automated testing for TLS 1.3 handshake transmission costs using Post-Quantum Cryptography (PQC), Hybrid-PQC, and classical algorithms. It measures the number of bytes sent and received during one-way and mutually authenticated TLS handshakes for every supported signing-algorithm/KEM pairing and classical signing-algorithm/key-exchange-group/ciphersuite combination. It utilises the PQC, Hybrid-PQC, and classical algorithms integrated into OpenSSL 4.0.2 and the OQS-Provider library.
 
 The tool performs both one-way and mutual authentication for every supported PQC, Hybrid-PQC, and classical algorithm configuration. The results are outputted as CSV files, with each file containing the handshake transmission costs for a specific algorithm category. 
 
@@ -20,7 +20,7 @@ The automated testing tool is currently only supported on the following devices:
 - ARM Linux devices using a 64-bit Debian-based Operating System
 
 ## Supported Algorithms
-This tool supports PQC and Hybrid-PQC algorithms available through OpenSSL 4.0.1 and the OQS-Provider, with a small number excluded because of known incompatibilities and dependency limitations. It also supports various classical digital signature, key-exchange-group, and ciphersuite combinations which can be used a baseline to compare PQC/Hybrid-PQC results to.
+This tool supports PQC and Hybrid-PQC algorithms available through OpenSSL 4.0.2 and the OQS-Provider, with a small number excluded because of known incompatibilities and dependency limitations. It also supports various classical digital signature, key-exchange-group, and ciphersuite combinations which can be used as a baseline to compare PQC/Hybrid-PQC results to.
 
 The algorithms used within this category of testing are the same as those used for TLS handshake performance testing. The supported algorithms are listed in the following project documentation:
 
@@ -71,8 +71,8 @@ The result CSVs are separated into three files, one for each algorithm category:
 - `classic_tls_handshake_bytes_results.csv` - Contains results for all supported classical algorithms.
 
 ## Useful External Documentation
-- [OpenSSL(4.0.1) Release](https://github.com/openssl/openssl/releases/tag/openssl-4.0.1)
-- [OpenSSL(4.0.1) Documentation](https://docs.openssl.org/4.0/)
+- [OpenSSL(4.0.2) Release](https://github.com/openssl/openssl/releases/tag/openssl-4.0.2)
+- [OpenSSL(4.0.2) Documentation](https://docs.openssl.org/4.0/)
 - [OQS-Provider Webpage](https://openquantumsafe.org/applications/tls.html#oqs-openssl-provider)
 - [OQS-Provider GitHub Page](https://github.com/open-quantum-safe/oqs-provider)
 - [Latest OQS-Provider Release Notes](https://github.com/open-quantum-safe/oqs-provider/blob/main/RELEASE.md)

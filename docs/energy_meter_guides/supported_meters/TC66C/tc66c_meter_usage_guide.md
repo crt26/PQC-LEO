@@ -4,7 +4,7 @@
 This document provides a comprehensive guide on using the TC66C USB-C energy meter with the PQC-LEO automated energy testing tooling. It covers the device specifications, potential use cases, and detailed instructions on how to set up and configure the TC66C device for automated energy usage testing. PQC-LEO currently supports TC66C data collection over the meter's micro-USB serial interface. Although the TC66C hardware also provides Bluetooth wireless communication, Bluetooth collection is not currently supported by PQC-LEO.
 
 ### Contents <!-- omit from toc -->
-- [TC6CC Device Overview and Specifications](#tc6cc-device-overview-and-specifications)
+- [TC66C Device Overview and Specifications](#tc66c-device-overview-and-specifications)
   - [Device Overview](#device-overview)
   - [Device Specifications](#device-specifications)
 - [Potential Devices that this meter can be used to test energy usage of:](#potential-devices-that-this-meter-can-be-used-to-test-energy-usage-of)
@@ -14,7 +14,7 @@ This document provides a comprehensive guide on using the TC66C USB-C energy met
   - [TC66C Power Switch Power Delivery (PD) Switch Configuration](#tc66c-power-switch-power-delivery-pd-switch-configuration)
 - [Additional Documentation](#additional-documentation)
 
-## TC6CC Device Overview and Specifications
+## TC66C Device Overview and Specifications
 
 ### Device Overview
 The [TC66C](https://joy-it.net/en/products/JT-TC66C) is a small USB-C multimeter device that can be used to measure various electrical metrics such as voltage, current, power, and energy consumption. The manufacturer of the TC66C provides the following description of the device:
@@ -26,7 +26,7 @@ A copy of the user manual and product data sheet for the TC66C device can be fou
 - [TC66C User Manual](https://joy-it.net/files/files/Produkte/JT-TC66C/JT-TC66C-Manual-20201023.pdf)
 - [TC66C Product Data Sheet](https://joy-it.net/files/files/Produkte/JT-TC66C/JT-TC66C_Datasheet_2021-06-30.pdf)
 
-![Image](../../../_doc_images/tc66c-device-image.png)
+![Image](../../../_doc_images/tc66c_device_image.png)
 
 ### Device Specifications
 The TC66C has the following specifications as provided by the manufacturer:
@@ -49,13 +49,13 @@ The TC66C has the following specifications as provided by the manufacturer:
 | Energy accumulation range     | 0- 999,99 Wh                                         |
 | Load impedance range          | 1 – 9,999.9 Ω                                        |
 | Temperature measurement range | 0 - 80 °C                                            |
-| Work temperatur range         | 0 – 45 °C                                            |
+| Work temperature range        | 0 – 45 °C                                            |
 | Temperature measurement error | ± 3 °C                                               |
 
-The latest available firmware version of the TC66C device is **version v1.18** and is the version used in testing when integrating support for the TC66C device into PQC-LEO.
+Firmware **version v1.18** was used in testing when integrating support for the TC66C device into PQC-LEO.
 
 ## Potential Devices that this meter can be used to test energy usage of:
-As the TC66C device provides its power output via a USB-C interface, is can be used to test the energy usage of any device that can be powered via a USB-C interface and is within the power output specifications of the TC66C device.
+As the TC66C device provides its power output via a USB-C interface, it can be used to test the energy usage of any device that can be powered via a USB-C interface and is within the power output specifications of the TC66C device.
 
 ## Configuring the Device for Automated Energy Testing
 This section details how the device should be connected and configured for use in automated energy usage testing with PQC-LEO. These steps should be followed before enabling the energy metric collector script to ensure that the TC66C device is properly configured and connected to the collection machine and testing machine for automated energy usage testing.
@@ -65,11 +65,10 @@ Once the device has been properly connected and configured, the user can return 
 ### General Environment Layout
 The General environment setup for using the TC66C device for automated energy testing is as follows:
 
-![Image](../../../_doc_images/energy-env-setup.png)
-
+![Image](../../../_doc_images/energy_env_setup.png)
 
 ### TC66C Device Connection Layout
-To utilise the TC66C device for the automated energy testing, the device must be connected to the collection machine and and the testing machine in the following manner:
+To utilise the TC66C device for the automated energy testing, the device must be connected to the collection machine and the testing machine in the following manner:
 
 ![image](../../../_doc_images/tc66c_usb_connects.png)
 
@@ -95,10 +94,10 @@ The TC66C device supports configuring how it is powered and how it handles USB-C
 
 For automated energy testing with PQC-LEO, the recommended switch configuration is:
 
-| **Switch** | **Recommended setting** | **Reason** |
-|------------|--------------------------|------------|
-| PWR        | OFF                      | Powers the TC66C independently from the micro-USB connection. |
-| PD         | OFF                      | Allows the testing device and USB-C power source to negotiate power normally. |
+| **Switch** | **Recommended setting** | **Reason**                                                                    |
+|------------|-------------------------|-------------------------------------------------------------------------------|
+| PWR        | OFF                     | Powers the TC66C independently from the micro-USB connection.                 |
+| PD         | OFF                     | Allows the testing device and USB-C power source to negotiate power normally. |
 
 ## Additional Documentation
 - [TC66C Webpage](https://joy-it.net/en/products/JT-TC66C)

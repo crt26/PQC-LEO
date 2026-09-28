@@ -28,7 +28,7 @@ The guide details the controller API data structures and functions, the serial a
 - [Controller Utils Data Structures](#controller-utils-data-structures)
   - [TestParams Data Structure](#testparams-data-structure)
 - [Controller Utils Functions](#controller-utils-functions)
-  - [list\_com\_ports() Function](#list_com_ports-function)
+  - [list\_serial\_ports() Function](#list_serial_ports-function)
   - [get\_ip\_address() Function](#get_ip_address-function)
   - [check\_port\_availability() Function](#check_port_availability-function)
   - [get\_port\_number() Function](#get_port_number-function)
@@ -36,7 +36,7 @@ The guide details the controller API data structures and functions, the serial a
   - [get\_ready\_formatter() Function](#get_ready_formatter-function)
   - [control\_handler() Function](#control_handler-function)
 - [Controller Utils Function Usage](#controller-utils-function-usage)
-  - [list\_com\_ports() Function Usage](#list_com_ports-function-usage)
+  - [list\_serial\_ports() Function Usage](#list_serial_ports-function-usage)
   - [get\_ip\_address() Function Usage](#get_ip_address-function-usage)
   - [check\_port\_availability() Function Usage](#check_port_availability-function-usage)
   - [get\_port\_number() Function Usage](#get_port_number-function-usage)
@@ -171,7 +171,7 @@ controller.serial_controller.control_port_name = "/dev/ttyUSB0";
 controller.serial_controller.baudrate = 115200;
 controller.serial_controller.data_bits = 8;
 controller.serial_controller.parity = 0;
-controller.serial_controller.stop_bits = 1;
+controller.serial_controller.stop_bits = 2;
 controller.serial_controller.flow_control = 0;
 
 // Initialise the controller instance
@@ -209,7 +209,7 @@ Please refer to the [Network Controller Data Structures](#network-controller-dat
 Once the controller instance has been initialised, control signal messages can be sent using the `controller_send()` function. The following is an example of how to send a control signal message using the controller instance:
 
 ```c
-char message[] = "READY";
+char message[] = "READY\n";
 int ret = controller_send(&controller, message);
 ```
 
@@ -307,7 +307,7 @@ Sends a control message to the configured remote device
 int network_controller_send(NetworkController *network_controller, char *message);
 ```
 
-parameters:
+Parameters:
 - `NetworkController *network_controller`: Pointer to a NetworkController data structure containing the configuration for the network control signalling method.
 - `char *message`: Message to be sent.
 
@@ -322,7 +322,7 @@ Closes the network controller and releases socket resources.
 int network_controller_close(NetworkController *network_controller);
 ```
 
-parameters:
+Parameters:
 - `NetworkController *network_controller`: Pointer to a NetworkController data structure containing the configuration for the network control signalling method.
 
 Returns:
@@ -452,12 +452,12 @@ typedef struct {
 - `int total_runs`: Total number of runs configured for the test.
 - `int run_num`: Run number for the current test.
 - `int iterations`: Number of iterations configured for the run.
-- `float polling_rate`: Energy polling rate in miliseconds.
+- `float polling_rate`: Energy polling rate in milliseconds.
 
 ## Controller Utils Functions
 The following are various utility functions that are included within the `libcontroller_api.a` library and are defined in the `controller_utils.h` header file. These functions are used to assist with various tasks related to the controller API functions, such as parsing control signal messages, validating control signal messages, and converting between different data types. The following utility functions are available:
 
-- list_com_ports()
+- list_serial_ports()
 - get_ip_address()
 - check_port_availability()
 - get_port_number()
@@ -465,15 +465,15 @@ The following are various utility functions that are included within the `libcon
 - get_ready_formatter()
 - control_handler()
 
-### list_com_ports() Function
-Helper function for listing the available serial COM ports on the system. It uses the libserialport library to enumerate the available serial ports and print their names to the console. The user is then able to select which COM port to use for communication. The function returns a char array containing the selected port name.
+### list_serial_ports() Function
+Helper function for listing the available serial ports on the system. It uses the libserialport library to enumerate the available serial ports and print their names to the console. The user is then able to select which serial port to use for communication. The function returns a char array containing the selected port name.
 
 ```c
-char* list_com_ports();
+char* list_serial_ports();
 ```
 
 Returns:
-- `char*`: Pointer to the selected COM port string, or NULL on failure.
+- `char*`: Allocated serial port string, which the caller must free, or NULL on failure.
 
 ### get_ip_address() Function
 Helper function for prompting the user for an IP address and validating it. Once the input is validated, it is stored in the provided buffer.
@@ -522,7 +522,7 @@ Parameters:
 - `char *message`: Input message buffer to parse.
 - `char *command`: String value for the expected command to be contained in the message.
 - `char **message_elements`: Output array for parsed message tokens.
-- `size_t message_elements_size`: Capacity of the `message_elements` array.
+- `size_t message_elements_size`: Size of the `message_elements` array in bytes.
 
 Returns:
 - `0` on success
@@ -543,7 +543,7 @@ Parameters:
 ### control_handler() Function
 Function for handling the control actions based on the control type specified in the TestParams struct. It will send the appropriate command to the collector machine based on the control type and parameters. This function will call the relevant controller API functions to send and receive control signal messages based on the selected control type in the TestParams struct. It will also handle any errors that may occur during the control signal message handling process.
 
-It is intended to be ran primarily on the testing device, as the function flow is designed to send, wait, and receive control signal message as if it is a client device.
+It is intended to be run primarily on the testing device, as the function flow is designed to send, wait, and receive control signal message as if it is a client device.
 
 ```c
 int control_handler(TestController *test_controller, TestParams *test_params);
@@ -560,18 +560,18 @@ Returns:
 ## Controller Utils Function Usage
 The controller utils functions can be used to assist with various tasks related to the controller API functions, such as parsing control signal messages, validating control signal messages, and converting between different data types.
 
-### list_com_ports() Function Usage
-The `list_com_ports()` function can be used to list the available serial COM ports on the system and allow the user to select which COM port to use from that list. The returned COM port name can then be used to configure the serial controller instance for communication with the energy usage collector tool.
+### list_serial_ports() Function Usage
+The `list_serial_ports()` function can be used to list the available serial ports on the system and allow the user to select which serial port to use from that list. The returned serial port name can then be used to configure the serial controller instance for communication with the energy usage collector tool.
 
-Example usage of the `list_com_ports()` function is shown below:
+Example usage of the `list_serial_ports()` function is shown below:
 ```c
 #include "controller_api.h"
 #include "controller_utils.h"
 
-// List available COM ports and get the selected port name
-char *selected_port = list_com_ports();
+// List available serial ports and get the selected port name
+char *selected_port = list_serial_ports();
 
-// Configure the serial controller instance with the selected COM port name
+// Configure the serial controller instance with the selected serial port name
 controller.serial_controller.control_port_name = selected_port;
 ```
 
@@ -698,7 +698,7 @@ ret = controller_send(&controller, get_ready_message);
 ### control_handler() Function Usage
 The `control_handler()` function can be used to handle the control actions based on the control type specified in the TestParams struct. It will send the appropriate command to the collector machine based on the control type and parameters. This function will call the relevant controller API functions to send and receive control signal messages based on the selected control type in the TestParams struct. It will also handle any errors that may occur during the control signal message handling process.
 
-This function is intended to be ran primarily on the testing device, as the function flow is designed to send, wait, and receive control signal message as if it is a client device.
+This function is intended to be run primarily on the testing device, as the function flow is designed to send, wait, and receive control signal message as if it is a client device.
 
 Example usage of the `control_handler()` function is shown below:
 ```c

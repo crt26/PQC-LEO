@@ -20,8 +20,8 @@ output for invalid or incomplete invocation.
 
 //-------------------------------------------------------------------------------------------------------------------------------
 void output_help() {
-    /*  Function for outputting the help message for the contorl sender script. It will display the usage, options, and their 
-        descriptions. After this, it will exit the program. */
+    /*  Function for outputting the help message for the control_sender program. It will display the usage, options, and their
+        descriptions. */
 
     // Print the help message
     printf("Usage: control_sender [OPTIONS]\n");
@@ -34,15 +34,12 @@ void output_help() {
     printf("-R, --run-num=<number>                          Specify the run number for the test (positive integer)\n");
     printf("-P, --polling-rate=<rate>                       Specify the polling rate in milliseconds (a value of 0 means no delays between polls)\n");
     printf("-Z,  --controller-method=<serial|network>       Specify the control signalling method to use (serial or network)\n");
-    printf("-C, --com-port=<port>                           Specify the COM port to use for serial communication\n");
+    printf("-S, --serial-port=<port>                        Specify the serial port to use for serial communication\n");
     printf("-L, --local-ip=<ip>                             Specify the local IP address for network communication\n");
     printf("-Q, --remote-ip=<ip>                            Specify the remote IP address for network communication\n");
     printf("-N, --custom-local-port=<port>                  Specify a custom local port for network communication\n");
     printf("-J, --custom-remote-port=<port>                 Specify a custom remote port for network communication\n");
     printf("-h, --help                                      Display the help message and exit\n");
-
-    // Exit the program
-    exit(0);
 
 }
 
@@ -71,7 +68,7 @@ int validate_ip(char *ip_address) {
 
 //-------------------------------------------------------------------------------------------------------------------------------
 int parse_args(TestParams *test_params, ControllerInterfaces *controller_interfaces, int argc, char *argv[]) {
-    /*  Function for parsing the command line arguments passed to the control sender script.It will populate the TestParams 
+    /*  Function for parsing the command line arguments passed to the control sender script. It will populate the TestParams
         structure with the relevant parameters and return an error code if any of the parameters are invalid. */
 
     // Define the getopt_long struct and options    
@@ -83,7 +80,7 @@ int parse_args(TestParams *test_params, ControllerInterfaces *controller_interfa
         {"test-algs", required_argument, 0, 'A'},
         {"run-num", required_argument, 0, 'R'},
         {"polling-rate", required_argument, 0, 'P'},
-        {"com-port", required_argument, 0, 'C'},
+        {"serial-port", required_argument, 0, 'S'},
         {"controller-method", required_argument, 0, 'Z'},
         {"local-ip", required_argument, 0, 'L'},
         {"remote-ip", required_argument, 0, 'Q'},
@@ -102,7 +99,7 @@ int parse_args(TestParams *test_params, ControllerInterfaces *controller_interfa
     int custom_remote_port = 0;
 
     // Parse the command line arguments
-    while ((option = getopt_long(argc, argv, "steT:A:R:P:C:Z:L:Q:N:J:h", long_options, &option_index)) != -1) {
+    while ((option = getopt_long(argc, argv, "steT:A:R:P:S:Z:L:Q:N:J:h", long_options, &option_index)) != -1) {
 
         // Determine which option is being processed
         switch (option) {
@@ -169,6 +166,7 @@ int parse_args(TestParams *test_params, ControllerInterfaces *controller_interfa
                     output_help();
                     return -1;
                 }
+
                 break;
 
             case 'P':
@@ -192,33 +190,36 @@ int parse_args(TestParams *test_params, ControllerInterfaces *controller_interfa
 
                 // Store the passed polling rate
                 test_params->polling_rate = captured_polling_rate;
+
                 break;
 
-            case 'C':
+            case 'S':
 
-                // Store the user provided com port name
-                controller_interfaces->com_port_name = optarg;
+                // Store the user provided serial port name
+                controller_interfaces->serial_port_name = optarg;
 
-                // Ensure that the com port name is not empty
-                if (controller_interfaces->com_port_name == NULL || strlen(controller_interfaces->com_port_name) == 0) {
-                    fprintf(stderr, "[ERROR] - Com port name cannot be empty.\n");
+                // Ensure that the serial port name is not empty
+                if (controller_interfaces->serial_port_name == NULL || strlen(controller_interfaces->serial_port_name) == 0) {
+                    fprintf(stderr, "[ERROR] - Serial port name cannot be empty.\n");
                     output_help();
                     return -1;
                 }
+
                 break;
 
             case 'Z':
 
-                    // Store the control method
-                    test_params->control_method = optarg;
-    
-                    // Ensure that the control method is valid (either "serial" or "network")
-                    if (strcmp(test_params->control_method, "serial") != 0 && strcmp(test_params->control_method, "network") != 0) {
-                        fprintf(stderr, "[ERROR] - Invalid control method specified. It must be either 'serial' or 'network'.\n");
-                        output_help();
-                        return -1;
-                    }
-                    break;
+                // Store the control method
+                test_params->control_method = optarg;
+
+                // Ensure that the control method is valid (either "serial" or "network")
+                if (strcmp(test_params->control_method, "serial") != 0 && strcmp(test_params->control_method, "network") != 0) {
+                    fprintf(stderr, "[ERROR] - Invalid control method specified. It must be either 'serial' or 'network'.\n");
+                    output_help();
+                    return -1;
+                }
+
+                break;
 
             case 'L':
             
@@ -238,6 +239,7 @@ int parse_args(TestParams *test_params, ControllerInterfaces *controller_interfa
                     output_help();
                     return -1;
                 }
+
                 break;
 
             case 'Q':
@@ -282,6 +284,7 @@ int parse_args(TestParams *test_params, ControllerInterfaces *controller_interfa
 
                 // Set the custom local port used flag
                 custom_local_port = 1;
+
                 break;
 
             case 'J':
@@ -298,15 +301,18 @@ int parse_args(TestParams *test_params, ControllerInterfaces *controller_interfa
 
                 // Set the custom remote port used flag
                 custom_remote_port = 1;
+
                 break;
 
             case 'h':
 
-                // Output the help message and return success
+                // Output the help message and exit successfully
                 output_help();
-                return 0;
+                exit(0);
 
             default:
+
+                // Output the error message to the terminal for the unknown argument and return failure
                 fprintf(stderr, "[ERROR] - Unknown command line argument: %s\n", argv[optind - 1]);
                 output_help();
                 return -1;
@@ -331,9 +337,9 @@ int parse_args(TestParams *test_params, ControllerInterfaces *controller_interfa
         }
     }
     
-    // Ensure that if control method is serial, that a com port name has been provided
-    if (test_params->control_method && strcmp(test_params->control_method, "serial") == 0 && (controller_interfaces->com_port_name == NULL || strlen(controller_interfaces->com_port_name) == 0)) {
-        fprintf(stderr, "[ERROR] - Control method is set to serial but no COM port name has been provided.\n");
+    // Ensure that if control method is serial, that a serial port name has been provided
+    if (test_params->control_method && strcmp(test_params->control_method, "serial") == 0 && (controller_interfaces->serial_port_name == NULL || strlen(controller_interfaces->serial_port_name) == 0)) {
+        fprintf(stderr, "[ERROR] - Control method is set to serial but no serial port name has been provided.\n");
         output_help();
         return -1;
     }
@@ -379,8 +385,8 @@ int parse_args(TestParams *test_params, ControllerInterfaces *controller_interfa
 
 //------------------------------------------------------------------------------------------------------------------------------ 
 int setup_env(TestController *test_controller, ControllerInterfaces *controller_interfaces) {
-    /*  Function to handle the setup of the control_sender environment. This includes the configuration of the passed
-        test controller instance using the specified controller interfaces. */
+    /*  Function to handle the setup of the control_sender environment. This includes the configuration of the passed test
+        controller instance using the specified controller interfaces. */
 
     // Ensure the control method is available before comparing it
     if (test_controller->control_type == NULL) {
@@ -393,7 +399,7 @@ int setup_env(TestController *test_controller, ControllerInterfaces *controller_
 
         // Configure the serial controller settings
         test_controller->serial_controller = (SerialController) {
-            .control_port_name = controller_interfaces->com_port_name,
+            .control_port_name = controller_interfaces->serial_port_name,
             .control_port = NULL,
             .baudrate = 115200,
             .data_bits = 8,
@@ -430,8 +436,11 @@ int setup_env(TestController *test_controller, ControllerInterfaces *controller_
     
     }
     else {
+
+        // Output an error message for an invalid control method and return failure
         fprintf(stderr, "[ERROR] - Invalid control method specified in test parameters.\n");
         return -1;
+
     }
 
     return 0;
@@ -460,7 +469,7 @@ int main(int argc, char *argv[]) {
 
     // Declare an instance of the controller interfaces struct and initialise the default values
     ControllerInterfaces controller_interfaces = {
-        .com_port_name = NULL,
+        .serial_port_name = NULL,
         .local_ip = NULL,
         .remote_ip = NULL,
         .local_port = 0,
@@ -478,9 +487,12 @@ int main(int argc, char *argv[]) {
 
     }
     else {
+
+        // Output an error message for missing command line arguments and return failure
         fprintf(stderr, "[ERROR] - No command line arguments provided.\n");
         output_help();
         return -1;
+        
     }
 
     // Declare the controller instance

@@ -10,6 +10,19 @@
 # can also call the central parser automatically to structure the collected results as CSV files.
 
 #-------------------------------------------------------------------------------------------------------------------------------
+function output_help() {
+    # Helper function for outputting the help message to the user when the --help flag is present or
+    # when incorrect arguments are passed.
+
+    # Output the supported options and their usage to the user
+    echo "Usage: energy_metric_collector.sh [options]"
+    echo "Options:"
+    echo "--disable-result-parsing       Disable the automatic result parsing for the test suite."
+    echo "--help                         Display this help message."
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
 function get_user_yes_no() {
     # Helper function to prompt the user for a yes or no response. The function loops until a valid response ('y' or 'n') is 
     # provided and sets the global variable 'user_y_n_response' to 1 for 'yes' and 0 for 'no'.
@@ -47,19 +60,6 @@ function get_user_yes_no() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
-function output_help() {
-    # Helper function for outputting the help message to the user when the --help flag is present or
-    # when incorrect arguments are passed.
-
-    # Output the supported options and their usage to the user
-    echo "Usage: energy_metric_collector.sh [options]"
-    echo "Options:"
-    echo "--disable-result-parsing       Disable the automatic result parsing for the test suite."
-    echo "--help                         Display this help message."
-
-}
-
-#-------------------------------------------------------------------------------------------------------------------------------
 function parse_args() {
     # Function for parsing the command line arguments passed to the script. Based on the detected arguments, the function will 
     # set the relevant global flags that are used throughout the setup process.
@@ -85,7 +85,7 @@ function parse_args() {
                 get_user_yes_no "Are you sure you want to continue with automatic result parsing disabled?"
 
                 # Determine the next action based on the user's response
-                if [ $user_y_n_response -eq 0 ]; then
+                if [ $user_y_n_response -eq 1 ]; then
                     echo "[NOTICE] - Continuing with automatic result parsing disabled"
                     parse_results=0
                 else
@@ -119,7 +119,7 @@ function setup_base_env() {
     # Determine the directory that the script is being run from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-    # Try and find the .dir_marker.tmp file to determine the project's root directory
+    # Try and find the .pqc_leo_dir_marker.tmp file to determine the project's root directory
     current_dir="$script_dir"
 
     # Continue moving up the directory tree until the .pqc_leo_dir_marker.tmp file is found
@@ -151,7 +151,7 @@ function setup_base_env() {
     parsing_scripts="$root_dir/scripts/parsing_scripts"
 
     # Declare the global library directory path variables
-    openssl_path="$libs_dir/openssl_4.0.1"
+    openssl_path="$libs_dir/openssl_4.0.2"
     provider_path="$libs_dir/oqs_provider/lib"
     provider_flags="-provider default -provider oqsprovider -provider-path $provider_path"
 
@@ -210,8 +210,8 @@ function setup_base_env() {
         exit 1
     fi
 
-    # Declare global collection parameter flags
-    collection_type=0 # 1- Computational, 2 - TLS Handshake, 3 - TLS Speed, 4 - Custom
+    # Declare global collection parameter flags (collection_type: 1 - Computational, 2 - TLS Handshake, 3 - TLS Operations, 4 - Custom)
+    collection_type=0
     machine_num=""
     result_dir_name=""
     number_of_runs=0
@@ -229,23 +229,15 @@ function get_machine_num() {
         read -p "What machine-ID would you like to assign to these results? - " user_response
         
         # Check that the input from the user is a valid integer and store it
-        case "$user_response" in
+        if [[ "$user_response" =~ ^[0-9]+$ ]]; then
+            machine_num="$user_response"
+            echo -e "\nMachine-ID set to $user_response\n"
+            break
 
-            ''|*[!0-9]*)
+        else
+            echo -e "[WARNING] - Invalid value, please enter a number\n"
 
-                # Output to the user that the input is invalid
-                echo -e "Invalid value, please enter a number.\n"
-                continue
-                ;;
-            
-            *)
-                # Store the machine-ID  from the user and break out of the loop
-                machine_num="$user_response"
-                echo -e "\nMachine-ID set to $user_response\n"
-                break
-                ;;
-
-        esac
+        fi
 
     done
 
@@ -271,17 +263,19 @@ function handle_machine_id_clash() {
         case $user_response in
 
             1)
-
                 # Remove old results and create new directories
                 echo -e "\nReplacing old results\n"
                 rm -rf $unparsed_results_path
                 break;;
 
             2)
-
                 # Get a new machine-ID that will be assigned to the results instead
                 echo -e "Assigning new Machine-ID for test results"
                 get_machine_num
+
+                # Update both result paths for the newly assigned machine-ID
+                unparsed_results_path="$unparsed_results_base_path/machine_$machine_num"
+                parsed_results_path="$test_data_dir/results/energy_test_results/$result_dir_name/machine_$machine_num"
 
                 # Ensure the new machine-ID does not have results already present
                 if [ ! -d "$unparsed_results_path" ]; then
@@ -325,7 +319,6 @@ function get_collection_options() {
         case $collection_response in
 
             1)
-
                 # Set the collection type variable to PQC performance testing
                 collection_type=1
                 result_dir_name="pqc_performance_energy_results"
@@ -333,7 +326,6 @@ function get_collection_options() {
                 break;;
 
             2)
-
                 # Set the collection type variable to TLS handshake testing
                 collection_type=2
                 result_dir_name="tls_handshake_energy_results"
@@ -341,7 +333,6 @@ function get_collection_options() {
                 break;;
 
             3)
-
                 # Set the collection type variable to TLS operations energy testing
                 collection_type=3
                 result_dir_name="tls_operations_energy_results"
@@ -349,7 +340,6 @@ function get_collection_options() {
                 break;;
 
             4)  
-
                 # Set the collection type variable to custom option and prompt the user to enter a custom name for the collection type
                 collection_type=4
                 read -p "Please enter a name for this collection type: " custom_collection_name
@@ -358,7 +348,6 @@ function get_collection_options() {
                 break;;
 
             *)
-
                 # Output to the user that their response is invalid and prompt again
                 echo -e "\nInvalid response, please select a valid option (1-4)\n"
                 ;;
@@ -377,10 +366,10 @@ function get_collection_options() {
     while true; do
 
         # Prompt the user for their response and read it in
-        read -p "Do you wish to assign a custom Machine-ID to the energy usage results? [y/n] - " response_1
+        read -p "Do you wish to assign a custom Machine-ID to the energy usage results? [y/n] - " machine_id_response
 
         # Determine what action to take based on the user's response
-        case $response_1 in
+        case $machine_id_response in
 
             [Yy]* )
 
@@ -388,7 +377,7 @@ function get_collection_options() {
                 get_machine_num
                 break;;
 
-            [Nn]* ) 
+            [Nn]* )
 
                 # Output to the user that the default machine-ID will be used, and set it to 1
                 echo -e "\nUsing default Machine-ID for saving results\n"
@@ -396,7 +385,7 @@ function get_collection_options() {
                 break;;
 
             * ) 
-
+            
                 # Output to the user that the input is invalid and prompt again
                 echo -e "\nInvalid value, please answer (y/n)\n"
                 ;;
@@ -472,7 +461,7 @@ function setup_collection_suite() {
             echo -e "[NOTICE] - Existing Parsed Results for Machine-ID ($machine_num) will be replaced\n"
             sleep 2
 
-            # Set the automatic result parsing flag to enabled
+            # Set the flag to replace existing parsed results
             replace_old_results=1
             
         fi
@@ -523,7 +512,7 @@ function handle_result_parsing() {
 
         # Output the complete message with the test results path to the user
         echo -e "All performance testing complete, the unparsed results for Machine-ID ($machine_num) can be found in:"
-        echo "$machine_results_path"
+        echo "$unparsed_results_path"
         
     else
         echo -e "\n[ERROR] - parse_results flag not set correctly, manual calling of parsing script is now required\n"

@@ -46,7 +46,7 @@ This section provides a brief overview of these operations to support the perfor
 |--------------------|--------------------|--------------------------------------------------------------------------|
 | Key Generation     | keypair            | Generates a public/private key pair for the digital signature algorithm. |
 | Signing            | sign               | Uses the private key to generate a digital signature over a message.     |
-| Verification       | Verify             | Uses the public key to verify the authenticity of a digital signature.   |
+| Verification       | verify             | Uses the public key to verify the authenticity of a digital signature.   |
 
 ### Key Encapsulation Mechanism (KEM) Operations <!-- omit from toc --> 
 
@@ -78,31 +78,31 @@ The memory benchmarking tool evaluates how much memory individual PQC cryptograp
 
 The following table describes the memory-related metrics captured after the result parsing process has been completed:
 
-| **Metric** | **Description**                                                                 |
-|------------|---------------------------------------------------------------------------------|
-| inits      | Number of memory snapshots (or samples) collected by Valgrind during profiling. |
-| peakBytes  | Total memory usage across all memory segments (heap + stack + others) at peak.  |
-| Heap       | Heap memory usage at the time of peak total memory consumption.                 |
-| extHeap    | Externally allocated heap memory (e.g., from system libraries) at peak usage.   |
-| Stack      | Stack memory usage at the time of peak total memory consumption.                |
+| **Metric**   | **Description**                                                                                    |
+|--------------|----------------------------------------------------------------------------------------------------|
+| instructions | Instructions executed when the peak snapshot was recorded, using Massif's default `--time-unit=i`. |
+| peakBytes    | Total memory measured by Massif at the peak snapshot: useful heap + extra heap + stack.            |
+| Heap         | Useful heap memory requested by the program at the peak snapshot.                                  |
+| extHeap      | Extra heap bytes attributed to allocation bookkeeping and alignment at the peak snapshot.          |
+| Stack        | Stack memory usage at the peak snapshot.                                                           |
 
 ## Computational Performance Result Data Storage Structure
 All performance data is initially stored as unparsed output when using the computational performance benchmarking script (`pqc_performance_test.sh`). This raw data is then automatically processed using the Python parsing script to generate structured CSV files for analysis, including averages across test runs.
 
 The table below outlines where this data is stored and how it's organised in the project's directory structure:
 
-| **Data Type**        | **State** | **Description**                                              | **Location** *(relative to `test_data/`)*                           |
-|----------------------|-----------|--------------------------------------------------------------|---------------------------------------------------------------------|
-| CPU Speed            | Un-parsed | Raw `.csv` outputs from `speed_kem` and `speed_sig`.         | `up_results/computational_performance/machine_x/raw_speed_results/` |
-| CPU Speed            | Parsed    | Cleaned CSV files with metrics and averages.                 | `results/computational_performance/machine_x/speed_results/`        |
-| Memory Usage         | Un-parsed | Valgrind Massif `.txt` outputs from signature/KEM profiling. | `up_results/computational_performance/machine_x/mem_results/`       |
-| Memory Usage         | Parsed    | CSV summaries of peak memory usage.                          | `results/computational_performance/machine_x/mem_results/`          |
-| Performance Averages | Parsed    | Averaged metrics across test runs.                           | `results/computational_performance/machine_x/`                      |
+| **Data Type**        | **State** | **Description**                                               | **Location** *(relative to `test_data/`)*                                  |
+|----------------------|-----------|---------------------------------------------------------------|----------------------------------------------------------------------------|
+| CPU Speed            | Un-parsed | Raw `.csv` outputs from `speed_kem` and `speed_sig`.          | `up_results/computational_performance/machine_x/raw_speed_results/`        |
+| CPU Speed            | Parsed    | Cleaned CSV files with metrics and averages.                  | `results/computational_performance/machine_x/speed_results/`               |
+| Memory Usage         | Un-parsed | Valgrind Massif `.txt` outputs from signature/KEM profiling.  | `up_results/computational_performance/machine_x/mem_results/`              |
+| Memory Usage         | Parsed    | CSV summaries of peak memory usage.                           | `results/computational_performance/machine_x/mem_results/`                 |
+| Performance Averages | Parsed    | Averaged metrics across test runs, alongside per-run results. | `results/computational_performance/machine_x/{speed_results/mem_results}/` |
 
 Where `machine_x` is the Machine-ID number assigned to the results when executing the testing scripts. If no custom Machine-ID is assigned, the default ID of 1 will be set for the results.
 
 ## PQC TLS Performance Metrics
-The TLS performance testing suite benchmarks PQC, Hybrid-PQC, and classical algorithm configurations available through both OpenSSL's native support and the OQS-Provider. OpenSSL 4.0.1 provides native PQC implementations alongside those exposed by the OQS-Provider, and the suite is designed to evaluate performance consistently across the available implementations. It measures performance within the TLS 1.3 handshake protocol and the execution speed of cryptographic operations directly through OpenSSL. This provides insight into how PQC schemes perform in real-world security protocol scenarios. An expanded set of classical digital signature algorithms, key-exchange groups, and ciphersuites is also tested to establish performance baselines for comparison with PQC and Hybrid-PQC algorithms.
+The TLS performance testing suite benchmarks PQC, Hybrid-PQC, and classical algorithm configurations available through both OpenSSL's native support and the OQS-Provider. OpenSSL 4.0.2 provides native PQC implementations alongside those exposed by the OQS-Provider, and the suite is designed to evaluate performance consistently across the available implementations. It measures performance within the TLS 1.3 handshake protocol and the execution speed of cryptographic operations directly through OpenSSL. This provides insight into how PQC schemes perform in real-world security protocol scenarios. An expanded set of classical digital signature algorithms, key-exchange groups, and ciphersuites is also tested to establish performance baselines for comparison with PQC and Hybrid-PQC algorithms.
 
 As part of the automated TLS testing, two categories of evaluations are conducted:
 
@@ -117,14 +117,14 @@ For PQC and Hybrid-PQC, each test uses a signing-algorithm and KEM pairing. Clas
 
 The table below describes the performance metrics gathered during this testing:
 
-| **Metric**                                  | **Description**                                                                                                   |
-|---------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
-| Connections in User Time                    | Number of successful TLS handshakes completed during CPU/user time. Reflects algorithm efficiency per CPU second. |
-| Connections per User Second                 | Handshake rate per CPU second. Indicates performance under ideal CPU conditions.                                  |
-| Real-Time                                   | Total wall clock time elapsed, including system I/O and process delays.                                           |
-| Connections in Real Time                    | Number of handshakes completed in actual wall time. Useful for real-world performance assessment.                 |
-| Connections per User Second (Session Reuse) | Handshake rate per CPU second with session ID reuse. Measures efficiency with session resumption.                 |
-| Connections in Real Time (Session Reuse)    | Handshakes per real-world time with session reuse. Reflects practical performance with resumed sessions.          |
+| **Metric**                  | **Description**                                                              |
+|-----------------------------|------------------------------------------------------------------------------|
+| Reused Session ID           | `*` marks session reuse; an empty value marks first-use connections.         |
+| Connections in User Time    | Number of successful TLS connections reported during user CPU time.          |
+| User Time (s)               | User CPU time consumed by the client during testing.                         |
+| Connections Per User Second | Number of connections divided by the client's user CPU time in seconds.      |
+| Connections in Real Time    | Number of successful connections reported alongside elapsed wall clock time. |
+| Real Time (s)               | Total wall clock time elapsed, including system I/O and process delays.      |
 
 When averaged TLS handshake result files are generated, additional columns are included alongside the standard metrics:
 
@@ -135,7 +135,7 @@ When averaged TLS handshake result files are generated, additional columns are i
 
 These columns are used to indicate how many test runs were included in each average calculation. This is necessary because, in some cases, a value of `inf` may be produced for the **"Connections per User Second"** metric when using shorter TLS handshake test durations.
 
-If an `inf` value occurs in a run, that run is excluded from the average calculation for the affected algorithm combination. The additional columns allow users to determine whether any runs were excluded and how many valid runs contributed to the final averaged result. This information on the number of runs used is only present for TLS handshake results, as all other types of testing are always able to use all test runs performed for average calculations.
+For PQC and Hybrid-PQC results, if an `inf` value occurs in a row, that row is excluded from the average calculation for the affected algorithm combination and session-reuse mode. Classical handshake averages currently do not apply this filter. The additional columns record how many rows contributed to each average and are only present for TLS handshake results.
 
 Further information on this behaviour and how it can be avoided is provided in the [TLS Handshake Inf Result Handling](./tls_handshake_inf_result_handling.md) documentation.
 
@@ -157,6 +157,8 @@ The following table describes the metrics collected for PQC/Hybrid-PQC signature
 | keygens/s  | Number of key generation operations completed per second. |
 | signs/s    | Number of signing operations completed per second.        |
 | verifies/s | Number of verification operations completed per second.   |
+
+Classical EC and Ed signature result files contain only signing and verification metrics, without key-generation metrics.
 
 #### KEM Algorithm Metrics
 The following table describes the metrics collected for PQC/Hybrid-PQC KEMs and classical XDH algorithms during TLS speed testing:
@@ -245,18 +247,18 @@ The energy usage metrics that can be gathered by the current version of the `Ene
 In addition to the per-sample parsed CSV files, the parser also generates per-run condensed CSV files (`*_condensed.csv`).
 These condensed files group rows by test metadata and apply metric aggregation as follows:
 
-| **Metric Group** | **Input Metrics**                   | **Columns Produced in Condensed Output** |
-|------------------|-------------------------------------|------------------------------------------|
-| Poll metrics     | Voltage (V), Current (A), Power (W) | Min, Max, Avg, Std. Dev                  |
-| Total metrics    | mWh, mAh, Joules, Elapsed Time (ms) | Total <Metric> (maximum observed value)  |
-| Group metadata   | N/A                                 | Total Record Count                       |
+| **Metric Group** | **Input Metrics**                   | **Columns Produced in Condensed Output**  |
+|------------------|-------------------------------------|-------------------------------------------|
+| Poll metrics     | Voltage (V), Current (A), Power (W) | Min, Max, Avg, Std. Dev                   |
+| Total metrics    | mWh, mAh, Joules, Elapsed Time (ms) | `Total <Metric>` (maximum observed value) |
+| Group metadata   | N/A                                 | Total Record Count                        |
 
 If during the parsing process, the parser encounters a run where no energy usage data was collected, the blank line will be skipped and not included within the final record count.
 
 ### PQC Computational Energy Usage
 The computational energy usage metrics measure the total energy consumed by the system during the execution of specific cryptographic operations for PQC algorithms. This is done by utilising the PQC KEM and digital signature implementations available from the Liboqs library. The energy usage collection tool runs the same cryptographic operations as the computational performance testing suite, but instead will perform energy measurement using connected energy meters. The collected energy usage data provides insight into the power efficiency of different PQC algorithms during their core operations.
 
-Each cryptographic operation is ran for a user defined number of iterations and the energy usage data is collected during this period. The rate at which the energy meter is polled for data during this period is also user defined.
+Each cryptographic operation is run for a user defined number of iterations and the energy usage data is collected during this period. The rate at which the energy meter is polled for data during this period is also user defined.
 
 In addition to the standard energy usage metrics, the computational energy usage result files will also include the following metadata fields to provide context for the energy usage data:
 
@@ -337,5 +339,5 @@ TLS operations energy parsing produces `pqc` and `hybrid_pqc` KEM/signature resu
 - [Valgrind Massif Tool](http://valgrind.org/docs/manual/ms-manual.html)
 - [OQS-Provider Webpage](https://openquantumsafe.org/applications/tls.html#oqs-openssl-provider)
 - [OQS-Provider GitHub Page](https://github.com/open-quantum-safe/oqs-provider)
-- [OpenSSL(4.0.1) Release](https://github.com/openssl/openssl/releases/tag/openssl-4.0.1)
-- [OpenSSL(4.0.1) Documentation](https://docs.openssl.org/4.0/)
+- [OpenSSL(4.0.2) Release](https://github.com/openssl/openssl/releases/tag/openssl-4.0.2)
+- [OpenSSL(4.0.2) Documentation](https://docs.openssl.org/4.0/)

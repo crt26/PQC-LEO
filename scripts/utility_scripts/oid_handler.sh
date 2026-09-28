@@ -29,7 +29,7 @@ function get_root_dir() {
     # Determine the directory that the script is being run from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-    # Try and find the .dir_marker.tmp file to determine the project's root directory
+    # Try and find the .pqc_leo_dir_marker.tmp file to determine the project's root directory
     current_dir="$script_dir"
 
     # Continue moving up the directory tree until the .pqc_leo_dir_marker.tmp file is found
@@ -59,7 +59,7 @@ function output_help() {
     # Helper function for outputting the help message to the user when the --help flag is present or when incorrect arguments 
     # are passed.
 
-    # Output the help message for the oqs_enable_algs modification tool
+    # Output the help message for the OID handler
     echo "Usage: oid_handler.sh [options]"
     echo "Options:"
     echo "--set-env-oids        Set OID environment variables for quantum-safe algorithms"
@@ -453,7 +453,7 @@ function define_oid_var_arrays() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function actionable_algorithm_check() {
-    # Helper function for determing if the passed algorithm OID variables is one that shoudl either be set or unset based on
+    # Helper function for determining if the passed algorithm OID variable is one that should either be set or unset based on
     # whether it is in the excluded list or requires an enabled check. If the algorithm is actionable, the function will return
     # 0, otherwise it will return 1.
 
@@ -490,7 +490,6 @@ function OID_handler() {
 
     # Define the OID variable arrays for performing export/unset operations
     define_oid_var_arrays
-
 
     # Determine which set action to perform based on the passed configure mode
     if [ "$set_type" -eq 1 ]; then
@@ -533,7 +532,7 @@ function oid_handler_entrypoint() {
     # by first parsing the command line arguments and then calling the OID handler function with the relevant configuration 
     # mode based on the detected arguments.
 
-    # Ensure that arugments have been passed to the script
+    # Ensure that arguments have been passed to the script
     if [[ $# -gt 0 ]]; then
 
         # Determine the project root directory path

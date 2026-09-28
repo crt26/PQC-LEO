@@ -18,7 +18,7 @@ If you prefer to make use of the automated energy usage testing provided by PQC-
 ## Tool Description
 The computational energy usage testing tool provides a means of evaluating the energy usage of the cryptographic operations of the various PQC algorithms supported by the PQC-LEO framework. It utilises the PQC implementations available within the Liboqs library and the controller API functions included within the `energy usage collector` tool to perform the energy usage testing.
 
-Whilst PQC-LEO provides a automation script to perform the computational energy usage testing using this tool, it can also be used as a standalone tool to perform the energy usage testing of the PQC algorithms supported by the Liboqs library.
+Whilst PQC-LEO provides an automation script to perform the computational energy usage testing using this tool, it can also be used as a standalone tool to perform the energy usage testing of the PQC algorithms supported by the Liboqs library.
 
 The tool and its source code can be found in the following directory from the PQC-LEO project root directory:
 
@@ -44,7 +44,7 @@ cd tools
 make
 ```
 
-To use a custom OpenSSL installation, replace `make` with `make OPENSSL_PATH=/path/to/openssl`, using an absolute path (for the PQC-LEO build, the project's `lib/openssl_4.0.1` directory). This setting applies to both tools. See [OpenSSL Compatibility for Energy Tools](../developer_information/project_dependencies.md#openssl-compatibility-for-energy-tools) for the requirements.
+To use a custom OpenSSL installation, replace `make` with `make OPENSSL_PATH=/path/to/openssl`, using an absolute path (for the PQC-LEO build, the project's `lib/openssl_4.0.2` directory). This setting applies to both tools. See [OpenSSL Compatibility for Energy Tools](../developer_information/project_dependencies.md#openssl-compatibility-for-energy-tools) for the requirements.
 
 The compiled binaries will then be located in the `tools/comp_energy_tester/build/bin` directory.
 
@@ -63,7 +63,7 @@ Once the energy usage testing environment is setup, you can run the computationa
 
 Once the tool has started, it will then prompt the user to configure the controller and testing parameters.
 
-It is **important to note** that when running the testing tool manually, no changes are made to the system performance state unlike the automated testing method. It is recommended to manually set the system performance and fan speed (if applicable) to a set fixed value to ensure that variances in these parameters do not effect the base system power draw during the energy usage testing. Please refer to the relevant system documentation for information on how to set the system performance state and fan speed.
+It is **important to note** that when running the testing tool manually, no changes are made to the system performance state unlike the automated testing method. It is recommended to manually set the system performance and fan speed (if applicable) to a set fixed value to ensure that variances in these parameters do not affect the base system power draw during the energy usage testing. Please refer to the relevant system documentation for information on how to set the system performance state and fan speed.
 
 ### Configuring the Testing Parameters
 Before testing begins, the script will prompt the user to configure two categories of parameters, which include:
@@ -77,14 +77,14 @@ The first set of parameters to be configured is related to the control signaller
 1) Serial
 2) Network 
 
-If the user selects serial, the COM port to be used for serial communication must be specified. If the user selects network, the local IP of the testing machine and the remote IP of the collection machine must be specified. For details on setting up the required communication environment for control signalling, please refer to the [Energy Usage Testing](../testing_tools_usage/pqc_energy_usage_testing.md) documentation.
+If the user selects serial, the serial port to be used for serial communication must be specified. If the user selects network, the local IP of the testing machine and the remote IP of the collection machine must be specified. For details on setting up the required communication environment for control signalling, please refer to the [Energy Usage Testing](../testing_tools_usage/pqc_energy_usage_testing.md) documentation.
 
 #### Testing Parameter Configuration:
 The second set of parameters to be configured is related to the testing parameters, which include:
 
 | **Prompt**                                                                          | **What the option sets**                                                                              |
 |-------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
-| Enter the number of iterations for each test (e.g., 1000)                           | Number of iterations to be performed for each algorithm's respective cryptographic operations.       |
+| Enter the number of iterations for each test (e.g., 1000)                           | Number of iterations to be performed for each algorithm's respective cryptographic operations.        |
 | Enter the number of test runs to perform                                            | Number of separate test runs to execute for averaging.                                                |
 | Enter the energy meter polling rate in milliseconds (0 for no delays between polls) | Polling interval in milliseconds for the energy meter; set `0` for continuous/no delay between polls. |
 
@@ -104,10 +104,10 @@ For example:
 ./comp_energy_tester -c
 ```
 
-This will then prompt the user to configure the local and remote networks ports to be used for the control signalling functionality if networking communication is selected.
+This will then prompt the user to configure the local and remote network ports to be used for the control signalling functionality if networking communication is selected.
 
 ### Skipping the Welcome Message
-For automation purposes, the tool supports skipping displaying the display of the welcome message through a command line argument:
+For automation purposes, the tool supports skipping the display of the welcome message through a command line argument:
 
 `-s | --skip-welcome-message`
 

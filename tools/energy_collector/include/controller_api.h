@@ -26,7 +26,8 @@ typedef struct {
  * Initialises the active controller backend based on the control type set in passed `TestController` struct.
  *
  * @param controller Pointer to the test controller instance.
- * @return 0 on success, -1 if the controller is NULL or the control type is unsupported.
+ * @return 0 on success, -1 if the controller is NULL, the control type is unsupported,
+ * or the backend reports an initialisation failure.
  */ 
 int controller_init(TestController *controller);
 
@@ -35,7 +36,7 @@ int controller_init(TestController *controller);
  *
  * @param controller Pointer to the test controller instance.
  * @param message Null-terminated message payload to send.
- * @return 0 on success, -1 if the control type is unsupported.
+ * @return 0 on success, -1 if the control type is unsupported or the backend reports a send failure.
  */
 int controller_send(TestController *controller, char *message);
 
@@ -45,7 +46,7 @@ int controller_send(TestController *controller, char *message);
  * @param controller Pointer to the test controller instance.
  * @param message Buffer to store the received message.
  * @param message_size Size of the message buffer.
- * @return 0 on success, -1 if the control type is unsupported.
+ * @return 0 on success, -1 if the control type is unsupported or the backend reports a receive failure.
  */
 int controller_receive(TestController *controller, char *message, size_t message_size);
 
@@ -53,7 +54,7 @@ int controller_receive(TestController *controller, char *message, size_t message
  * Closes the active controller backend based on the control type set in passed `TestController` struct.
  *
  * @param controller Pointer to the test controller instance.
- * @return 0 on success, -1 if the control type is unsupported.
+ * @return 0 on success, -1 if the control type is unsupported or the backend reports a close failure.
  */
 int controller_close(TestController *controller);
 

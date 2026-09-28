@@ -5,7 +5,7 @@
 
 # Utility script for toggling the OpenSSL configuration settings in the openssl.cnf file to enable or 
 # disable post-quantum cryptographic key generation. It comments or uncomments default group directives
-# required for compatibility with scheme groups supported by the OQS-Provider when integrated with OpenSSL 4.0.1.
+# required for compatibility with scheme groups supported by the OQS-Provider when integrated with OpenSSL 4.0.2.
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function output_help() {
@@ -13,7 +13,7 @@ function output_help() {
     # are passed.
 
     # Output the supported options and their usage to the user
-    echo "Usage: configure-openssl-cnf.sh [options]"
+    echo "Usage: configure_openssl_cnf.sh [options]"
     echo "Options:"
     echo "0                     Modify default OpenSSL Configuration file to include OQS-Provider directives (for setup only)"
     echo "1                     Configure OpenSSL Configuration for Key Generation mode"
@@ -43,12 +43,10 @@ function parse_args() {
         case "$1" in
 
             0)
-
                 # Set the configure mode if no mode has been set yet
                 if [ "$mode_selected" == "False" ]; then
                     configure_mode=0
                     mode_selected="True"
-
                 else
                     echo "[ERROR] - Only one mode can be selected at a time"
                     exit 1
@@ -58,12 +56,10 @@ function parse_args() {
                 ;;
 
             1)
-
                 # Set the configure mode if no mode has been set yet
                 if [ "$mode_selected" == "False" ]; then
                     configure_mode=1
                     mode_selected="True"
-
                 else
                     echo "[ERROR] - Only one mode can be selected at a time"
                     exit 1
@@ -73,12 +69,10 @@ function parse_args() {
                 ;;
 
             2)
-            
                 # Set the configure mode if no mode has been set yet
                 if [ "$mode_selected" == "False" ]; then
                     configure_mode=2
                     mode_selected="True"
-
                 else
                     echo "[ERROR] - Only one mode can be selected at a time"
                     exit 1
@@ -88,9 +82,8 @@ function parse_args() {
                 ;;
 
             *)
-
                 # Output the error message for unknown options and display the help message
-                echo -e "[ERROR] - Invalid argument passed to configure-openssl-cnf.sh"
+                echo -e "[ERROR] - Invalid argument passed to configure_openssl_cnf.sh"
                 output_help
                 exit 1
                 ;;
@@ -103,15 +96,13 @@ function parse_args() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_base_env() {
-    # Function for setting up the foundational global variables required for the test suite. This includes determining the 
-    # project's root directory, establishing paths for libraries, scripts, and test data, and validating the presence of required 
-    # libraries. Additionally, it sets up environment variables for control ports and sleep timers, ensuring proper configuration 
-    # for the test suite's execution.
+    # Function for setting up the base environment for the utility script. It locates the project root directory, sets up
+    # the required OpenSSL installation, and configures the runtime library path for OpenSSL.
 
     # Determine the directory that the script is being executed from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-    # Try and find the .dir_marker.tmp file to determine the project's root directory
+    # Try and find the .pqc_leo_dir_marker.tmp file to determine the project's root directory
     current_dir="$script_dir"
 
     # Continue moving up the directory tree until the .pqc_leo_dir_marker.tmp file is found
@@ -141,7 +132,7 @@ function setup_base_env() {
     test_scripts_path="$root_dir/scripts/test_scripts"
 
     # Declare the global library directory path variables
-    openssl_path="$libs_dir/openssl_4.0.1"
+    openssl_path="$libs_dir/openssl_4.0.2"
     liboqs_path="$libs_dir/liboqs"
     oqs_provider_path="$libs_dir/oqs_provider"
 
@@ -205,7 +196,7 @@ ssl_conf   = ssl_sect
         sed -i 's/^\[ssl_sect\]$/#[ssl_sect]/' "$openssl_conf_path"
         sed -i 's/^system_default = system_default_sect$/#system_default = system_default_sect/' "$openssl_conf_path"
         sed -i 's/^\[system_default_sect\]$/#[system_default_sect]/' "$openssl_conf_path"
-        sed -i 's/Groups = \$ENV::DEFAULT_GROUPS/#Groups = \$ENV::DEFAULT_GROUPS/' $openssl_conf_path
+        sed -i 's/^Groups = \$ENV::DEFAULT_GROUPS/#Groups = \$ENV::DEFAULT_GROUPS/' $openssl_conf_path
 
     elif [ "$configure_mode" -eq 2 ]; then
 
@@ -234,7 +225,7 @@ function main() {
         parse_args "$@"
 
     else
-        echo "[ERROR] - No arguments passed to configure-openssl-cnf.sh"
+        echo "[ERROR] - No arguments passed to configure_openssl_cnf.sh"
         output_help
         exit 1
 

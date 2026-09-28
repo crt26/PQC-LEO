@@ -71,11 +71,11 @@ typedef struct {
  *
  * @param device Meter device wrapper to populate.
  * @param type Meter backend type to initialise.
- * @param com_port_name COM/serial port name used by the backend.
+ * @param serial_port_name Serial port name used by the backend.
  * @return 0 on success, -1 on invalid input, unsupported type, allocation failure,
  * or backend initialisation failure.
  */
-int meter_init(MeterDevice *device, MeterType type, const char *com_port_name);
+int meter_init(MeterDevice *device, MeterType type, const char *serial_port_name);
 
 /**
  * Sends a command message to the active meter device.

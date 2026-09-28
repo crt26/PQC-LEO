@@ -3,12 +3,33 @@
 # Copyright (c) 2023-2026 Callum Turino
 # SPDX-License-Identifier: MIT
 
-# Script for controlling the TLS benchmarking suite using OpenSSL 4.0.1. Supports both OpenSSL native PQC algorithms and those
+# Script for controlling the TLS benchmarking suite using OpenSSL 4.0.2. Supports both OpenSSL native PQC algorithms and those
 # provided via OQS-Provider. It handles the configuration of test parameters, machine role assignment, port and environment
 # validation, and result directory setup. The script also supports optional energy testing mode, including energy collector
 # control signalling configuration and custom system state options for client-side energy test execution. Based on the selected
 # machine role, the script calls the relevant client or server benchmarking script to perform handshake and speed tests across
 # post-quantum, Hybrid-PQC, and classical algorithm modes, storing results in machine-specific directories for later analysis.
+
+#-------------------------------------------------------------------------------------------------------------------------------
+function output_help() {
+    # Helper function for outputting the help message to the user when the --help flag is present or when incorrect arguments 
+    # are passed.
+
+    # Output the supported options and their usage to the user
+    echo "Usage: pqc_tls_performance_test.sh [options]"
+    echo "Options:"
+    echo "--server-control-port=<PORT>       Set the server control port             (1024-65535)"
+    echo "--client-control-port=<PORT>       Set the client control port             (1024-65535)"
+    echo "--s-server-port=<PORT>             Set the OpenSSL S_Server port           (1024-65535)"
+    echo "--control-sleep-time=<TIME>        Set the control sleep time in seconds   (integer or float)"
+    echo "--disable-control-sleep            Disable the control signal sleep time"
+    echo "--disable-result-parsing           Disable the result parsing for the test suite."
+    echo "--enable-energy-testing            Enable energy testing, ensure the power measurement device is connected and configured correctly"
+    echo "--use-custom-eng-control-ports     Enable the use of custom network control ports for energy testing control signalling (requires --enable-energy-testing to be enabled)"
+    echo "--use-custom-sys-state             If performing energy testing, use custom system state values for the test instead of the default values."
+    echo "--help                             Display the help message"
+
+}
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function get_user_yes_no() {
@@ -44,27 +65,6 @@ function get_user_yes_no() {
         esac
 
     done
-
-}
-
-#-------------------------------------------------------------------------------------------------------------------------------
-function output_help() {
-    # Helper function for outputting the help message to the user when the --help flag is present or when incorrect arguments 
-    # are passed.
-
-    # Output the supported options and their usage to the user
-    echo "Usage: pqc_tls_performance_test.sh [options]"
-    echo "Options:"
-    echo "--server-control-port=<PORT>       Set the server control port             (1024-65535)"
-    echo "--client-control-port=<PORT>       Set the client control port             (1024-65535)"
-    echo "--s-server-port=<PORT>             Set the OpenSSL S_Server port           (1024-65535)"
-    echo "--control-sleep-time=<TIME>        Set the control sleep time in seconds   (integer or float)"
-    echo "--disable-control-sleep            Disable the control signal sleep time"
-    echo "--disable-result-parsing           Disable the result parsing for the test suite."
-    echo "--enable-energy-testing            Enable energy testing, ensure the power measurement device is connected and configured correctly"
-    echo "--use-custom-eng-control-ports     Enable the use of custom network control ports for energy testing control signalling (requires --enable-energy-testing to be enabled)"
-    echo "--use-custom-sys-state             If performing energy testing, use custom system state values for the test instead of the default values."
-    echo "--help                             Display the help message"
 
 }
 
@@ -165,7 +165,7 @@ function parse_args {
 
             --disable-control-sleep)
 
-                # Check if the custom sleep time flag has been
+                # Check if the custom sleep time flag has been set
                 if [ "$custom_control_time_flag" == "True" ]; then
                     echo "[ERROR] - Cannot use the --disable-control-sleep flag when the --control-sleep-time flag has been set"
                     exit 1
@@ -187,7 +187,7 @@ function parse_args {
                 get_user_yes_no "Are you sure you want to continue with result parsing disabled?"
 
                 # Determine the next action based on the user's response
-                if [ $user_y_n_response -eq 0 ]; then
+                if [ $user_y_n_response -eq 1 ]; then
                     echo "[NOTICE] - Continuing with result parsing disabled"
                     parse_results=0
                 else
@@ -237,7 +237,7 @@ function parse_args {
 
     done
 
-    # Ensure that if the --custom-sys-state flag is used, energy testing is also enabled
+    # Ensure that if the --use-custom-sys-state flag is used, energy testing is also enabled
     if [ "$custom_sys_state_arg_used" == "True" ] && [ "$enable_energy_testing" == 0 ]; then
         echo "[ERROR] - The --use-custom-sys-state flag requires energy testing to be enabled"
         output_help
@@ -392,7 +392,7 @@ function setup_base_env() {
     # Determine the directory that the script is being run from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-    # Try and find the .dir_marker.tmp file to determine the project's root directory
+    # Try and find the .pqc_leo_dir_marker.tmp file to determine the project's root directory
     current_dir="$script_dir"
 
     # Continue moving up the directory tree until the .pqc_leo_dir_marker.tmp file is found
@@ -430,7 +430,7 @@ function setup_base_env() {
     result_parser_script="$parsing_scripts/parse_results.py"
 
     # Declare the global library directory path variables
-    openssl_path="$libs_dir/openssl_4.0.1"
+    openssl_path="$libs_dir/openssl_4.0.2"
     oqs_provider_path="$libs_dir/oqs_provider"
 
     # Ensure that the OQS-Provider and OpenSSL libraries are present before proceeding
@@ -579,7 +579,7 @@ function clean_environment() {
 
     # Clear the TLS speed test env var if energy testing was not enabled as var was set
     if [ $enable_energy_testing -eq 0 ]; then
-        unset SPEED_NUM
+        unset SPEED_TIME_NUM
     fi
 
     # Clear the DISABLE_CONTROL_SLEEP variable if set
@@ -599,10 +599,10 @@ function clean_environment() {
         unset SERVER_IP
     fi
 
-    # Clear the energy testing flag variable and com flags variable if energy testing is enabled
+    # Clear the energy testing flag variable and communication flags variable if energy testing is enabled
     if [ "$enable_energy_testing" -eq 1 ]; then
         unset ENABLE_ENERGY_TESTING
-        unset COM_FLAGS
+        unset COMMUNICATION_FLAGS
         unset ENERGY_POLL_RATE
     fi
 
@@ -629,6 +629,7 @@ function get_machine_num() {
                 ;;
             
             *)
+
                 # Store the machine-ID from the user and break out of the loop
                 MACHINE_NUM="$user_response"
                 echo -e "\nMachine-ID set to $user_response\n"
@@ -661,7 +662,6 @@ function handle_machine_id_clash() {
         case $user_response in
 
             1)
-
                 # Remove old results and create new directories
                 echo -e "\nReplacing old results\n"
                 rm -rf $MACHINE_RESULTS_PATH
@@ -674,7 +674,6 @@ function handle_machine_id_clash() {
                 ;;
 
             2)
-
                 # Get a new machine-ID that will be assigned to the results instead
                 echo -e "\nAssigning new Machine-ID for test results"
                 get_machine_num
@@ -684,15 +683,24 @@ function handle_machine_id_clash() {
 
                 # Ensure the new machine-ID does not have results already present
                 if [ ! -d "$MACHINE_RESULTS_PATH" ]; then
+
+                    # Output to the user that no previous results are present
                     echo -e "No previous results present for Machine-ID ($MACHINE_NUM), continuing test setup"
+
+                    # Create the result directories for the new machine-ID
+                    for result_dir in "${result_dir_paths[@]}"; do
+                        mkdir -p "$result_dir"
+                    done
+                    
                     break
+
                 else
                     echo "There are previous results detected for the new Machine-ID value, please select a different value or replace the old results"
+
                 fi
                 ;;
 
             *)
-
                 # Output to the user that the input is invalid
                 echo "Invalid option, please select a valid option value (1-2)"
                 ;;
@@ -763,7 +771,7 @@ function configure_results_dir() {
             echo -e "[NOTICE] - Existing Parsed Results for Machine-ID ($MACHINE_NUM) will be replaced\n"
             sleep 2
 
-            # Set the automatic result parsing flag to enabled
+            # Set the flag to replace existing parsed results
             replace_old_results=1
             
         fi
@@ -821,19 +829,19 @@ function get_net_port() {
     local port_type="$1"
 
     # Define an array of the TLS handshake testing communication ports to check against
-    tls_handshake_com_ports=("$server_control_port" "$client_control_port" "$s_server_port")
+    tls_handshake_ports=("$server_control_port" "$client_control_port" "$s_server_port")
 
     # Prompt the user for the network control port until a valid response is given
     while true; do
 
         # Prompt the user for their response and read it in
-        read -p "Enter the $port_type network control port number to use for energy collector communication (1-65535): " user_port_input
+        read -p "Enter the $port_type network control port number to use for energy collector communication (1024-65535): " user_port_input
 
         # Check if the port number is valid
         if is_valid_port "$user_port_input"; then
 
             # Check if the port number is already being used by the TLS handshake testing communication ports
-            for tls_port in "${tls_handshake_com_ports[@]}"; do
+            for tls_port in "${tls_handshake_ports[@]}"; do
                 if [ "$user_port_input" -eq "$tls_port" ]; then
                     echo "[ERROR] - Port number ($user_port_input) is already in use by the TLS handshake testing communication. Please choose a different port number."
                     continue 2
@@ -847,6 +855,7 @@ function get_net_port() {
 
         else
             echo "[ERROR] - Invalid port number: $user_port_input"
+
         fi
 
     done
@@ -877,19 +886,19 @@ function configure_control_method() {
 
             1)
                 # Call the serial port selector utility script and capture only the selected port from stdout
-                com_port_name="$(python3 "$util_scripts/serial_port_selector.py")"
+                serial_port_name="$(python3 "$util_scripts/serial_port_selector.py")"
                 selector_exit_code=$?
 
                 # Ensure that the serial port selection completed successfully
-                if [ "$selector_exit_code" -ne 0 ] || [ -z "$com_port_name" ]; then
-                    echo -e "[ERROR] - Failed to select a valid serial (com) port, please verify pyserial is installed and try again."
+                if [ "$selector_exit_code" -ne 0 ] || [ -z "$serial_port_name" ]; then
+                    echo -e "[ERROR] - Failed to select a valid serial port, please verify pyserial is installed and try again."
                     exit 1
                 fi
 
-                # Output the selected com port and set the communication flags
-                echo -e "Using com port: $com_port_name\n"
-                com_flags=(-Z serial -C "$com_port_name")
-                export COM_FLAGS="${com_flags[*]}"
+                # Output the selected serial port and set the communication flags
+                echo -e "Using serial port: $serial_port_name\n"
+                communication_flags=(-Z serial -S "$serial_port_name")
+                export COMMUNICATION_FLAGS="${communication_flags[*]}"
 
                 break
                 ;;
@@ -930,19 +939,18 @@ function configure_control_method() {
 
                 fi
 
-                # Set the com flags based on the user inputs and set communication parameters
+                # Set the communication flags based on the user inputs and set communication parameters
                 if [ $use_custom_eng_control_ports -eq 0 ]; then
-                    com_flags=(-Z network -L "$local_ip" -Q "$remote_ip")
+                    communication_flags=(-Z network -L "$local_ip" -Q "$remote_ip")
                 else
-                    com_flags=(-Z network -L "$local_ip" -Q "$remote_ip" -N "$local_port" -J "$remote_port")
+                    communication_flags=(-Z network -L "$local_ip" -Q "$remote_ip" -N "$local_port" -J "$remote_port")
                 fi
-                export COM_FLAGS="${com_flags[*]}"
+                export COMMUNICATION_FLAGS="${communication_flags[*]}"
 
                 break
                 ;;
 
             *)
-
                 # Output to the user that the input is invalid and prompt again
                 echo -e "\nInvalid value, please enter 1 or 2.\n"
                 ;;
@@ -979,7 +987,6 @@ function configure_test_options {
         case $usr_mach_option in
 
             1)
-
                 # Set the machine type to server and which IP address to request
                 echo -e "\nServer machine type selected\n"
                 machine_type="Server"
@@ -988,8 +995,7 @@ function configure_test_options {
                 ;;
 
             2)
-
-                # Set the machine type to server and which IP address to request
+                # Set the machine type to client and which IP address to request
                 echo -e "\nClient machine type selected\n"
                 machine_type="Client"
                 ip_request_string="Server"
@@ -997,7 +1003,6 @@ function configure_test_options {
                 ;;
 
             3)
-
                 # Output the exit message to the terminal and exit the script
                 echo "Exiting test suite"
                 exit 1
@@ -1005,7 +1010,6 @@ function configure_test_options {
                 ;;
 
             *)
-
                 # Output to the user that the input is invalid
                 echo "Invalid option, please select a valid option value (1-3)"
                 ;;
@@ -1050,7 +1054,6 @@ function configure_test_options {
                 break
             else
                 echo -e "Invalid input. Please enter a valid polling rate (0 or above) or decimal value.\n"
-
             fi
         
         done
@@ -1089,7 +1092,7 @@ function configure_test_options {
                 # Set the machine-ID to the default value and configure the results directory
                 echo -e "\nUsing default Machine-ID (1) for test results\n"
                 configure_results_dir
-                export MACHINE_NUM="1"
+                export MACHINE_NUM="$MACHINE_NUM"
 
             fi
 
@@ -1164,11 +1167,11 @@ function configure_test_options {
             while true; do
 
                 # Prompt the user for their response and read it in
-                read -p "Enter the test length in seconds for the TLS speed tests: " user_speed_num
+                read -p "Enter the test length in seconds for the TLS speed tests: " user_speed_time_num
 
                 # Check if the input is a valid integer and export it to the environment if valid
-                if [[ $user_speed_num =~ ^[1-9][0-9]*$ ]]; then
-                    export SPEED_NUM="$user_speed_num"
+                if [[ $user_speed_time_num =~ ^[1-9][0-9]*$ ]]; then
+                    export SPEED_TIME_NUM="$user_speed_time_num"
                     break
                 else
                     echo -e "Invalid input. Please enter a valid integer above 0.\n"
@@ -1450,7 +1453,7 @@ function run_tests() {
         # Export the server IP to the environment
         export SERVER_IP="$machine_ip"
         
-        # Call the server machine test script
+        # Call the client machine test script
         $tls_handshake_client
         exit_code=$?
 

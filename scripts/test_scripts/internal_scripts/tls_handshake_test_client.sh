@@ -5,7 +5,7 @@
 
 # Client-side script for executing TLS handshake performance tests in coordination with a remote server.
 # It evaluates PQC and Hybrid-PQC signature/KEM pairs and every configured classical
-# signature/key-exchange-group/ciphersuite combination using OpenSSL 4.0.1, with support for both native PQC
+# signature/key-exchange-group/ciphersuite combination using OpenSSL 4.0.2, with support for both native PQC
 # implementations and those integrated via the OQS-Provider. The script performs three main test suites:
 # PQC, Hybrid-PQC, and classical handshake tests. It is called by the TLS benchmarking controller script
 # and uses globally defined test parameters, certificate files, and control signalling for synchronisation with the server.
@@ -23,7 +23,7 @@ function setup_base_env() {
     # Determine the directory that the script is being run from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-    # Try and find the .dir_marker.tmp file to determine the project's root directory
+    # Try and find the .pqc_leo_dir_marker.tmp file to determine the project's root directory
     current_dir="$script_dir"
 
     # Continue moving up the directory tree until the .pqc_leo_dir_marker.tmp file is found
@@ -54,7 +54,7 @@ function setup_base_env() {
     util_scripts="$root_dir/scripts/utility_scripts"
 
     # Declare the global library directory path variables
-    openssl_path="$libs_dir/openssl_4.0.1"
+    openssl_path="$libs_dir/openssl_4.0.2"
     provider_path="$libs_dir/oqs_provider/lib"
 
     # Declare global key storage directory paths
@@ -63,10 +63,10 @@ function setup_base_env() {
     classic_cert_dir="$key_storage_path/classic"
     hybrid_cert_dir="$key_storage_path/hybrid"
 
-    # Define path to energy testing util scripts and import the com flags array
+    # Define path to energy testing util scripts and import the communication flags array
     energy_collector_path="$libs_dir/energy_collector"
     control_sender="$energy_collector_path/build/bin/control_sender"
-    com_flags=($COM_FLAGS)
+    communication_flags=($COMMUNICATION_FLAGS)
 
     # Declare global test flags
     test_type=0 #0=pqc, 1=hybrid, 2=classic
@@ -120,13 +120,13 @@ function get_baseline() {
         -A "baseline" \
         -R "1" \
         -P "$ENERGY_POLL_RATE" \
-        "${com_flags[@]}"
+        "${communication_flags[@]}"
 
     # Sleep for 10 seconds to allow baseline measurement to be taken
     sleep 10
 
     # Send test stop message to the collector machine
-    "$control_sender" -t "${com_flags[@]}"
+    "$control_sender" -t "${communication_flags[@]}"
     
 }
 
@@ -141,7 +141,7 @@ function set_test_env() {
     local test_type="$1"
     local configure_mode="$2"
 
-    # Clear the current_group array before setting the new group
+    # Clear the current_group string before setting the new group
     current_group=""
 
     # Determine the test parameters based on the test type passed to the function
@@ -159,7 +159,7 @@ function set_test_env() {
             sig_algs+=("$line")
         done < $sig_alg_file
 
-        # Populate the current group array with PQC algorithms
+        # Populate the current group string with PQC algorithms
         for kem_alg in "${kem_algs[@]}"; do
             current_group+=":$kem_alg"
         done
@@ -187,7 +187,7 @@ function set_test_env() {
             sig_algs+=("$line")
         done < $hybrid_sig_alg_file
 
-        # Populate the current group array with PQC algorithms
+        # Populate the current group string with PQC algorithms
         for hybr_kem_alg in "${kem_algs[@]}"; do
             current_group+=":$hybr_kem_alg"
         done
@@ -352,7 +352,7 @@ function control_signal() {
 function test_success_check() {
     # Helper function for checking the exit status of a test attempt and determining whether to retry or not. It uses a fail 
     # counter to track the number of consecutive failures for a test combination, and if the number of failures exceeds a 
-    #specified limit, it reports a hard failure to the caller.
+    # specified limit, it reports a hard failure to the caller.
     # Return codes: 0=success, 1=retry, 2=failed after max retries.
 
     # Declare the local variables to store test check variables
@@ -401,9 +401,8 @@ function check_s_time_errors() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function pqc_tests() {
-    # Function for performing the PQC and Hybrid-PQC TLS handshake tests. Digital signature and KEM algorithms are 
-    # loaded based on the selected test type (0=pqc, 1=hybrid) via set_test_env. Each sig/KEM pair is tested
-    # using OpenSSL's s_time.
+    # Function for performing the PQC and Hybrid-PQC TLS handshake tests. Digital signature and KEM algorithms are loaded based 
+    # on the selected test type (0=pqc, 1=hybrid) via set_test_env. Each sig/KEM pair is tested using OpenSSL's s_time.
 
     # Loop through all PQC/Hybrid-PQC sig algorithms to be used for signing
     for sig in "${sig_algs[@]}"; do
@@ -417,7 +416,7 @@ function pqc_tests() {
             # Perform the current run sig/kem combination test until it passes
             while true; do
 
-                # Output the current TLS test info
+                # Output the current TLS test info to the terminal
                 echo -e "\n-------------------------------------------------------------------------"
                 echo "[OUTPUT] - Run Number - $run_num, Signature - $sig, KEM - $kem"
                 
@@ -515,7 +514,7 @@ function pqc_tests() {
                                     -A "$sig_name@$kem" \
                                     -R "$run_num" \
                                     -P "$ENERGY_POLL_RATE" \
-                                    "${com_flags[@]}"
+                                    "${communication_flags[@]}"
 
                                 # Run the OpenSSL s_time process with the current test parameters and grab the exit code
                                 $openssl_cmd s_time \
@@ -536,7 +535,7 @@ function pqc_tests() {
                                 fi
 
                                 # Send energy test complete signal for the current session-ID test
-                                "$control_sender" -t "${com_flags[@]}"
+                                "$control_sender" -t "${communication_flags[@]}"
 
                                 # If any session-ID test fails, mark attempt failed and retry entire combination
                                 if [ "$session_exit_code" -ne 0 ]; then
@@ -548,10 +547,11 @@ function pqc_tests() {
 
                         fi
 
-                        # Check if the attempt was successful and decide whether to retry
+                        # Check if the attempt was successful and capture the return code to determine whether to retry or not
                         test_success_check "$attempt_exit_code"
                         check_status=$?
 
+                        # Based on the return code, determine whether to retry the current test combination or not
                         if [ "$check_status" -eq 0 ]; then
                             fail_flag=0
                             break
@@ -562,6 +562,7 @@ function pqc_tests() {
                         else
                             fail_flag=1
                             break
+
                         fi
                         
                     done
@@ -704,7 +705,7 @@ function classic_tests() {
                                     -A "$classic_sig@$key_exchange_group@$ciphersuite" \
                                     -R "$run_num" \
                                     -P "$ENERGY_POLL_RATE" \
-                                    "${com_flags[@]}"
+                                    "${communication_flags[@]}"
 
                                 # Run the OpenSSL s_time process with the current test parameters and grab the exit code
                                 $openssl_cmd s_time \
@@ -723,7 +724,7 @@ function classic_tests() {
                                 fi
 
                                 # Send energy test complete signal for the current session-ID test
-                                "$control_sender" -t "${com_flags[@]}"
+                                "$control_sender" -t "${communication_flags[@]}"
 
                                 # If any session-ID test fails, mark attempt failed and retry entire combination
                                 if [ "$session_exit_code" -ne 0 ]; then
@@ -735,10 +736,11 @@ function classic_tests() {
 
                         fi
 
-                        # Check if the attempt was successful and decide whether to retry
+                        # Check if the attempt was successful and capture the return code to determine whether to retry or not
                         test_success_check "$attempt_exit_code"
                         check_status=$?
 
+                        # Based on the return code, determine whether to retry the current test combination or not
                         if [ "$check_status" -eq 0 ]; then
                             fail_flag=0
                             break
@@ -865,7 +867,7 @@ function tls_client_test_entrypoint() {
 
     # Send test complete control signal if energy testing is enabled
     if [ "$ENABLE_ENERGY_TESTING" -eq 1 ]; then
-        "$control_sender" --end-testing "${com_flags[@]}"
+        "$control_sender" --end-testing "${communication_flags[@]}"
     fi
 
 }

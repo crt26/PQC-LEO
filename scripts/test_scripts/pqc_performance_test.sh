@@ -9,6 +9,19 @@
 # directories based on the assigned machine number.
 
 #-------------------------------------------------------------------------------------------------------------------------------
+function output_help() {
+    # Helper function for outputting the help message to the user when the --help flag is present or when incorrect arguments 
+    # are passed.
+
+    # Output the supported options and their usage to the user
+    echo "Usage: pqc_performance_test.sh [options]"
+    echo "Options:"
+    echo "  --disable-result-parsing       Disable the result parsing for the test suite."
+    echo "  --help                         Display this help message."
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
 function get_user_yes_no() {
     # Helper function to prompt the user for a yes or no response. The function loops until a valid response ('y' or 'n') is 
     # provided and sets the global variable 'user_y_n_response' to 1 for 'yes' and 0 for 'no'.
@@ -46,19 +59,6 @@ function get_user_yes_no() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
-function output_help() {
-    # Helper function for outputting the help message to the user when the --help flag is present or when incorrect arguments 
-    # are passed.
-
-    # Output the supported options and their usage to the user
-    echo "Usage: pqc_performance_test.sh [options]"
-    echo "Options:"
-    echo "  --disable-result-parsing       Disable the result parsing for the test suite."
-    echo "  --help                         Display this help message."
-
-}
-
-#-------------------------------------------------------------------------------------------------------------------------------
 function parse_args() {
     # Function for parsing the command line arguments passed to the script. Based on the detected arguments, the function will 
     # set the relevant global flags that are used throughout the setup process.
@@ -84,7 +84,7 @@ function parse_args() {
                 get_user_yes_no "Are you sure you want to continue with result parsing disabled?"
 
                 # Determine the next action based on the user's response
-                if [ $user_y_n_response -eq 0 ]; then
+                if [ $user_y_n_response -eq 1 ]; then
                     echo "[NOTICE] - Continuing with result parsing disabled"
                     parse_results=0
                 else
@@ -185,9 +185,12 @@ function resolve_arm_pmu_access() {
         # Ensure that the system has user access to the ARM PMU
         if lsmod | grep -q 'enable_ccr'; then
             echo -e "\nPMU access enabled successfully\n"
+
         else
-            echo -e "\n[WARNING] - ARM PMU access not enabled using current build, attempting to resolve the issue with a clean install..." && sleep 2
+            echo -e "\n[WARNING] - ARM PMU access not enabled using current build, attempting to resolve the issue with a clean install..."
+            sleep 2
             enable_arm_pmu
+            
         fi
 
     else
@@ -207,7 +210,7 @@ function setup_base_env() {
     # Determine the directory that the script is being executed from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-    # Try and find the .dir_marker.tmp file to determine the project's root directory
+    # Try and find the .pqc_leo_dir_marker.tmp file to determine the project's root directory
     current_dir="$script_dir"
 
     # Continue moving up the directory tree until the .pqc_leo_dir_marker.tmp file is found
@@ -302,6 +305,7 @@ function get_machine_num() {
                 ;;
             
             *)
+
                 # Store the machine-ID  from the user and break out of the loop
                 machine_num="$user_response"
                 echo -e "\nMachine-ID set to $user_response\n"
@@ -334,16 +338,15 @@ function handle_machine_id_clash() {
         case $user_response in
 
             1)
-
                 # Remove old results and create new directories
                 echo -e "\nReplacing old results\n"
                 rm -rf $machine_results_path
-                mkdir -p "$machine_speed_results"
-                mkdir -p "$kem_mem_results" && mkdir -p "$sig_mem_results"
-                break;;
+                mkdir -p "$machine_speed_results" "$kem_mem_results" "$sig_mem_results"
+
+                break
+                ;;
 
             2)
-
                 # Get a new machine-ID that will be assigned to the results instead
                 echo -e "Assigning new Machine-ID for test results"
                 get_machine_num
@@ -354,6 +357,7 @@ function handle_machine_id_clash() {
                 # Ensure the new machine-ID does not have results already present
                 if [ ! -d "$machine_results_path" ]; then
                     echo -e "No previous results present for Machine-ID ($machine_num), continuing test setup"
+                    mkdir -p "$machine_speed_results" "$kem_mem_results" "$sig_mem_results"
                     break
                 else
                     echo "There are previous results detected for the new Machine-ID value, please select a different value or replace the old results"
@@ -446,16 +450,12 @@ function setup_test_suite() {
         # Check if there are already results present for the assigned machine-ID and handle any clashes
         if [ -d "$machine_results_path" ]; then
             handle_machine_id_clash
-            
         else
-            mkdir -p "$machine_speed_results"
-            mkdir -p "$kem_mem_results" && mkdir -p "$sig_mem_results"
-
+            mkdir -p "$machine_speed_results" "$kem_mem_results" "$sig_mem_results"
         fi
 
     else
-        mkdir -p "$machine_speed_results"
-        mkdir -p "$kem_mem_results" && mkdir -p "$sig_mem_results"
+        mkdir -p "$machine_speed_results" "$kem_mem_results" "$sig_mem_results"
 
     fi
 
@@ -482,7 +482,7 @@ function setup_test_suite() {
             echo -e "[NOTICE] - Existing Parsed Results for Machine-ID ($machine_num) will be replaced\n"
             sleep 2
 
-            # Set the automatic result parsing flag to enabled
+            # Set the flag to replace existing parsed results
             replace_old_results=1
             
         fi
@@ -537,7 +537,8 @@ function setup_test_suite() {
 
     # Create the temp memory results directories for storing Valgrind operation files
     mem_tmp_dir="$tmp_dir/mem_test_tmp"
-    rm -rf "$mem_tmp_dir/" && mkdir -p "$mem_tmp_dir"
+    rm -rf "$mem_tmp_dir/"
+    mkdir -p "$mem_tmp_dir"
 
 }
 
@@ -605,7 +606,8 @@ function mem_tests() {
                 filename="$kem_mem_results/${kem_alg}_${operation}_${run_count}.txt"
                 valgrind --tool=massif --stacks=yes --massif-out-file="$mem_tmp_dir/massif.out" "$kem_mem_bin" "$kem_alg" "$operation"
                 ms_print "$mem_tmp_dir/massif.out" > $filename
-                rm -f "$mem_tmp_dir/massif.out" && echo -e "\n"
+                rm -f "$mem_tmp_dir/massif.out"
+                echo -e "\n"
   
             done
 
@@ -631,7 +633,8 @@ function mem_tests() {
                 filename="$sig_mem_results/${sig_alg}_${operation}_${run_count}.txt"
                 valgrind --tool=massif --stacks=yes --massif-out-file="$mem_tmp_dir/massif.out" "$sig_mem_bin" "$sig_alg" "$operation"
                 ms_print "$mem_tmp_dir/massif.out" > $filename
-                rm -f "$mem_tmp_dir/massif.out" && echo -e "\n"
+                rm -f "$mem_tmp_dir/massif.out"
+                echo -e "\n"
 
             done
 
@@ -641,7 +644,8 @@ function mem_tests() {
         done
 
         # Clean up the temp memory results directory
-        rm -rf $mem_tmp_dir && rm -rf "$test_scripts_path/tmp"
+        rm -rf $mem_tmp_dir
+        rm -rf "$test_scripts_path/tmp"
         mkdir -p "$mem_tmp_dir"
 
     done

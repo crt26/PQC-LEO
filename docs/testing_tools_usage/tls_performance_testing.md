@@ -1,7 +1,7 @@
 # Automated PQC TLS Performance Benchmarking Tool - Usage Guide <!-- omit from toc -->
 
 ## Overview <!-- omit from toc -->
-This tool provides automated benchmarking for PQC-enabled TLS 1.3 handshakes and cryptographic operations within OpenSSL 4.0.1. It supports OpenSSL-native algorithms and PQC algorithms integrated into OpenSSL through the OQS-Provider library. The handshake tests evaluate PQC and Hybrid-PQC signing-algorithm/KEM pairings alongside classical signing-algorithm, key-exchange-group, and ciphersuite combinations. The OpenSSL speed tests benchmark PQC/Hybrid-PQC KEM and signature operations together with classical signature and key-exchange operations.
+This tool provides automated benchmarking for PQC-enabled TLS 1.3 handshakes and cryptographic operations within OpenSSL 4.0.2. It supports OpenSSL-native algorithms and PQC algorithms integrated into OpenSSL through the OQS-Provider library. The handshake tests evaluate PQC and Hybrid-PQC signing-algorithm/KEM pairings alongside classical signing-algorithm, key-exchange-group, and ciphersuite combinations. The OpenSSL speed tests benchmark PQC/Hybrid-PQC KEM and signature operations together with classical signature and key-exchange operations.
 
 Tests can be conducted either on a single machine (localhost) or across two networked machines, using a physical or virtual connection. The tool records detailed performance and timing metrics for each algorithm pairing evaluated during testing.
 
@@ -11,7 +11,7 @@ If you wish to perform TLS handshake or TLS operations energy usage testing, ple
 
 To compare the size of the network data exchanged by one-way and mutually authenticated TLS 1.3 handshakes, refer to the separate [TLS Handshake Transmission Cost Testing Guide](./tls_handshake_transmission_cost_testing.md).
 
->**Notice:** The versions of project dependencies used in PQC-LEO version 0.5.0 contains a known issue where certain signature/KEM combinations may produce values of `inf` for "Connections Per User Second" results in TLS handshake testing when using smaller testing windows. Please refer to the [Inf Result Value Occurrence Details](#inf-result-value-occurrence-details) section in this document for further information.
+>**Notice:** Certain signature/KEM combinations may produce values of `inf` for "Connections Per User Second" results in TLS handshake testing when using smaller testing windows. Please refer to the [Inf Result Value Occurrence Details](#inf-result-value-occurrence-details) section in this document for further information.
 
 ### Contents <!-- omit from toc -->
 - [Supported Hardware](#supported-hardware)
@@ -28,7 +28,7 @@ To compare the size of the network data exchanged by one-way and mutually authen
 - [Advanced Testing Customisation](#advanced-testing-customisation)
   - [Customising Testing Suite TCP Ports](#customising-testing-suite-tcp-ports)
   - [Adjusting Control Signalling](#adjusting-control-signalling)
-- [Disabling Automatic Result Parsing](#disabling-automatic-result-parsing)
+  - [Disabling Automatic Result Parsing](#disabling-automatic-result-parsing)
   - [Enabling Energy Usage Testing](#enabling-energy-usage-testing)
 - [Inf Result Value Occurrence Details](#inf-result-value-occurrence-details)
 - [Useful External Documentation](#useful-external-documentation)
@@ -40,7 +40,7 @@ The automated testing tool is currently only supported on the following devices:
 - ARM Linux devices using a 64-bit Debian-based Operating System
 
 ## Supported Algorithms
-This tool supports PQC and Hybrid-PQC algorithms available through OpenSSL 4.0.1 and the OQS-Provider, with a small number excluded because of known incompatibilities and dependency limitations. TLS handshake testing also covers a set of classical digital signature algorithms, TLS key-exchange groups, and TLS 1.3 ciphersuites. Every supported classical signing algorithm is tested with every supported key-exchange-group and ciphersuite combination. TLS speed testing covers supported PQC/Hybrid-PQC KEMs and signatures, classical RSA/EC/Ed signature algorithms, and classical ECDH/XDH key-exchange groups.
+This tool supports PQC and Hybrid-PQC algorithms available through OpenSSL 4.0.2 and the OQS-Provider, with a small number excluded because of known incompatibilities and dependency limitations. TLS handshake testing also covers a set of classical digital signature algorithms, TLS key-exchange groups, and TLS 1.3 ciphersuites. Every supported classical signing algorithm is tested with every supported key-exchange-group and ciphersuite combination. TLS speed testing covers supported PQC/Hybrid-PQC KEMs and signatures, classical RSA/EC/Ed signature algorithms, and classical ECDH/XDH key-exchange groups.
 
 RSA-PSS is included in classical TLS handshake testing, but standard TLS speed testing does not produce separate RSA-PSS results. The underlying `openssl speed` command provides size-based RSA selectors only and uses its standard RSA/PKCS#1 v1.5 benchmark path; it does not provide an RSA-PSS selector that the test could invoke or parse as a distinct result.
 
@@ -213,7 +213,7 @@ If the default delay is unsuitable for your environment, you can either set a cu
 
 **Please note** that the `--control-sleep-time` flag cannot be used with the `--disable-control-sleep` flag.
 
-## Disabling Automatic Result Parsing
+### Disabling Automatic Result Parsing
 The performance testing script triggers automatic result parsing upon test completion. This behaviour can be disabled by passing the following flag at runtime:
 
 ```
@@ -251,8 +251,8 @@ For a detailed explanation of this behaviour and how it is handled, please refer
 - [Inf Result Value Occurrence Details](../performance_results/tls_handshake_inf_result_handling.md)
 
 ## Useful External Documentation
-- [OpenSSL(4.0.1) Release](https://github.com/openssl/openssl/releases/tag/openssl-4.0.1)
-- [OpenSSL(4.0.1) Documentation](https://docs.openssl.org/4.0/)
+- [OpenSSL(4.0.2) Release](https://github.com/openssl/openssl/releases/tag/openssl-4.0.2)
+- [OpenSSL(4.0.2) Documentation](https://docs.openssl.org/4.0/)
 - [OQS-Provider Webpage](https://openquantumsafe.org/applications/tls.html#oqs-openssl-provider)
 - [OQS-Provider GitHub Page](https://github.com/open-quantum-safe/oqs-provider)
 - [Latest OQS-Provider Release Notes](https://github.com/open-quantum-safe/oqs-provider/blob/main/RELEASE.md)

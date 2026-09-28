@@ -137,7 +137,7 @@ function get_ip() {
 
             # Ensure that the IP address is not set to 0.0.0.0 or 255.255.255.255 before continuing
             if [[ "$ip_address" == "0.0.0.0" || "$ip_address" == "255.255.255.255" ]]; then
-                echo "Invalid IP address: $ip_address. Please enter a valid IP address."
+                echo "[WARNING] - Invalid IP address: $ip_address. Please enter a valid IP address."
             else
                 echo "Other test machine set to - $ip_address"
                 machine_ip="$ip_address"
@@ -145,7 +145,7 @@ function get_ip() {
             fi
 
         else
-            echo "Invalid IP format, please try again"
+            echo "[WARNING] - Invalid IP format, please try again"
 
         fi
     
@@ -190,7 +190,7 @@ function setup_env() {
     # Determine the directory that the script is being run from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-    # Try and find the .dir_marker.tmp file to determine the project's root directory
+    # Try and find the .pqc_leo_dir_marker.tmp file to determine the project's root directory
     current_dir="$script_dir"
 
     # Continue moving up the directory tree until the .pqc_leo_dir_marker.tmp file is found
@@ -221,7 +221,7 @@ function setup_env() {
     util_scripts="$root_dir/scripts/utility_scripts"
 
     # Declare the global library directory path variables
-    openssl_path="$libs_dir/openssl_4.0.1"
+    openssl_path="$libs_dir/openssl_4.0.2"
     provider_path="$libs_dir/oqs_provider/lib"
     provider_flags="-provider default -provider oqsprovider -provider-path $provider_path"
 
@@ -340,9 +340,9 @@ function setup_env() {
 function sys_state_configure() {
     # Function for configuring the system state for the performance energy test. The function will call the system state configurer 
     # utility script with the relevant flags based on the stage of the test (start or end) and the global configuration flag for the 
-    # system state. Depending on whether the user has chosen to use the default state or custom state, the utility script will be called 
-    # with the relevant flags. A trap is set to call this function with the "test_end" argument to restore the system state back to 
-    # its original configuration.
+    # system state. Depending on whether the user has chosen to use the default state or custom state, the utility script will be 
+    # called with the relevant flags. A trap is set to call this function with the "test_end" argument to restore the system state 
+    # back to its original configuration.
 
     # Store the passed argument in a local variable
     local config_stage="$1"
@@ -372,7 +372,7 @@ function sys_state_configure() {
             if [ "$user_y_n_response" -eq 1 ]; then
 
                 # Output the warning and force the CPU core to be 0
-                echo -e "Continuing with the test, but results may be inaccurate due to incorrect system state configuration.\n"
+                echo -e "[WARNING] - Continuing with the test, but results may be inaccurate due to incorrect system state configuration.\n"
                 TARGET_CPU_CORE=0
                 sys_state_set_ok=0
                 return 0
@@ -380,7 +380,7 @@ function sys_state_configure() {
             else
 
                 # Output the message to the user and exit the script
-                echo -e "Exiting the test, please resolve the system state configuration issue and try again."
+                echo -e "[NOTICE] - Exiting the test, please resolve the system state configuration issue and try again."
                 exit 1
 
             fi
@@ -420,8 +420,11 @@ function sys_state_configure() {
         sys_state_set_ok=0
         
     else
+
+        # Output the error message to the user and exit the script if an invalid argument is passed
         echo -e "[ERROR] - Invalid argument passed to sys_state_configure function, please check the code and try again."
         exit 1
+
     fi
 
 }
@@ -501,18 +504,18 @@ function configure_control_method() {
 
             1)
                 # Call the serial port selector utility script and capture only the selected port from stdout
-                com_port_name="$(python3 "$util_scripts/serial_port_selector.py")"
+                serial_port_name="$(python3 "$util_scripts/serial_port_selector.py")"
                 selector_exit_code=$?
 
                 # Ensure that the serial port selection completed successfully
-                if [ "$selector_exit_code" -ne 0 ] || [ -z "$com_port_name" ]; then
-                    echo -e "[ERROR] - Failed to select a valid serial (com) port, please verify pyserial is installed and try again."
+                if [ "$selector_exit_code" -ne 0 ] || [ -z "$serial_port_name" ]; then
+                    echo -e "[ERROR] - Failed to select a valid serial port, please verify pyserial is installed and try again."
                     exit 1
                 fi
 
-                # Output the selected com port and set the communication flags
-                echo -e "Using com port: $com_port_name\n"
-                com_flags=(-Z serial -C "$com_port_name")
+                # Output the selected serial port and set the communication flags
+                echo -e "Using serial port: $serial_port_name\n"
+                communication_flags=(-Z serial -S "$serial_port_name")
 
                 break
                 ;;
@@ -541,11 +544,11 @@ function configure_control_method() {
 
                 fi
 
-                # Set the com flags based on the user inputs and set communication parameters
+                # Set the communication flags based on the user inputs and set communication parameters
                 if [ "$use_custom_control_ports" -eq 0 ]; then
-                    com_flags=(-Z network -L "$local_ip" -Q "$remote_ip")
+                    communication_flags=(-Z network -L "$local_ip" -Q "$remote_ip")
                 else
-                    com_flags=(-Z network -L "$local_ip" -Q "$remote_ip" -N "$local_port" -J "$remote_port")
+                    communication_flags=(-Z network -L "$local_ip" -Q "$remote_ip" -N "$local_port" -J "$remote_port")
                 fi
 
                 break
@@ -589,7 +592,6 @@ function get_test_options() {
             break
         else
             echo -e "Invalid input. Please enter a valid integer above 0.\n"
-
         fi
 
     done
@@ -604,10 +606,8 @@ function get_test_options() {
         if [[ "$user_run_num" =~ ^[1-9][0-9]*$ ]]; then
             number_of_runs=$user_run_num
             break
-
         else
             echo -e "Invalid input. Please enter a valid integer above 0.\n"
-
         fi
     
     done
@@ -624,7 +624,6 @@ function get_test_options() {
             break
         else
             echo -e "Invalid input. Please enter a valid polling rate (0 or above) or decimal value.\n"
-
         fi
 
     done
@@ -636,7 +635,7 @@ function get_test_options() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function get_baseline() {
-    # Function for getting the baseline energy consumption for the testing machine. The function sends communicates with the 
+    # Function for getting the baseline energy consumption for the testing machine. The function communicates with the
     # energy collector to signal the start and end of the baseline measurement, and includes a 10 second sleep period to allow for
     # the measurement to be taken.
 
@@ -646,13 +645,13 @@ function get_baseline() {
         -A "baseline" \
         -R "1" \
         -P "$energy_poll_rate" \
-        "${com_flags[@]}"
+        "${communication_flags[@]}"
 
     # Sleep for 10 seconds to allow baseline measurement
     sleep 10
 
     # Send test stop message to the collector
-    "$control_sender" -t "${com_flags[@]}"
+    "$control_sender" -t "${communication_flags[@]}"
 
 }
 
@@ -801,9 +800,10 @@ function create_common_files() {
         local_secret_path="$temp_test_storage/${testing_alg}_local_secret.bin"
         peer_secret_path="$temp_test_storage/${testing_alg}_peer_secret.bin"
 
-        # Ensure that the common files for this alg do not already exist and remove if they do
+        # Define an array of the common file paths that need to be checked for existence and removed if they do exist
         local file_vars=($local_priv_key_path $local_pub_key_path $peer_priv_key_path $peer_pub_key_path $local_secret_path $peer_secret_path)
 
+        # Ensure that the common files for this alg do not already exist and remove if they do
         for file in "${file_vars[@]}"; do
             if [[ -f "$file" ]]; then
                 echo -e "[NOTICE] - Removing existing common file: $file"
@@ -852,7 +852,7 @@ function pqc_kem_testing()  {
     # for the defined number of iterations.
 
     # Concat the two types of kem algs
-    local all_kems=( "${kem_algs[@]}" "${hybrid_kem_algs[@]}" )
+    local all_kems=("${kem_algs[@]}" "${hybrid_kem_algs[@]}")
 
     # Ensure that the temp storage directory is present and empty
     if [[ -d "$temp_test_storage" ]]; then
@@ -862,13 +862,13 @@ function pqc_kem_testing()  {
         mkdir -p "$temp_test_storage"
     fi
 
-    # Loop through the KEM algorithms and run the tests for each
+    # Loop through the KEM algorithms and run the tests for each operation (keygen, encaps, decaps)
     for kem_alg in "${all_kems[@]}"; do
 
         # Create the common files required for this KEM algorithm
         create_common_files "PQC-KEM" "$kem_alg"
 
-        # Output current testing to the user
+        # Output the current test being performed to the user
         echo "Testing KEM $kem_alg - Keygen"
 
         # Send the GETREADY message to the collector for keygen testing
@@ -877,7 +877,7 @@ function pqc_kem_testing()  {
             -A "$kem_alg" \
             -R "$run_num" \
             -P "$energy_poll_rate" \
-            "${com_flags[@]}"
+            "${communication_flags[@]}"
         exit_code=$?
 
         # Ensure no issues with the command
@@ -902,9 +902,9 @@ function pqc_kem_testing()  {
         done
 
         # Send the testing complete message to the collector
-        "$control_sender" -t "${com_flags[@]}"
+        "$control_sender" -t "${communication_flags[@]}"
 
-        # Output current testing to the user
+        # Output the current test being performed to the user
         echo "Testing KEM $kem_alg - Encaps"
 
         # Send the GETREADY message to the collector for encapsulation testing
@@ -913,10 +913,10 @@ function pqc_kem_testing()  {
             -A "$kem_alg" \
             -R "$run_num" \
             -P "$energy_poll_rate" \
-            "${com_flags[@]}"
+            "${communication_flags[@]}"
         exit_code=$?
 
-        # Ensure no issues with the command
+        # Ensure there was no issues with the command execution
         if [ $exit_code -ne 0 ]; then
             echo -e "[ERROR] - Error sending GETREADY message to energy collector, please check the connection and try again."
             exit 1
@@ -929,7 +929,7 @@ function pqc_kem_testing()  {
             taskset -c "$TARGET_CPU_CORE" "$openssl_bin" pkeyutl $provider_flags -encap -pubin -inkey "$pub_key_path" -out /dev/null -secret /dev/null
             exit_code=$?
 
-            # Check for errors during the operation
+            # Check for any errors during the operation
             if [ $exit_code -ne 0 ]; then
                 echo -e "[ERROR] - Error during $kem_alg encapsulation operation"
                 exit 1
@@ -938,9 +938,9 @@ function pqc_kem_testing()  {
         done
 
         # Send the testing complete message to the collector
-        "$control_sender" -t "${com_flags[@]}"
+        "$control_sender" -t "${communication_flags[@]}"
 
-        # Output current testing to the user
+        # Output the current test being performed to the user
         echo "Testing KEM $kem_alg - Decaps"
 
         # Send the GETREADY message to the collector for decapsulation testing
@@ -949,10 +949,10 @@ function pqc_kem_testing()  {
             -A "$kem_alg" \
             -R "$run_num" \
             -P "$energy_poll_rate" \
-            "${com_flags[@]}"
+            "${communication_flags[@]}"
         exit_code=$?
 
-        # Ensure no issues with the command
+        # Ensure there was no issues with the command execution
         if [ $exit_code -ne 0 ]; then
             echo -e "[ERROR] - Error sending GETREADY message to energy collector, please check the connection and try again."
             exit 1
@@ -974,7 +974,7 @@ function pqc_kem_testing()  {
         done
 
         # Send the testing complete message to the collector
-        "$control_sender" -t "${com_flags[@]}"
+        "$control_sender" -t "${communication_flags[@]}"
 
     done
 
@@ -992,7 +992,7 @@ function pqc_sig_testing() {
     # algorithm for the defined number of iterations.
 
     # Concat the two types of signature algs
-    local all_sigs=( "${sig_algs[@]}" "${hybrid_sig_algs[@]}" )
+    local all_sigs=("${sig_algs[@]}" "${hybrid_sig_algs[@]}")
 
     # Ensure that the temp storage directory is present and empty
     if [[ -d "$temp_test_storage" ]]; then
@@ -1002,13 +1002,13 @@ function pqc_sig_testing() {
         mkdir -p "$temp_test_storage"
     fi
 
-    # Loop through the signature algorithms and run the tests for each
+    # Loop through the signature algorithms and run the tests for each operation (keygen, sign, verify)
     for sig_alg in "${all_sigs[@]}"; do
 
         # Create the common files required for this signature algorithm
         create_common_files "PQC-Sig" "$sig_alg"
 
-        # Output the current testing to the user
+        # Output the current test being performed to the user
         echo "Testing SIG $sig_alg - Keygen"
 
         # Send the GETREADY message to the collector for keygen testing
@@ -1017,7 +1017,7 @@ function pqc_sig_testing() {
             -A "$sig_alg" \
             -R "$run_num" \
             -P "$energy_poll_rate" \
-            "${com_flags[@]}"
+            "${communication_flags[@]}"
         exit_code=$?
 
         # Ensure no issues with the command
@@ -1042,9 +1042,9 @@ function pqc_sig_testing() {
         done
 
         # Send the testing complete message to the collector
-        "$control_sender" -t "${com_flags[@]}"
+        "$control_sender" -t "${communication_flags[@]}"
 
-        # Output the current testing to the user
+        # Output the current test being performed to the user
         echo "Testing SIG $sig_alg - Sign"
 
         # Send the GETREADY message to the collector for signing testing
@@ -1053,7 +1053,7 @@ function pqc_sig_testing() {
             -A "$sig_alg" \
             -R "$run_num" \
             -P "$energy_poll_rate" \
-            "${com_flags[@]}"
+            "${communication_flags[@]}"
         exit_code=$?
 
         # Ensure no issues with the command
@@ -1078,9 +1078,9 @@ function pqc_sig_testing() {
         done
 
         # Send the testing complete message to the collector
-        "$control_sender" -t "${com_flags[@]}"
+        "$control_sender" -t "${communication_flags[@]}"
 
-        # Output the current testing to the user
+        # Output the current test being performed to the user
         echo "Testing SIG $sig_alg - Verify"
 
         # Send the GETREADY message to the collector for verification testing
@@ -1089,7 +1089,7 @@ function pqc_sig_testing() {
             -A "$sig_alg" \
             -R "$run_num" \
             -P "$energy_poll_rate" \
-            "${com_flags[@]}"
+            "${communication_flags[@]}"
         exit_code=$?
 
         # Ensure no issues with the command
@@ -1114,7 +1114,7 @@ function pqc_sig_testing() {
         done
 
         # Send the testing complete message to the collector
-        "$control_sender" -t "${com_flags[@]}"
+        "$control_sender" -t "${communication_flags[@]}"
 
     done
 
@@ -1207,9 +1207,8 @@ function classic_sig_testing() {
 
         # Create the common files for the current signature algorithm
         create_common_files "Classic-Sig" "$sig_alg" "${keygen_args[*]}" "${sign_args[*]}"
-        
 
-        # Output the current test to the user
+        # Output the current test being performed to the user
         echo "Testing Classic SIG $sig_alg - Keygen"
 
         # Send the GETREADY message to the collector for keygen testing
@@ -1218,10 +1217,10 @@ function classic_sig_testing() {
             -A "$sig_alg" \
             -R "$run_num" \
             -P "$energy_poll_rate" \
-            "${com_flags[@]}"
+            "${communication_flags[@]}"
         exit_code=$?
 
-        # Ensure no issues with the command
+        # Ensure there was no issues with the command execution
         if [ $exit_code -ne 0 ]; then
             echo -e "[ERROR] - Error sending GETREADY message to energy collector, please check the connection and try again."
             exit 1
@@ -1234,7 +1233,7 @@ function classic_sig_testing() {
             taskset -c "$TARGET_CPU_CORE" "$openssl_bin" genpkey $provider_flags "${keygen_args[@]}" -out /dev/null
             exit_code=$?
 
-            # Check for errors during the operation
+            # Check for any errors during the operation
             if [ $exit_code -ne 0 ]; then
                 echo -e "[ERROR] - Error during $sig_alg keygen operation"
                 exit 1
@@ -1243,9 +1242,9 @@ function classic_sig_testing() {
         done
 
         # Send the testing complete message to the collector
-        "$control_sender" -t "${com_flags[@]}"
+        "$control_sender" -t "${communication_flags[@]}"
 
-        # Output the current test to the user
+        # Output the current test being performed to the user
         echo "Testing Classic SIG $sig_alg - Sign"
 
         # Send the GETREADY message to the collector for signing testing
@@ -1254,10 +1253,10 @@ function classic_sig_testing() {
             -A "$sig_alg" \
             -R "$run_num" \
             -P "$energy_poll_rate" \
-            "${com_flags[@]}"
+            "${communication_flags[@]}"
         exit_code=$?
 
-        # Ensure no issues with the command
+        # Ensure there was no issues with the command execution
         if [ $exit_code -ne 0 ]; then
             echo -e "[ERROR] - Error sending GETREADY message to energy collector, please check the connection and try again."
             exit 1
@@ -1277,7 +1276,7 @@ function classic_sig_testing() {
                 -out /dev/null
             exit_code=$?
 
-            # Check for errors during the operation
+            # Check for any errors during the operation
             if [ $exit_code -ne 0 ]; then
                 echo -e "[ERROR] - Error during $sig_alg signing operation"
                 exit 1
@@ -1286,9 +1285,9 @@ function classic_sig_testing() {
         done
 
         # Send the testing complete message to the collector
-        "$control_sender" -t "${com_flags[@]}"
+        "$control_sender" -t "${communication_flags[@]}"
 
-        # Output the current test to the user
+        # Output the current test being performed to the user
         echo "Testing Classic SIG $sig_alg - Verify"
 
         # Send the GETREADY message to the collector for verification testing
@@ -1297,10 +1296,10 @@ function classic_sig_testing() {
             -A "$sig_alg" \
             -R "$run_num" \
             -P "$energy_poll_rate" \
-            "${com_flags[@]}"
+            "${communication_flags[@]}"
         exit_code=$?
 
-        # Ensure no issues with the command
+        # Ensure there was no issues with the command execution
         if [ $exit_code -ne 0 ]; then
             echo -e "[ERROR] - Error sending GETREADY message to energy collector, please check the connection and try again."
             exit 1
@@ -1322,7 +1321,7 @@ function classic_sig_testing() {
                 > /dev/null
             exit_code=$?
 
-            # Check for errors during the operation
+            # Check for any errors during the operation
             if [ $exit_code -ne 0 ]; then
                 echo -e "[ERROR] - Error during $sig_alg verification operation"
                 exit 1
@@ -1331,7 +1330,7 @@ function classic_sig_testing() {
         done
 
         # Send the testing complete message to the collector
-        "$control_sender" -t "${com_flags[@]}"
+        "$control_sender" -t "${communication_flags[@]}"
 
     done
 
@@ -1383,10 +1382,10 @@ function classic_key_exchange_testing() {
             -A "$key_exchange_alg" \
             -R "$run_num" \
             -P "$energy_poll_rate" \
-            "${com_flags[@]}"
+            "${communication_flags[@]}"
         exit_code=$?
 
-        # Ensure no issues with the command
+        # Ensure there was no issues with the command execution
         if [ $exit_code -ne 0 ]; then
             echo -e "[ERROR] - Error sending GETREADY message to energy collector, please check the connection and try again."
             exit 1
@@ -1399,7 +1398,7 @@ function classic_key_exchange_testing() {
             taskset -c "$TARGET_CPU_CORE" "$openssl_bin" genpkey $provider_flags "${keygen_args[@]}" -out /dev/null
             exit_code=$?
 
-            # Check for errors during the operation
+            # Check for any errors during the operation
             if [ $exit_code -ne 0 ]; then
                 echo -e "[ERROR] - Error during $key_exchange_alg keygen operation"
                 exit 1
@@ -1408,7 +1407,7 @@ function classic_key_exchange_testing() {
         done
 
         # Send the keygen testing complete message to the collector
-        "$control_sender" -t "${com_flags[@]}"
+        "$control_sender" -t "${communication_flags[@]}"
 
         # Output the current test to the user
         echo "Testing Classic Key Exchange $key_exchange_alg - Derive"
@@ -1419,10 +1418,10 @@ function classic_key_exchange_testing() {
             -A "$key_exchange_alg" \
             -R "$run_num" \
             -P "$energy_poll_rate" \
-            "${com_flags[@]}"
+            "${communication_flags[@]}"
         exit_code=$?
 
-        # Ensure no issues with the command
+        # Ensure there was no issues with the command execution
         if [ $exit_code -ne 0 ]; then
             echo -e "[ERROR] - Error sending GETREADY message to energy collector, please check the connection and try again."
             exit 1
@@ -1450,7 +1449,7 @@ function classic_key_exchange_testing() {
         done
 
         # Send the testing complete message to the collector
-        "$control_sender" -t "${com_flags[@]}"
+        "$control_sender" -t "${communication_flags[@]}"
 
     done
 
@@ -1518,7 +1517,7 @@ function main() {
     done
 
     # Send END testing message to the collector
-    "$control_sender" --end-testing "${com_flags[@]}"
+    "$control_sender" --end-testing "${communication_flags[@]}"
 
     # Output the test completion message to the terminal
     echo -e "\nAll testing runs completed"

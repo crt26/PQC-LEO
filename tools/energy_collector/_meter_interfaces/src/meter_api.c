@@ -21,13 +21,13 @@ PQC-LEO repository site.
 #include "tc66c.h"
 
 //-------------------------------------------------------------------------------------------------------------------------------
-int meter_init(MeterDevice *device, MeterType type, const char *com_port_name) {
-    /*  Function for initialising a energy meter device. It configures the device based on its type and the provided COM port name. 
-        It will check the device type and initialise the appropriate device instance based on what is currently supported. 
+int meter_init(MeterDevice *device, MeterType type, const char *serial_port_name) {
+    /*  Function for initialising an energy meter device. It configures the device based on its type and the provided serial port
+        name. It will check the device type and initialise the appropriate device instance based on what is currently supported. 
         New device instances can be added here as needed. */
 
     // Ensure that passed values are valid before proceeding
-    if (device == NULL || com_port_name == NULL) {
+    if (device == NULL || serial_port_name == NULL) {
         fprintf(stderr, "[ERROR] - Invalid parameters for meter initialisation.\n");
         return -1;
     }
@@ -40,7 +40,7 @@ int meter_init(MeterDevice *device, MeterType type, const char *com_port_name) {
 
         case METER_TYPE_TC66C: {
             
-            // Create and instance of the TC66C_Device struct
+            // Create an instance of the TC66C_Device struct
             TC66C_Device *tc66c_device = malloc(sizeof(TC66C_Device));
             if (tc66c_device == NULL) {
                 fprintf(stderr, "[ERROR] - Failed to allocate memory for TC66C device instance.\n");
@@ -49,7 +49,7 @@ int meter_init(MeterDevice *device, MeterType type, const char *com_port_name) {
             
             // Configure the TC66C port configurations
             *tc66c_device = (TC66C_Device){
-                .com_port = NULL,
+                .serial_port = NULL,
                 .aes_ctx = NULL,
                 .baudrate = 115200,
                 .data_bits = 8,
@@ -62,8 +62,8 @@ int meter_init(MeterDevice *device, MeterType type, const char *com_port_name) {
             device->device_instance = tc66c_device;
             device->type = METER_TYPE_TC66C;
 
-            // Initialise the TC66C device using the provided COM port name
-            if (tc66c_init(device->device_instance, com_port_name) != 0) {
+            // Initialise the TC66C device using the provided serial port name
+            if (tc66c_init(device->device_instance, serial_port_name) != 0) {
                 fprintf(stderr, "[ERROR] - Failed to initialise TC66C device.\n");
                 free(tc66c_device);
                 return -1;
@@ -86,8 +86,8 @@ int meter_init(MeterDevice *device, MeterType type, const char *com_port_name) {
 
 //-------------------------------------------------------------------------------------------------------------------------------
 int meter_send_cmd(MeterDevice *device, const char *message) {
-    /*  Function for sending a command to an energy meter device. It will check the device type and call the 
-        relevant command sending function. */
+    /*  Function for sending a command to an energy meter device. It will check the device type and call the relevant command 
+        sending function. */
 
     // Ensure that the device instance has been initialised properly and that the message pointer is valid before proceeding
     if (device == NULL || device->device_instance == NULL || message == NULL) {
@@ -123,9 +123,9 @@ int meter_send_cmd(MeterDevice *device, const char *message) {
 
 //-------------------------------------------------------------------------------------------------------------------------------
 int meter_poll(MeterDevice *device, MeterReading *poll_data) {
-    /*  Function for polling an energy meter device for readings. It will check the device type and call the 
-        relevant polling function to retrieve the current readings from the device. The retrieved data is stored
-        in the provided poll_data struct. */
+    /*  Function for polling an energy meter device for readings. It will check the device type and call the relevant polling 
+        function to retrieve the current readings from the device. The retrieved data is stored in the provided poll_data
+        struct. */
 
     // Ensure that the device instance has been initialised properly and that the poll_data pointer is valid before proceeding
     if (device == NULL || device->device_instance == NULL || poll_data == NULL) {
@@ -185,7 +185,7 @@ int meter_poll(MeterDevice *device, MeterReading *poll_data) {
 
 //-------------------------------------------------------------------------------------------------------------------------------
 int meter_close(MeterDevice *device) {
-    /*  Function for closing a connection instance with a energy meter device. It will check the device type and call the 
+    /*  Function for closing a connection instance with an energy meter device. It will check the device type and call the
         relevant closing function to release the device resources. */
 
     // Ensure that the device instance has been initialised properly before proceeding

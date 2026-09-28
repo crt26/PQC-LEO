@@ -12,7 +12,7 @@ messages, and closes/releases serial resources during shutdown.
 
 //-------------------------------------------------------------------------------------------------------------------------------
 int serial_controller_init(SerialController *serial_controller) {
-    /*  Function for initialising the SerialController instance. It will open the specified COM port and configure it with the 
+    /*  Function for initialising the SerialController instance. It will open the specified serial port and configure it with the
         specified parameters. */
 
     // Ensure that the serial controller struct is valid

@@ -15,6 +15,20 @@ sys_state_set_ok=0
 trap_cleanup_done=0
 
 #-------------------------------------------------------------------------------------------------------------------------------
+function output_help() {
+    # Helper function for outputting the help message to the user when the --help flag is present or when incorrect arguments 
+    # are passed.
+
+    # Output the supported options and their usage to the user
+    echo "Usage: pqc_performance_energy_test.sh [options]"
+    echo "Options:"
+    echo "--use-custom-sys-state            Used to indicate that custom system state values should be set for the test instead of the default values"
+    echo "--use-custom-eng-control-ports    Enable the use of custom network control ports for energy testing control signalling"
+    echo "--help                            Display the help message"
+    
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
 function get_user_yes_no() {
     # Helper function to prompt the user for a yes or no response. The function loops until a valid response ('y' or 'n') is 
     # provided and sets the global variable 'user_y_n_response' to 1 for 'yes' and 0 for 'no'.
@@ -49,20 +63,6 @@ function get_user_yes_no() {
 
     done
 
-}
-
-#-------------------------------------------------------------------------------------------------------------------------------
-function output_help() {
-    # Helper function for outputting the help message to the user when the --help flag is present or when incorrect arguments 
-    # are passed.
-
-    # Output the supported options and their usage to the user
-    echo "Usage: pqc_performance_energy_test.sh [options]"
-    echo "Options:"
-    echo "--use-custom-sys-state            Used to indicate that custom system state values should be set for the test instead of the default values"
-    echo "--use-custom-eng-control-ports    Enable the use of custom network control ports for energy testing control signalling (requires --enable-energy-testing to be enabled)"
-    echo "--help                            Display the help message"
-    
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
@@ -118,7 +118,7 @@ function setup_env() {
     # Determine the directory that the script is being run from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-    # Try and find the .dir_marker.tmp file to determine the project's root directory
+    # Try and find the .pqc_leo_dir_marker.tmp file to determine the project's root directory
     current_dir="$script_dir"
 
     # Continue moving up the directory tree until the .pqc_leo_dir_marker.tmp file is found
@@ -149,7 +149,7 @@ function setup_env() {
     util_scripts="$root_dir/scripts/utility_scripts"
 
     # Declare the global library directory path variables
-    openssl_path="$libs_dir/openssl_4.0.1"
+    openssl_path="$libs_dir/openssl_4.0.2"
     provider_path="$libs_dir/oqs_provider/lib"
     provider_flags="-provider default -provider oqsprovider -provider-path $provider_path"
 
@@ -268,7 +268,7 @@ function sys_state_configure() {
     
     elif [[ "$config_stage" == "test_end" ]]; then
 
-       # Skip restore if system state was not set successfully and the user continued anyway
+        # Skip restore if system state was not set successfully and the user continued anyway
         if [ "$sys_state_set_ok" -eq 0 ]; then
             echo -e "\n"
             return 0
@@ -277,6 +277,8 @@ function sys_state_configure() {
         # Restore the CPU frequency scaling governor to the original setting
         "$util_scripts/system_state_configurer.sh" --restore
         restore_status=$?
+
+        # Check if the restore was successful, if not output an error message and return a non-zero exit status
         if [ $restore_status -ne 0 ]; then
             echo "[ERROR] - Failed to restore system state." >&2
             return 1

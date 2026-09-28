@@ -18,9 +18,10 @@ SPDX-License-Identifier: MIT
  * @param control_type Numeric control message type identifier used by internal logic.
  * @param test_type Test category/name.
  * @param test_algs Tested algorithm/s.
+ * @param total_runs Total number of runs configured for the test.
  * @param run_num Run number for the current test.
  * @param iterations Number of iterations configured for the run.
- * @param polling_rate Energy polling rate in miliseconds.
+ * @param polling_rate Energy polling rate in milliseconds.
  */
 typedef struct {
     char *control_method;
@@ -34,11 +35,11 @@ typedef struct {
 } TestParams;
 
 /**
- * Lists available COM ports and prompts the user to select one.
+ * Lists available serial ports and prompts the user to select one.
  *
- * @return Pointer to the selected COM port string, or NULL on failure.
+ * @return Allocated serial port string, which the caller must free, or NULL on failure.
  */
-char* list_com_ports();
+char* list_serial_ports();
 
 /**
  * Prompt the user for an IPv4 address, validate it, and store it in the
@@ -69,22 +70,21 @@ int check_port_availability(int port_number, const char *protocol);
 void get_port_number(int *port_number);
 
 /**
- * Parses a control message and extracts command and message fields from it .
+ * Parses a control message and extracts command and message fields from it.
  *
  * @param message Input message buffer to parse.
  * @param command String value for the expected command to be contained in the message.
  * @param message_elements Output array for parsed message tokens.
- * @param message_elements_size Capacity of the `message_elements` array.
+ * @param message_elements_size Size of the `message_elements` array in bytes.
  * @return 0 on success, -1 on parse/validation failure.
  */
 int message_parser(char *message, char *command, char **message_elements, size_t message_elements_size);
 
 /**
- * Parses and validates a the passed GETREADY message and populates the test parameters
- * using the extracted values.
+ * Formats a GETREADY message using the supplied test parameters.
  *
- * @param test_params Output test parameter structure.
- * @param get_ready_message Input GETREADY message buffer.
+ * @param test_params Input test parameter structure.
+ * @param get_ready_message Output GETREADY message buffer.
  * @param message_size Size of the GETREADY message buffer.
  * @return 0 on success, -1 on formatting failure.
  */

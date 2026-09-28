@@ -58,13 +58,14 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
             # Get the decision from the user on how to handle old results before parsing continues
             while True:
 
-                # Output the potential options and handle user choice
+                # Output the potential options available to the user for handling the old results and get their input
                 print(f"\nFrom the following options, choose how would you like to handle the old energy usage results:")
                 print("Option 1 - Replace old parsed results with new ones")
                 print("Option 2 - Exit parsing programme to move old results and rerun after (if you choose this option, please move the entire folder not just its contents)")
                 print("Option 3 - Make parsing script programme wait until you have move files before continuing")
                 user_choice = input("Enter option: ")
 
+                # Based on the user input, handle the old results accordingly and break out of the loop to continue parsing
                 if user_choice == "1":
 
                     # Replace all old results and create a new empty directory to store the parsed results
@@ -643,7 +644,7 @@ def parse_energy_data(test_opts, replace_old_results):
         the relevant test options, defines the relevant directory paths, and then calls the main processing function to handle 
         the parsing of the results. """
     
-    # Get the test options from the passed dict
+    # Get the test options from the passed dictionary
     machine_id = test_opts["machine_id"]
     num_runs = test_opts["total_runs"]
     test_type = test_opts["eng_test_type"]

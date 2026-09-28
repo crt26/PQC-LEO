@@ -29,47 +29,57 @@ update    Boot    5                       Prepare to upload firmware (returns 'u
 #include "tc66c.h"
 
 //-------------------------------------------------------------------------------------------------------------------------------
-int tc66c_init(TC66C_Device *tc66c_device, const char *com_port_name) {
-    /*  Function for initialising the TC66C device instance. It will open the specified COM port 
-        and configure it with the specified parameters contained in the device instance struct. */
+int tc66c_init(TC66C_Device *tc66c_device, const char *serial_port_name) {
+    /*  Function for initialising the TC66C device instance. It will open the specified serial port and configure it with the
+        specified parameters contained in the device instance struct. */
 
-    // Open the serial port
-    if (sp_get_port_by_name(com_port_name, &tc66c_device->com_port) != SP_OK) {
-        fprintf(stderr, "Error: Unable to find port %s\n", com_port_name);
+    // Get the serial port by name using the passed serial_port_name and store it in the device instance
+    if (sp_get_port_by_name(serial_port_name, &tc66c_device->serial_port) != SP_OK) {
+        fprintf(stderr, "Error: Unable to find port %s\n", serial_port_name);
         return -1;
     }
 
-    if (sp_open(tc66c_device->com_port, SP_MODE_READ_WRITE) != SP_OK) {
-        fprintf(stderr, "Error: Unable to open port %s\n", com_port_name);
+    // Open the serial port for read/write
+    if (sp_open(tc66c_device->serial_port, SP_MODE_READ_WRITE) != SP_OK) {
+        fprintf(stderr, "Error: Unable to open port %s\n", serial_port_name);
         return -1;
     }
 
     // Configure the serial port
-    sp_set_baudrate(tc66c_device->com_port, 115200);
-    sp_set_bits(tc66c_device->com_port, 8);
-    sp_set_parity(tc66c_device->com_port, SP_PARITY_NONE);
-    sp_set_stopbits(tc66c_device->com_port, 2);
-    sp_set_flowcontrol(tc66c_device->com_port, SP_FLOWCONTROL_NONE);
+    sp_set_baudrate(tc66c_device->serial_port, 115200);
+    sp_set_bits(tc66c_device->serial_port, 8);
+    sp_set_parity(tc66c_device->serial_port, SP_PARITY_NONE);
+    sp_set_stopbits(tc66c_device->serial_port, 2);
+    sp_set_flowcontrol(tc66c_device->serial_port, SP_FLOWCONTROL_NONE);
 
-    // Initialise the AES decryption context
+    // Allocate the AES cipher context used to decrypt TC66C measurement packets.
     tc66c_device->aes_ctx = EVP_CIPHER_CTX_new();
     if (tc66c_device->aes_ctx == NULL) {
+
+        // Output the error message and clean up the serial port before returning
         fprintf(stderr, "Error: Failed to allocate AES decryption context\n");
-        sp_close(tc66c_device->com_port);
-        sp_free_port(tc66c_device->com_port);
+        sp_close(tc66c_device->serial_port);
+        sp_free_port(tc66c_device->serial_port);
         return -1;
+
     }
 
+    // Initialise the AES-256-ECB decryption context with the TC66C static key.
     if (EVP_DecryptInit_ex(tc66c_device->aes_ctx, EVP_aes_256_ecb(), NULL, TC66C_STATIC_KEY, NULL) != 1) {
+
+        // Output the error message to the terminal 
         fprintf(stderr, "Error: Failed to initialise AES decryption context\n");
+
+        // Clean up the AES context and serial port before returning
         EVP_CIPHER_CTX_free(tc66c_device->aes_ctx);
         tc66c_device->aes_ctx = NULL;
-        sp_close(tc66c_device->com_port);
-        sp_free_port(tc66c_device->com_port);
+        sp_close(tc66c_device->serial_port);
+        sp_free_port(tc66c_device->serial_port);
         return -1;
+
     }
 
-    // As TC66C packets are fixed-size raw AES blocks, disable PKCS#7 padding
+    // As the TC66C data packets are fixed-size raw AES blocks, disable PKCS#7 padding
     EVP_CIPHER_CTX_set_padding(tc66c_device->aes_ctx, 0);
 
     return 0;
@@ -82,7 +92,7 @@ int tc66c_send_cmd(TC66C_Device *tc66c_device, const char *message) {
         that can be sent to the TC66C device. */
 
     // Ensure that the TC66C device instance has been initialised properly
-    if (tc66c_device == NULL || tc66c_device->com_port == NULL) {
+    if (tc66c_device == NULL || tc66c_device->serial_port == NULL) {
         fprintf(stderr, "[ERROR] - The TC66C device instance has not been initialised properly\n");
         return -1;
     }
@@ -94,7 +104,7 @@ int tc66c_send_cmd(TC66C_Device *tc66c_device, const char *message) {
     }
 
     // Write the message to the TC66C serial port
-    int status = sp_blocking_write(tc66c_device->com_port, message, strlen(message), 1000);
+    int status = sp_blocking_write(tc66c_device->serial_port, message, strlen(message), 1000);
 
     // Check if the write was successful
     if (status < 0) {
@@ -109,9 +119,9 @@ int tc66c_send_cmd(TC66C_Device *tc66c_device, const char *message) {
 //-------------------------------------------------------------------------------------------------------------------------------
 static int reorder_packet_blocks(uint8_t *decrypted_buffer) {
     /* Internal helper function for reordering the decrypted buffer based on block tags. If the tc66c_poll function detects
-       a incorrectly ordered packet, it will call this function to reorder the blocks before processing. */
+       an incorrectly ordered packet, it will call this function to reorder the blocks before processing. */
 
-    // Define the expected block tags for each chunks for validation
+    // Define the expected block tags for each chunk for validation
     const char expected_tag_1[] = "pac1";
     const char expected_tag_2[] = "pac2";
     const char expected_tag_3[] = "pac3";
@@ -199,7 +209,7 @@ int tc66c_poll(TC66C_Device *tc66c_device, TC66C_PollData *poll_data) {
         readings and stores them in the provided poll_data structure. */
 
     // Ensure that the TC66C device instance has been initialised properly before proceeding
-    if (tc66c_device == NULL || tc66c_device->com_port == NULL || poll_data == NULL) {
+    if (tc66c_device == NULL || tc66c_device->serial_port == NULL || poll_data == NULL) {
         fprintf(stderr, "[ERROR] - The TC66C device instance has not been initialised properly\n");
         return -1;
     }
@@ -210,16 +220,16 @@ int tc66c_poll(TC66C_Device *tc66c_device, TC66C_PollData *poll_data) {
     uint8_t decrypted_buffer[192];
 
     // Send the getva command to the TC66C meter 
-    int write_status = sp_blocking_write(tc66c_device->com_port, command, strlen(command), 1000);
+    int write_status = sp_blocking_write(tc66c_device->serial_port, command, strlen(command), 1000);
 
-    // Check if the write and read operations were successful
+    // Check if the complete command was written successfully
     if (write_status < 0 || (size_t)write_status != strlen(command)) {
         fprintf(stderr, "[ERROR] - Failed to send full getva command to TC66C device.\n");
         return -1;
     }
 
     // Read in the encrypted response from the TC66C meter     
-    int read_status = sp_blocking_read(tc66c_device->com_port, encrypted_buffer, sizeof(encrypted_buffer), 1000);
+    int read_status = sp_blocking_read(tc66c_device->serial_port, encrypted_buffer, sizeof(encrypted_buffer), 1000);
 
     // Ensure that the read operation was successful and that the expected number of bytes were received
     if (read_status < 0 || read_status != (int)sizeof(encrypted_buffer)) {
@@ -288,19 +298,19 @@ int tc66c_poll(TC66C_Device *tc66c_device, TC66C_PollData *poll_data) {
 
 //-------------------------------------------------------------------------------------------------------------------------------
 int tc66c_close(TC66C_Device *tc66c_device) {
-    /*  Function for closing the TC66C device instance and releasing resources. It will close the COM port and free any 
+    /*  Function for closing the TC66C device instance and releasing resources. It will close the serial port and free any
         associated resources. */
 
     // Ensure that the TC66C device instance has been initialised properly
-    if (tc66c_device == NULL || tc66c_device->com_port == NULL) {
+    if (tc66c_device == NULL || tc66c_device->serial_port == NULL) {
         fprintf(stderr, "[ERROR] - The TC66C device instance has not been initialised properly\n");
         return -1;
     }
 
     // Close the serial port
-    sp_close(tc66c_device->com_port);
-    sp_free_port(tc66c_device->com_port);
-    tc66c_device->com_port = NULL;
+    sp_close(tc66c_device->serial_port);
+    sp_free_port(tc66c_device->serial_port);
+    tc66c_device->serial_port = NULL;
 
     // Free the AES decryption context if it exists
     if (tc66c_device->aes_ctx != NULL) {
@@ -308,6 +318,6 @@ int tc66c_close(TC66C_Device *tc66c_device) {
         tc66c_device->aes_ctx = NULL;
     }
 
-    return 0; // Success
+    return 0;
 
 }

@@ -54,6 +54,7 @@ def handle_args():
         if parse_mode is not None:
             if parse_mode not in valid_parse_modes:
                 raise Exception(f"[ERROR] - Invalid parse mode provided to the script - {parse_mode}, please use 'computational', 'tls', or 'energy'")
+            
         else:
             raise Exception("[ERROR] - No parsing mode provided, please use the --parse-mode argument to specify the parsing mode to be used")
 
@@ -82,6 +83,7 @@ def handle_args():
             if energy_test_type is not None:
                 if energy_test_type not in valid_energy_test_types.keys():
                     raise Exception(f"[ERROR] - Invalid energy test type provided to the script - {energy_test_type}")
+                
             else:
                 raise Exception("[ERROR] - The --energy-test-type argument must be provided if --parse-mode is set to energy parsing mode")
             
@@ -158,10 +160,10 @@ def get_mode_selection():
 
 #------------------------------------------------------------------------------------------------------------------------------
 def get_test_opts(root_dir, user_parse_mode):
-    """ Helper function for getting the parsing mode from the user in interactive mode. It displays the available options 
-        and returns the selected choice. """
+    """ Helper function for collecting the Machine-ID, run count, and energy test type in interactive mode.
+        Returns a dictionary containing these test options and the project root directory. """
     
-    # Define the test_opts list that will store parsing parameters
+    # Define the test_opts dictionary that will store parsing parameters
     test_opts = {}
 
     # If performing energy usage metrics parsing, get the type of testing performed
@@ -201,7 +203,7 @@ def get_test_opts(root_dir, user_parse_mode):
             except ValueError:
                 print(f"[ERROR] - Invalid input, please enter a valid testing type option\n")
 
-    # Get the Machine-ID to be parsed from the user
+    # Get the Machine-ID to be parsed from the user until a valid input is provided
     while True:
         try:
             machine_num = int(input("Enter the Machine-ID to be parsed - "))
@@ -263,7 +265,7 @@ def check_skip_tls_speed():
 
 #------------------------------------------------------------------------------------------------------------------------------
 def main():
-    """ Main function for controlling the parsing of computational and TLS performance testing results. Handles both 
+    """ Main function for controlling the parsing of computational, TLS performance, and energy testing results. Handles both
         command-line and interactive modes to process results based on user input. """
 
     # Setup the base environment for the script
@@ -409,8 +411,8 @@ def main():
             sys.exit(1)
 
     # Output the parsing completed message to the terminal
-    print(f"Results processing complete, parsed results can be found in the following directory:")
-    print(f"{os.path.join(root_dir, 'test-data', 'results', f'machine_{local_machine_id}')}")
+    print(f"Results processing complete for Machine-ID ({local_machine_id}), parsed results can be found under:")
+    print(f"{os.path.join(root_dir, 'test_data', 'results')}")
 
 #------------------------------------------------------------------------------------------------------------------------------
 """Main boiler plate"""

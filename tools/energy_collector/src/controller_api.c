@@ -27,17 +27,15 @@ int controller_init(TestController *controller) {
 
     // Determine which control type to initialise based on the control_type field in the controller struct
     if (strcmp(controller->control_type, "serial") == 0) {
-        serial_controller_init(&controller->serial_controller);
+        return serial_controller_init(&controller->serial_controller);
     } 
     else if (strcmp(controller->control_type, "network") == 0) {
-        network_controller_init(&controller->network_controller);
+        return network_controller_init(&controller->network_controller);
     } 
     else {
         fprintf(stderr, "[ERROR] - Invalid control type specified: %s\n", controller->control_type);
         return -1;
     }
-
-    return 0;
 
 }
 
@@ -48,17 +46,15 @@ int controller_send(TestController *controller, char *message) {
 
     // Determine which control type to use when sending the message
     if (strcmp(controller->control_type, "serial") == 0) {
-        serial_controller_send(&controller->serial_controller, message);
+        return serial_controller_send(&controller->serial_controller, message);
     }
     else if (strcmp(controller->control_type, "network") == 0) {
-        network_controller_send(&controller->network_controller, message);
+        return network_controller_send(&controller->network_controller, message);
     }
     else {
         fprintf(stderr, "[ERROR] - Invalid control type specified: %s\n", controller->control_type);
         return -1;
     }
-
-    return 0;
 
 }
 
@@ -69,18 +65,16 @@ int controller_receive(TestController *controller, char *message, size_t message
 
     // Determine which control type to use when receiving the message
     if (strcmp(controller->control_type, "serial") == 0) {
-        serial_controller_receiver(&controller->serial_controller, message, message_size);
+        return serial_controller_receiver(&controller->serial_controller, message, message_size);
     }
     else if (strcmp(controller->control_type, "network") == 0) {
-        network_controller_receiver(&controller->network_controller, message, message_size);
+        return network_controller_receiver(&controller->network_controller, message, message_size);
 
     }
     else {
         fprintf(stderr, "[ERROR] - Invalid control type specified: %s\n", controller->control_type);
         return -1;
     }
-
-    return 0;
 
 }
 
@@ -91,16 +85,14 @@ int controller_close(TestController *controller) {
 
     // Determine which control type to use when closing the controller
     if (strcmp(controller->control_type, "serial") == 0) {
-        serial_controller_close(&controller->serial_controller);
+        return serial_controller_close(&controller->serial_controller);
     }
     else if (strcmp(controller->control_type, "network") == 0) {
-        network_controller_close(&controller->network_controller);
+        return network_controller_close(&controller->network_controller);
     }
     else {
         fprintf(stderr, "[ERROR] - Invalid control type specified: %s\n", controller->control_type);
         return -1;
     }
-
-    return 0;
 
 }
