@@ -297,17 +297,16 @@ function setup_env() {
     kem_algs=("${filtered_kem_algs[@]}")
 
     # Temporary fix - Remove X25519MLKEM768 from hybrid KEM algorithm list as it is currently
-    # not exportable via this script's file-based key generation flow.
     excluded_hybrid_kems=(
         "X25519MLKEM768"
         "X448MLKEM1024"
         "SecP256r1MLKEM768"
         "SecP384r1MLKEM1024"
-        "p256_hqc128"
-        "x25519_hqc128"
-        "p384_hqc192"
-        "x448_hqc192"
-        "p521_hqc256"
+        "p256_hqc1"
+        "x25519_hqc1"
+        "p384_hqc3"
+        "x448_hqc3"
+        "p521_hqc5"
     )
 
     filtered_hybrid_kem_algs=()

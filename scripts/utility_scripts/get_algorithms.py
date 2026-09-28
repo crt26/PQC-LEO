@@ -191,7 +191,7 @@ def get_liboqs_algs():
             return
 
 #------------------------------------------------------------------------------------------------------------------------------
-def extract_tls_algs(test_type, provider_type, output_str):
+def extract_tls_algs(test_type, provider_type, output_str, oqs_algs_enabled):
     """ Helper function for extracting PQC and Hybrid-PQC algorithms supported by OpenSSL and OQS-Provider from the output 
         string, filtering based on the test type (PQC or Hybrid-PQC) and the provider type (OpenSSL or OQS-Provider). """
 
@@ -206,7 +206,7 @@ def extract_tls_algs(test_type, provider_type, output_str):
     #native_pqc_pattern = re.compile(r'^(MLKEM[0-9]+|MLDSA[0-9]+|SLH-DSA-[A-Z0-9-]+[a-z]*)$')
 
     # Set the UOV and SNOVA exclude and include patterns
-    exclude_pattern = re.compile(r'^(p(256|384|521)_)?(OV_|snova)')
+    exclude_pattern = re.compile(r'^(?:p(?:256|384|521)_)?(?:OV_|snova)')
     include_list = [
         "OV_Ip_pkc", "p256_OV_Ip_pkc",
         "OV_Ip_pkc_skc", "p256_OV_Ip_pkc_skc",
@@ -219,6 +219,9 @@ def extract_tls_algs(test_type, provider_type, output_str):
 
     # Regex pattern to match OpenSSL's native NIST PQC algorithms (ML-KEM and ML-DSA)
     native_pqc_pattern = re.compile(r'^(MLKEM[0-9]+|MLDSA[0-9]+)$')
+
+    # Define the list which contains OQS-Provider algorithms that may still show up in output even if they are not enabled for use
+    special_oqs_prov_algs = ["bikel1", "p256_bikel1", "x25519_bikel1"]
 
     # Pre-format the output string to remove newlines and split into a list
     pre_algs = output_str.split("\n")
@@ -241,6 +244,10 @@ def extract_tls_algs(test_type, provider_type, output_str):
             # If no braces, get the last part of the string
             alg = alg.strip()
             alg = alg.split(" @ ")[0]
+
+        # If OQS-Provider algorithms are not enabled, skip over algorithms that may still be included in the output anyway
+        if not oqs_algs_enabled and provider_type == "oqsprovider" and alg in special_oqs_prov_algs:
+            continue
 
         # Skip over algorithms that are to be excluded from the list
         if test_type == 0 and ((exclude_pattern.match(alg) and alg not in include_list) or alg in excluded_algs):
@@ -294,6 +301,11 @@ def get_tls_pqc_algs():
         "oqsprovider": ["-provider", "oqsprovider", "-provider-path", oqs_provider_path]
     }
 
+    # Check if the OQS-Provider algs enabled flag is present in the temp directory
+    oqs_algs_enabled = False
+    if os.path.isfile(os.path.join(root_dir, "tmp", ".oqs_prov_algs_enabled.flag")):
+        oqs_algs_enabled = True
+
     # Loop through the different algorithm types and get the algorithms supported
     for alg_type in alg_cats:
 
@@ -317,7 +329,7 @@ def get_tls_pqc_algs():
 
             # Extract the PQC and Hybrid-PQC algorithms for TLS handshakes from the output string
             test_type = 0
-            provider_algs, provider_hybrid_algs = extract_tls_algs(test_type, provider_type, stdout)
+            provider_algs, provider_hybrid_algs = extract_tls_algs(test_type, provider_type, stdout, oqs_algs_enabled)
 
             # Append the extracted algorithms to the master lists
             algs.extend(provider_algs)
@@ -325,7 +337,7 @@ def get_tls_pqc_algs():
 
             # Extract the speed algorithms for the current algorithm type
             test_type = 1
-            provider_algs, provider_hybrid_algs = extract_tls_algs(test_type, provider_type, stdout)
+            provider_algs, provider_hybrid_algs = extract_tls_algs(test_type, provider_type, stdout, oqs_algs_enabled)
 
             # Append the extracted algorithms to the master lists
             speed_algs.extend(provider_algs)
