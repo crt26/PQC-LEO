@@ -8,6 +8,7 @@ The project's scripts are grouped into the following categories:
 - The utility scripts
 - The automated computational performance testing scripts
 - The automated TLS performance testing scripts
+- The automated TLS handshake transmission cost testing script
 - The automated energy usage testing scripts
 - The performance data parsing scripts
 
@@ -31,6 +32,8 @@ It provides overviews of each script’s purpose, functionality, and any relevan
   - [tls\_handshake\_test\_client.sh](#tls_handshake_test_clientsh)
   - [tls\_speed\_test.sh](#tls_speed_testsh)
   - [tls\_generate\_keys.sh](#tls_generate_keyssh)
+- [Automated TLS Handshake Transmission Cost Testing Scripts](#automated-tls-handshake-transmission-cost-testing-scripts)
+  - [get\_pqc\_tls\_bytes.py](#get_pqc_tls_bytespy)
 - [Automated Energy Usage Testing Scripts](#automated-energy-usage-testing-scripts)
   - [energy\_metric\_collector.sh](#energy_metric_collectorsh)
   - [pqc\_performance\_energy\_test.sh](#pqc_performance_energy_testsh)
@@ -57,7 +60,7 @@ The project utility scripts include the following:
 - system_state_configurer.sh
 
 ### setup.sh
-This script automates the full environment setup required to run the PQC benchmarking tools. It provides setup options for the different types of automated testing supported (computational, TLS, and energy usage), and handles all necessary system configuration and dependency installation.
+This script automates the full environment setup required to run the PQC benchmarking tools. It provides setup options for computational performance, TLS performance, TLS handshake transmission cost, and energy usage testing, and handles all necessary system configuration and dependency installation. Transmission cost testing uses the components installed by the TLS setup modes.
 
 Key tasks performed include:
 
@@ -117,7 +120,7 @@ When called, the utility script accepts the following arguments:
 | `2`          | Configures the OpenSSL environment for **TLS handshake benchmarking** by uncommenting PQC-related configuration lines.                                                                        |
 
 ### get_algorithms.py
-This Python utility script generates lists of supported cryptographic algorithms based on the currently installed versions of the Liboqs, OpenSSL (classic + PQC), and OQS-Provider libraries. These lists are stored under the `test_data/alg_lists` directory and are used by benchmarking and parsing tools to determine which algorithms to run and parse for the computational and TLS performance testing.
+This Python utility script generates lists of supported cryptographic algorithms based on the currently installed versions of the Liboqs, OpenSSL (classic + PQC), and OQS-Provider libraries. These lists are stored under the `test_data/alg_lists` directory and are used by benchmarking, TLS handshake transmission cost, and parsing tools to determine which algorithms to run or parse.
 
 Primarily intended to be invoked by the `setup.sh` script, this utility accepts an argument that specifies the installation and testing context. However, it can also be run manually to regenerate the algorithm list files.
 
@@ -133,12 +136,12 @@ The script supports the following functionality:
 
 The utility script accepts the following arguments:
 
-| **Argument** | **Functionality**                                                                                                          |
-|--------------|----------------------------------------------------------------------------------------------------------------------------|
-| 1            | Extracts algorithms for **computational performance testing** (Liboqs algorithms only).                                    |
-| 2            | Extracts algorithms for both **computational and TLS performance testing** (Liboqs, OpenSSL, and OQS-Provider algorithms). |
-| 3            | Extracts algorithms for **TLS performance testing** (OpenSSL and OQS-Provider algorithms only).                            |
-| 4            | Parses `ALGORITHMS.md` from OQS-Provider to determine the total number of supported algorithms (used only by `setup.sh`).  |
+| **Argument** | **Functionality**                                                                                                                                       |
+|--------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1            | Extracts algorithms for **computational performance testing** (Liboqs algorithms only).                                                                 |
+| 2            | Extracts algorithms for **computational, TLS performance, and TLS handshake transmission cost testing** (Liboqs, OpenSSL, and OQS-Provider algorithms). |
+| 3            | Extracts algorithms for **TLS performance and TLS handshake transmission cost testing** (OpenSSL and OQS-Provider algorithms only).                     |
+| 4            | Parses `ALGORITHMS.md` from OQS-Provider to determine the total number of supported algorithms (used only by `setup.sh`).                               |
 
 While running option `4` manually will work, it is unnecessary. This function is used exclusively by the `source_code_modifier.sh` script to modify OpenSSL’s `speed.c` file when all OQS-Provider algorithms are enabled. Unlike the other arguments, it does not alter or create files in the repository; it only returns the algorithm count for use during setup.
 
@@ -276,9 +279,17 @@ This script handles the client-side operations for the automated TLS handshake p
 This script performs TLS cryptographic operation benchmarking. It tests the CPU performance of PQC, Hybrid-PQC, and classical digital signature and KEM operations implemented within OpenSSL (natively or via OQS-Provider). This script is intended to be called only by the `pqc_tls_performance_test.sh` script and **cannot be run manually**. It is only called if the machine or current shell has been designated as the client (depending on whether single-machine or separate-machine testing is performed).
 
 ### tls_generate_keys.sh
-This script generates all the certificates and private keys needed for TLS handshake performance testing. It creates a certificate authority (CA) and server certificate for each PQC, Hybrid-PQC, and classical digital signature algorithm and KEM used in the tests. The generated keys must be copied to the client machine before running handshake tests so both machines can access the required certificates. This is particularly relevant if conducting testing between two machines over a physical/virtual network.
+This script generates all certificates and private keys needed for TLS handshake performance and transmission cost testing. It creates a certificate authority (CA), server credentials, and client credentials for each PQC, Hybrid-PQC, and classical digital signature algorithm used in the tests. The client credentials enable mutual authentication during transmission cost testing. For performance tests conducted over a physical or virtual network, the generated key material must be copied to the client machine so both systems can access the required credentials.
 
-This script must be called before conducting the automated TLS handshake performance testing.
+This script must be called before conducting automated TLS handshake performance or transmission cost testing.
+
+## Automated TLS Handshake Transmission Cost Testing Scripts
+The TLS handshake transmission cost testing suite is implemented by the standalone `get_pqc_tls_bytes.py` script in the `scripts/test_scripts` directory. It uses the certificates generated by `tls_generate_keys.sh` and the project-managed OpenSSL and OQS-Provider builds.
+
+### get_pqc_tls_bytes.py
+This script measures the bytes transferred during local TLS 1.3 handshakes for PQC, Hybrid-PQC, and classical configurations. It starts an OpenSSL `s_server` on `127.0.0.1:4433`, connects with OpenSSL `s_client`, and extracts the handshake byte counts reported by the client. Every signature and KEM/ciphersuite pairing is tested with both one-way and mutual authentication.
+
+The script prompts for a Machine-ID and writes three final CSV files, separated into PQC, Hybrid-PQC, and classical results, under `test_data/results/tls_handshake_bytes/machine_x`. These files are already structured and are not processed by `parse_results.py`. The script accepts no command-line arguments and is intended to be run directly after `tls_generate_keys.sh` has generated the required CA, server, and client credentials.
 
 ## Automated Energy Usage Testing Scripts
 These scripts provide automated mechanisms for integrating energy usage evaluations into the existing PQC performance suites available within PQC-LEO. These bash scripts utilise the `comp_energy_tester` and `energy_collector` tools included within the framework to provide energy usage metrics for PQC computational and TLS performance. In doing, so the scripts provide a easy to use interface for interacting with these tools. For further information on the energy evaluation tools used by these scripts, please refer to the [Project Tools](./project_tools.md) documentation.
@@ -335,7 +346,7 @@ The project includes several Python scripts that handle automatic parsing of ben
 
 These scripts support automated invocation (triggered by the automated test scripts) and manual execution via terminal input or command-line flags. Parsing is currently **supported only on Linux systems**. Windows environments are not supported due to the inability to create the environment needed to parse the raw performance results.
 
-By default, parsing is triggered automatically at the end of each test run that produces results on the testing machine. The test scripts directly pass the necessary parameters (Machine-ID, number of runs, and test type) to the parsing system. When TLS handshake performance results are stored during energy usage testing, the TLS controller also instructs the parser to skip TLS speed results because those tests are not performed in this mode.
+By default, parsing is triggered automatically at the end of each test run that produces a supported raw result type on the testing machine. The applicable test scripts directly pass the necessary parameters (Machine-ID, number of runs, and test type) to the parsing system. TLS handshake transmission cost testing is excluded because its script writes structured CSV files directly. When TLS handshake performance results are stored during energy usage testing, the TLS controller also instructs the parser to skip TLS speed results because those tests are not performed in this mode.
 
 While several scripts are utilised for the result parsing process, only the `parse_results.py` is intended to be run directly. The main parsing script calls the remaining scripts depending on which parameters the user supplies to the script when prompted. The main parsing script is stored in the `scripts/parsing_scripts` directory, whilst internal scripts are stored in the `scripts/parsing_scripts/internal_scripts` directory.
 
