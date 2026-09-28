@@ -158,8 +158,8 @@ An example of how the `control_sender` program can be called to send a GETREADY 
 
 ```bash
 ./control_sender -s \
-  -T "tls_speed_sig_verify" \
-  -A "MLDSA44" \
+  -T "tls_operations_sig_verify" \
+  -A "ML-DSA-44" \
   -R "1" \
   -P "100" \
   -Z "serial" \

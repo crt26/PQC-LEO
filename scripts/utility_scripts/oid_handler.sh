@@ -3,8 +3,8 @@
 # Copyright (c) 2023-2026 Callum Turino
 # SPDX-License-Identifier: MIT
 
-# This utility script manages custom OID environment variable mappings used only during TLS speed energy testing in
-# the PQC-LEO benchmarking suite. It is an internal helper invoked by the TLS speed energy test workflow and is not
+# This utility script manages custom OID environment variable mappings used only during TLS operations energy testing in
+# the PQC-LEO benchmarking suite. It is an internal helper invoked by the TLS operations energy test workflow and is not
 # intended to be called manually. It supports setting or clearing OID mappings so OpenSSL and OQS-Provider can
 # reference consistent private enterprise OIDs during controlled interoperability and performance test runs.
 #
@@ -477,7 +477,7 @@ function actionable_algorithm_check() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function OID_handler() {
-    # Function to manage OID (Object Identifier) environment variables for TLS speed energy testing. Due to the algorithms 
+    # Function to manage OID (Object Identifier) environment variables for TLS operations energy testing. Due to the algorithms
     # present in OQS-Provider not being fully standardised, custom OID's must be assigned to the algorithms included within 
     # OQS-Provider in order to use them within manual cryptographic operations in OpenSSL. To do this, algorithms are provided 
     # with a base OID from a private enterprise OID space (1.3.6.1.4.1.555555.9000) and then assigned an OID variable in the 

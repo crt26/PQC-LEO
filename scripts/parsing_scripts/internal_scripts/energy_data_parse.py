@@ -2,8 +2,8 @@
 Copyright (c) 2023-2026 Callum Turino
 SPDX-License-Identifier: MIT
 
-Parsing script for PQC computational and TLS energy usage testing results. Parses raw computational energy, 
-TLS handshake energy, and TLS speed energy results produced by the automated test scripts, and structures the 
+Parsing script for PQC computational and TLS energy usage testing results. Parses raw computational energy,
+TLS handshake energy, and TLS operations energy results produced by the automated test scripts, and structures the
 data into clean CSV files for each machine and test run. This script is called by the central parse_results.py 
 controller and supports single-machine, multi-run setups.
 
@@ -13,10 +13,10 @@ which is then used to structure the parsed results.
 
 The file naming format expected for each of the different types of energy usage testing results is as follows:
 
-Computational Energy Usage Result - (test-type)_(alg-type)_(operation)_(alg-name)_(run-number).txt  
-PQC/Hybrid TLS Handshake Energy Result - (test-type)_(session-id-type)_(signing-alg)@(kem-alg)_(run-number).txt
-Classic TLS Handshake Energy Result - (test-type)_(session-id-type)_(signing-alg)@(key-exchange-group)@(ciphersuite)_(run-number).txt
-TLS Speed Energy Usage Result - (test-type)_(alg-type)_(operation)_(alg-name)_(run-number).txt
+Computational Energy Usage Result - comp_(alg-type)_(operation)_(alg-name)_(run-number).txt
+PQC/Hybrid TLS Handshake Energy Result - tls_handshake_(session-id-type)_(signing-alg)@(kem-alg)_(run-number).txt
+Classic TLS Handshake Energy Result - tls_handshake_(session-id-type)_(signing-alg)@(key-exchange-group)@(ciphersuite)_(run-number).txt
+TLS Operations Energy Usage Result - tls_operations_(alg-type)_(operation)_(alg-name)_(run-number).txt
 """
 
 #------------------------------------------------------------------------------------------------------------------------------
@@ -452,8 +452,8 @@ def process_tls_handshake_results(dir_paths, result_files, num_runs, eng_avgr):
             condensed_df.to_csv(condensed_filepath, index=False)
         
 #------------------------------------------------------------------------------------------------------------------------------
-def process_tls_speed_results(dir_paths, result_files, num_runs, eng_avgr):
-    """ Function for processing the results from the TLS speed energy usage testing, extracting the relevant data from 
+def process_tls_operations_results(dir_paths, result_files, num_runs, eng_avgr):
+    """ Function for processing the results from the TLS operations energy usage testing, extracting the relevant data from
         the result files, and organising the data into csv files for each test run. Refer to script header comment 
         for expected filename format of un-parsed result files. """
     
@@ -505,7 +505,7 @@ def process_tls_speed_results(dir_paths, result_files, num_runs, eng_avgr):
         # If the current file is the baseline, process it differently then move onto next file
         if "baseline" in filename:
             baseline_df = process_baseline(result_filepath)
-            baseline_output_path = os.path.join(dir_paths["results_dir"], "tls_speed_energy_usage_baseline.csv")
+            baseline_output_path = os.path.join(dir_paths["results_dir"], "tls_operations_energy_usage_baseline.csv")
             baseline_df.to_csv(baseline_output_path, index=False)
             continue
 
@@ -513,9 +513,9 @@ def process_tls_speed_results(dir_paths, result_files, num_runs, eng_avgr):
         filename_no_ext = filename.rsplit(".", 1)[0]
         parameter_fields = filename_no_ext.split("_")
 
-        # Validate the expected tls speed result filename structure
-        if len(parameter_fields) < 6 or parameter_fields[0] != "tls" or parameter_fields[1] != "speed":
-            print(f"[ERROR] - Bad tls_speed filename format: {filename}")
+        # Validate the expected TLS operations result filename structure
+        if len(parameter_fields) < 6 or parameter_fields[0] != "tls" or parameter_fields[1] != "operations":
+            print(f"[ERROR] - Bad tls_operations filename format: {filename}")
             sys.exit(1)
 
         # Extract the test metadata from the filename
@@ -596,14 +596,14 @@ def process_tls_speed_results(dir_paths, result_files, num_runs, eng_avgr):
                 current_run_df = current_run_df.drop(columns=["Run Number"])
 
                 # Define the filepath for the results and export the data to a csv
-                result_filepath = os.path.join(group_output_dir, f"tls_speed_{alg_group}_{alg_type}_{current_run}.csv")
+                result_filepath = os.path.join(group_output_dir, f"tls_operations_{alg_group}_{alg_type}_{current_run}.csv")
                 current_run_df.to_csv(result_filepath, index=False)
 
                 # Create the condensed sheet for the current run
                 condensed_df = eng_avgr.df_run_condenser(current_run_df, ["Algorithm Name", "Operation"])
 
                 # Define the filepath for the condensed results and export the data to a csv
-                condensed_filepath = os.path.join(group_output_dir, f"tls_speed_{alg_group}_{alg_type}_{current_run}_condensed.csv")
+                condensed_filepath = os.path.join(group_output_dir, f"tls_operations_{alg_group}_{alg_type}_{current_run}_condensed.csv")
                 condensed_df.to_csv(condensed_filepath, index=False)
 
 #------------------------------------------------------------------------------------------------------------------------------
@@ -630,8 +630,8 @@ def process_test(dir_paths, num_runs):
     elif "tls_handshake" in example_file:
         process_tls_handshake_results(dir_paths, test_results, num_runs, eng_avgr)
 
-    elif "tls_speed" in example_file:
-        process_tls_speed_results(dir_paths, test_results, num_runs, eng_avgr)
+    elif "tls_operations" in example_file:
+        process_tls_operations_results(dir_paths, test_results, num_runs, eng_avgr)
 
     else:
         print(f"[ERROR] - Unsupported test type was extracted from result filename - {example_file}")

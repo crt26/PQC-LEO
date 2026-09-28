@@ -37,7 +37,7 @@ It provides overviews of each script’s purpose, functionality, and any relevan
 - [Automated Energy Usage Testing Scripts](#automated-energy-usage-testing-scripts)
   - [energy\_metric\_collector.sh](#energy_metric_collectorsh)
   - [pqc\_performance\_energy\_test.sh](#pqc_performance_energy_testsh)
-  - [tls\_speed\_energy\_test.sh](#tls_speed_energy_testsh)
+  - [tls\_operations\_energy\_test.sh](#tls_operations_energy_testsh)
 - [Performance Data Parsing Scripts](#performance-data-parsing-scripts)
   - [parse\_results.py](#parse_resultspy)
   - [performance\_data\_parse.py](#performance_data_parsepy)
@@ -120,7 +120,7 @@ When called, the utility script accepts the following arguments:
 | `2`          | Configures the OpenSSL environment for **TLS handshake benchmarking** by uncommenting PQC-related configuration lines.                                                                        |
 
 ### get_algorithms.py
-This Python utility script generates lists of supported cryptographic algorithms based on the currently installed versions of the Liboqs, OpenSSL (classic + PQC), and OQS-Provider libraries. These lists are stored under the `test_data/alg_lists` directory and are used by benchmarking, TLS handshake transmission cost, and parsing tools to determine which algorithms to run or parse.
+This Python utility script generates lists of supported cryptographic algorithms based on the currently installed versions of the Liboqs, OpenSSL (classic + PQC), and OQS-Provider libraries. These lists are stored under the `test_data/alg_lists` directory and are used by benchmarking, energy usage, TLS handshake transmission cost, and parsing tools to determine which algorithms to run or parse.
 
 Primarily intended to be invoked by the `setup.sh` script, this utility accepts an argument that specifies the installation and testing context. However, it can also be run manually to regenerate the algorithm list files.
 
@@ -136,12 +136,12 @@ The script supports the following functionality:
 
 The utility script accepts the following arguments:
 
-| **Argument** | **Functionality**                                                                                                                                       |
-|--------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1            | Extracts algorithms for **computational performance testing** (Liboqs algorithms only).                                                                 |
-| 2            | Extracts algorithms for **computational, TLS performance, and TLS handshake transmission cost testing** (Liboqs, OpenSSL, and OQS-Provider algorithms). |
-| 3            | Extracts algorithms for **TLS performance and TLS handshake transmission cost testing** (OpenSSL and OQS-Provider algorithms only).                     |
-| 4            | Parses `ALGORITHMS.md` from OQS-Provider to determine the total number of supported algorithms (used only by `setup.sh`).                               |
+| **Argument** | **Functionality**                                                                                                                                                              |
+|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1            | Extracts algorithms for **computational performance testing** (Liboqs algorithms only).                                                                                        |
+| 2            | Extracts algorithms for **computational, TLS performance, TLS operations energy, and TLS handshake transmission cost testing** (Liboqs, OpenSSL, and OQS-Provider algorithms). |
+| 3            | Extracts algorithms for **TLS performance, TLS operations energy, and TLS handshake transmission cost testing** (OpenSSL and OQS-Provider algorithms only).                    |
+| 4            | Parses `ALGORITHMS.md` from OQS-Provider to determine the total number of supported algorithms (used only by `setup.sh`).                                                      |
 
 While running option `4` manually will work, it is unnecessary. This function is used exclusively by the `source_code_modifier.sh` script to modify OpenSSL’s `speed.c` file when all OQS-Provider algorithms are enabled. Unlike the other arguments, it does not alter or create files in the repository; it only returns the algorithm count for use during setup.
 
@@ -153,7 +153,7 @@ python3 get_algorithms.py 1
 ```
 
 ### oid_handler.sh
-This utility script manages custom OID environment variable mappings used only during TLS speed energy usage testing. It is an internal helper invoked by the TLS speed energy test scripts and is **not intended to be called manually**. It supports setting or clearing OID mappings so OpenSSL and OQS-Provider can reference private enterprise OIDs during performance test runs. This is required due to various algorithms included within OQS-Provider not having standardised OID values, which is required for the algorithm to be recognised as valid when being used in manual OpenSSL operations.
+This utility script manages custom OID environment variable mappings used only during TLS operations energy usage testing. It is an internal helper invoked by the TLS operations energy test script and is **not intended to be called manually**. It supports setting or clearing OID mappings so OpenSSL and OQS-Provider can reference private enterprise OIDs during performance test runs. This is required due to various algorithms included within OQS-Provider not having standardised OID values, which is required for the algorithm to be recognised as valid when being used in manual OpenSSL operations.
 
 The utility script must be called with one of the following arguments in order to determine which OID handling operation must be performed:
 
@@ -166,7 +166,7 @@ The utility script must be called with one of the following arguments in order t
 The algorithms that are included within this script are based on the algorithms listed by OQS-Provider in their `ALGORITHMS.md` file (OQS-Provider version 0.11.0+). Currently, the script is hard-coded to include the algorithms mentioned in that file. This will be updated in the future to be more dynamic. The version of the `ALGORITHMS.md` file used to dictate the algorithms included in this script can be found [here](https://github.com/open-quantum-safe/oqs-provider/blob/1670a8a91bbca997d33e6b6851309d6241cc224c/ALGORITHMS.md).
 
 ### serial_port_selector.py
-This Python utility script is used for handling serial (com) port selection in the energy testing bash scripts when serial control signalling has been selected by the user. The script uses the `pyserial` package to detect available serial ports on the system, outputs a numbered list of available ports to the user, validates the selected option value, and returns the selected serial device path to the calling Bash script This utility script is intended to be called by the automated testing scripts (for example, `tls_speed_energy_test.sh` and `pqc_tls_performance_test.sh`) and is **not intended to be run manually**. To support properly grabbing the selected serial port path from the utility script in bash, interactive menu output and warning messages are written to standard error, while only the selected serial device path is written to standard output.
+This Python utility script is used for handling serial (com) port selection in the energy testing bash scripts when serial control signalling has been selected by the user. The script uses the `pyserial` package to detect available serial ports on the system, outputs a numbered list of available ports to the user, validates the selected option value, and returns the selected serial device path to the calling Bash script. This utility script is intended to be called by the automated testing scripts (for example, `tls_operations_energy_test.sh` and `pqc_tls_performance_test.sh`) and is **not intended to be run manually**. To support properly grabbing the selected serial port path from the utility script in bash, interactive menu output and warning messages are written to standard error, while only the selected serial device path is written to standard output.
 
 ### source_code_modifier.sh
 This internal utility script automates source code modifications for OpenSSL and OQS-Provider during the setup process. **It is not intended to be run manually from the terminal.** Depending on the setup configuration, the `setup.sh` script automatically invokes it to adjust hardcoded OpenSSL constants and enable algorithms that are disabled by default in OQS-Provider. It is located in the `scripts/utility_scripts/` directory.
@@ -297,12 +297,12 @@ These scripts provide automated mechanisms for integrating energy usage evaluati
 The following dedicated scripts handle this functionality:
 - energy_metric_collector.sh
 - pqc_performance_energy_test.sh
-- tls_speed_energy_test.sh
+- tls_operations_energy_test.sh
 
 Additionally, functionality is included within the `pqc_tls_performance_test.sh` and `tls_handshake_test_client.sh` scripts to provide automated TLS handshake energy usage evaluations. This section will describe the dedicated automation scripts.
 
 ### energy_metric_collector.sh
-This controller script provides automation for the energy metric collector device using the `collector` binary included within the `energy_collector` tool. The script provides an interactive configuration interface for collection parameters (test type, machine ID, test runs), manages result directories and pre-existing result handling, and invokes the energy collector binary. Supports PQC performance, TLS handshake, and TLS speed collection types. The script will also automatically call the parsing script to parses results into structured CSV files via the central parser once testing has completed. Whilst the `collector` binary can be used by itself, this script provides and easy solution for result collection, handling, and parsing compared to manual use of the binary.
+This controller script provides automation for the energy metric collector device using the `collector` binary included within the `energy_collector` tool. The script provides an interactive configuration interface for collection parameters (test type, machine ID, test runs), manages result directories and pre-existing result handling, and invokes the energy collector binary. It supports PQC performance, TLS handshake, and TLS operations collection types. The script will also automatically call the parsing script to parse results into structured CSV files via the central parser once testing has completed. Whilst the `collector` binary can be used by itself, this script provides an easy solution for result collection, handling, and parsing compared to manual use of the binary.
 
 The `energy_collector` tool must be present within the PQC-LEO testing environment when calling this script, so please ensure that the relevant tools have been built using the `setup.sh` script.
 
@@ -324,8 +324,8 @@ This controller script provides automation for the PQC computational performance
 | `--use-custom-eng-control-ports` | Enable the use of custom network control ports for energy testing control signalling (requires --enable-energy-testing to be enabled) |
 | `--help`                         | Display the help message                                                                                                              |
 
-### tls_speed_energy_test.sh
-This controller script provides automation for TLS speed energy usage benchmarking. It measures the energy usage of PQC, Hybrid-PQC, and classical cryptographic operations performed through OpenSSL. The script tests key generation, encapsulation, and decapsulation for supported PQC/Hybrid-PQC KEMs; key generation, signing, and verification for PQC/Hybrid-PQC and classical signatures; and key generation and shared-secret derivation for classical key-exchange algorithms. It communicates with the collector device around each operation window, configures the system performance state through `system_state_configurer.sh`, and uses `oid_handler.sh` for PQC algorithms that require custom OID environment mappings. The script accepts command-line flags for custom system-state configuration and custom network control ports, and restores the system state on completion or interruption.
+### tls_operations_energy_test.sh
+This controller script provides automation for TLS operations energy usage benchmarking. It measures the energy usage of PQC, Hybrid-PQC, and classical cryptographic operations performed directly through OpenSSL commands. The script tests key generation, encapsulation, and decapsulation for supported PQC/Hybrid-PQC KEMs; key generation, signing, and verification for PQC/Hybrid-PQC and classical signatures; and key generation and shared-secret derivation for classical key-exchange algorithms. It communicates with the collector device around each operation window, configures the system performance state through `system_state_configurer.sh`, and uses `oid_handler.sh` for PQC algorithms that require custom OID environment mappings. The script accepts command-line flags for custom system-state configuration and custom network control ports, and restores the system state on completion or interruption.
 
 **Accepted Script Arguments:**
 
@@ -380,14 +380,14 @@ python3 parse_results.py --parse-mode=computational --machine-id=2 --total-runs=
 
 The table below outlines each of the accepted commands that are required for operation:
 
-| **Argument**            | **Description**                                                                                              | **Required Flag (*)** |
-|-------------------------|--------------------------------------------------------------------------------------------------------------|-----------------------|
-| `--parse-mode=`         | Must be `computational`, `tls`, or `energy`.                                                                 |           *           |
-| `--machine-id=`         | Machine-ID used during testing (positive integer).                                                           |           *           |
-| `--total-runs=`         | Number of test runs (must be > 0).                                                                           |           *           |
-| `--energy-test-type=`   | Required when `--parse-mode=energy`. 1=PQC computational energy, 2=TLS handshake energy, 3=TLS speed energy. |                       |
-| `--replace-old-results` | Optional flag to force overwrite any existing results for the specified Machine-ID.                          |                       |
-| `--skip-tls-speed`      | When `--parse-mode=tls`, skip TLS speed parsing. Use when energy testing produces handshake results only.    |                       |
+| **Argument**               | **Description**                                                                                                   | **Required Flag (*)** |
+|----------------------------|-------------------------------------------------------------------------------------------------------------------|:---------------------:|
+| `--parse-mode=<str>`       | Must be `computational`, `tls`, or `energy`.                                                                      |           *           |
+| `--machine-id=<int>`       | Machine-ID used during testing (positive integer).                                                                |           *           |
+| `--total-runs=<int>`       | Number of test runs (must be > 0).                                                                                |           *           |
+| `--energy-test-type=<int>` | Required when `--parse-mode=energy`. 1=PQC computational energy, 2=TLS handshake energy, 3=TLS operations energy. |                       |
+| `--replace-old-results`    | Optional flag to force overwrite any existing results for the specified Machine-ID.                               |                       |
+| `--skip-tls-speed`         | When `--parse-mode=tls`, skip TLS speed parsing. Use when energy testing produces handshake results only.         |                       |
 
 **Note:** The script parses one result type per run in both command-line and interactive modes. Run it again to parse a different result type.
 
@@ -400,14 +400,14 @@ This script processes TLS performance data collected from handshake and OpenSSL 
 ### energy_data_parse.py
 This script processes the PQC computational and TLS energy usage testing results produced by the automated test scripts. Unlike other parsing scripts in PQC-LEO, the energy usage parsing script extracts all of the test metadata from the filename of the un-parsed result files, rather than a mix of filename and algorithm list text files, as seen in the other parsing scripts.
 
-For TLS speed energy results, the parser classifies algorithms into `pqc`, `hybrid_pqc`, and `classic` groups. It writes the group CSVs to `pqc`, `hybrid`, and `classic` sub-directories beneath the machine results directory. The PQC groups contain KEM and signature CSVs, while the classical group contains signature and key-exchange CSVs, with a condensed per-run summary for each output. The TLS speed energy baseline CSV remains directly in the machine results directory.
+For TLS operations energy results, the parser classifies algorithms into `pqc`, `hybrid_pqc`, and `classic` groups. It writes the group CSVs to `pqc`, `hybrid`, and `classic` sub-directories beneath the machine results directory. The PQC groups contain KEM and signature CSVs, while the classical group contains signature and key-exchange CSVs, with a condensed per-run summary for each output. The TLS operations energy baseline CSV remains directly in the machine results directory.
 
 The file naming format expected for each of the different types of energy usage testing results is as follows:
 
 - **Computational Energy Usage Result** - `comp_(alg-type)_(operation)_(alg-name)_(run-number).txt`
 - **PQC/Hybrid-PQC TLS Handshake Energy Result** - `tls_handshake_(session-id-type)_(signing-alg)@(kem-alg)_(run-number).txt`
 - **Classical TLS Handshake Energy Result** - `tls_handshake_(session-id-type)_(signing-alg)@(key-exchange-group)@(ciphersuite)_(run-number).txt`
-- **TLS Speed Energy Usage Result** - `tls_speed_(alg-type)_(operation)_(alg-name)_(run-number).txt`
+- **TLS Operations Energy Usage Result** - `tls_operations_(alg-type)_(operation)_(alg-name)_(run-number).txt`
 
 ### results_averager.py
 This script provides the internal classes used to aggregate and condense parsed benchmarking results. It is used by `performance_data_parse.py` and `tls_performance_data_parse.py` to generate per-algorithm averages across multiple test runs, and is also used by `energy_data_parse.py` to create condensed per-run energy result sheets (min/max/avg/std for polled metrics and max-aggregated totals for cumulative metrics). For computational performance tests, it handles CPU speed and memory profiling metrics collected using Liboqs. For TLS performance tests, it calculates average handshake durations and cryptographic operation timings gathered from OpenSSL and OQS-Provider. For energy usage parsing, it groups each run by algorithm/operation context and computes structured summary metrics for easier analysis. This script is **not to be called manually** and only executes internally by the result parsing scripts.

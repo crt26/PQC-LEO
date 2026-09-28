@@ -63,7 +63,7 @@ If the energy usage results parsing mode is selected, the script will also ask f
 
 - PQC computational energy usage
 - TLS handshake energy usage
-- TLS speed energy usage
+- TLS operations energy usage
 
 Once all required parameters are provided, the script will then process the appropriate raw result files and generate structured CSV outputs.
 
@@ -80,14 +80,14 @@ python3 parse_results.py --parse-mode=computational --machine-id=2 --total-runs=
 
 The table below outlines each of the accepted commands that are required for operation:
 
-| **Argument**               | **Description**                                                                                              | **Required Flag (*)** |
-|----------------------------|--------------------------------------------------------------------------------------------------------------|-----------------------|
-| `--parse-mode=<str>`       | Must be `computational`, `tls`, or `energy`.                                                                 |           *           |
-| `--machine-id=<int>`       | Machine-ID used during testing (positive integer).                                                           |           *           |
-| `--total-runs=<int>`       | Number of test runs (must be > 0).                                                                           |           *           |
-| `--energy-test-type=<int>` | Required when `--parse-mode=energy`. 1=PQC computational energy, 2=TLS handshake energy, 3=TLS speed energy. |                       |
-| `--replace-old-results`    | Optional flag to force overwrite any existing results for the specified Machine-ID.                          |                       |
-| `--skip-tls-speed`         | When `--parse-mode=tls`, skips TLS speed parsing. Use when energy testing produces handshake results only.   |                       |
+| **Argument**               | **Description**                                                                                                   | **Required Flag (*)** |
+|----------------------------|-------------------------------------------------------------------------------------------------------------------|:---------------------:|
+| `--parse-mode=<str>`       | Must be `computational`, `tls`, or `energy`.                                                                      |           *           |
+| `--machine-id=<int>`       | Machine-ID used during testing (positive integer).                                                                |           *           |
+| `--total-runs=<int>`       | Number of test runs (must be > 0).                                                                                |           *           |
+| `--energy-test-type=<int>` | Required when `--parse-mode=energy`. 1=PQC computational energy, 2=TLS handshake energy, 3=TLS operations energy. |                       |
+| `--replace-old-results`    | Optional flag to force overwrite any existing results for the specified Machine-ID.                               |                       |
+| `--skip-tls-speed`         | When `--parse-mode=tls`, skips TLS speed parsing. Use when energy testing produces handshake results only.        |                       |
 
 This mode is suited for automated testing workflows or environments where manual input is impractical.
 
@@ -102,16 +102,16 @@ The automated energy usage result parsing scripts support processing for the fol
 
 - PQC computational energy usage
 - TLS handshake energy usage
-- TLS speed energy usage
+- TLS operations energy usage
 
 For each of these testing types, the following filename structure is expected:
 
 - **Computational Energy Usage Result** - `comp_(alg-type)_(operation)_(alg-name)_(run-number).txt`
 - **PQC/Hybrid-PQC TLS Handshake Energy Result** - `tls_handshake_(session-id-type)_(signing-alg)@(kem-alg)_(run-number).txt`
 - **Classical TLS Handshake Energy Result** - `tls_handshake_(session-id-type)_(signing-alg)@(key-exchange-group)@(ciphersuite)_(run-number).txt`
-- **TLS Speed Energy Usage Result** - `tls_speed_(alg-type)_(operation)_(alg-name)_(run-number).txt`
+- **TLS Operations Energy Usage Result** - `tls_operations_(alg-type)_(operation)_(alg-name)_(run-number).txt`
 
-For TLS speed energy results, `alg-type` is `kem`, `sig`, or `key-exchange`. The parser normalises `key-exchange` to `key_exchange`, classifies each algorithm as `pqc`, `hybrid_pqc`, or `classic`, and writes per-run detailed and condensed CSVs. PQC and Hybrid-PQC outputs are split into KEM and signature files; classical outputs are split into signature and key-exchange files. These CSVs are stored in `pqc`, `hybrid`, and `classic` sub-directories beneath the machine directory, while the baseline CSV remains in the machine directory itself.
+For TLS operations energy results, `alg-type` is `kem`, `sig`, or `key-exchange`. The parser normalises `key-exchange` to `key_exchange`, classifies each algorithm as `pqc`, `hybrid_pqc`, or `classic`, and writes per-run detailed and condensed CSVs. PQC and Hybrid-PQC outputs are split into KEM and signature files; classical outputs are split into signature and key-exchange files. These CSVs are stored in `pqc`, `hybrid`, and `classic` sub-directories beneath the machine directory, while the baseline CSV remains in the machine directory itself.
 
 ## Parsed Results Output
 Once parsing is complete, the parsed results will be stored in the newly created `test_data/results` directory. This includes CSV files containing the detailed test results and automatically calculated averages for each test category. These files are ready for further analysis or can be imported into graphing tools for visualisation.
@@ -130,7 +130,7 @@ For energy usage testing results, `test_type` refers to one of the following tes
 
 - `pqc_performance_energy_results`
 - `tls_handshake_energy_results`
-- `tls_speed_energy_results`
+- `tls_operations_energy_results`
 
 Please refer to the [Performance Metrics Guide](./performance_metrics_guide.md) for a detailed description of the performance metrics that this project can gather, what they mean, and how these scripts structure the unparsed and parsed data.
 
