@@ -36,7 +36,7 @@ function setup_base_env() {
 
     # Declare the global last tested version SHA variables
     liboqs_tested_sha="5a1a854b0dc9f2141bdc771c555ee60c37950183"
-    oqs_provider_tested_sha="a635e341d6a4624d9bba36d158804762f316fe5e"
+    oqs_provider_tested_sha="1670a8a91bbca997d33e6b6851309d6241cc224c"
 
     # Declare the global library directory path variables
     openssl_path="$libs_dir/openssl_$openssl_version"
@@ -1076,6 +1076,11 @@ function oqs_provider_build() {
         if [ $exit_status -ne 0 ]; then
             echo -e "\n[ERROR] - The source code modifier script failed to run successfully, please verify the installation and rerun the setup script"
             exit 1
+        fi
+
+        # Create a flag file to indicate that the generate.yml file has been modified
+        if [ ! -f "$tmp_dir/.oqs_prov_algs_enabled.flag" ]; then
+            touch "$tmp_dir/.oqs_prov_algs_enabled.flag"
         fi
 
     fi

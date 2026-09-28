@@ -77,7 +77,7 @@ This version of the repository has been fully tested with the following library 
 
 - Liboqs Version: 0.16.0
 
-- OQS-Provider Version 0.11.0
+- OQS-Provider Version 0.11.0+
 
 - OpenSSL Version 3.6.1
 
