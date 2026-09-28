@@ -27,14 +27,14 @@ function setup_base_env() {
     test_scripts="$root_dir/scripts/test_scripts"
 
     # Declare the global dependency library version variables
-    openssl_version="4.0.1"
+    openssl_version="4.0.2"
     min_sys_openssl_version="3.3.0"
 
     # Declare the global library download URL variables
     liboqs_download_url="https://github.com/open-quantum-safe/liboqs.git"
     oqs_provider_download_url="https://github.com/open-quantum-safe/oqs-provider.git"
-    openssl_download_url="https://github.com/openssl/openssl/releases/download/openssl-4.0.1/openssl-4.0.1.tar.gz"
-
+    openssl_download_url="https://github.com/openssl/openssl/releases/download/openssl-4.0.2/openssl-4.0.2.tar.gz"
+    
     # Declare the global last tested version SHA variables
     liboqs_tested_sha="5a1a854b0dc9f2141bdc771c555ee60c37950183"
     oqs_provider_tested_sha="1670a8a91bbca997d33e6b6851309d6241cc224c"
@@ -359,7 +359,7 @@ function download_libraries() {
     # Check if the install mode requires downloading the OpenSSL library
     if [ $install_type -ne 3 ] || [ $eng_openssl_download -eq 1 ]; then
 
-        # Download OpenSSL 4.0.1 and extract it into the tmp directory
+        # Download OpenSSL 4.0.2 and extract it into the tmp directory
         wget -O "$tmp_dir/openssl_$openssl_version.tar.gz" "$openssl_download_url"
         tar -xf "$tmp_dir/openssl_$openssl_version.tar.gz" -C $tmp_dir
         mv "$tmp_dir/openssl-$openssl_version" "$openssl_source"
@@ -648,7 +648,7 @@ function energy_tools_checker() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function openssl_build() {
-    # Function for handling the build of the OpenSSL library (version 4.0.1). The function will check if the library is already
+    # Function for handling the build of the OpenSSL library (version 4.0.2). The function will check if the library is already
     # built and if not, it will build the library using the specified configuration options. The function will call the 
     # modify_openssl_src function to modify the speed.c source code file if the OQS-Provider library is being built with the 
     # enable all disabled algorithms flag.
@@ -724,7 +724,7 @@ function openssl_build() {
         # Testing if OpenSSL has been correctly installed
         test_output=$("$openssl_path/bin/openssl" version)
 
-        if [[ "$test_output" != "OpenSSL 4.0.1 9 Jun 2026 (Library: OpenSSL 4.0.1 9 Jun 2026)" ]]; then
+        if [[ "$test_output" != "OpenSSL 4.0.2 25 Aug 2026 (Library: OpenSSL 4.0.2 25 Aug 2026)" ]]; then
             echo -e "\n\n[ERROR] - Installing required OpenSSL version failed, please verify the installation process"
             exit 1
         fi
@@ -1051,7 +1051,7 @@ function determine_energy_tools_openssl_choice() {
             # Output the OpenSSL install options for the energy tools
             echo "Please select from the following OpenSSL Install options for the energy evaluation tools:"
             echo "1) - Use system OpenSSL install with energy evaluation tools"
-            echo "2) - Use the PQC-LEO OpenSSL 4.0.1 build with the energy evaluation tools (please refer to project documentation for manual use of tools with this option)"
+            echo "2) - Use the PQC-LEO OpenSSL 4.0.2 build with the energy evaluation tools (please refer to project documentation for manual use of tools with this option)"
 
             # Prompt the user for their selection
             read -p "Enter your choice (1-2): " energy_openssl_choice
@@ -1084,23 +1084,23 @@ function determine_energy_tools_openssl_choice() {
 
         # Warn that the system library cannot support the energy tools and explain the fallback build
         echo "The energy measurement tools must be built with the PQC-LEO OpenSSL build to ensure correct functionality."
-        echo -e "The setup script will use the existing OpenSSL 4.0.1 build, or build it if needed.\n"
+        echo -e "The setup script will use the existing OpenSSL 4.0.2 build, or build it if needed.\n"
 
         # Ask the user if they wish to proceed with the OpenSSL build for the energy measurement tools
-        get_user_yes_no "Would you like to proceed linking the PQC-LEO OpenSSL 4.0.1 build to the energy measurement tools?"
+        get_user_yes_no "Would you like to proceed linking the PQC-LEO OpenSSL 4.0.2 build to the energy measurement tools?"
 
         # Determine the next steps based on the user's response
         if [ $user_y_n_response -eq 1 ]; then
 
             # Output the message to the user and proceed with the OpenSSL build for the energy measurement tools
-            echo -e "\n[NOTICE] - Proceeding with PQC-LEO OpenSSL 4.0.1 for the energy measurement tools..."
+            echo -e "\n[NOTICE] - Proceeding with PQC-LEO OpenSSL 4.0.2 for the energy measurement tools..."
             use_pqc_leo_openssl=1
             forced_use_of_pqc_leo_openssl=1
 
         else
 
             # Output the message to the user and exit the setup script
-            echo -e "\n[NOTICE] - Exiting setup script. Update libssl-dev to version $min_sys_openssl_version or newer, or rerun setup and allow the OpenSSL 4.0.1 fallback build."
+            echo -e "\n[NOTICE] - Exiting setup script. Update libssl-dev to version $min_sys_openssl_version or newer, or rerun setup and allow the OpenSSL 4.0.2 fallback build."
             exit 1
 
         fi
@@ -1371,7 +1371,7 @@ function setup_controller() {
                 configure_oqs_provider_build
                 dependency_install
 
-                # Build OpenSSL 4.0.1
+                # Build OpenSSL 4.0.2
                 openssl_build
 
                 # Check if a Liboqs install is already present and install if not

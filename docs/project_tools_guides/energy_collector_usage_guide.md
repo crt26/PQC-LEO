@@ -85,7 +85,7 @@ cd tools/energy_collector
 make OPENSSL_PATH=/path/to/openssl
 ```
 
-Use an absolute path for `OPENSSL_PATH`; for the PQC-LEO build, this is the project's `lib/openssl_4.0.1` directory.
+Use an absolute path for `OPENSSL_PATH`; for the PQC-LEO build, this is the project's `lib/openssl_4.0.2` directory.
 
 The compiled binaries will then be located in the `tools/energy_collector/build/bin` directory.
 
