@@ -17,6 +17,7 @@ This information helps clarify which software components the project relies on a
 - [Required Hardware and Operating Systems](#required-hardware-and-operating-systems)
 - [Cryptographic Dependency Libraries](#cryptographic-dependency-libraries)
 - [System Package Dependencies](#system-package-dependencies)
+- [OpenSSL Compatibility for Energy Tools](#openssl-compatibility-for-energy-tools)
 - [Python PIP Dependencies](#python-pip-dependencies)
 
 ## Required Hardware and Operating Systems
@@ -37,7 +38,7 @@ This section lists the **last tested versions** of the project's core dependenci
 | OpenSSL        | Official release 4.0.1 | N/A                                        | Downloaded as a fixed release tarball          |
 | pqax           | Always latest          | N/A                                        | Pulled from latest main branch at install time |
 
-**Note:** These versions are used by default unless the `--latest-dependency-versions` flag is explicitly set during setup.
+**Note:** The `--latest-dependency-versions` flag selects the latest OQS library versions. The PQC-LEO OpenSSL build remains fixed at 4.0.1; the energy tools can also use compatible system OpenSSL as described [below](#openssl-compatibility-for-energy-tools).
 
 **Note:** The + sign in the OQS-Provider version indicates that the latest commit from the main branch is used, which may include additional changes beyond the last tagged
 release. This is because to utilise Liboqs version 0.16.0, several changes made to OQS-Provider after the 0.11.0 release are required.
@@ -72,6 +73,15 @@ By default, the setup script will install the latest available versions of these
 - python3-pip
 - netcat-openbsd
 - libserialport-dev
+
+## OpenSSL Compatibility for Energy Tools
+When installing the energy tools, all installation modes use the same OpenSSL selection process. The tools require OpenSSL **3.3.0 or newer** for compatibility with the energy measurement libraries. The setup script checks for a compatible system `libssl-dev` installation and, if found, allows users to choose between the system OpenSSL and the PQC-LEO **OpenSSL 4.0.1** build. Installation modes 1–3 still require the PQC-LEO project OpenSSL independently for the OQS libraries.
+
+If the PQC-LEO OpenSSL build is selected for the energy tools, the build process reuses `lib/openssl_4.0.1` when available, or downloads and builds it as needed. Binaries linked against this version require the corresponding `libssl.so` and `libcrypto.so` libraries to be available at runtime.
+
+The provided `energy_metric_collector.sh` and `pqc_performance_energy_test.sh` scripts handle this automatically when the PQC-LEO OpenSSL build is used. They add the project OpenSSL library directory to `LD_LIBRARY_PATH` while preserving any existing paths. When running the energy tools manually with the project's OpenSSL build or another custom OpenSSL installation, users must ensure that the appropriate library directory is included in `LD_LIBRARY_PATH`, or the equivalent environment variable for the target platform.
+
+For further configuration details, please see the [Energy Collector Tool Usage Guide](../project_tools_guides/energy_collector_usage_guide.md#building-the-energy-usage-collector-tools) and the [Computational Energy Tester Tool Usage Guide](../project_tools_guides/comp_energy_tester_usage_guide.md#setting-up-the-computational-energy-usage-testing-tool).
 
 ## Python PIP Dependencies
 The following Python packages are required for testing and result parsing. These are automatically checked and installed via pip during setup:

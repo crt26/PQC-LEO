@@ -155,6 +155,33 @@ function setup_base_env() {
     provider_path="$libs_dir/oqs_provider/lib"
     provider_flags="-provider default -provider oqsprovider -provider-path $provider_path"
 
+    # If the use PQC-LEO OpenSSL build with energy testing flag is present, set the OpenSSL path to the PQC-LEO OpenSSL build
+    if [ -f "$tmp_dir/energy_tools_pqc_leo_openssl.flag" ]; then
+
+        # Check if the PQC-LEO OpenSSL build is present before proceeding, if not output an error message and exit the script
+        if [ ! -d "$openssl_path" ]; then
+            echo -e "[ERROR] - PQC-LEO OpenSSL build not found, please ensure the build is present and try again."
+            exit 1
+        fi
+
+        # Use the same lib64-then-lib selection order as the energy-tool makefiles
+        if [[ -f "$openssl_path/lib64/libcrypto.so" ]]; then
+            openssl_lib_path="$openssl_path/lib64"
+
+        elif [[ -f "$openssl_path/lib/libcrypto.so" ]]; then
+            openssl_lib_path="$openssl_path/lib"
+
+        else
+            echo "[ERROR] - Selected OpenSSL installation does not contain libcrypto.so: $openssl_path"
+            exit 1
+
+        fi
+
+        # Export the LD_LIBRARY_PATH to include the OpenSSL lib directory for the collector binary
+        export LD_LIBRARY_PATH="$openssl_lib_path${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
+    fi
+
     # Declare the internal test script path variables
     result_parser_script="$parsing_scripts/parse_results.py"
 

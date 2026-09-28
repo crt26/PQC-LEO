@@ -66,7 +66,7 @@ Key tasks performed include:
 
 - Installing all required system and Python dependencies (e.g., OpenSSL dev packages, CMake, Valgrind)
 
-- Downloading and compiling OpenSSL 4.0.1
+- Downloading and compiling OpenSSL 4.0.1 when required for the selected setup
 
 - Cloning and building the last-tested or latest versions of Liboqs and OQS-Provider
 
@@ -304,7 +304,7 @@ Additionally, functionality is included within the `pqc_tls_performance_test.sh`
 ### energy_metric_collector.sh
 This controller script provides automation for the energy metric collector device using the `collector` binary included within the `energy_collector` tool. The script provides an interactive configuration interface for collection parameters (test type, machine ID, test runs), manages result directories and pre-existing result handling, and invokes the energy collector binary. It supports PQC performance, TLS handshake, and TLS operations collection types. The script will also automatically call the parsing script to parse results into structured CSV files via the central parser once testing has completed. Whilst the `collector` binary can be used by itself, this script provides an easy solution for result collection, handling, and parsing compared to manual use of the binary.
 
-The `energy_collector` tool must be present within the PQC-LEO testing environment when calling this script, so please ensure that the relevant tools have been built using the `setup.sh` script.
+The `energy_collector` tool must be present within the PQC-LEO testing environment when calling this script, so please ensure that the relevant tools have been built using the `setup.sh` script. If the setup process sets that the energy tools should use the PQC-LEO OpenSSL build, the script will automatically configure the `LD_LIBRARY_PATH` to include the PQC-LEO OpenSSL build used by the energy tools.
 
 **Accepted Script Arguments:**
 
@@ -315,6 +315,8 @@ The `energy_collector` tool must be present within the PQC-LEO testing environme
 
 ### pqc_performance_energy_test.sh
 This controller script provides automation for the PQC computational performance energy benchmarking. The script utilises the `comp_energy_tester` binary included within `comp_energy_tester` tool to perform PQC cryptographic operations using the Liboqs library whilst sending control signals to the collector machine, allowing energy usage metrics to be gathered for each individual KEM/sig algorithm's respective operations. The script will call the `comp_energy_tester` after configuring the environment and system performance state using the `system_state_configurer.sh` utility script. The script accepts command line flags to enable custom system state configuration and custom network control ports for energy collector communication, and restores system state upon completion or interruption.
+
+If the setup process sets that the energy tools should use the PQC-LEO OpenSSL build, the script will automatically configure the `LD_LIBRARY_PATH` to include the PQC-LEO OpenSSL build used by the energy tools.
 
 **Accepted Script Arguments:**
 

@@ -2,6 +2,9 @@ CC := gcc
 AR := ar
 OPENSSL_PATH ?= /usr
 OPENSSL_CRYPTO := -lcrypto
+ifneq ($(OPENSSL_PATH),/usr)
+OPENSSL_CRYPTO := $(firstword $(wildcard $(OPENSSL_PATH)/lib64/libcrypto.so) $(wildcard $(OPENSSL_PATH)/lib/libcrypto.so))
+endif
 CFLAGS := -Wall -Wextra -std=c11 -Iinclude -I_meter_interfaces/include -I$(OPENSSL_PATH)/include
 LDFLAGS := -L$(OPENSSL_PATH)/lib
 LDLIBS := -lserialport $(OPENSSL_CRYPTO) -lpthread

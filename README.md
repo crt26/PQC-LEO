@@ -144,9 +144,11 @@ When executing the setup script, you will be prompted to select one of the follo
 
 4. **Energy Collector Machine Setup** - Installs only the energy collector tools and its dependencies for use on the energy usage collection device. This device is used to poll the energy meter and collect energy usage data during testing and is separate from the main testing machines.
 
-The setup script will also build [OpenSSL 4.0.1](https://github.com/openssl/openssl/releases/tag/openssl-4.0.1) inside the repository’s `lib` directory. This version is required to support the OQS libraries and is built separately from the system’s default OpenSSL installation. It will not interfere with system-level binaries.
+Installation options 1–3 also require the PQC-LEO [OpenSSL 4.0.1](https://github.com/openssl/openssl/releases/tag/openssl-4.0.1) build in the repository’s `lib` directory to support the OQS libraries. This is built automatically during setup and managed separately from the system OpenSSL installation. The OpenSSL installation used for the energy measurement tools is selected independently.
 
-Once a installation option has been selected, the setup script will ask if **energy measurement tools** should be installed. If this option is selected, the setup script will also install the energy measurement tools and dependencies required for energy usage testing using supported energy meters. Certain features such as the use of UART communication for energy testing control signalling will require additional configuration after setup, so please refer to the relevant internal and external documentation.
+For installation options 1–3, the setup script prompts you to choose whether to install **energy measurement tools**; option 4 always installs the collector tools. When energy tools are installed, the setup checks whether the system OpenSSL installation is compatible. If so, you can choose between the system OpenSSL installation and the PQC-LEO build. If not, the PQC-LEO build must be used. See [OpenSSL Compatibility for Energy Tools](docs/developer_information/project_dependencies.md#openssl-compatibility-for-energy-tools) for compatibility requirements and manual runtime configuration.
+
+Some energy-testing features, such as UART communication for control signalling, require additional configuration after setup. Refer to the relevant internal and external documentation for details.
 
 If the TLS testing libraries are installed (Options 2 or 3), you will be prompted with the following additional setup options:
 
@@ -155,6 +157,8 @@ If the TLS testing libraries are installed (Options 2 or 3), you will be prompte
 - **Enable KEM encoders** – Adds support for OpenSSL’s optional KEM encoder functionality. This option is **automatically enabled** if energy measurement tools are configured to be installed as the KEM encoders are required for TLS operations energy usage testing.
 
 Once all the relevant options have been selected, the setup script will download, configure and build each library. It will also tailor the builds for your system architecture by applying appropriate build flags.
+
+If issues occur during installation that prevent the project from functioning correctly, it is recommended that a clean installation is performed. This can be done by running the `cleaner.sh` utility script and selecting **Uninstall Libraries Only**, followed by **Uninstall all Libraries**. Existing benchmarking results will be preserved when using these options. Once this has completed, rerun the `setup.sh` script and select the desired installation option. Please note that Option 3 requires an existing computational installation; for a fresh installation with TLS support, select Option 2.
 
 > † Enabling all disabled OQS-Provider algorithms may cause the OpenSSL speed tool to fail due to internal limits in its source code. The setup script attempts to patch this automatically, but you can configure this process manually. Please refer to the [Advanced Setup Configuration](docs/advanced_setup_configuration.md) for further details.
 
