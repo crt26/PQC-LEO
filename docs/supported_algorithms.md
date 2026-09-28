@@ -40,9 +40,7 @@ Each testing category also provides support for energy usage evaluations. Howeve
 ## Liboqs Algorithms
 
 ### Algorithm Support Summary
-The PQC-LEO project supports all key encapsulation mechanisms (KEMs) and digital signature algorithms provided by Liboqs, with three notable exceptions:
-
-- **HQC** -  its variants are disabled by default in both Liboqs and the OQS-Provider due to their current implementations not conforming to the latest specification, which includes important security fixes. As a result, HQC algorithms are excluded from all performance benchmarking unless explicitly enabled by the user using dedicated flags during the setup process.
+The PQC-LEO project supports all key encapsulation mechanisms (KEMs) and digital signature algorithms provided by Liboqs, with two notable exceptions:
 
 - **Falcon** digital signature variants are not compatible with **memory profiling on ARM systems** due to issues between the scheme’s structure and the Valgrind Massif tool. This does not affect general functional testing or result parsing, which remain fully supported across all platforms.
 
@@ -50,7 +48,9 @@ The PQC-LEO project supports all key encapsulation mechanisms (KEMs) and digital
 
 These exceptions are reflected in the tables below. If users wish to enable HQC despite the associated risks, detailed instructions are provided in the advanced setup guide.
 
-All Liboqs algorithms listed below are also supported for computational energy usage testing.
+All Liboqs algorithms listed below are also supported for computational energy usage testing. Information presented in the tables below on algorithm specifications are taken from the algorithm spec sheets included in the [Liboqs v0.16.0 documentation](https://github.com/open-quantum-safe/liboqs/tree/5a1a854b0dc9f2141bdc771c555ee60c37950183/docs/algorithms).
+
+In addition to standard algorithm implementations, Liboqs offers memory optimised implementation, where available upstream, which offer reduced memory footprint at the cost of performance. To utilise this feature, users can enable memory optimisation during the setup process. These implementations are disabled by default but can be enabled by passing the `--liboqs-memory-optimisation` flag to the setup script. For more information, please see the [Advanced Setup Configuration Guide](./advanced_setup_configuration.md).
 
 For further context and guidance:
 
@@ -59,269 +59,275 @@ For further context and guidance:
 
 ### Supported KEM Algorithms
 
-| **Algorithm Name**        | **NIST Security Level** | **Requires Enabling (*)** |
-|---------------------------|:-----------------------:|:-------------------------:|
-| BIKE-L1                   |            1            |                           |
-| BIKE-L3                   |            3            |                           |
-| BIKE-L5                   |            5            |                           |
-| Classic-McEliece-348864   |            1            |                           |
-| Classic-McEliece-348864f  |            1            |                           |
-| Classic-McEliece-460896   |            3            |                           |
-| Classic-McEliece-460896f  |            3            |                           |
-| Classic-McEliece-6688128  |            5            |                           |
-| Classic-McEliece-6688128f |            5            |                           |
-| Classic-McEliece-6960119  |            5            |                           |
-| Classic-McEliece-6960119f |            5            |                           |
-| Classic-McEliece-8192128  |            5            |                           |
-| Classic-McEliece-8192128f |            5            |                           |
-| FrodoKEM-640-AES          |            1            |                           |
-| FrodoKEM-640-SHAKE        |            1            |                           |
-| FrodoKEM-976-AES          |            3            |                           |
-| FrodoKEM-976-SHAKE        |            3            |                           |
-| FrodoKEM-1344-AES         |            5            |                           |
-| FrodoKEM-1344-SHAKE       |            5            |                           |
-| HQC-128                   |            1            |             *             |
-| HQC-192                   |            3            |             *             |
-| HQC-256                   |            5            |             *             |
-| Kyber512                  |            1            |                           |
-| Kyber768                  |            3            |                           |
-| Kyber1024                 |            5            |                           |
-| ML-KEM-512                |            1            |                           |
-| ML-KEM-768                |            3            |                           |
-| ML-KEM-1024               |            5            |                           |
-| NTRU-HPS-2048-509         |            1            |                           |
-| NTRU-HPS-2048-677         |            3            |                           |
-| NTRU-HPS-4096-821         |            5            |                           |
-| NTRU-HPS-4096-1229        |            5            |                           |
-| NTRU-HRSS-701             |            3            |                           |
-| NTRU-HRSS-1373            |            5            |                           |
-| sntrup761                 |            2            |                           |
+| **Algorithm Name**        | **Claimed NIST Level** | **Public key size (bytes)** | **Secret key size (bytes)** | **Ciphertext size (bytes)** | **Shared secret size (bytes)** | **Keypair seed size (bytes)** | **Encapsulation seed size (bytes)** |
+|---------------------------|------------------------|-----------------------------|-----------------------------|-----------------------------|--------------------------------|-------------------------------|-------------------------------------|
+| BIKE-L1                   |            1           |                        1541 |                        5223 |                        1573 |                             32 |                           n/a |                                 n/a |
+| BIKE-L3                   |            3           |                        3083 |                       10105 |                        3115 |                             32 |                           n/a |                                 n/a |
+| BIKE-L5                   |            5           |                        5122 |                       16494 |                        5154 |                             32 |                           n/a |                                 n/a |
+| Classic-McEliece-348864   |            1           |                      261120 |                        6492 |                          96 |                             32 |                           n/a |                                 n/a |
+| Classic-McEliece-348864f  |            1           |                      261120 |                        6492 |                          96 |                             32 |                           n/a |                                 n/a |
+| Classic-McEliece-460896   |            3           |                      524160 |                       13608 |                         156 |                             32 |                           n/a |                                 n/a |
+| Classic-McEliece-460896f  |            3           |                      524160 |                       13608 |                         156 |                             32 |                           n/a |                                 n/a |
+| Classic-McEliece-6688128  |            5           |                     1044992 |                       13932 |                         208 |                             32 |                           n/a |                                 n/a |
+| Classic-McEliece-6688128f |            5           |                     1044992 |                       13932 |                         208 |                             32 |                           n/a |                                 n/a |
+| Classic-McEliece-6960119  |            5           |                     1047319 |                       13948 |                         194 |                             32 |                           n/a |                                 n/a |
+| Classic-McEliece-6960119f |            5           |                     1047319 |                       13948 |                         194 |                             32 |                           n/a |                                 n/a |
+| Classic-McEliece-8192128  |            5           |                     1357824 |                       14120 |                         208 |                             32 |                           n/a |                                 n/a |
+| Classic-McEliece-8192128f |            5           |                     1357824 |                       14120 |                         208 |                             32 |                           n/a |                                 n/a |
+| FrodoKEM-640-AES          |            1           |                        9616 |                       19888 |                        9752 |                             16 |                           n/a |                                 n/a |
+| FrodoKEM-640-SHAKE        |            1           |                        9616 |                       19888 |                        9752 |                             16 |                           n/a |                                 n/a |
+| FrodoKEM-976-AES          |            3           |                       15632 |                       31296 |                       15792 |                             24 |                           n/a |                                 n/a |
+| FrodoKEM-976-SHAKE        |            3           |                       15632 |                       31296 |                       15792 |                             24 |                           n/a |                                 n/a |
+| FrodoKEM-1344-AES         |            5           |                       21520 |                       43088 |                       21696 |                             32 |                           n/a |                                 n/a |
+| FrodoKEM-1344-SHAKE       |            5           |                       21520 |                       43088 |                       21696 |                             32 |                           n/a |                                 n/a |
+| eFrodoKEM-640-AES         |            1           |                        9616 |                       19888 |                        9720 |                             16 |                           n/a |                                 n/a |
+| eFrodoKEM-640-SHAKE       |            1           |                        9616 |                       19888 |                        9720 |                             16 |                           n/a |                                 n/a |
+| eFrodoKEM-976-AES         |            3           |                       15632 |                       31296 |                       15744 |                             24 |                           n/a |                                 n/a |
+| eFrodoKEM-976-SHAKE       |            3           |                       15632 |                       31296 |                       15744 |                             24 |                           n/a |                                 n/a |
+| eFrodoKEM-1344-AES        |            5           |                       21520 |                       43088 |                       21632 |                             32 |                           n/a |                                 n/a |
+| eFrodoKEM-1344-SHAKE      |            5           |                       21520 |                       43088 |                       21632 |                             32 |                           n/a |                                 n/a |
+| HQC-1                     |            1           |                        2241 |                        2321 |                        4433 |                             32 |                           n/a |                                 n/a |
+| HQC-3                     |            3           |                        4514 |                        4602 |                        8978 |                             32 |                           n/a |                                 n/a |
+| HQC-5                     |            5           |                        7237 |                        7333 |                       14421 |                             32 |                           n/a |                                 n/a |
+| Kyber512                  |            1           |                         800 |                        1632 |                         768 |                             32 |                           n/a |                                 n/a |
+| Kyber768                  |            3           |                        1184 |                        2400 |                        1088 |                             32 |                           n/a |                                 n/a |
+| Kyber1024                 |            5           |                        1568 |                        3168 |                        1568 |                             32 |                           n/a |                                 n/a |
+| ML-KEM-512                |            1           |                         800 |                        1632 |                         768 |                             32 |                            64 |                                  32 |
+| ML-KEM-768                |            3           |                        1184 |                        2400 |                        1088 |                             32 |                            64 |                                  32 |
+| ML-KEM-1024               |            5           |                        1568 |                        3168 |                        1568 |                             32 |                            64 |                                  32 |
+| NTRU-HPS-2048-509         |            1           |                         699 |                         935 |                         699 |                             32 |                           n/a |                                 n/a |
+| NTRU-HPS-2048-677         |            3           |                         930 |                        1234 |                         930 |                             32 |                           n/a |                                 n/a |
+| NTRU-HPS-4096-821         |            5           |                        1230 |                        1590 |                        1230 |                             32 |                           n/a |                                 n/a |
+| NTRU-HPS-4096-1229        |            5           |                        1842 |                        2366 |                        1842 |                             32 |                           n/a |                                 n/a |
+| NTRU-HRSS-701             |            3           |                        1138 |                        1450 |                        1138 |                             32 |                           n/a |                                 n/a |
+| NTRU-HRSS-1373            |            5           |                        2401 |                        2983 |                        2401 |                             32 |                           n/a |                                 n/a |
+| sntrup761                 |            2           |                        1158 |                        1763 |                        1039 |                             32 |                           n/a |                                 n/a |
 
 ### Supported Digital Signature Algorithms
 
-| **Algorithm Name**                      | **NIST Security Level** | **Requires Enabling (*)** |
-|-----------------------------------------|:-----------------------:|:-------------------------:|
-| cross-rsdp-128-balanced                 |            1            |                           |
-| cross-rsdp-128-fast                     |            1            |                           |
-| cross-rsdp-128-small                    |            1            |                           |
-| cross-rsdp-192-balanced                 |            3            |                           |
-| cross-rsdp-192-fast                     |            3            |                           |
-| cross-rsdp-192-small                    |            3            |                           |
-| cross-rsdp-256-balanced                 |            5            |                           |
-| cross-rsdp-256-fast                     |            5            |                           |
-| cross-rsdp-256-small                    |            5            |                           |
-| cross-rsdpg-128-balanced                |            1            |                           |
-| cross-rsdpg-128-fast                    |            1            |                           |
-| cross-rsdpg-128-small                   |            1            |                           |
-| cross-rsdpg-192-balanced                |            3            |                           |
-| cross-rsdpg-192-fast                    |            3            |                           |
-| cross-rsdpg-192-small                   |            3            |                           |
-| cross-rsdpg-256-balanced                |            5            |                           |
-| cross-rsdpg-256-fast                    |            5            |                           |
-| cross-rsdpg-256-small                   |            5            |                           |
-| Falcon-512                              |            1            |                           |
-| Falcon-1024                             |            5            |                           |
-| Falcon-padded-512                       |            1            |                           |
-| Falcon-padded-1024                      |            5            |                           |
-| MAYO-1                                  |            1            |                           |
-| MAYO-2                                  |            1            |                           |
-| MAYO-3                                  |            3            |                           |
-| MAYO-5                                  |            5            |                           |
-| ML-DSA-44                               |            2            |                           |
-| ML-DSA-65                               |            3            |                           |
-| ML-DSA-87                               |            5            |                           |
-| SLH_DSA_PURE_SHA2_128S                  |            1            |                           |
-| SLH_DSA_PURE_SHA2_128F                  |            1            |                           |
-| SLH_DSA_PURE_SHA2_192S                  |            3            |                           |
-| SLH_DSA_PURE_SHA2_192F                  |            3            |                           |
-| SLH_DSA_PURE_SHA2_256S                  |            5            |                           |
-| SLH_DSA_PURE_SHA2_256F                  |            5            |                           |
-| SLH_DSA_PURE_SHAKE_128S                 |            1            |                           |
-| SLH_DSA_PURE_SHAKE_128F                 |            1            |                           |
-| SLH_DSA_PURE_SHAKE_192S                 |            3            |                           |
-| SLH_DSA_PURE_SHAKE_192F                 |            3            |                           |
-| SLH_DSA_PURE_SHAKE_256S                 |            5            |                           |
-| SLH_DSA_PURE_SHAKE_256F                 |            5            |                           |
-| SLH_DSA_SHA2_224_PREHASH_SHA2_128S      |            1            |                           |
-| SLH_DSA_SHA2_256_PREHASH_SHA2_128S      |            1            |                           |
-| SLH_DSA_SHA2_384_PREHASH_SHA2_128S      |            1            |                           |
-| SLH_DSA_SHA2_512_PREHASH_SHA2_128S      |            1            |                           |
-| SLH_DSA_SHA2_512_224_PREHASH_SHA2_128S  |            1            |                           |
-| SLH_DSA_SHA2_512_256_PREHASH_SHA2_128S  |            1            |                           |
-| SLH_DSA_SHA3_224_PREHASH_SHA2_128S      |            1            |                           |
-| SLH_DSA_SHA3_256_PREHASH_SHA2_128S      |            1            |                           |
-| SLH_DSA_SHA3_384_PREHASH_SHA2_128S      |            1            |                           |
-| SLH_DSA_SHA3_512_PREHASH_SHA2_128S      |            1            |                           |
-| SLH_DSA_SHAKE_128_PREHASH_SHA2_128S     |            1            |                           |
-| SLH_DSA_SHAKE_256_PREHASH_SHA2_128S     |            1            |                           |
-| SLH_DSA_SHA2_224_PREHASH_SHA2_128F      |            1            |                           |
-| SLH_DSA_SHA2_256_PREHASH_SHA2_128F      |            1            |                           |
-| SLH_DSA_SHA2_384_PREHASH_SHA2_128F      |            1            |                           |
-| SLH_DSA_SHA2_512_PREHASH_SHA2_128F      |            1            |                           |
-| SLH_DSA_SHA2_512_224_PREHASH_SHA2_128F  |            1            |                           |
-| SLH_DSA_SHA2_512_256_PREHASH_SHA2_128F  |            1            |                           |
-| SLH_DSA_SHA3_224_PREHASH_SHA2_128F      |            1            |                           |
-| SLH_DSA_SHA3_256_PREHASH_SHA2_128F      |            1            |                           |
-| SLH_DSA_SHA3_384_PREHASH_SHA2_128F      |            1            |                           |
-| SLH_DSA_SHA3_512_PREHASH_SHA2_128F      |            1            |                           |
-| SLH_DSA_SHAKE_128_PREHASH_SHA2_128F     |            1            |                           |
-| SLH_DSA_SHAKE_256_PREHASH_SHA2_128F     |            1            |                           |
-| SLH_DSA_SHA2_224_PREHASH_SHA2_192S      |            3            |                           |
-| SLH_DSA_SHA2_256_PREHASH_SHA2_192S      |            3            |                           |
-| SLH_DSA_SHA2_384_PREHASH_SHA2_192S      |            3            |                           |
-| SLH_DSA_SHA2_512_PREHASH_SHA2_192S      |            3            |                           |
-| SLH_DSA_SHA2_512_224_PREHASH_SHA2_192S  |            3            |                           |
-| SLH_DSA_SHA2_512_256_PREHASH_SHA2_192S  |            3            |                           |
-| SLH_DSA_SHA3_224_PREHASH_SHA2_192S      |            3            |                           |
-| SLH_DSA_SHA3_256_PREHASH_SHA2_192S      |            3            |                           |
-| SLH_DSA_SHA3_384_PREHASH_SHA2_192S      |            3            |                           |
-| SLH_DSA_SHA3_512_PREHASH_SHA2_192S      |            3            |                           |
-| SLH_DSA_SHAKE_128_PREHASH_SHA2_192S     |            3            |                           |
-| SLH_DSA_SHAKE_256_PREHASH_SHA2_192S     |            3            |                           |
-| SLH_DSA_SHA2_224_PREHASH_SHA2_192F      |            3            |                           |
-| SLH_DSA_SHA2_256_PREHASH_SHA2_192F      |            3            |                           |
-| SLH_DSA_SHA2_384_PREHASH_SHA2_192F      |            3            |                           |
-| SLH_DSA_SHA2_512_PREHASH_SHA2_192F      |            3            |                           |
-| SLH_DSA_SHA2_512_224_PREHASH_SHA2_192F  |            3            |                           |
-| SLH_DSA_SHA2_512_256_PREHASH_SHA2_192F  |            3            |                           |
-| SLH_DSA_SHA3_224_PREHASH_SHA2_192F      |            3            |                           |
-| SLH_DSA_SHA3_256_PREHASH_SHA2_192F      |            3            |                           |
-| SLH_DSA_SHA3_384_PREHASH_SHA2_192F      |            3            |                           |
-| SLH_DSA_SHA3_512_PREHASH_SHA2_192F      |            3            |                           |
-| SLH_DSA_SHAKE_128_PREHASH_SHA2_192F     |            3            |                           |
-| SLH_DSA_SHAKE_256_PREHASH_SHA2_192F     |            3            |                           |
-| SLH_DSA_SHA2_224_PREHASH_SHA2_256S      |            5            |                           |
-| SLH_DSA_SHA2_256_PREHASH_SHA2_256S      |            5            |                           |
-| SLH_DSA_SHA2_384_PREHASH_SHA2_256S      |            5            |                           |
-| SLH_DSA_SHA2_512_PREHASH_SHA2_256S      |            5            |                           |
-| SLH_DSA_SHA2_512_224_PREHASH_SHA2_256S  |            5            |                           |
-| SLH_DSA_SHA2_512_256_PREHASH_SHA2_256S  |            5            |                           |
-| SLH_DSA_SHA3_224_PREHASH_SHA2_256S      |            5            |                           |
-| SLH_DSA_SHA3_256_PREHASH_SHA2_256S      |            5            |                           |
-| SLH_DSA_SHA3_384_PREHASH_SHA2_256S      |            5            |                           |
-| SLH_DSA_SHA3_512_PREHASH_SHA2_256S      |            5            |                           |
-| SLH_DSA_SHAKE_128_PREHASH_SHA2_256S     |            5            |                           |
-| SLH_DSA_SHAKE_256_PREHASH_SHA2_256S     |            5            |                           |
-| SLH_DSA_SHA2_224_PREHASH_SHA2_256F      |            5            |                           |
-| SLH_DSA_SHA2_256_PREHASH_SHA2_256F      |            5            |                           |
-| SLH_DSA_SHA2_384_PREHASH_SHA2_256F      |            5            |                           |
-| SLH_DSA_SHA2_512_PREHASH_SHA2_256F      |            5            |                           |
-| SLH_DSA_SHA2_512_224_PREHASH_SHA2_256F  |            5            |                           |
-| SLH_DSA_SHA2_512_256_PREHASH_SHA2_256F  |            5            |                           |
-| SLH_DSA_SHA3_224_PREHASH_SHA2_256F      |            5            |                           |
-| SLH_DSA_SHA3_256_PREHASH_SHA2_256F      |            5            |                           |
-| SLH_DSA_SHA3_384_PREHASH_SHA2_256F      |            5            |                           |
-| SLH_DSA_SHA3_512_PREHASH_SHA2_256F      |            5            |                           |
-| SLH_DSA_SHAKE_128_PREHASH_SHA2_256F     |            5            |                           |
-| SLH_DSA_SHAKE_256_PREHASH_SHA2_256F     |            5            |                           |
-| SLH_DSA_SHA2_224_PREHASH_SHAKE_128S     |            1            |                           |
-| SLH_DSA_SHA2_256_PREHASH_SHAKE_128S     |            1            |                           |
-| SLH_DSA_SHA2_384_PREHASH_SHAKE_128S     |            1            |                           |
-| SLH_DSA_SHA2_512_PREHASH_SHAKE_128S     |            1            |                           |
-| SLH_DSA_SHA2_512_224_PREHASH_SHAKE_128S |            1            |                           |
-| SLH_DSA_SHA2_512_256_PREHASH_SHAKE_128S |            1            |                           |
-| SLH_DSA_SHA3_224_PREHASH_SHAKE_128S     |            1            |                           |
-| SLH_DSA_SHA3_256_PREHASH_SHAKE_128S     |            1            |                           |
-| SLH_DSA_SHA3_384_PREHASH_SHAKE_128S     |            1            |                           |
-| SLH_DSA_SHA3_512_PREHASH_SHAKE_128S     |            1            |                           |
-| SLH_DSA_SHAKE_128_PREHASH_SHAKE_128S    |            1            |                           |
-| SLH_DSA_SHAKE_256_PREHASH_SHAKE_128S    |            1            |                           |
-| SLH_DSA_SHA2_224_PREHASH_SHAKE_128F     |            1            |                           |
-| SLH_DSA_SHA2_256_PREHASH_SHAKE_128F     |            1            |                           |
-| SLH_DSA_SHA2_384_PREHASH_SHAKE_128F     |            1            |                           |
-| SLH_DSA_SHA2_512_PREHASH_SHAKE_128F     |            1            |                           |
-| SLH_DSA_SHA2_512_224_PREHASH_SHAKE_128F |            1            |                           |
-| SLH_DSA_SHA2_512_256_PREHASH_SHAKE_128F |            1            |                           |
-| SLH_DSA_SHA3_224_PREHASH_SHAKE_128F     |            1            |                           |
-| SLH_DSA_SHA3_256_PREHASH_SHAKE_128F     |            1            |                           |
-| SLH_DSA_SHA3_384_PREHASH_SHAKE_128F     |            1            |                           |
-| SLH_DSA_SHA3_512_PREHASH_SHAKE_128F     |            1            |                           |
-| SLH_DSA_SHAKE_128_PREHASH_SHAKE_128F    |            1            |                           |
-| SLH_DSA_SHAKE_256_PREHASH_SHAKE_128F    |            1            |                           |
-| SLH_DSA_SHA2_224_PREHASH_SHAKE_192S     |            3            |                           |
-| SLH_DSA_SHA2_256_PREHASH_SHAKE_192S     |            3            |                           |
-| SLH_DSA_SHA2_384_PREHASH_SHAKE_192S     |            3            |                           |
-| SLH_DSA_SHA2_512_PREHASH_SHAKE_192S     |            3            |                           |
-| SLH_DSA_SHA2_512_224_PREHASH_SHAKE_192S |            3            |                           |
-| SLH_DSA_SHA2_512_256_PREHASH_SHAKE_192S |            3            |                           |
-| SLH_DSA_SHA3_224_PREHASH_SHAKE_192S     |            3            |                           |
-| SLH_DSA_SHA3_256_PREHASH_SHAKE_192S     |            3            |                           |
-| SLH_DSA_SHA3_384_PREHASH_SHAKE_192S     |            3            |                           |
-| SLH_DSA_SHA3_512_PREHASH_SHAKE_192S     |            3            |                           |
-| SLH_DSA_SHAKE_128_PREHASH_SHAKE_192S    |            3            |                           |
-| SLH_DSA_SHAKE_256_PREHASH_SHAKE_192S    |            3            |                           |
-| SLH_DSA_SHA2_224_PREHASH_SHAKE_192F     |            3            |                           |
-| SLH_DSA_SHA2_256_PREHASH_SHAKE_192F     |            3            |                           |
-| SLH_DSA_SHA2_384_PREHASH_SHAKE_192F     |            3            |                           |
-| SLH_DSA_SHA2_512_PREHASH_SHAKE_192F     |            3            |                           |
-| SLH_DSA_SHA2_512_224_PREHASH_SHAKE_192F |            3            |                           |
-| SLH_DSA_SHA2_512_256_PREHASH_SHAKE_192F |            3            |                           |
-| SLH_DSA_SHA3_224_PREHASH_SHAKE_192F     |            3            |                           |
-| SLH_DSA_SHA3_256_PREHASH_SHAKE_192F     |            3            |                           |
-| SLH_DSA_SHA3_384_PREHASH_SHAKE_192F     |            3            |                           |
-| SLH_DSA_SHA3_512_PREHASH_SHAKE_192F     |            3            |                           |
-| SLH_DSA_SHAKE_128_PREHASH_SHAKE_192F    |            3            |                           |
-| SLH_DSA_SHAKE_256_PREHASH_SHAKE_192F    |            3            |                           |
-| SLH_DSA_SHA2_224_PREHASH_SHAKE_256S     |            5            |                           |
-| SLH_DSA_SHA2_256_PREHASH_SHAKE_256S     |            5            |                           |
-| SLH_DSA_SHA2_384_PREHASH_SHAKE_256S     |            5            |                           |
-| SLH_DSA_SHA2_512_PREHASH_SHAKE_256S     |            5            |                           |
-| SLH_DSA_SHA2_512_224_PREHASH_SHAKE_256S |            5            |                           |
-| SLH_DSA_SHA2_512_256_PREHASH_SHAKE_256S |            5            |                           |
-| SLH_DSA_SHA3_224_PREHASH_SHAKE_256S     |            5            |                           |
-| SLH_DSA_SHA3_256_PREHASH_SHAKE_256S     |            5            |                           |
-| SLH_DSA_SHA3_384_PREHASH_SHAKE_256S     |            5            |                           |
-| SLH_DSA_SHA3_512_PREHASH_SHAKE_256S     |            5            |                           |
-| SLH_DSA_SHAKE_128_PREHASH_SHAKE_256S    |            5            |                           |
-| SLH_DSA_SHAKE_256_PREHASH_SHAKE_256S    |            5            |                           |
-| SLH_DSA_SHA2_224_PREHASH_SHAKE_256F     |            5            |                           |
-| SLH_DSA_SHA2_256_PREHASH_SHAKE_256F     |            5            |                           |
-| SLH_DSA_SHA2_384_PREHASH_SHAKE_256F     |            5            |                           |
-| SLH_DSA_SHA2_512_PREHASH_SHAKE_256F     |            5            |                           |
-| SLH_DSA_SHA2_512_224_PREHASH_SHAKE_256F |            5            |                           |
-| SLH_DSA_SHA2_512_256_PREHASH_SHAKE_256F |            5            |                           |
-| SLH_DSA_SHA3_224_PREHASH_SHAKE_256F     |            5            |                           |
-| SLH_DSA_SHA3_256_PREHASH_SHAKE_256F     |            5            |                           |
-| SLH_DSA_SHA3_384_PREHASH_SHAKE_256F     |            5            |                           |
-| SLH_DSA_SHA3_512_PREHASH_SHAKE_256F     |            5            |                           |
-| SLH_DSA_SHAKE_128_PREHASH_SHAKE_256F    |            5            |                           |
-| SLH_DSA_SHAKE_256_PREHASH_SHAKE_256F    |            5            |                           |
-| SNOVA_24_5_4                            |            1            |                           |
-| SNOVA_24_5_4_SHAKE                      |            1            |                           |
-| SNOVA_24_5_4_esk                        |            1            |                           |
-| SNOVA_24_5_4_SHAKE_esk                  |            1            |                           |
-| SNOVA_37_17_2                           |            1            |                           |
-| SNOVA_25_8_3                            |            1            |                           |
-| SNOVA_56_25_2                           |            3            |                           |
-| SNOVA_49_11_3                           |            3            |                           |
-| SNOVA_37_8_4                            |            3            |                           |
-| SNOVA_24_5_5                            |            3            |                           |
-| SNOVA_60_10_4                           |            5            |                           |
-| SNOVA_29_6_5                            |            5            |                           |
-| SPHINCS+-SHA2-128f-simple               |            1            |                           |
-| SPHINCS+-SHA2-128s-simple               |            1            |                           |
-| SPHINCS+-SHA2-192f-simple               |            3            |                           |
-| SPHINCS+-SHA2-192s-simple               |            3            |                           |
-| SPHINCS+-SHA2-256f-simple               |            5            |                           |
-| SPHINCS+-SHA2-256s-simple               |            5            |                           |
-| SPHINCS+-SHAKE-128f-simple              |            1            |                           |
-| SPHINCS+-SHAKE-128s-simple              |            1            |                           |
-| SPHINCS+-SHAKE-192f-simple              |            3            |                           |
-| SPHINCS+-SHAKE-192s-simple              |            3            |                           |
-| SPHINCS+-SHAKE-256f-simple              |            5            |                           |
-| SPHINCS+-SHAKE-256s-simple              |            5            |                           |
-| OV-Is                                   |            1            |                           |
-| OV-Ip                                   |            1            |                           |
-| OV-III                                  |            3            |                           |
-| OV-V                                    |            5            |                           |
-| OV-Is-pkc                               |            1            |                           |
-| OV-Ip-pkc                               |            1            |                           |
-| OV-III-pkc                              |            3            |                           |
-| OV-V-pkc                                |            5            |                           |
-| OV-Is-pkc-skc                           |            1            |                           |
-| OV-Ip-pkc-skc                           |            1            |                           |
-| OV-III-pkc-skc                          |            3            |                           |
-| OV-V-pkc-skc                            |            5            |                           |
+| **Algorithm Name**                      | **Claimed NIST Level** | **Public key size (bytes)** | **Secret key size (bytes)** | **Signature size (bytes)** |
+|-----------------------------------------|------------------------|-----------------------------|-----------------------------|----------------------------|
+| cross-rsdp-128-balanced                 |            1           |                          77 |                          32 |                      13152 |
+| cross-rsdp-128-fast                     |            1           |                          77 |                          32 |                      18432 |
+| cross-rsdp-128-small                    |            1           |                          77 |                          32 |                      12432 |
+| cross-rsdp-192-balanced                 |            3           |                         115 |                          48 |                      29853 |
+| cross-rsdp-192-fast                     |            3           |                         115 |                          48 |                      41406 |
+| cross-rsdp-192-small                    |            3           |                         115 |                          48 |                      28391 |
+| cross-rsdp-256-balanced                 |            5           |                         153 |                          64 |                      53527 |
+| cross-rsdp-256-fast                     |            5           |                         153 |                          64 |                      74590 |
+| cross-rsdp-256-small                    |            5           |                         153 |                          64 |                      50818 |
+| cross-rsdpg-128-balanced                |            1           |                          54 |                          32 |                       9120 |
+| cross-rsdpg-128-fast                    |            1           |                          54 |                          32 |                      11980 |
+| cross-rsdpg-128-small                   |            1           |                          54 |                          32 |                       8960 |
+| cross-rsdpg-192-balanced                |            3           |                          83 |                          48 |                      22464 |
+| cross-rsdpg-192-fast                    |            3           |                          83 |                          48 |                      26772 |
+| cross-rsdpg-192-small                   |            3           |                          83 |                          48 |                      20452 |
+| cross-rsdpg-256-balanced                |            5           |                         106 |                          64 |                      40100 |
+| cross-rsdpg-256-fast                    |            5           |                         106 |                          64 |                      48102 |
+| cross-rsdpg-256-small                   |            5           |                         106 |                          64 |                      36454 |
+| Falcon-512                              |            1           |                         897 |                        1281 |                        752 |
+| Falcon-1024                             |            5           |                        1793 |                        2305 |                       1462 |
+| Falcon-padded-512                       |            1           |                         897 |                        1281 |                        666 |
+| Falcon-padded-1024                      |            5           |                        1793 |                        2305 |                       1280 |
+| MAYO-1                                  |            1           |                        1420 |                          24 |                        454 |
+| MAYO-2                                  |            1           |                        4912 |                          24 |                        186 |
+| MAYO-3                                  |            3           |                        2986 |                          32 |                        681 |
+| MAYO-5                                  |            5           |                        5554 |                          40 |                        964 |
+| ML-DSA-44                               |            2           |                        1312 |                        2560 |                       2420 |
+| ML-DSA-65                               |            3           |                        1952 |                        4032 |                       3309 |
+| ML-DSA-87                               |            5           |                        2592 |                        4896 |                       4627 |
+| mqom2_cat1_gf16_fast_r5                 |            1           |                          60 |                          88 |                       3280 |
+| mqom2_cat1_gf16_fast_r3                 |            1           |                          60 |                          88 |                       3484 |
+| mqom2_cat1_gf16_short_r5                |            1           |                          60 |                          88 |                       2916 |
+| mqom2_cat1_gf16_short_r3                |            1           |                          60 |                          88 |                       3060 |
+| mqom2_cat3_gf16_fast_r5                 |            3           |                          90 |                         132 |                       7738 |
+| mqom2_cat3_gf16_fast_r3                 |            3           |                          90 |                         132 |                       8224 |
+| mqom2_cat3_gf16_short_r5                |            3           |                          90 |                         132 |                       6496 |
+| mqom2_cat3_gf16_short_r3                |            3           |                          90 |                         132 |                       6820 |
+| mqom2_cat5_gf16_fast_r5                 |            5           |                         122 |                         180 |                      13772 |
+| mqom2_cat5_gf16_fast_r3                 |            5           |                         122 |                         180 |                      14708 |
+| mqom2_cat5_gf16_short_r5                |            5           |                         122 |                         180 |                      12014 |
+| mqom2_cat5_gf16_short_r3                |            5           |                         122 |                         180 |                      12664 |
+| SLH_DSA_PURE_SHA2_128S                  |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_PURE_SHA2_128F                  |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_PURE_SHA2_192S                  |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_PURE_SHA2_192F                  |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_PURE_SHA2_256S                  |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_PURE_SHA2_256F                  |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_PURE_SHAKE_128S                 |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_PURE_SHAKE_128F                 |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_PURE_SHAKE_192S                 |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_PURE_SHAKE_192F                 |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_PURE_SHAKE_256S                 |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_PURE_SHAKE_256F                 |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_SHA2_224_PREHASH_SHA2_128S      |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_SHA2_256_PREHASH_SHA2_128S      |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_SHA2_384_PREHASH_SHA2_128S      |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_SHA2_512_PREHASH_SHA2_128S      |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_SHA2_512_224_PREHASH_SHA2_128S  |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_SHA2_512_256_PREHASH_SHA2_128S  |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_SHA3_224_PREHASH_SHA2_128S      |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_SHA3_256_PREHASH_SHA2_128S      |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_SHA3_384_PREHASH_SHA2_128S      |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_SHA3_512_PREHASH_SHA2_128S      |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_SHAKE_128_PREHASH_SHA2_128S     |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_SHAKE_256_PREHASH_SHA2_128S     |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_SHA2_224_PREHASH_SHA2_128F      |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_SHA2_256_PREHASH_SHA2_128F      |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_SHA2_384_PREHASH_SHA2_128F      |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_SHA2_512_PREHASH_SHA2_128F      |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_SHA2_512_224_PREHASH_SHA2_128F  |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_SHA2_512_256_PREHASH_SHA2_128F  |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_SHA3_224_PREHASH_SHA2_128F      |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_SHA3_256_PREHASH_SHA2_128F      |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_SHA3_384_PREHASH_SHA2_128F      |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_SHA3_512_PREHASH_SHA2_128F      |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_SHAKE_128_PREHASH_SHA2_128F     |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_SHAKE_256_PREHASH_SHA2_128F     |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_SHA2_224_PREHASH_SHA2_192S      |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_SHA2_256_PREHASH_SHA2_192S      |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_SHA2_384_PREHASH_SHA2_192S      |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_SHA2_512_PREHASH_SHA2_192S      |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_SHA2_512_224_PREHASH_SHA2_192S  |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_SHA2_512_256_PREHASH_SHA2_192S  |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_SHA3_224_PREHASH_SHA2_192S      |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_SHA3_256_PREHASH_SHA2_192S      |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_SHA3_384_PREHASH_SHA2_192S      |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_SHA3_512_PREHASH_SHA2_192S      |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_SHAKE_128_PREHASH_SHA2_192S     |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_SHAKE_256_PREHASH_SHA2_192S     |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_SHA2_224_PREHASH_SHA2_192F      |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_SHA2_256_PREHASH_SHA2_192F      |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_SHA2_384_PREHASH_SHA2_192F      |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_SHA2_512_PREHASH_SHA2_192F      |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_SHA2_512_224_PREHASH_SHA2_192F  |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_SHA2_512_256_PREHASH_SHA2_192F  |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_SHA3_224_PREHASH_SHA2_192F      |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_SHA3_256_PREHASH_SHA2_192F      |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_SHA3_384_PREHASH_SHA2_192F      |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_SHA3_512_PREHASH_SHA2_192F      |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_SHAKE_128_PREHASH_SHA2_192F     |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_SHAKE_256_PREHASH_SHA2_192F     |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_SHA2_224_PREHASH_SHA2_256S      |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_SHA2_256_PREHASH_SHA2_256S      |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_SHA2_384_PREHASH_SHA2_256S      |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_SHA2_512_PREHASH_SHA2_256S      |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_SHA2_512_224_PREHASH_SHA2_256S  |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_SHA2_512_256_PREHASH_SHA2_256S  |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_SHA3_224_PREHASH_SHA2_256S      |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_SHA3_256_PREHASH_SHA2_256S      |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_SHA3_384_PREHASH_SHA2_256S      |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_SHA3_512_PREHASH_SHA2_256S      |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_SHAKE_128_PREHASH_SHA2_256S     |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_SHAKE_256_PREHASH_SHA2_256S     |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_SHA2_224_PREHASH_SHA2_256F      |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_SHA2_256_PREHASH_SHA2_256F      |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_SHA2_384_PREHASH_SHA2_256F      |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_SHA2_512_PREHASH_SHA2_256F      |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_SHA2_512_224_PREHASH_SHA2_256F  |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_SHA2_512_256_PREHASH_SHA2_256F  |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_SHA3_224_PREHASH_SHA2_256F      |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_SHA3_256_PREHASH_SHA2_256F      |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_SHA3_384_PREHASH_SHA2_256F      |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_SHA3_512_PREHASH_SHA2_256F      |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_SHAKE_128_PREHASH_SHA2_256F     |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_SHAKE_256_PREHASH_SHA2_256F     |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_SHA2_224_PREHASH_SHAKE_128S     |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_SHA2_256_PREHASH_SHAKE_128S     |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_SHA2_384_PREHASH_SHAKE_128S     |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_SHA2_512_PREHASH_SHAKE_128S     |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_SHA2_512_224_PREHASH_SHAKE_128S |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_SHA2_512_256_PREHASH_SHAKE_128S |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_SHA3_224_PREHASH_SHAKE_128S     |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_SHA3_256_PREHASH_SHAKE_128S     |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_SHA3_384_PREHASH_SHAKE_128S     |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_SHA3_512_PREHASH_SHAKE_128S     |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_SHAKE_128_PREHASH_SHAKE_128S    |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_SHAKE_256_PREHASH_SHAKE_128S    |            1           |                          32 |                          64 |                       7856 |
+| SLH_DSA_SHA2_224_PREHASH_SHAKE_128F     |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_SHA2_256_PREHASH_SHAKE_128F     |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_SHA2_384_PREHASH_SHAKE_128F     |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_SHA2_512_PREHASH_SHAKE_128F     |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_SHA2_512_224_PREHASH_SHAKE_128F |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_SHA2_512_256_PREHASH_SHAKE_128F |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_SHA3_224_PREHASH_SHAKE_128F     |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_SHA3_256_PREHASH_SHAKE_128F     |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_SHA3_384_PREHASH_SHAKE_128F     |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_SHA3_512_PREHASH_SHAKE_128F     |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_SHAKE_128_PREHASH_SHAKE_128F    |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_SHAKE_256_PREHASH_SHAKE_128F    |            1           |                          32 |                          64 |                      17088 |
+| SLH_DSA_SHA2_224_PREHASH_SHAKE_192S     |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_SHA2_256_PREHASH_SHAKE_192S     |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_SHA2_384_PREHASH_SHAKE_192S     |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_SHA2_512_PREHASH_SHAKE_192S     |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_SHA2_512_224_PREHASH_SHAKE_192S |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_SHA2_512_256_PREHASH_SHAKE_192S |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_SHA3_224_PREHASH_SHAKE_192S     |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_SHA3_256_PREHASH_SHAKE_192S     |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_SHA3_384_PREHASH_SHAKE_192S     |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_SHA3_512_PREHASH_SHAKE_192S     |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_SHAKE_128_PREHASH_SHAKE_192S    |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_SHAKE_256_PREHASH_SHAKE_192S    |            3           |                          48 |                          96 |                      16224 |
+| SLH_DSA_SHA2_224_PREHASH_SHAKE_192F     |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_SHA2_256_PREHASH_SHAKE_192F     |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_SHA2_384_PREHASH_SHAKE_192F     |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_SHA2_512_PREHASH_SHAKE_192F     |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_SHA2_512_224_PREHASH_SHAKE_192F |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_SHA2_512_256_PREHASH_SHAKE_192F |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_SHA3_224_PREHASH_SHAKE_192F     |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_SHA3_256_PREHASH_SHAKE_192F     |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_SHA3_384_PREHASH_SHAKE_192F     |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_SHA3_512_PREHASH_SHAKE_192F     |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_SHAKE_128_PREHASH_SHAKE_192F    |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_SHAKE_256_PREHASH_SHAKE_192F    |            3           |                          48 |                          96 |                      35664 |
+| SLH_DSA_SHA2_224_PREHASH_SHAKE_256S     |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_SHA2_256_PREHASH_SHAKE_256S     |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_SHA2_384_PREHASH_SHAKE_256S     |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_SHA2_512_PREHASH_SHAKE_256S     |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_SHA2_512_224_PREHASH_SHAKE_256S |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_SHA2_512_256_PREHASH_SHAKE_256S |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_SHA3_224_PREHASH_SHAKE_256S     |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_SHA3_256_PREHASH_SHAKE_256S     |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_SHA3_384_PREHASH_SHAKE_256S     |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_SHA3_512_PREHASH_SHAKE_256S     |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_SHAKE_128_PREHASH_SHAKE_256S    |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_SHAKE_256_PREHASH_SHAKE_256S    |            5           |                          64 |                         128 |                      29792 |
+| SLH_DSA_SHA2_224_PREHASH_SHAKE_256F     |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_SHA2_256_PREHASH_SHAKE_256F     |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_SHA2_384_PREHASH_SHAKE_256F     |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_SHA2_512_PREHASH_SHAKE_256F     |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_SHA2_512_224_PREHASH_SHAKE_256F |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_SHA2_512_256_PREHASH_SHAKE_256F |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_SHA3_224_PREHASH_SHAKE_256F     |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_SHA3_256_PREHASH_SHAKE_256F     |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_SHA3_384_PREHASH_SHAKE_256F     |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_SHA3_512_PREHASH_SHAKE_256F     |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_SHAKE_128_PREHASH_SHAKE_256F    |            5           |                          64 |                         128 |                      49856 |
+| SLH_DSA_SHAKE_256_PREHASH_SHAKE_256F    |            5           |                          64 |                         128 |                      49856 |
+| SNOVA_24_5_4                            |            1           |                        1016 |                          48 |                        248 |
+| SNOVA_24_5_4_SHAKE                      |            1           |                        1016 |                          48 |                        248 |
+| SNOVA_24_5_4_esk                        |            1           |                        1016 |                       36848 |                        248 |
+| SNOVA_24_5_4_SHAKE_esk                  |            1           |                        1016 |                       36848 |                        248 |
+| SNOVA_37_17_2                           |            1           |                        9842 |                          48 |                        124 |
+| SNOVA_25_8_3                            |            1           |                        2320 |                          48 |                        165 |
+| SNOVA_56_25_2                           |            3           |                       31266 |                          48 |                        178 |
+| SNOVA_49_11_3                           |            3           |                        6006 |                          48 |                        286 |
+| SNOVA_37_8_4                            |            3           |                        4112 |                          48 |                        376 |
+| SNOVA_24_5_5                            |            3           |                        1579 |                          48 |                        379 |
+| SNOVA_60_10_4                           |            5           |                        8016 |                          48 |                        576 |
+| SNOVA_29_6_5                            |            5           |                        2716 |                          48 |                        454 |
+| OV-Is                                   |            1           |                      412160 |                      348704 |                         96 |
+| OV-Ip                                   |            1           |                      278432 |                      237896 |                        128 |
+| OV-III                                  |            3           |                     1225440 |                     1044320 |                        200 |
+| OV-V                                    |            5           |                     2869440 |                     2436704 |                        260 |
+| OV-Is-pkc                               |            1           |                       66576 |                      348704 |                         96 |
+| OV-Ip-pkc                               |            1           |                       43576 |                      237896 |                        128 |
+| OV-III-pkc                              |            3           |                      189232 |                     1044320 |                        200 |
+| OV-V-pkc                                |            5           |                      446992 |                     2436704 |                        260 |
+| OV-Is-pkc-skc                           |            1           |                       66576 |                          32 |                         96 |
+| OV-Ip-pkc-skc                           |            1           |                       43576 |                          32 |                        128 |
+| OV-III-pkc-skc                          |            3           |                      189232 |                          32 |                        200 |
+| OV-V-pkc-skc                            |            5           |                      446992 |                          32 |                        260 |
 
 ## OpenSSL Algorithms
 
@@ -590,6 +596,6 @@ For further details on algorithm support, compatibility, HQC implementation issu
 ## External Documentation
 For additional reference, the upstream dependency documentation corresponding to the pinned versions used by PQC-LEO can be found below:
 
-- [Liboqs v0.15.0 – Supported Algorithms](https://github.com/open-quantum-safe/liboqs/tree/97f6b86b1b6d109cfd43cf276ae39c2e776aed80?tab=readme-ov-file#supported-algorithms)
+- [Liboqs v0.16.0 – Supported Algorithms](https://github.com/open-quantum-safe/liboqs/blob/5a1a854b0dc9f2141bdc771c555ee60c37950183/ALGORITHMS.md)
 - [OpenSSL 3.6.1 – PQC Listed in Documenation Overviews](https://docs.openssl.org/3.6/man7/)
 - [OQS-Provider v0.11.0 – Supported Algorithms](https://github.com/open-quantum-safe/oqs-provider/blob/a635e341d6a4624d9bba36d158804762f316fe5e/ALGORITHMS.md)

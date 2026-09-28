@@ -3,6 +3,7 @@ This document outlines additional configuration options available when running t
 
 - Use the latest versions of the OQS dependency libraries
 - Manually adjusting OpenSSL's `s_speed` tool hardcoded limits
+- Enabling Liboqs algorithm memory optimisation for supported algorithms
 - Enabling HQC KEM algorithms in Liboqs and OQS-Provider
 
 ## Using the Latest Versions of the OQS Libraries
@@ -28,6 +29,17 @@ By default, the main setup script will attempt to detect and patch these values 
 Replace [integer] with the desired value. The setup script will then patch the `speed.c` source file to set both `MAX_KEM_NUM` and `MAX_SIG_NUM` to this value before compiling OpenSSL.
 
 For further details on this issue and the plans to address the problem in the future, please refer to this [git issue](https://github.com/crt26/PQC-LEO/issues/25) on the repositories page.
+
+## Enabling Liboqs Algorithm Memory Optimisation
+As of version 0.16.0 of the Liboqs library, support for using memory optimised implementations of supported algorithms has been added. These implementations reduce the memory footprint of certain algorithms, but may impact their overall performance. By default, this feature is disabled during the setup process but can be enabled should the user wish to utilise this Liboqs feature.
+
+If the user wishes to utilise this feature in Liboqs, the `--liboqs-memory-optimisation` flag can be passed to the `setup.sh` script:
+
+```
+./setup.sh --liboqs-memory-optimisation
+```
+
+As described within the [Liboqs documentation](https://github.com/open-quantum-safe/liboqs/blob/5a1a854b0dc9f2141bdc771c555ee60c37950183/CONFIGURE.md#oqs_memopt_build), when the `-DOQS_MEMOPT_BUILD=ON` flag is passed to the Liboqs build process, algorithms with memory optimised implementations will be used where available. If a algorithm does not have a memory optimised implementation, the standard implementation will be used instead.
 
 ## Enabling HQC KEM Algorithms in Liboqs and OQS-Provider
 Recent versions of both Liboqs and OQS-Provider disable HQC KEM algorithms by default, due to their current implementations not conforming to the latest specification, which includes important security fixes. This project provides optional setup flags to re-enable HQC **strictly for benchmarking purposes**, with full user awareness and consent. When enabling HQC, the setup script will display a security warning and require confirmation before continuing. If declined, HQC remains disabled.

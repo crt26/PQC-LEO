@@ -75,7 +75,7 @@ The automated testing tool is currently only supported in the following environm
 ### Tested Cryptographic Dependency Libraries <!-- omit from toc -->
 This version of the repository has been fully tested with the following library versions:
 
-- Liboqs Version: 0.15.0
+- Liboqs Version: 0.16.0
 
 - OQS-Provider Version 0.11.0
 

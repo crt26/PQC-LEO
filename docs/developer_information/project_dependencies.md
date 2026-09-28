@@ -32,7 +32,7 @@ This section lists the **last tested versions** of the project's core dependenci
 
 | **Dependency** | **Version Number**     | **Commit SHA**                             | **Notes**                                      |
 |----------------|------------------------|--------------------------------------------|------------------------------------------------|
-| Liboqs         | 0.15.0                 | `97f6b86b1b6d109cfd43cf276ae39c2e776aed80` |                                                |
+| Liboqs         | 0.16.0                 | `5a1a854b0dc9f2141bdc771c555ee60c37950183` |                                                |
 | OQS-Provider   | 0.11.0                 | `a635e341d6a4624d9bba36d158804762f316fe5e` |                                                |
 | OpenSSL        | Official release 3.6.1 | N/A                                        | Downloaded as a fixed release tarball          |
 | pqax           | Always latest          | N/A                                        | Pulled from latest main branch at install time |
