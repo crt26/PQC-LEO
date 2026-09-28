@@ -34,7 +34,7 @@ This section lists the **last tested versions** of the project's core dependenci
 |----------------|------------------------|--------------------------------------------|------------------------------------------------|
 | Liboqs         | 0.16.0                 | `5a1a854b0dc9f2141bdc771c555ee60c37950183` |                                                |
 | OQS-Provider   | 0.11.0+                | `1670a8a91bbca997d33e6b6851309d6241cc224c` |                                                |
-| OpenSSL        | Official release 3.6.1 | N/A                                        | Downloaded as a fixed release tarball          |
+| OpenSSL        | Official release 4.0.1 | N/A                                        | Downloaded as a fixed release tarball          |
 | pqax           | Always latest          | N/A                                        | Pulled from latest main branch at install time |
 
 **Note:** These versions are used by default unless the `--latest-dependency-versions` flag is explicitly set during setup.

@@ -295,7 +295,7 @@ def process_tls_handshake_results(dir_paths, result_files, num_runs, eng_avgr):
     all_rows = []
 
     # Define the regex patterns for result classification
-    hybrid_prefix_pattern = re.compile(r'^(rsa[0-9]+|p[0-9]+|x[0-9]+|bp[0-9]+|X25519|X448|SecP256r1|SecP384r1|SecP521r1)[a-zA-Z0-9_-]+$')
+    hybrid_prefix_pattern = re.compile(r'^(rsa[0-9]+|p[0-9]+|x[0-9]+|bp[0-9]+|X25519|X448|SecP256r1|SecP384r1|SecP521r1|curveSM2)[a-zA-Z0-9_-]+$')
     classical_sig_pattern = re.compile(r'^(RSA_(?:[1-9][0-9]{3,4})|prime(?:192|224|256|384|521)v1|secp(?:192|224|256|384|521)r1)$')
 
     # Define the regex pattern for matching classical ciphers used in testing
@@ -442,7 +442,7 @@ def process_tls_speed_results(dir_paths, result_files, num_runs, eng_avgr):
     all_rows = []
 
     # Define the PQC-Hybrid algorithm prefix regex pattern
-    hybrid_prefix_pattern = re.compile(r'^(rsa[0-9]+|p[0-9]+|x[0-9]+|bp[0-9]+|X25519|X448|SecP256r1|SecP384r1|SecP521r1)[a-zA-Z0-9_-]+$')
+    hybrid_prefix_pattern = re.compile(r'^(rsa[0-9]+|p[0-9]+|x[0-9]+|bp[0-9]+|X25519|X448|SecP256r1|SecP384r1|SecP521r1|curveSM2)[a-zA-Z0-9_-]+$')
 
     # Loop through the result files and process the data
     for filename in result_files:

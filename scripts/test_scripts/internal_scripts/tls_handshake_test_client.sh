@@ -5,7 +5,7 @@
 
 # Client-side script for executing TLS handshake performance tests in coordination with a remote server.
 # It evaluates all supported combinations of classic, Post-Quantum Cryptography (PQC), and Hybrid-PQC signature
-# and Key Encapsulation Mechanism (KEM) algorithms using OpenSSL 3.6.1, with support for both native PQC
+# and Key Encapsulation Mechanism (KEM) algorithms using OpenSSL 4.0.1, with support for both native PQC
 # implementations and those integrated via OQS-Provider. The script performs three main test suites:
 # PQC-only, Hybrid-PQC, and Classic handshake tests. It is called by the TLS benchmarking controller script
 # and uses globally defined test parameters, certificate files, and control signalling for synchronisation with the server.
@@ -54,7 +54,7 @@ function setup_base_env() {
     util_scripts="$root_dir/scripts/utility_scripts"
 
     # Declare the global library directory path variables
-    openssl_path="$libs_dir/openssl_3.6.1"
+    openssl_path="$libs_dir/openssl_4.0.1"
     provider_path="$libs_dir/oqs_provider/lib"
 
     # Declare global key storage directory paths
@@ -349,6 +349,29 @@ function test_success_check() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
+function check_s_time_errors() {
+    # Helper function for checking the s_time process exit code and stderr captured in a temporary file. A non-zero exit code
+    # or the presence of "verify error" in stderr indicates a failure, which is reported to the terminal. The function returns
+    # a non-zero status when an error is detected; otherwise, it returns 0.
+
+    # Declare the local variables for the arguments passed to the function
+    local s_time_exit_code="$1"
+    local s_time_error_file="$2"
+
+    # Report any detected errors to the terminal and return a non-zero exit code to the caller
+    if [ "$s_time_exit_code" -ne 0 ] || grep -q "^verify error:" "$s_time_error_file"; then
+        cat "$s_time_error_file" >&2
+        rm -f -- "$s_time_error_file"
+        return 1
+    fi
+
+    # Remove the temporary stderr output file
+    rm -f -- "$s_time_error_file"
+    return 0
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
 function pqc_tests() {
     # Function for performing the PQC and Hybrid-PQC TLS handshake tests. Digital signature and KEM algorithms are 
     # loaded based on the selected test type (0=pqc, 1=hybrid) via set_test_env. Each sig/KEM pair is tested
@@ -389,7 +412,7 @@ function pqc_tests() {
                         handshake_dir=$PQC_HANDSHAKE
 
                     elif [ "$test_type" -eq 1 ]; then
-                        cert_file="$hybrid_cert_dir/""${sig/:/_}""_srv.crt"
+                        cert_file="$hybrid_cert_dir/""${sig/:/_}""_CA.crt"
                         handshake_dir=$HYBRID_HANDSHAKE
                         
                     fi
@@ -420,7 +443,13 @@ function pqc_tests() {
 
                         # Perform necessary steps to perform TLS handshake testing based on whether energy testing is enabled or not
                         if [ "$ENABLE_ENERGY_TESTING" -eq 0 ]; then
-                            
+
+                            # Create a temporary file for the s_time error output
+                            s_time_error_file=$(mktemp) || {
+                                echo "[ERROR] - Failed to create a temporary file for the s_time error output."
+                                exit 1
+                            }
+
                             # Run the OpenSSL s_time process with the current test parameters and grab the exit code
                             $openssl_cmd s_time \
                                 -connect "${SERVER_IP}:${S_SERVER_PORT}" \
@@ -429,8 +458,14 @@ function pqc_tests() {
                                 -verify  1 \
                                 -provider default \
                                 -provider oqsprovider \
-                                -provider-path "$provider_path" > "$output_path"
+                                -provider-path "$provider_path" \
+                                > "$output_path" 2>"$s_time_error_file"
                             attempt_exit_code=$?
+
+                            # Check the process result and stderr output, then remove the temporary file
+                            if ! check_s_time_errors "$attempt_exit_code" "$s_time_error_file"; then
+                                attempt_exit_code=1
+                            fi
 
                         elif [ "$ENABLE_ENERGY_TESTING" -eq 1 ]; then
 
@@ -439,6 +474,12 @@ function pqc_tests() {
 
                             # Perform both new and reuse session ID testing if energy testing is enabled
                             for session_id in "${session_id_types[@]}"; do
+
+                                # Create a temporary file for the s_time error output
+                                s_time_error_file=$(mktemp) || {
+                                    echo "[ERROR] - Failed to create a temporary file for the s_time error output."
+                                    exit 1
+                                }
 
                                 # Send control signal to energy collector to get ready for a new test
                                 "$control_sender" -s \
@@ -457,8 +498,14 @@ function pqc_tests() {
                                     -provider default \
                                     -provider oqsprovider \
                                     -provider-path "$provider_path" \
-                                    "-${session_id}" >> "$output_path"
+                                    "-${session_id}" \
+                                    >> "$output_path" 2>"$s_time_error_file"
                                 session_exit_code=$?
+
+                                # Check the process result and stderr output, then remove the temporary file
+                                if ! check_s_time_errors "$session_exit_code" "$s_time_error_file"; then
+                                    session_exit_code=1
+                                fi
 
                                 # Send energy test complete signal for the current session-ID test
                                 "$control_sender" -t "${com_flags[@]}"
@@ -550,7 +597,7 @@ function classic_tests() {
 
                 # Set the output filename based on the current combination and run and CA file
                 output_name="tls_handshake_classic_${run_num}_${cipher}_${classic_alg}.txt"
-                classic_cert_file="$classic_cert_dir/${classic_alg}_srv.crt"
+                classic_cert_file="$classic_cert_dir/${classic_alg}_CA.crt"
 
                 # Define the output file path based on various env flags and test type
                 if [ "$ENABLE_ENERGY_TESTING" -eq 0 ]; then
@@ -576,12 +623,25 @@ function classic_tests() {
                     # Perform necessary steps to perform TLS handshake testing based on whether energy testing is enabled or not
                     if [ "$ENABLE_ENERGY_TESTING" -eq 0 ]; then
 
+                        # Create a temporary file for the s_time error output
+                        s_time_error_file=$(mktemp) || {
+                            echo "[ERROR] - Failed to create a temporary file for the s_time error output."
+                            exit 1
+                        }
+
                         # Run the OpenSSL s_time process with the current test parameters and grab the exit code
                         $openssl_cmd s_time \
                             -connect "${SERVER_IP}:${S_SERVER_PORT}" \
                             -CAfile "$classic_cert_file" \
-                            -time "$TIME_NUM" > "$output_path"
+                            -time "$TIME_NUM" \
+                            -verify 1 \
+                            >> "$output_path" 2>"$s_time_error_file"
                         attempt_exit_code=$?
+
+                        # Check the process result and stderr output, then remove the temporary file
+                        if ! check_s_time_errors "$attempt_exit_code" "$s_time_error_file"; then
+                            attempt_exit_code=1
+                        fi
 
                     elif [ "$ENABLE_ENERGY_TESTING" -eq 1 ]; then
 
@@ -590,6 +650,12 @@ function classic_tests() {
 
                         # Perform both new and reuse session ID testing if energy testing is enabled
                         for session_id in "${session_id_types[@]}"; do
+
+                            # Create a temporary file for the s_time error output
+                            s_time_error_file=$(mktemp) || {
+                                echo "[ERROR] - Failed to create a temporary file for the s_time error output."
+                                exit 1
+                            }
 
                             # Send control signal to energy collector to get ready for a new test
                             "$control_sender" -s \
@@ -604,8 +670,15 @@ function classic_tests() {
                                 -connect "${SERVER_IP}:${S_SERVER_PORT}" \
                                 -CAfile "$classic_cert_file" \
                                 -time "$TIME_NUM" \
-                                "-${session_id}" >> "$output_path"
+                                -verify 1 \
+                                "-${session_id}" \
+                                >> "$output_path" 2>"$s_time_error_file"
                             session_exit_code=$?
+
+                            # Check the process result and stderr output, then remove the temporary file
+                            if ! check_s_time_errors "$session_exit_code" "$s_time_error_file"; then
+                                session_exit_code=1
+                            fi
 
                             # Send energy test complete signal for the current session-ID test
                             "$control_sender" -t "${com_flags[@]}"

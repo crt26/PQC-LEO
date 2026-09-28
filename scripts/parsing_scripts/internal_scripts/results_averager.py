@@ -416,7 +416,7 @@ class TLSAverager:
                 classic_avg_df.loc[len(classic_avg_df)] = curve_reused_combined_row
 
         # Output averages to csv file
-        avg_out_filename = f"classic_speed_avg.csv"
+        avg_out_filename = f"classic_results_avg.csv"
         avg_out_filepath = os.path.join(self.dir_paths['classic_handshake_results'], avg_out_filename)
         classic_avg_df.to_csv(avg_out_filepath, index=False)
 

@@ -27,12 +27,12 @@ function setup_base_env() {
     test_scripts="$root_dir/scripts/test_scripts"
 
     # Declare the global dependency library version variables
-    openssl_version="3.6.1"
+    openssl_version="4.0.1"
 
     # Declare the global library download URL variables
     liboqs_download_url="https://github.com/open-quantum-safe/liboqs.git"
     oqs_provider_download_url="https://github.com/open-quantum-safe/oqs-provider.git"
-    openssl_download_url="https://github.com/openssl/openssl/releases/download/openssl-3.6.1/openssl-3.6.1.tar.gz"
+    openssl_download_url="https://github.com/openssl/openssl/releases/download/openssl-4.0.1/openssl-4.0.1.tar.gz"
 
     # Declare the global last tested version SHA variables
     liboqs_tested_sha="5a1a854b0dc9f2141bdc771c555ee60c37950183"
@@ -340,7 +340,7 @@ function download_libraries() {
     # Check if the install mode requires downloading the OpenSSL library
     if [ $install_type -ne 3 ] || [ $eng_openssl_download -eq 1 ]; then
 
-        # Download OpenSSL 3.6.1 and extract it into the tmp directory
+        # Download OpenSSL 4.0.1 and extract it into the tmp directory
         wget -O "$tmp_dir/openssl_$openssl_version.tar.gz" "$openssl_download_url"
         tar -xf "$tmp_dir/openssl_$openssl_version.tar.gz" -C $tmp_dir
         mv "$tmp_dir/openssl-$openssl_version" "$openssl_source"
@@ -629,7 +629,7 @@ function energy_tools_checker() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function openssl_build() {
-    # Function for handling the build of the OpenSSL library (version 3.6.1). The function will check if the library is already
+    # Function for handling the build of the OpenSSL library (version 4.0.1). The function will check if the library is already
     # built and if not, it will build the library using the specified configuration options. The function will call the 
     # modify_openssl_src function to modify the speed.c source code file if the OQS-Provider library is being built with the 
     # enable all disabled algorithms flag.
@@ -705,7 +705,7 @@ function openssl_build() {
         # Testing if OpenSSL has been correctly installed
         test_output=$("$openssl_path/bin/openssl" version)
 
-        if [[ "$test_output" != "OpenSSL 3.6.1 27 Jan 2026 (Library: OpenSSL 3.6.1 27 Jan 2026)" ]]; then
+        if [[ "$test_output" != "OpenSSL 4.0.1 9 Jun 2026 (Library: OpenSSL 4.0.1 9 Jun 2026)" ]]; then
             echo -e "\n\n[ERROR] - Installing required OpenSSL version failed, please verify the installation process"
             exit 1
         fi
@@ -1143,7 +1143,7 @@ function setup_controller() {
                 configure_oqs_provider_build
                 dependency_install
 
-                # Build OpenSSL 3.6.1
+                # Build OpenSSL 4.0.1
                 openssl_build
 
                 # Check if a Liboqs install is already present and install if not
@@ -1204,22 +1204,22 @@ function setup_controller() {
                 # Check if a previous install of OpenSSL is available
                 if [ ! -d "$openssl_path" ]; then
 
-                    # Ask the user if they wish to build OpenSSL 3.6.1 or use the system install for the energy collector
-                    echo "[NOTICE] - The PQC-LEO install of OpenSSL 3.6.1 is not currently present."
+                    # Ask the user if they wish to build OpenSSL 4.0.1 or use the system install for the energy collector
+                    echo "[NOTICE] - The PQC-LEO install of OpenSSL 4.0.1 is not currently present."
 
                     # Prompt the user for their selection until a valid choice is made
                     while true; do
 
                         # Output the options to the user
                         echo "The following options are available:"
-                        echo "1) - Download and build OpenSSL 3.6.1 for the energy collector"
+                        echo "1) - Download and build OpenSSL 4.0.1 for the energy collector"
                         echo "2) - Use the system OpenSSL install for the energy collector"
                         read -p "Enter selected option (1/2): " eng_openssl_user_choice
 
                         # Check and validate the selected option
                         if [ "$eng_openssl_user_choice" -eq 1 ]; then
                             eng_openssl_download=1
-                            echo -e "\nProceeding with OpenSSL 3.6.1 build for the energy collector..."
+                            echo -e "\nProceeding with OpenSSL 4.0.1 build for the energy collector..."
                             download_libraries
                             openssl_build
                             break

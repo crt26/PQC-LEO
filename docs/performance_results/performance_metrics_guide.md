@@ -284,5 +284,5 @@ Where `machine_x` is the Machine-ID number assigned to the results when executin
 - [Valgrind Massif Tool](http://valgrind.org/docs/manual/ms-manual.html)
 - [OQS-Provider Webpage](https://openquantumsafe.org/applications/tls.html#oqs-openssl-provider)
 - [OQS-Provider GitHub Page](https://github.com/open-quantum-safe/oqs-provider)
-- [OpenSSL(3.6.1) Release](https://github.com/openssl/openssl/releases/tag/openssl-3.6.1)
-- [OpenSSL(3.6.1) Documentation](https://docs.openssl.org/3.6/)
+- [OpenSSL(4.0.1) Release](https://github.com/openssl/openssl/releases/tag/openssl-4.0.1)
+- [OpenSSL(4.0.1) Documentation](https://docs.openssl.org/4.0/)
