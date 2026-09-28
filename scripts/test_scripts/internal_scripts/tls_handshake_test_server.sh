@@ -239,7 +239,7 @@ function control_signal() {
                 signal_message=$(nc -l -p "$SERVER_CONTROL_PORT")
 
                 # Check if the received control signal message is valid
-                if [[ "$signal_message" == "ready" || "$signal_message" == "skip" || "$signal_message" == "complete" ]]; then
+                if [[ "$signal_message" == "ready" || "$signal_message" == "skip" || "$signal_message" == "complete" || "$signal_message" == "failed" ]]; then
                     break
                 fi
 
