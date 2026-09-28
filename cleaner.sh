@@ -83,6 +83,7 @@ function setup_base_env() {
     libs_dir="$root_dir/lib"
     tmp_dir="$root_dir/tmp"
     test_data_dir="$root_dir/test_data"
+    test_scripts_dir="$root_dir/scripts/test_scripts"
     parsing_scripts_dir="$root_dir/scripts/parsing_scripts"
 
     # Declare the global library directory path variables
@@ -102,7 +103,7 @@ function setup_base_env() {
     test_data_alg_lists_dir="$test_data_dir/alg_lists"
 
     # Declaring the __pycahce__ locations array
-    pycache_locations=("$parsing_scripts_dir/__pycache__" "$parsing_scripts_dir/internal_scripts/__pycache__")
+    pycache_locations=("$test_scripts_dir/__pycache__""$parsing_scripts_dir/__pycache__" "$parsing_scripts_dir/internal_scripts/__pycache__")
 
 }
 

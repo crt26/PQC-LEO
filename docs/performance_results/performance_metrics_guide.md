@@ -1,7 +1,7 @@
 # PQC Performance Metrics & Results Storage Breakdown <!-- omit from toc -->
 
 ## Overview <!-- omit from toc -->
-This document provides a comprehensive guide to the PQC computational and TLS performance metrics collected by the project's automated benchmarking tools. It describes the types of metrics gathered and how raw test data is structured, parsed, and analysed across different environments using the provided testing and parsing scripts.
+This document provides a comprehensive guide to the PQC computational performance, TLS performance, TLS handshake transmission cost, and energy usage metrics collected by the project's automated benchmarking tools. It describes the types of metrics gathered and how test data is structured, parsed where required, and analysed across different environments using the provided testing and parsing scripts.
 
 Specifically, it covers:
 
@@ -10,6 +10,8 @@ Specifically, it covers:
 - A breakdown of the computational performance metrics gathered via Liboqs benchmarking tools, including how these results are stored and organised
 
 - A description of TLS performance metrics obtained from testing OpenSSL’s native PQC support and OQS-Provider, along with their storage and processing structure
+
+- A description of the TLS handshake transmission cost metrics gathered for one-way and mutual authentication, along with their result structure
 
 - A description of the energy usage metrics collected during computational and TLS performance testing, including the specific metrics gathered and how this data is stored for analysis
 
@@ -23,6 +25,8 @@ Specifically, it covers:
   - [TLS Handshake Testing](#tls-handshake-testing)
   - [TLS Speed Testing](#tls-speed-testing)
 - [TLS Performance Result Data Storage Structure](#tls-performance-result-data-storage-structure)
+- [TLS Handshake Transmission Cost Metrics](#tls-handshake-transmission-cost-metrics)
+- [TLS Handshake Transmission Cost Result Data Storage Structure](#tls-handshake-transmission-cost-result-data-storage-structure)
 - [PQC Energy Usage Metrics](#pqc-energy-usage-metrics)
   - [Collected Energy Usage Metrics](#collected-energy-usage-metrics)
   - [PQC Computational Energy Usage](#pqc-computational-energy-usage)
@@ -177,6 +181,28 @@ When running the TLS benchmarking script (`full_tls_test.sh`), all performance d
 | Parsed Averages | Parsed        | Averaged handshake and speed results across test runs.                                      | Stored alongside parsed result files in `results/tls_performance/machine_x/`           |
 
 Where `machine_x` is the Machine-ID number assigned to the results when executing the testing scripts. If no custom Machine-ID is assigned, the default ID of 1 will be set for the results.
+
+## TLS Handshake Transmission Cost Metrics
+The TLS handshake transmission cost test measures the network data exchanged during TLS 1.3 handshakes for PQC, Hybrid-PQC, and classical configurations. For each signature and KEM/ciphersuite pairing, the tool performs one handshake with one-way authentication and one handshake with mutual authentication. The measurements are extracted from the summary produced by OpenSSL `s_client` output.
+
+| **Metric**     | **Description**                                                |
+|----------------|----------------------------------------------------------------|
+| Bytes Sent     | Number of bytes written by the TLS client during the handshake |
+| Bytes Received | Number of bytes read by the TLS client during the handshake    |
+| Total Bytes    | Sum of the bytes sent and received during the handshake        |
+
+Each result row also identifies the signature algorithm, KEM algorithm or classical ciphersuite, and authentication type (`one_way_auth` or `mutual_auth`). Unlike the TLS performance suite, this test records a single handshake per configuration and does not calculate run averages.
+
+## TLS Handshake Transmission Cost Result Data Storage Structure
+The `get_pqc_tls_bytes.py` script writes structured CSV data directly, so there is no unparsed result directory or additional parsing stage.
+
+| **Data Type**                  | **Description**                                                                | **Location** *(relative to `test_data/`)*                                       |
+|--------------------------------|--------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
+| PQC TLS Handshake Bytes        | Transmission-cost results for PQC signature and KEM combinations               | `results/tls_handshake_bytes/machine_x/pqc_tls_handshake_bytes_results.csv`     |
+| Hybrid-PQC TLS Handshake Bytes | Transmission-cost results for Hybrid-PQC signature and KEM combinations        | `results/tls_handshake_bytes/machine_x/hybrid_tls_handshake_bytes_results.csv`  |
+| Classical TLS Handshake Bytes  | Transmission-cost results for classical signature and ciphersuite combinations | `results/tls_handshake_bytes/machine_x/classic_tls_handshake_bytes_results.csv` |
+
+Where `machine_x` is the Machine-ID selected when the script is executed. If no custom Machine-ID is assigned, the default ID of 1 is used.
 
 ## PQC Energy Usage Metrics
 The energy usage metrics collected by the project’s automated testing tools provide insight into the power consumption of PQC algorithms during both computational performance tests and TLS performance tests. These metrics are gathered using energy meters connected to the system, which measure the total energy consumed during the execution of cryptographic operations and TLS handshakes.

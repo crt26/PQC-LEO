@@ -49,6 +49,7 @@ function setup_base_env() {
     # Declare the global library directory path variables
     openssl_path="$libs_dir/openssl_4.0.1"
     oqs_provider_path="$libs_dir/oqs_provider"
+    provider_path="$oqs_provider_path/lib"
 
     # Ensure that the OQS-Provider and OpenSSL libraries are present before proceeding
     if [ ! -d "$oqs_provider_path" ]; then
@@ -92,7 +93,10 @@ function setup_base_env() {
     done < $hybrid_sig_alg_file
 
     # Declaring classic digital signature algorithms array
-    classic_sigs=( "RSA:2048" "RSA:3072" "RSA:4096" "prime256v1" "secp384r1" "secp521r1")
+    classic_sigs=("RSA:2048" "RSA:3072" "RSA:4096" "prime256v1" "secp384r1" "secp521r1")
+
+    # Define the certificate types
+    cert_types=("srv" "client")
 
 }
 
@@ -119,7 +123,7 @@ function classic_keygen() {
             "$openssl_path/bin/openssl" req \
                 -x509 \
                 -new \
-                -newkey rsa:${sig#RSA:} \
+                -newkey "rsa:${sig#RSA:}" \
                 -keyout "$classic_cert_dir/${sig_name}_CA.key" \
                 -out "$classic_cert_dir/${sig_name}_CA.crt" \
                 -nodes \
@@ -130,40 +134,45 @@ function classic_keygen() {
                 -provider oqsprovider \
                 -provider-path "$provider_path"
 
-            # Generate the server certificate signing request for the current RSA signature algorithm
-            "$openssl_path/bin/openssl" req \
-                -new \
-                -newkey rsa:${sig#RSA:} \
-                -keyout "$classic_cert_dir/${sig_name}_srv.key" \
-                -out "$classic_cert_dir/${sig_name}_srv.csr" \
-                -nodes \
-                -subj "/CN=oqstest server" \
-                -config "$openssl_path/openssl.cnf" \
-                -provider default \
-                -provider oqsprovider \
-                -provider-path "$provider_path"
-            
-            # Sign the server CSR with the RSA CA cert
-            "$openssl_path/bin/openssl" x509 \
-                -req \
-                -in "$classic_cert_dir/${sig_name}_srv.csr" \
-                -out "$classic_cert_dir/${sig_name}_srv.crt" \
-                -CA "$classic_cert_dir/${sig_name}_CA.crt" \
-                -CAkey "$classic_cert_dir/${sig_name}_CA.key" \
-                -CAcreateserial \
-                -days 365 \
-                -provider default \
-                -provider oqsprovider \
-                -provider-path "$provider_path"
+            # Loop through each certificate type, and perform the generation and signing operations
+            for cert_type in "${cert_types[@]}"; do
 
-            # Remove the server CSR file
-            rm -f "$classic_cert_dir/${sig_name}_srv.csr"
+                # Generate the certificate signing request for the current RSA signature algorithm
+                "$openssl_path/bin/openssl" req \
+                    -new \
+                    -newkey "rsa:${sig#RSA:}" \
+                    -keyout "$classic_cert_dir/${sig_name}_${cert_type}.key" \
+                    -out "$classic_cert_dir/${sig_name}_${cert_type}.csr" \
+                    -nodes \
+                    -subj "/CN=oqstest ${cert_type}" \
+                    -config "$openssl_path/openssl.cnf" \
+                    -provider default \
+                    -provider oqsprovider \
+                    -provider-path "$provider_path"
+
+                # Sign the CSR using the RSA CA certificate and key
+                "$openssl_path/bin/openssl" x509 \
+                    -req \
+                    -in "$classic_cert_dir/${sig_name}_${cert_type}.csr" \
+                    -out "$classic_cert_dir/${sig_name}_${cert_type}.crt" \
+                    -CA "$classic_cert_dir/${sig_name}_CA.crt" \
+                    -CAkey "$classic_cert_dir/${sig_name}_CA.key" \
+                    -CAcreateserial \
+                    -days 365 \
+                    -provider default \
+                    -provider oqsprovider \
+                    -provider-path "$provider_path"
+
+                # Remove the CSR file after signing
+                rm -f "$classic_cert_dir/${sig_name}_${cert_type}.csr"
+
+            done
 
         else
 
             # Generate the ECC CA private key using the specified curve
             "$openssl_path/bin/openssl" ecparam \
-                -name $sig \
+                -name "$sig" \
                 -genkey \
                 -out "$classic_cert_dir/${sig_name}_CA.key" \
                 -provider default \
@@ -184,42 +193,47 @@ function classic_keygen() {
                 -provider oqsprovider \
                 -provider-path "$provider_path"
 
-            # Generate the ECC server private key using the same curve
-            "$openssl_path/bin/openssl" ecparam $PROV_ARGS \
-                -name $sig \
-                -genkey \
-                -out "$classic_cert_dir/${sig_name}_srv.key" \
-                -provider default \
-                -provider oqsprovider \
-                -provider-path "$provider_path"
+            # Loop through each certificate type, and perform the generation and signing operations
+            for cert_type in "${cert_types[@]}"; do
 
-            # Generate the certificate signing request for the server using the ECC private key
-            "$openssl_path/bin/openssl" req $PROV_ARGS \
-                -new \
-                -key "$classic_cert_dir/${sig_name}_srv.key" \
-                -out "$classic_cert_dir/${sig_name}_srv.csr" \
-                -nodes \
-                -subj "/CN=oqstest server" \
-                -config "$openssl_path/openssl.cnf" \
-                -provider default \
-                -provider oqsprovider \
-                -provider-path "$provider_path"
+                # Generate the ECC private key for the current certificate type using the specified curve
+                "$openssl_path/bin/openssl" ecparam \
+                    -name "$sig" \
+                    -genkey \
+                    -out "$classic_cert_dir/${sig_name}_${cert_type}.key" \
+                    -provider default \
+                    -provider oqsprovider \
+                    -provider-path "$provider_path"
 
-            # Sign the server CSR using the ECC CA certificate and key
-            "$openssl_path/bin/openssl" x509 $PROV_ARGS \
-                -req \
-                -in "$classic_cert_dir/${sig_name}_srv.csr" \
-                -out "$classic_cert_dir/${sig_name}_srv.crt" \
-                -CA "$classic_cert_dir/${sig_name}_CA.crt" \
-                -CAkey "$classic_cert_dir/${sig_name}_CA.key" \
-                -CAcreateserial \
-                -days 365 \
-                -provider default \
-                -provider oqsprovider \
-                -provider-path "$provider_path"
+                # Generate the certificate signing request for the current ECC private key
+                "$openssl_path/bin/openssl" req \
+                    -new \
+                    -key "$classic_cert_dir/${sig_name}_${cert_type}.key" \
+                    -out "$classic_cert_dir/${sig_name}_${cert_type}.csr" \
+                    -nodes \
+                    -subj "/CN=oqstest ${cert_type}" \
+                    -config "$openssl_path/openssl.cnf" \
+                    -provider default \
+                    -provider oqsprovider \
+                    -provider-path "$provider_path"
 
-            # Remove the server CSR file
-            rm -f "$classic_cert_dir/${sig_name}_srv.csr"
+                # Sign the CSR using the ECC CA certificate and key
+                "$openssl_path/bin/openssl" x509 \
+                    -req \
+                    -in "$classic_cert_dir/${sig_name}_${cert_type}.csr" \
+                    -out "$classic_cert_dir/${sig_name}_${cert_type}.crt" \
+                    -CA "$classic_cert_dir/${sig_name}_CA.crt" \
+                    -CAkey "$classic_cert_dir/${sig_name}_CA.key" \
+                    -CAcreateserial \
+                    -days 365 \
+                    -provider default \
+                    -provider oqsprovider \
+                    -provider-path "$provider_path"
+
+                # Remove the CSR file after signing
+                rm -f "$classic_cert_dir/${sig_name}_${cert_type}.csr"
+
+            done
 
         fi
 
@@ -240,7 +254,7 @@ function pqc_keygen() {
         "$openssl_path/bin/openssl" req \
             -x509 \
             -new \
-            -newkey $sig \
+            -newkey "$sig" \
             -keyout "$pqc_cert_dir/${sig}_CA.key" \
             -out "$pqc_cert_dir/${sig}_CA.crt" \
             -nodes \
@@ -251,35 +265,40 @@ function pqc_keygen() {
             -provider oqsprovider \
             -provider-path "$provider_path"
 
-        # Generate the server certificate signing request for the current PQC signature algorithm
-        "$openssl_path/bin/openssl" req \
-            -new \
-            -newkey $sig \
-            -keyout "$pqc_cert_dir/${sig}_srv.key" \
-            -out "$pqc_cert_dir/${sig}_srv.csr" \
-            -nodes \
-            -subj "/CN=oqstest $sig server" \
-            -config "$openssl_path/openssl.cnf" \
-            -provider default \
-            -provider oqsprovider \
-            -provider-path "$provider_path"
+        # Loop through each certificate type, and perform the generation and signing operations
+        for cert_type in "${cert_types[@]}"; do
 
-        # Sign the server CSR using the PQC CA certificate and key
-        "$openssl_path/bin/openssl" x509 \
-            -req \
-            -in "$pqc_cert_dir/${sig}_srv.csr" \
-            -out "$pqc_cert_dir/${sig}_srv.crt" \
-            -CA "$pqc_cert_dir/${sig}_CA.crt" \
-            -CAkey "$pqc_cert_dir/${sig}_CA.key" \
-            -CAcreateserial \
-            -days 365 \
-            -provider default \
-            -provider oqsprovider \
-            -provider-path "$provider_path"
+            # Generate the certificate signing request for the current PQC signature algorithm
+            "$openssl_path/bin/openssl" req \
+                -new \
+                -newkey "$sig" \
+                -keyout "$pqc_cert_dir/${sig}_${cert_type}.key" \
+                -out "$pqc_cert_dir/${sig}_${cert_type}.csr" \
+                -nodes \
+                -subj "/CN=oqstest $sig $cert_type" \
+                -config "$openssl_path/openssl.cnf" \
+                -provider default \
+                -provider oqsprovider \
+                -provider-path "$provider_path"
 
-        # Remove the server CSR file
-        rm -f "$pqc_cert_dir/${sig}_srv.csr"
-    
+            # Sign the CSR using the PQC CA certificate and key
+            "$openssl_path/bin/openssl" x509 \
+                -req \
+                -in "$pqc_cert_dir/${sig}_${cert_type}.csr" \
+                -out "$pqc_cert_dir/${sig}_${cert_type}.crt" \
+                -CA "$pqc_cert_dir/${sig}_CA.crt" \
+                -CAkey "$pqc_cert_dir/${sig}_CA.key" \
+                -CAcreateserial \
+                -days 365 \
+                -provider default \
+                -provider oqsprovider \
+                -provider-path "$provider_path"
+
+            # Remove the CSR file after signing
+            rm -f "$pqc_cert_dir/${sig}_${cert_type}.csr"
+
+        done
+
     done
 
 }
@@ -297,8 +316,8 @@ function hybrid_pqc_keygen() {
         "$openssl_path/bin/openssl" req \
             -x509 \
             -new \
-            -newkey $sig \
-            -keyout "$hybrid_cert_dir/${sig}_CA.key" $PROV_ARGS \
+            -newkey "$sig" \
+            -keyout "$hybrid_cert_dir/${sig}_CA.key" \
             -out "$hybrid_cert_dir/${sig}_CA.crt" \
             -nodes \
             -subj "/CN=oqstest $sig CA" \
@@ -308,33 +327,39 @@ function hybrid_pqc_keygen() {
             -provider oqsprovider \
             -provider-path "$provider_path"
 
-        # Generate the server certificate signing request for the current Hybrid-PQC signature algorithm
-        "$openssl_path/bin/openssl" req \
-            -new \
-            -newkey $sig \
-            -keyout "$hybrid_cert_dir/${sig}_srv.key" \
-            -out "$hybrid_cert_dir/${sig}_srv.csr" \
-            -nodes \
-            -subj "/CN=oqstest $sig server" \
-            -config "$openssl_path/openssl.cnf" \
-            -provider default \
-            -provider oqsprovider \
-            -provider-path "$provider_path"
+        # Loop through each certificate type, and perform the generation and signing operations
+        for cert_type in "${cert_types[@]}"; do
 
-        # Sign the server CSR using the Hybrid-PQC CA certificate and key
-        "$openssl_path/bin/openssl" x509 \
-            -req \
-            -in "$hybrid_cert_dir/${sig}_srv.csr" \
-            -out "$hybrid_cert_dir/${sig}_srv.crt" \
-            -CA "$hybrid_cert_dir/${sig}_CA.crt" \
-            -CAkey "$hybrid_cert_dir/${sig}_CA.key" \
-            -CAcreateserial -days 365 \
-            -provider default \
-            -provider oqsprovider \
-            -provider-path "$provider_path"
+            # Generate the certificate signing request for the current Hybrid-PQC signature algorithm
+            "$openssl_path/bin/openssl" req \
+                -new \
+                -newkey "$sig" \
+                -keyout "$hybrid_cert_dir/${sig}_${cert_type}.key" \
+                -out "$hybrid_cert_dir/${sig}_${cert_type}.csr" \
+                -nodes \
+                -subj "/CN=oqstest $sig $cert_type" \
+                -config "$openssl_path/openssl.cnf" \
+                -provider default \
+                -provider oqsprovider \
+                -provider-path "$provider_path"
 
-        # Remove the server CSR file
-        rm -f "$hybrid_cert_dir/${sig}_srv.csr"
+            # Sign the CSR using the Hybrid-PQC CA certificate and key
+            "$openssl_path/bin/openssl" x509 \
+                -req \
+                -in "$hybrid_cert_dir/${sig}_${cert_type}.csr" \
+                -out "$hybrid_cert_dir/${sig}_${cert_type}.crt" \
+                -CA "$hybrid_cert_dir/${sig}_CA.crt" \
+                -CAkey "$hybrid_cert_dir/${sig}_CA.key" \
+                -CAcreateserial \
+                -days 365 \
+                -provider default \
+                -provider oqsprovider \
+                -provider-path "$provider_path"
+
+            # Remove the CSR file after signing
+            rm -f "$hybrid_cert_dir/${sig}_${cert_type}.csr"
+
+        done
 
     done
 

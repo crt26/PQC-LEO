@@ -9,6 +9,8 @@ The relevant PQC TLS Performance testing scripts can be found in the `scripts/te
 
 If you wish to perform TLS handshake and speed energy usage testing, please refer to the [PQC Energy Usage Testing Guide](./pqc_energy_usage_testing.md) for further details.
 
+To compare the size of the network data exchanged by one-way and mutually authenticated TLS 1.3 handshakes, refer to the separate [TLS Handshake Transmission Cost Testing Guide](./tls_handshake_transmission_cost_testing.md).
+
 >**Notice:** The versions of project dependencies used in PQC-LEO version 0.5.0 contains a known issue where certain signature/KEM combinations may produce values of `inf` for "Connections Per User Second" results in TLS handshake testing when using smaller testing windows. Please refer to the [Inf Result Value Occurrence Details](#inf-result-value-occurrence-details) section in this document for further information.
 
 ### Contents <!-- omit from toc -->
@@ -243,7 +245,6 @@ It is recommended to use TLS handshake test durations of **5 seconds or greater*
 For a detailed explanation of this behaviour and how it is handled, please refer to:
 
 - [Inf Result Value Occurrence Details](../performance_results/tls_handshake_inf_result_handling.md)
-
 
 ## Useful External Documentation
 - [OpenSSL(4.0.1) Release](https://github.com/openssl/openssl/releases/tag/openssl-4.0.1)
