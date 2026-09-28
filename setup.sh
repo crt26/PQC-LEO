@@ -36,7 +36,7 @@ function setup_base_env() {
 
     # Declare the global last tested version SHA variables
     liboqs_tested_sha="5a1a854b0dc9f2141bdc771c555ee60c37950183"
-    oqs_provider_tested_sha="a635e341d6a4624d9bba36d158804762f316fe5e"
+    oqs_provider_tested_sha="1670a8a91bbca997d33e6b6851309d6241cc224c"
 
     # Declare the global library directory path variables
     openssl_path="$libs_dir/openssl_$openssl_version"
@@ -62,11 +62,7 @@ function setup_base_env() {
     use_energy_tools=0
     eng_openssl_download=0
     liboqs_alg_memory_optimisation=0
-    enable_liboqs_hqc=0 # temp flag for hqc bug fix
-    enable_oqs_hqc=0 # temp flag for hqc bug fix
-    warning_given=0 # temp flag to indicate if the user has accepted the warning about HQC KEM algorithms
-    allow_hqc=0 # temp flag to indicate if the user has accepted the warning about HQC KEM algorithms
-    
+
     # Declare the global flags for enabling OQS-Provider build options
     oqs_enable_algs=0
     encoder_flag="OFF" # string as needed for inserting value into OQS-Provider cmake command
@@ -139,78 +135,19 @@ function output_help() {
     echo "--latest-dependency-versions     Use the latest available versions of the OQS libraries (may cause compatibility issues)."
     echo "--set-speed-new-value=[int]      Set a new value for MAX_KEM_NUM and MAX_SIG_NUM in OpenSSL's speed.c file."
     echo "--liboqs-memory-optimisation     Enable liboqs algorithm memory optimisation feature for supported algorithms (disabled by default)."
-    echo "--enable-liboqs-hqc-algs         Enable HQC KEM algorithms in liboqs (disabled by default due to spec non-conformance)."
-    echo "--enable-oqs-hqc-algs            Enable HQC KEM algorithms in OQS-Provider (requires HQC to also be enabled in liboqs)."
-    echo "--enable-all-hqc-algs            Enable all HQC KEM algorithms in both liboqs and OQS-Provider (overrides individual HQC flags)."
     echo "--help                           Display this help message."
     
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
-function confirm_enable_hqc_algs() {
-    # Temporary helper function for warning the user about the disabled HQC KEM algorithms as discussed in the issue
-    # (https://github.com/crt26/PQC-LEO/issues/46). The function will display a security warning and provide
-    # background information about why HQC KEM algorithms are disabled by default in Liboqs and OQS-Provider. It then 
-    # prompts the user to decide whether to proceed with enabling HQC for benchmarking purposes. This function will be 
-    # removed in the future when Liboqs version 0.16.0 is released and the HQC KEM algorithms are re-enabled by default.
-
-    # Displays a clear warning about HQC vulnerabilities and disclaims all responsibility for its use
-    echo -e "\nEnable HQC KEM Algorithms Flag Detected:\n"
-
-    echo -e "[WARNING] - The current implementation of the HQC KEM algorithm in the OQS libraries (liboqs and oqs-provider)"
-    echo -e "does not conform to the latest reference specification, which includes fixes for a previously identified security flaw.\n"
-
-    echo -e "Because of this, HQC is disabled by default in the OQS libraries.\n"
-
-    echo -e "This project provides the option to re-enable HQC solely for benchmarking purposes. Whether or not to enable it is"
-    echo -e "entirely up to the user. If HQC is enabled for performance testing within this project, the risks must"
-    echo -e "be fully understood and accepted.\n"
-
-    echo -e "This project and its maintainers make no guarantees about the correctness, security, or compliance of HQC"
-    echo -e "as currently implemented in the OQS libraries. Enabling HQC is done entirely at your own risk, and this project"
-    echo -e "accepts no responsibility for any issues that may arise from its use.\n"
-    
-    echo -e "For more information, see:"
-    echo -e "- https://github.com/open-quantum-safe/liboqs/issues/2118"
-    echo -e "- https://github.com/crt26/PQC-LEO/issues/46"
-    echo -e "- https://github.com/crt26/PQC-LEO/issues/60\n"
-
-    # Prompt the user to acknowledge the risks and decide whether to proceed with enabling HQC KEM algorithms
-    get_user_yes_no "Do you acknowledge the risks and wish to proceed with enabling HQC KEM algorithms?"
-
-    # Set the allow_hqc flag based on the user's response
-    if [ $user_y_n_response -eq 1 ]; then
-        echo -e "\n[NOTICE] - HQC KEM algorithms will be enabled where applicable\n"
-        allow_hqc=1
-    else
-        echo -e "\n[NOTICE] - HQC KEM algorithms will remain disabled\n"
-        allow_hqc=0
-    fi
-
-    # Set the warning_given flag to indicate that the user has been warned about the HQC KEM algorithms
-    warning_given=1
-
-}
-
-#-------------------------------------------------------------------------------------------------------------------------------
 function parse_args() {
     # Function for parsing command-line arguments and setting global flags based on detected options. Flags control various 
-    # aspects of the setup process, such as library versions, speed values, and HQC algorithm settings.
+    # aspects of the setup process, such as library versions, speed values, and optional Liboqs build settings.
 
     # Check for the --help flag and display the help message
     if [[ "$*" =~ --help ]]; then
         output_help
         exit 0
-    fi
-
-    # Set the default flag set values for HQC flags (temp for HQC bug fix)
-    local all_hqc_flag_set=0
-    local liboqs_hqc_flag_set=0
-    local oqs_hqc_flag_set=0
-
-    # Check if the user has passed the enable all HQC algorithms flag
-    if [[ "$*" =~ --enable-all-hqc-algs ]]; then
-        all_hqc_flag_set=1
     fi
 
     # Loop through the passed command line arguments and check for the supported options
@@ -265,76 +202,6 @@ function parse_args() {
                 shift
                 ;;
 
-            --enable-liboqs-hqc-algs)
-
-                # Set the Liboqs HQC flag to indicate the flag has been passed
-                liboqs_hqc_flag_set=1
-
-                # Only handle the checks and enabling if the all_hqc_flag_set is not set
-                if [ $all_hqc_flag_set -eq 0 ]; then
-
-                    # Give the user a warning about the HQC KEM algorithms if not already given
-                    if [ $warning_given -ne 1 ]; then
-                        confirm_enable_hqc_algs
-                    fi
-
-                    # Enable the Liboqs HQC KEM algorithm if the warning has been accepted
-                    if [ $allow_hqc -eq 1 ]; then
-                        enable_liboqs_hqc=1
-                    else
-                        enable_liboqs_hqc=0
-                    fi
-
-                fi
-
-                shift
-                ;;
-
-            --enable-oqs-hqc-algs)
-
-                # Set the OQS-Provider HQC flag to indicate the flag has been passed
-                oqs_hqc_flag_set=1
-
-                # Only handle the checks and enabling if the all_hqc_flag_set is not set
-                if [ $all_hqc_flag_set -eq 0 ]; then
-
-                    # Give the user a warning about the HQC KEM algorithms if not already given
-                    if [ $warning_given -ne 1 ]; then
-                        confirm_enable_hqc_algs
-                    fi
-
-                    # Enable the OQS-Provider HQC KEM algorithm if the warning has been accepted
-                    if [ $allow_hqc -eq 1 ]; then
-                        enable_oqs_hqc=1
-                        oqs_hqc_flag_set=1
-                    else
-                        enable_oqs_hqc=0
-                    fi
-                
-                fi
-                
-                shift
-                ;;
-
-            --enable-all-hqc-algs)
-
-                # Give the user a warning about the HQC KEM algorithms if not already given
-                if [ $warning_given -ne 1 ]; then
-                    confirm_enable_hqc_algs
-                fi
-
-                # Enable both Liboqs and OQS-Provider HQC KEM algorithms if the warning has been accepted
-                if [ $allow_hqc -eq 1 ]; then
-                    enable_liboqs_hqc=1
-                    enable_oqs_hqc=1
-                else
-                    enable_liboqs_hqc=0
-                    enable_oqs_hqc=0
-                fi
-
-                shift
-                ;;
-
             *)
 
                 # Output an error message if an unknown option is passed
@@ -346,31 +213,6 @@ function parse_args() {
         esac
 
     done
-
-    # Output the message that all HQC algs will be enabled regardless of other flags if the enabled all_hqc_flag_set flag is set
-    if [ $all_hqc_flag_set -eq 1 ] && { [ $liboqs_hqc_flag_set -eq 1 ] || [ $oqs_hqc_flag_set -eq 1 ]; }; then
-        echo -e "[NOTICE] - The --enable-all-hqc-algs has been set, enabling all HQC KEMs in Liboqs and OQS-Provider and overriding other HQC flags\n"
-
-    fi
-
-    # If enabling OQS-Provider HQC KEM algorithms, ensure that Liboqs HQC KEM algorithms are also enabled
-    if [ $enable_oqs_hqc -eq 1 ] && [ $enable_liboqs_hqc -eq 0 ]; then
-
-        # Output the warning message to the user and prompt to enable Liboqs HQC KEM algorithms, as well
-        echo -e "[WARNING] - Enabling OQS-Provider HQC KEM algorithms requires Liboqs HQC KEM algorithms to be enabled as well."
-        get_user_yes_no "Would you like to enable Liboqs HQC KEM algorithms as well?"
-
-        # Determine any flag changes based on the user response
-        if [ $user_y_n_response -eq 1 ]; then
-            echo -e "\n[NOTICE] - Liboqs HQC KEM algorithms will be enabled in the Liboqs library build process\n"
-            enable_liboqs_hqc=1
-        else
-            echo -e "\n[NOTICE] - OQS-Provider HQC KEM algorithms will not be enabled in the OQS-Provider library build process"
-            sleep 3
-            enable_oqs_hqc=0
-        fi
-
-    fi
 
 }
 
@@ -444,13 +286,6 @@ function configure_dirs() {
     # Create the hidden pqc_leo_dir_marker.tmp file that is used by the test scripts to determine the root directory path
     touch "$root_dir/.pqc_leo_dir_marker.tmp"
 
-    # If HQC is to be enabled, create the hqc_algorithms marker file in the temp directory
-    if [ $enable_liboqs_hqc -eq 1 ] || [ $enable_oqs_hqc -eq 1 ]; then
-        touch "$tmp_dir/.hqc_enabled.flag"
-    else
-        rm -f "$tmp_dir/.hqc_enabled.flag"
-    fi
-
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
@@ -516,7 +351,6 @@ function download_libraries() {
             echo -e "\n[ERROR] - The OpenSSL source directory could not be found after downloading, please verify the installation and rerun the setup script"
             exit 1
         fi
-
 
     fi
 
@@ -934,8 +768,8 @@ function enable_arm_pmu() {
 #-------------------------------------------------------------------------------------------------------------------------------
 function liboqs_build() {
     # Function to build the Liboqs dependency library. Detects system architecture and configures the build process accordingly.
-    # On ARM devices, enables user space access to the ARM PMU if needed. Handles optional enabling of HQC algorithms and 
-    # replaces default test_mem files with project-specific versions for benchmarking.
+    # On ARM devices, enables user space access to the ARM PMU if needed and replaces default test_mem files with
+    # project-specific versions for benchmarking.
 
     # Set the default value for the custom build flags
     build_flags=""
@@ -1000,13 +834,6 @@ function liboqs_build() {
             build_flags="${build_flags:-} -DOQS_MEMOPT_BUILD=ON"
         fi
 
-        # Set the HQC enabled cmake flag if the user has selected to enable HQC
-        if [ $enable_liboqs_hqc -eq 1 ]; then
-            hqc_flag="-DOQS_ENABLE_KEM_HQC=ON"
-        else
-            hqc_flag=""
-        fi
-
         # Determine if the CMake command requires a custom lib suffix
         if [ $special_cmake_handling -eq 1 ]; then
             if [ "$build_flags" == "" ]; then
@@ -1023,8 +850,7 @@ function liboqs_build() {
             -DCMAKE_INSTALL_PREFIX="$liboqs_path" \
             -DOQS_USE_OPENSSL=ON \
             -DOPENSSL_ROOT_DIR="$openssl_path" \
-            $build_flags \
-            $hqc_flag
+            $build_flags
         exit_status=$?
         build_status_checker "$exit_status" "Liboqs configuration"
 
@@ -1063,13 +889,11 @@ function oqs_provider_build() {
     backup_generate_file="$root_dir/modded_lib_files/generate.yml"
     oqs_provider_generate_file="$oqs_provider_source/oqs-template/generate.yml"
 
-    # Enable disabled signature algorithms if the user has specified
-    if [ $oqs_enable_algs -eq 1 ] || [ $enable_oqs_hqc -eq 1 ]; then
+    # Enable disabled algorithms if the user has specified
+    if [ $oqs_enable_algs -eq 1 ]; then
 
         # Call the source code modifier utility script and capture the exit status
-        "$util_scripts/source_code_modifier.sh" "oqs_enable_algs" \
-            "--enable-hqc-algs=$enable_oqs_hqc" \
-            "--enable-disabled-algs=$oqs_enable_algs"
+        "$util_scripts/source_code_modifier.sh" "oqs_enable_algs"
         exit_status=$?
 
         # Ensure that the source code modifier script ran successfully
@@ -1077,6 +901,14 @@ function oqs_provider_build() {
             echo -e "\n[ERROR] - The source code modifier script failed to run successfully, please verify the installation and rerun the setup script"
             exit 1
         fi
+
+        # Create a flag file for utilities that need to know the disabled algorithms were enabled
+        touch "$tmp_dir/.oqs_prov_algs_enabled.flag"
+
+    else
+
+        # Ensure a flag from an earlier setup does not report disabled algorithms as enabled
+        rm -f "$tmp_dir/.oqs_prov_algs_enabled.flag"
 
     fi
 
@@ -1248,8 +1080,7 @@ function setup_controller() {
                 fi
 
                 # Clean up the tmp directory
-                # rm -rf $tmp_dir/* # original clean up
-                rm -rf $tmp_dir/liboqs_source $tmp_dir/openssl_$openssl_version # temp removal for hqc bug fix
+                rm -rf $tmp_dir/*
 
                 # Create the required alg-list files for the automated testing
                 cd "$util_scripts"
@@ -1286,9 +1117,7 @@ function setup_controller() {
                 fi
 
                 # Clean up the tmp directory
-                #rm -rf $tmp_dir/* # original clean up
-                rm -rf $tmp_dir/liboqs_source $tmp_dir/openssl_$openssl_version $tmp_dir/oqs_provider_source # temp removal for hqc bug fix
-                #touch "$tmp_dir/test.flag"
+                rm -rf $tmp_dir/*
 
                 # Create the required alg-list files for the automated testing
                 cd "$util_scripts"
@@ -1343,8 +1172,7 @@ function setup_controller() {
                 fi
 
                 # Clean up the tmp directory
-                #rm -rf $tmp_dir/* # original clean up
-                rm -rf $tmp_dir/liboqs_source $tmp_dir/openssl_$openssl_version $tmp_dir/oqs_provider_source # temp removal for hqc bug fix
+                rm -rf $tmp_dir/*
 
                 # Check if the Liboqs alg-list files are present before deciding which alg-list files need generating
                 if [ -f "$alg_lists_dir/kem_algs.txt" ] && [ -f "$alg_lists_dir/sig_algs.txt" ]; then

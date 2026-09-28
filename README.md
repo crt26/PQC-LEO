@@ -77,7 +77,7 @@ This version of the repository has been fully tested with the following library 
 
 - Liboqs Version: 0.16.0
 
-- OQS-Provider Version 0.11.0
+- OQS-Provider Version 0.11.0+
 
 - OpenSSL Version 3.6.1
 
@@ -93,8 +93,6 @@ For information on the specific project dependencies libraries used by PQC-LEO, 
 For further information on the classical and PQC algorithms this project provides support for, including information on any exclusions, please refer to the following documentation:
 
 [Supported Algorithms](docs/supported_algorithms.md)
-
-**Notice:** The HQC KEM algorithms are disabled by default in recent versions of both Liboqs and the OQS-Provider, due to their current implementations not conforming to the latest specification, which includes important security fixes. For benchmarking purposes, the setup process includes an optional flag to enable HQC in these libraries, accompanied by a user confirmation prompt and warning. Enabling HQC is done at the user's own discretion, and this project assumes no responsibility for its use. For instructions on enabling HQC, see the [Advanced Setup Configuration Guide](docs/advanced_setup_configuration.md), and refer to the [Disclaimer Document](./DISCLAIMER.md) for more information on this issue.
 
 ## Supported Environments for PQC Energy Usage Testing
 The [energy collector tools](./docs/developer_information/project_tools.md) included with PQC-LEO provide mechanisms for measuring the energy usage of PQC algorithms across different environments. PQC-LEO also includes automated Bash scripts that use these tools to evaluate the energy usage of PQC computational operations and TLS performance. However, the energy collector tools can also be used independently of the provided scripts, allowing energy usage testing to be adapted for other environments and use cases.
@@ -180,7 +178,7 @@ touch .pqc_leo_dir_marker.tmp
 For advanced setup options, including:
 - Pulling the latest version of the OQS libraries rather than the default tested versions
 - Custom OpenSSL `speed.c` limits
-- Enabling HQC algorithms in the OQS Libraries
+- Enabling Liboqs memory optimised implementations
  
 Please refer to the [Advanced Setup Configuration Guide](docs/advanced_setup_configuration.md).
 

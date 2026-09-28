@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 # Copyright (c) 2023-2026 Callum Turino
 # SPDX-License-Identifier: MIT
@@ -15,10 +15,44 @@
 # `--clear-env-oids` to clear those environment variables after testing is complete. 
 #
 # The algorithms that are included within this script are based on the algorithms listed by OQS-Provider
-# in their ALGORITHMS.md file (OQS-Provider version 0.11.0). Currently, the script is hard-coded to include 
+# in their ALGORITHMS.md file (OQS-Provider version 0.11.0+). Currently, the script is hard-coded to include 
 # the algorithms mentioned in that file. This will be updated in the future to be more dynamic.
 # The version of the ALGORITHMS.md file used to dictate the algorithms included in this script can be found here:
-# https://github.com/open-quantum-safe/oqs-provider/blob/a635e341d6a4624d9bba36d158804762f316fe5e/ALGORITHMS.md
+# https://github.com/open-quantum-safe/oqs-provider/blob/1670a8a91bbca997d33e6b6851309d6241cc224c/ALGORITHMS.md
+
+#-------------------------------------------------------------------------------------------------------------------------------
+function get_root_dir() {
+    # Function for determining the root directory of the PQC-LEO repository. The function will keep going up the directory tree
+    # until it finds the .pqc_leo_dir_marker.tmp file, which is used to indicate the root directory of the repository. Once
+    # found it will set the root_dir variable to the path of the root directory.
+
+    # Determine the directory that the script is being run from
+    script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+
+    # Try and find the .dir_marker.tmp file to determine the project's root directory
+    current_dir="$script_dir"
+
+    # Continue moving up the directory tree until the .pqc_leo_dir_marker.tmp file is found
+    while true; do
+
+        # Check if the .pqc_leo_dir_marker.tmp file is present
+        if [ -f "$current_dir/.pqc_leo_dir_marker.tmp" ]; then
+            root_dir="$current_dir"
+            break
+        fi
+
+        # Move up a directory and store the new path
+        current_dir=$(dirname "$current_dir")
+
+        # If the system's root directory is reached and the file is not found, exit the script
+        if [ "$current_dir" == "/" ]; then
+            echo -e "Root directory path file not present, please ensure the path is correct and try again."
+            exit 1
+        fi
+
+    done
+
+}
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function output_help() {
@@ -107,6 +141,341 @@ function parse_args() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
+function define_oid_var_arrays() {
+    # Function for defining the arrays of OID variables that are used throughout the script. This includes the list of OIDs
+    # that are excluded from being exported as environment variables, the list of OIDs that require an enabled check, and
+    # the list of all OID variables that are used for setting and clearing the environment variables. Changes can be made
+    # to these arrays to add or remove algorithms from the OID handling process, but care should be taken to ensure that the
+    # algorithms are supported by OQS-Provider and that the OID variables are correctly defined in the script. Please
+    # refer to the script header comment for more information on the algorithms included in this script.
+
+    # Define algorithm OIDs to exclude from being exported as environment variables
+    exlcuded_algs=(
+        "OQS_OID_MLDSA44"
+        "OQS_OID_MLDSA65"
+        "OQS_OID_MLDSA87"
+        "OQS_OID_X25519MLKEM768"
+        "OQS_OID_SECP256R1MLKEM768"
+        "OQS_OID_SECP384R1MLKEM1024"
+        "OQS_OID_X448MLKEM1024"
+    )
+
+    # Define OID variables for algorithms which are disabled by default in OQS-Provider
+    algs_need_enabled_check=(
+
+        # CROSS signature algorithms that need enabled check
+        "OQS_OID_CROSSRSDP128FAST"
+        "OQS_OID_CROSSRSDP128SMALL"
+        "OQS_OID_CROSSRSDP192BALANCED"
+        "OQS_OID_CROSSRSDP192FAST"
+        "OQS_OID_CROSSRSDP192SMALL"
+        "OQS_OID_CROSSRSDP256SMALL"
+        "OQS_OID_CROSSRSDPG128BALANCED"
+        "OQS_OID_CROSSRSDPG128FAST"
+        "OQS_OID_CROSSRSDPG128SMALL"
+        "OQS_OID_CROSSRSDPG192BALANCED"
+        "OQS_OID_CROSSRSDPG192FAST"
+        "OQS_OID_CROSSRSDPG192SMALL"
+        "OQS_OID_CROSSRSDPG256BALANCED"
+        "OQS_OID_CROSSRSDPG256FAST"
+        "OQS_OID_CROSSRSDPG256SMALL"
+
+        # OV signature algorithms that need enabled check
+        "OQS_OID_OV_IS"
+        "OQS_OID_P256_OV_IS"
+        "OQS_OID_OV_IP"
+        "OQS_OID_P256_OV_IP"
+        "OQS_OID_OV_III"
+        "OQS_OID_P384_OV_III"
+        "OQS_OID_OV_V"
+        "OQS_OID_P521_OV_V"
+        "OQS_OID_OV_IS_PKC"
+        "OQS_OID_P256_OV_IS_PKC"
+        "OQS_OID_OV_III_PKC"
+        "OQS_OID_P384_OV_III_PKC"
+        "OQS_OID_OV_V_PKC"
+        "OQS_OID_P521_OV_V_PKC"
+        "OQS_OID_OV_IS_PKC_SKC"
+        "OQS_OID_P256_OV_IS_PKC_SKC"
+        "OQS_OID_OV_III_PKC_SKC"
+        "OQS_OID_P384_OV_III_PKC_SKC"
+        "OQS_OID_OV_V_PKC_SKC"
+        "OQS_OID_P521_OV_V_PKC_SKC"
+
+        # SNOVA signature algorithms that need enabled check
+        "OQS_OID_SNOVA2454SHAKE"
+        "OQS_OID_P256_SNOVA2454SHAKE"
+        "OQS_OID_SNOVA2454SHAKEESK"
+        "OQS_OID_P256_SNOVA2454SHAKEESK"
+        "OQS_OID_SNOVA2583"
+        "OQS_OID_P256_SNOVA2583"
+        "OQS_OID_SNOVA56252"
+        "OQS_OID_P384_SNOVA56252"
+        "OQS_OID_SNOVA49113"
+        "OQS_OID_P384_SNOVA49113"
+        "OQS_OID_SNOVA3784"
+        "OQS_OID_P384_SNOVA3784"
+        "OQS_OID_SNOVA60104"
+        "OQS_OID_P521_SNOVA60104"
+
+        # MQOM signature algorithms that need enabled check
+        "OQS_OID_MQOM2CAT1GF16FASTR3"
+        "OQS_OID_P256_MQOM2CAT1GF16FASTR3"
+        "OQS_OID_MQOM2CAT1GF16SHORTR5"
+        "OQS_OID_P256_MQOM2CAT1GF16SHORTR5"
+        "OQS_OID_MQOM2CAT1GF16SHORTR3"
+        "OQS_OID_P256_MQOM2CAT1GF16SHORTR3"
+        "OQS_OID_MQOM2CAT3GF16FASTR3"
+        "OQS_OID_P384_MQOM2CAT3GF16FASTR3"
+        "OQS_OID_MQOM2CAT3GF16SHORTR5"
+        "OQS_OID_P384_MQOM2CAT3GF16SHORTR5"
+        "OQS_OID_MQOM2CAT3GF16SHORTR3"
+        "OQS_OID_P384_MQOM2CAT3GF16SHORTR3"
+        "OQS_OID_MQOM2CAT5GF16FASTR3"
+        "OQS_OID_P521_MQOM2CAT5GF16FASTR3"
+        "OQS_OID_MQOM2CAT5GF16SHORTR5"
+        "OQS_OID_P521_MQOM2CAT5GF16SHORTR5"
+        "OQS_OID_MQOM2CAT5GF16SHORTR3"
+        "OQS_OID_P521_MQOM2CAT5GF16SHORTR3"
+
+        # BIKE KEM algorithms that need enabled check
+        "OQS_OID_BIKEL1"
+        "OQS_OID_P256_BIKEL1"
+        "OQS_OID_X25519_BIKEL1"
+
+    )
+
+    # Define all OID variables names
+    alg_oid_vars=(
+
+        # ML-DSA signature OID vars
+        "OQS_OID_MLDSA44"
+        "OQS_OID_P256_MLDSA44"
+        "OQS_OID_RSA3072_MLDSA44"
+        "OQS_OID_MLDSA65"
+        "OQS_OID_P384_MLDSA65"
+        "OQS_OID_MLDSA87"
+        "OQS_OID_P521_MLDSA87"
+
+        # Falcon signature OID vars
+        "OQS_OID_FALCON512"
+        "OQS_OID_P256_FALCON512"
+        "OQS_OID_RSA3072_FALCON512"
+        "OQS_OID_FALCONPADDED512"
+        "OQS_OID_P256_FALCONPADDED512"
+        "OQS_OID_RSA3072_FALCONPADDED512"
+        "OQS_OID_FALCON1024"
+        "OQS_OID_P521_FALCON1024"
+        "OQS_OID_FALCONPADDED1024"
+        "OQS_OID_P521_FALCONPADDED1024"
+
+        # MAYO signature OID vars
+        "OQS_OID_MAYO1"
+        "OQS_OID_P256_MAYO1"
+        "OQS_OID_MAYO2"
+        "OQS_OID_P256_MAYO2"
+        "OQS_OID_MAYO3"
+        "OQS_OID_P384_MAYO3"
+        "OQS_OID_MAYO5"
+        "OQS_OID_P521_MAYO5"
+
+        # CROSS signature OID vars
+        "OQS_OID_CROSSRSDP128BALANCED"
+        "OQS_OID_CROSSRSDP128FAST"
+        "OQS_OID_CROSSRSDP128SMALL"
+        "OQS_OID_CROSSRSDP192BALANCED"
+        "OQS_OID_CROSSRSDP192FAST"
+        "OQS_OID_CROSSRSDP192SMALL"
+        "OQS_OID_CROSSRSDP256SMALL"
+        "OQS_OID_CROSSRSDPG128BALANCED"
+        "OQS_OID_CROSSRSDPG128FAST"
+        "OQS_OID_CROSSRSDPG128SMALL"
+        "OQS_OID_CROSSRSDPG192BALANCED"
+        "OQS_OID_CROSSRSDPG192FAST"
+        "OQS_OID_CROSSRSDPG192SMALL"
+        "OQS_OID_CROSSRSDPG256BALANCED"
+        "OQS_OID_CROSSRSDPG256FAST"
+        "OQS_OID_CROSSRSDPG256SMALL"
+
+        # OV signature OID vars
+        "OQS_OID_OV_IS"
+        "OQS_OID_P256_OV_IS"
+        "OQS_OID_OV_IP"
+        "OQS_OID_P256_OV_IP"
+        "OQS_OID_OV_III"
+        "OQS_OID_P384_OV_III"
+        "OQS_OID_OV_V"
+        "OQS_OID_P521_OV_V"
+        "OQS_OID_OV_IS_PKC"
+        "OQS_OID_P256_OV_IS_PKC"
+        "OQS_OID_OV_IP_PKC"
+        "OQS_OID_P256_OV_IP_PKC"
+        "OQS_OID_OV_III_PKC"
+        "OQS_OID_P384_OV_III_PKC"
+        "OQS_OID_OV_V_PKC"
+        "OQS_OID_P521_OV_V_PKC"
+        "OQS_OID_OV_IS_PKC_SKC"
+        "OQS_OID_P256_OV_IS_PKC_SKC"
+        "OQS_OID_OV_IP_PKC_SKC"
+        "OQS_OID_P256_OV_IP_PKC_SKC"
+        "OQS_OID_OV_III_PKC_SKC"
+        "OQS_OID_P384_OV_III_PKC_SKC"
+        "OQS_OID_OV_V_PKC_SKC"
+        "OQS_OID_P521_OV_V_PKC_SKC"
+
+        # SNOVA signature OID vars
+        "OQS_OID_SNOVA2454"
+        "OQS_OID_P256_SNOVA2454"
+        "OQS_OID_SNOVA2454SHAKE"
+        "OQS_OID_P256_SNOVA2454SHAKE"
+        "OQS_OID_SNOVA2454ESK"
+        "OQS_OID_P256_SNOVA2454ESK"
+        "OQS_OID_SNOVA2454SHAKEESK"
+        "OQS_OID_P256_SNOVA2454SHAKEESK"
+        "OQS_OID_SNOVA37172"
+        "OQS_OID_P256_SNOVA37172"
+        "OQS_OID_SNOVA2583"
+        "OQS_OID_P256_SNOVA2583"
+        "OQS_OID_SNOVA56252"
+        "OQS_OID_P384_SNOVA56252"
+        "OQS_OID_SNOVA49113"
+        "OQS_OID_P384_SNOVA49113"
+        "OQS_OID_SNOVA3784"
+        "OQS_OID_P384_SNOVA3784"
+        "OQS_OID_SNOVA2455"
+        "OQS_OID_P384_SNOVA2455"
+        "OQS_OID_SNOVA60104"
+        "OQS_OID_P521_SNOVA60104"
+        "OQS_OID_SNOVA2965"
+        "OQS_OID_P521_SNOVA2965"
+
+        # MQOM signature OID vars
+        "OQS_OID_MQOM2CAT1GF16FASTR5"
+        "OQS_OID_P256_MQOM2CAT1GF16FASTR5"
+        "OQS_OID_MQOM2CAT1GF16FASTR3"
+        "OQS_OID_P256_MQOM2CAT1GF16FASTR3"
+        "OQS_OID_MQOM2CAT1GF16SHORTR5"
+        "OQS_OID_P256_MQOM2CAT1GF16SHORTR5"
+        "OQS_OID_MQOM2CAT1GF16SHORTR3"
+        "OQS_OID_P256_MQOM2CAT1GF16SHORTR3"
+        "OQS_OID_MQOM2CAT3GF16FASTR5"
+        "OQS_OID_P384_MQOM2CAT3GF16FASTR5"
+        "OQS_OID_MQOM2CAT3GF16FASTR3"
+        "OQS_OID_P384_MQOM2CAT3GF16FASTR3"
+        "OQS_OID_MQOM2CAT3GF16SHORTR5"
+        "OQS_OID_P384_MQOM2CAT3GF16SHORTR5"
+        "OQS_OID_MQOM2CAT3GF16SHORTR3"
+        "OQS_OID_P384_MQOM2CAT3GF16SHORTR3"
+        "OQS_OID_MQOM2CAT5GF16FASTR5"
+        "OQS_OID_P521_MQOM2CAT5GF16FASTR5"
+        "OQS_OID_MQOM2CAT5GF16FASTR3"
+        "OQS_OID_P521_MQOM2CAT5GF16FASTR3"
+        "OQS_OID_MQOM2CAT5GF16SHORTR5"
+        "OQS_OID_P521_MQOM2CAT5GF16SHORTR5"
+        "OQS_OID_MQOM2CAT5GF16SHORTR3"
+        "OQS_OID_P521_MQOM2CAT5GF16SHORTR3"
+
+        # eFrodo KEM OID vars
+        "OQS_OID_EFRODO640AES"
+        "OQS_OID_P256_EFRODO640AES"
+        "OQS_OID_X25519_EFRODO640AES"
+        "OQS_OID_EFRODO640SHAKE"
+        "OQS_OID_P256_EFRODO640SHAKE"
+        "OQS_OID_X25519_EFRODO640SHAKE"
+        "OQS_OID_EFRODO976AES"
+        "OQS_OID_P384_EFRODO976AES"
+        "OQS_OID_X448_EFRODO976AES"
+        "OQS_OID_EFRODO976SHAKE"
+        "OQS_OID_P384_EFRODO976SHAKE"
+        "OQS_OID_X448_EFRODO976SHAKE"
+        "OQS_OID_EFRODO1344AES"
+        "OQS_OID_P521_EFRODO1344AES"
+        "OQS_OID_EFRODO1344SHAKE"
+        "OQS_OID_P521_EFRODO1344SHAKE"
+
+        # Frodo KEM OID vars
+        "OQS_OID_FRODO640AES"
+        "OQS_OID_P256_FRODO640AES"
+        "OQS_OID_X25519_FRODO640AES"
+        "OQS_OID_FRODO640SHAKE"
+        "OQS_OID_P256_FRODO640SHAKE"
+        "OQS_OID_X25519_FRODO640SHAKE"
+        "OQS_OID_FRODO976AES"
+        "OQS_OID_P384_FRODO976AES"
+        "OQS_OID_X448_FRODO976AES"
+        "OQS_OID_FRODO976SHAKE"
+        "OQS_OID_P384_FRODO976SHAKE"
+        "OQS_OID_X448_FRODO976SHAKE"
+        "OQS_OID_FRODO1344AES"
+        "OQS_OID_P521_FRODO1344AES"
+        "OQS_OID_FRODO1344SHAKE"
+        "OQS_OID_P521_FRODO1344SHAKE"
+
+        # ML-KEM KEM OID vars
+        "OQS_OID_MLKEM512"
+        "OQS_OID_P256_MLKEM512"
+        "OQS_OID_X25519_MLKEM512"
+        "OQS_OID_BP256_MLKEM512"
+        "OQS_OID_MLKEM768"
+        "OQS_OID_P384_MLKEM768"
+        "OQS_OID_X448_MLKEM768"
+        "OQS_OID_BP384_MLKEM768"
+        "OQS_OID_X25519MLKEM768"
+        "OQS_OID_SECP256R1MLKEM768"
+        "OQS_OID_MLKEM1024"
+        "OQS_OID_P521_MLKEM1024"
+        "OQS_OID_SECP384R1MLKEM1024"
+        "OQS_OID_BP512_MLKEM1024"
+        "OQS_OID_X448MLKEM1024"
+
+        # BIKE KEM OID vars
+        "OQS_OID_BIKEL1"
+        "OQS_OID_P256_BIKEL1"
+        "OQS_OID_X25519_BIKEL1"
+        "OQS_OID_BIKEL3"
+        "OQS_OID_P384_BIKEL3"
+        "OQS_OID_X448_BIKEL3"
+        "OQS_OID_BIKEL5"
+        "OQS_OID_P521_BIKEL5"
+
+        # HQC KEM OID vars
+        "OQS_OID_HQC1"
+        "OQS_OID_P256_HQC1"
+        "OQS_OID_X25519_HQC1"
+        "OQS_OID_HQC3"
+        "OQS_OID_P384_HQC3"
+        "OQS_OID_X448_HQC3"
+        "OQS_OID_HQC5"
+        "OQS_OID_P521_HQC5"
+    )
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
+function actionable_algorithm_check() {
+    # Helper function for determing if the passed algorithm OID variables is one that shoudl either be set or unset based on
+    # whether it is in the excluded list or requires an enabled check. If the algorithm is actionable, the function will return
+    # 0, otherwise it will return 1.
+
+    # Store the passed algorithm OID variable name
+    local alg_oid_var=$1
+
+    # Check if the algorithm OID variable is in the excluded list
+    if [[ " ${exlcuded_algs[@]} " =~ " ${alg_oid_var} " ]]; then
+        return 1
+    fi
+
+    # Check if the algorithm OID variable requires an enabled check and if the flag file is present
+    if [[ " ${algs_need_enabled_check[@]} " =~ " ${alg_oid_var} " ]] && [ ! -f "$tmp_dir/.oqs_prov_algs_enabled.flag" ]; then
+        return 1
+    fi
+
+    # If the algorithm OID variable is not in the excluded list and does not require an enabled check, it is actionable
+    return 0
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
 function OID_handler() {
     # Function to manage OID (Object Identifier) environment variables for TLS speed energy testing. Due to the algorithms 
     # present in OQS-Provider not being fully standardised, custom OID's must be assigned to the algorithms included within 
@@ -116,242 +485,43 @@ function OID_handler() {
 
     # Store the passed configure mode and define the base OID prefix for the custom OIDs
     local set_type=$1
-    base_oid=1.3.6.1.4.1.555555.9000
+    local base_oid=1.3.6.1.4.1.555555.9000
+    local oid_offset_value=1
 
-    if [ $set_type -eq 1 ]; then
-
-        # ML-DSA signature algorithms
-        # export OQS_OID_MLDSA44=$base_oid.1
-        export OQS_OID_P256_MLDSA44=$base_oid.2
-        export OQS_OID_RSA3072_MLDSA44=$base_oid.3
-        # export OQS_OID_MLDSA65=$base_oid.4
-        export OQS_OID_P384_MLDSA65=$base_oid.5
-        # export OQS_OID_MLDSA87=$base_oid.6
-        export OQS_OID_P521_MLDSA87=$base_oid.7
-
-        # Falcon signature algorithms
-        export OQS_OID_FALCON512=$base_oid.8
-        export OQS_OID_P256_FALCON512=$base_oid.9
-        export OQS_OID_RSA3072_FALCON512=$base_oid.10
-        export OQS_OID_FALCONPADDED512=$base_oid.11
-        export OQS_OID_P256_FALCONPADDED512=$base_oid.12
-        export OQS_OID_RSA3072_FALCONPADDED512=$base_oid.13
-        export OQS_OID_FALCON1024=$base_oid.14
-        export OQS_OID_P521_FALCON1024=$base_oid.15
-        export OQS_OID_FALCONPADDED1024=$base_oid.16
-        export OQS_OID_P521_FALCONPADDED1024=$base_oid.17
-
-        # SPHINCS signature algorithms
-        export OQS_OID_SPHINCSSHA2128FSIMPLE=$base_oid.18
-        export OQS_OID_P256_SPHINCSSHA2128FSIMPLE=$base_oid.19
-        export OQS_OID_RSA3072_SPHINCSSHA2128FSIMPLE=$base_oid.20
-        export OQS_OID_SPHINCSSHA2128SSIMPLE=$base_oid.21
-        export OQS_OID_P256_SPHINCSSHA2128SSIMPLE=$base_oid.22
-        export OQS_OID_RSA3072_SPHINCSSHA2128SSIMPLE=$base_oid.23
-        export OQS_OID_SPHINCSSHA2192FSIMPLE=$base_oid.24
-        export OQS_OID_P384_SPHINCSSHA2192FSIMPLE=$base_oid.25
-        export OQS_OID_SPHINCSSHAKE128FSIMPLE=$base_oid.26
-        export OQS_OID_P256_SPHINCSSHAKE128FSIMPLE=$base_oid.27
-        export OQS_OID_RSA3072_SPHINCSSHAKE128FSIMPLE=$base_oid.28
-
-        # MAYO signature algorithms
-        export OQS_OID_MAYO1=$base_oid.29
-        export OQS_OID_P256_MAYO1=$base_oid.30
-        export OQS_OID_MAYO2=$base_oid.31
-        export OQS_OID_P256_MAYO2=$base_oid.32
-        export OQS_OID_MAYO3=$base_oid.33
-        export OQS_OID_P384_MAYO3=$base_oid.34
-        export OQS_OID_MAYO5=$base_oid.35
-        export OQS_OID_P521_MAYO5=$base_oid.36
-
-        # CROSS signature algorithms
-        export OQS_OID_CROSSRSDP128BALANCED=$base_oid.37
-
-        # OV signature algorithms
-        export OQS_OID_OV_IS_PKC=$base_oid.38
-        export OQS_OID_P256_OV_IS_PKC=$base_oid.39
-        export OQS_OID_OV_IP_PKC=$base_oid.40
-        export OQS_OID_P256_OV_IP_PKC=$base_oid.41
-        export OQS_OID_OV_IS_PKC_SKC=$base_oid.42
-        export OQS_OID_P256_OV_IS_PKC_SKC=$base_oid.43
-        export OQS_OID_OV_IP_PKC_SKC=$base_oid.44
-        export OQS_OID_P256_OV_IP_PKC_SKC=$base_oid.45
-
-        # SNOVA signature algorithms
-        export OQS_OID_SNOVA2454=$base_oid.46
-        export OQS_OID_P256_SNOVA2454=$base_oid.47
-        export OQS_OID_SNOVA2454ESK=$base_oid.48
-        export OQS_OID_P256_SNOVA2454ESK=$base_oid.49
-        export OQS_OID_SNOVA37172=$base_oid.50
-        export OQS_OID_P256_SNOVA37172=$base_oid.51
-        export OQS_OID_SNOVA2455=$base_oid.52
-        export OQS_OID_P384_SNOVA2455=$base_oid.53
-        export OQS_OID_SNOVA2965=$base_oid.54
-        export OQS_OID_P521_SNOVA2965=$base_oid.55
-
-        # Frodo KEM algorithms
-        export OQS_OID_FRODO640AES=$base_oid.56
-        export OQS_OID_FRODO640AES=$base_oid.57
-        export OQS_OID_P256_FRODO640AES=$base_oid.58
-        export OQS_OID_X25519_FRODO640AES=$base_oid.59
-        export OQS_OID_FRODO640SHAKE=$base_oid.60
-        export OQS_OID_P256_FRODO640SHAKE=$base_oid.61
-        export OQS_OID_X25519_FRODO640SHAKE=$base_oid.62
-        export OQS_OID_FRODO976AES=$base_oid.63
-        export OQS_OID_P384_FRODO976AES=$base_oid.64
-        export OQS_OID_X448_FRODO976AES=$base_oid.65
-        export OQS_OID_FRODO976SHAKE=$base_oid.66
-        export OQS_OID_P384_FRODO976SHAKE=$base_oid.67
-        export OQS_OID_X448_FRODO976SHAKE=$base_oid.68
-        export OQS_OID_FRODO1344AES=$base_oid.69
-        export OQS_OID_P521_FRODO1344AES=$base_oid.70
-        export OQS_OID_FRODO1344SHAKE=$base_oid.71
-        export OQS_OID_P521_FRODO1344SHAKE=$base_oid.72
-
-        # ML-KEM algorithms
-        export OQS_OID_MLKEM512=$base_oid.73
-        export OQS_OID_P256_MLKEM512=$base_oid.74
-        export OQS_OID_X25519_MLKEM512=$base_oid.75
-        export OQS_OID_BP256_MLKEM512=$base_oid.76
-        export OQS_OID_MLKEM768=$base_oid.77
-        export OQS_OID_P384_MLKEM768=$base_oid.78
-        export OQS_OID_X448_MLKEM768=$base_oid.79
-        export OQS_OID_BP384_MLKEM768=$base_oid.80
-        export OQS_OID_X25519MLKEM768=$base_oid.81
-        export OQS_OID_SECP256R1MLKEM768=$base_oid.82
-        export OQS_OID_MLKEM1024=$base_oid.83
-        export OQS_OID_P521_MLKEM1024=$base_oid.84
-        export OQS_OID_SECP384R1MLKEM1024=$base_oid.85
-        export OQS_OID_BP512_MLKEM1024=$base_oid.86
-
-        # BIKE KEM algorithms
-        export OQS_OID_BIKEL1=$base_oid.87
-        export OQS_OID_P256_BIKEL1=$base_oid.88
-        export OQS_OID_X25519_BIKEL1=$base_oid.89
-        export OQS_OID_BIKEL3=$base_oid.90
-        export OQS_OID_P384_BIKEL3=$base_oid.91
-        export OQS_OID_X448_BIKEL3=$base_oid.92
-        export OQS_OID_BIKEL5=$base_oid.93
-        export OQS_OID_P521_BIKEL5=$base_oid.94
-
-        # HQC KEM algorithms
-        export OQS_OID_HQC_128=$base_oid.95
-        export OQS_OID_HQC_192=$base_oid.96
-        export OQS_OID_HQC_256=$base_oid.97
+    # Define the OID variable arrays for performing export/unset operations
+    define_oid_var_arrays
 
 
-    elif [ $set_type -eq 2 ]; then
+    # Determine which set action to perform based on the passed configure mode
+    if [ "$set_type" -eq 1 ]; then
 
-        # Unset ML-DSA signature algorithms
-        unset OQS_OID_MLDSA44
-        unset OQS_OID_P256_MLDSA44
-        unset OQS_OID_RSA3072_MLDSA44
-        unset OQS_OID_MLDSA65
-        unset OQS_OID_P384_MLDSA65
-        unset OQS_OID_MLDSA87
-        unset OQS_OID_P521_MLDSA87
+        # Loop through each of the defined OID variables
+        for oid_var in "${alg_oid_vars[@]}"; do
 
-        # Unset Falcon signature algorithms
-        unset OQS_OID_FALCON512
-        unset OQS_OID_P256_FALCON512
-        unset OQS_OID_RSA3072_FALCON512
-        unset OQS_OID_FALCONPADDED512
-        unset OQS_OID_P256_FALCONPADDED512
-        unset OQS_OID_RSA3072_FALCONPADDED512
-        unset OQS_OID_FALCON1024
-        unset OQS_OID_P521_FALCON1024
-        unset OQS_OID_FALCONPADDED1024
-        unset OQS_OID_P521_FALCONPADDED1024
+            # Define the full OID value that will be assigned to the OID variable in the environment
+            new_oid_value="${base_oid}.${oid_offset_value}"
 
-        # Unset SPHINCS signature algorithms
-        unset OQS_OID_SPHINCSSHA2128FSIMPLE
-        unset OQS_OID_P256_SPHINCSSHA2128FSIMPLE
-        unset OQS_OID_RSA3072_SPHINCSSHA2128FSIMPLE
-        unset OQS_OID_SPHINCSSHA2128SSIMPLE
-        unset OQS_OID_P256_SPHINCSSHA2128SSIMPLE
-        unset OQS_OID_RSA3072_SPHINCSSHA2128SSIMPLE
-        unset OQS_OID_SPHINCSSHA2192FSIMPLE
-        unset OQS_OID_P384_SPHINCSSHA2192FSIMPLE
-        unset OQS_OID_SPHINCSSHAKE128FSIMPLE
-        unset OQS_OID_P256_SPHINCSSHAKE128FSIMPLE
-        unset OQS_OID_RSA3072_SPHINCSSHAKE128FSIMPLE
+            # Perform algorithm checks to determine if the OID variable is one that an action should be taken
+            if actionable_algorithm_check "$oid_var"; then
+                export "$oid_var=$new_oid_value"
+            fi
 
-        # Unset MAYO signature algorithms
-        unset OQS_OID_MAYO1
-        unset OQS_OID_P256_MAYO1
-        unset OQS_OID_MAYO2
-        unset OQS_OID_P256_MAYO2
-        unset OQS_OID_MAYO3
-        unset OQS_OID_P384_MAYO3
-        unset OQS_OID_MAYO5
-        unset OQS_OID_P521_MAYO5
+            # Increase the OID offset value for the next OID variable to ensure unique OIDs are assigned
+            ((oid_offset_value++))
 
-        # Unset CROSS signature algorithms
-        unset OQS_OID_CROSSRSDP128BALANCED
+        done
 
-        # Unset OV signature algorithms
-        unset OQS_OID_OV_IS_PKC
-        unset OQS_OID_P256_OV_IS_PKC
-        unset OQS_OID_OV_IP_PKC
-        unset OQS_OID_P256_OV_IP_PKC
-        unset OQS_OID_OV_IS_PKC_SKC
-        unset OQS_OID_P256_OV_IS_PKC_SKC
-        unset OQS_OID_OV_IP_PKC_SKC
-        unset OQS_OID_P256_OV_IP_PKC_SKC
+    elif [ "$set_type" -eq 2 ]; then
 
-        # Unset SNOVA signature algorithms
-        unset OQS_OID_SNOVA2454
-        unset OQS_OID_P256_SNOVA2454
-        unset OQS_OID_SNOVA2454ESK
-        unset OQS_OID_P256_SNOVA2454ESK
-        unset OQS_OID_SNOVA37172
-        unset OQS_OID_P256_SNOVA37172
-        unset OQS_OID_SNOVA2455
-        unset OQS_OID_P384_SNOVA2455
-        unset OQS_OID_SNOVA2965
-        unset OQS_OID_P521_SNOVA2965
+        # Loop through each of the defined OID variables
+        for oid_var in "${alg_oid_vars[@]}"; do
 
-        # Unset Frodo KEM algorithms
-        unset OQS_OID_FRODO640AES
-        unset OQS_OID_P256_FRODO640AES
-        unset OQS_OID_X25519_FRODO640AES
-        unset OQS_OID_FRODO640SHAKE
-        unset OQS_OID_P256_FRODO640SHAKE
-        unset OQS_OID_X25519_FRODO640SHAKE
-        unset OQS_OID_FRODO976AES
-        unset OQS_OID_P384_FRODO976AES
-        unset OQS_OID_X448_FRODO976AES
-        unset OQS_OID_FRODO976SHAKE
-        unset OQS_OID_P384_FRODO976SHAKE
-        unset OQS_OID_X448_FRODO976SHAKE
-        unset OQS_OID_FRODO1344AES
-        unset OQS_OID_P521_FRODO1344AES
-        unset OQS_OID_FRODO1344SHAKE
-        unset OQS_OID_P521_FRODO1344SHAKE
+            # Perform algorithm checks to determine if the OID variable is one that an action should be taken
+            if actionable_algorithm_check "$oid_var"; then
+                unset "$oid_var"
+            fi
 
-        # Unset ML-KEM algorithms
-        unset OQS_OID_P256_MLKEM512
-        unset OQS_OID_X25519_MLKEM512
-        unset OQS_OID_BP256_MLKEM512
-        unset OQS_OID_BP384_MLKEM768
-        unset OQS_OID_MLKEM1024
-        unset OQS_OID_P521_MLKEM1024
-        unset OQS_OID_BP512_MLKEM1024
-
-        # Unset BIKE KEM algorithms
-        unset OQS_OID_BIKEL1
-        unset OQS_OID_P256_BIKEL1
-        unset OQS_OID_X25519_BIKEL1
-        unset OQS_OID_BIKEL3
-        unset OQS_OID_P384_BIKEL3
-        unset OQS_OID_X448_BIKEL3
-        unset OQS_OID_BIKEL5
-        unset OQS_OID_P521_BIKEL5
-
-        # Unset HQC KEM algorithms
-        unset OQS_OID_HQC_128
-        unset OQS_OID_HQC_192
-        unset OQS_OID_HQC_256
+        done
 
     fi
 
@@ -365,12 +535,29 @@ function oid_handler_entrypoint() {
 
     # Ensure that arugments have been passed to the script
     if [[ $# -gt 0 ]]; then
+
+        # Determine the project root directory path
+        root_dir=""
+        get_root_dir
+
+        # Ensure that the temporary directory exists before proceeding
+        tmp_dir="$root_dir/tmp"
+        if [ ! -d "$tmp_dir" ]; then
+            echo "[ERROR] - Temporary directory not found at $tmp_dir. Please ensure the setup.sh script has been run and try again."
+            exit 1
+        fi
+
+        # Parse the command line arguments and call the OID handler function with the relevant configuration mode
         parse_args "$@"
         OID_handler $configure_mode
+
     else
+
+        # Output an error message if no arguments are provided and display the help message
         echo "[ERROR] - No arguments provided. One of --set-env-oids or --clear-env-oids is required."
         output_help
         exit 1
+
     fi
 
 }

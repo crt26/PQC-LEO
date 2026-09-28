@@ -33,11 +33,14 @@ This section lists the **last tested versions** of the project's core dependenci
 | **Dependency** | **Version Number**     | **Commit SHA**                             | **Notes**                                      |
 |----------------|------------------------|--------------------------------------------|------------------------------------------------|
 | Liboqs         | 0.16.0                 | `5a1a854b0dc9f2141bdc771c555ee60c37950183` |                                                |
-| OQS-Provider   | 0.11.0                 | `a635e341d6a4624d9bba36d158804762f316fe5e` |                                                |
+| OQS-Provider   | 0.11.0+                | `1670a8a91bbca997d33e6b6851309d6241cc224c` |                                                |
 | OpenSSL        | Official release 3.6.1 | N/A                                        | Downloaded as a fixed release tarball          |
 | pqax           | Always latest          | N/A                                        | Pulled from latest main branch at install time |
 
 **Note:** These versions are used by default unless the `--latest-dependency-versions` flag is explicitly set during setup.
+
+**Note:** The + sign in the OQS-Provider version indicates that the latest commit from the main branch is used, which may include additional changes beyond the last tagged
+release. This is because to utilise Liboqs version 0.16.0, several changes made to OQS-Provider after the 0.11.0 release are required.
 
 For setup instructions and details on using the latest cryptographic dependency versions,  please see:
 

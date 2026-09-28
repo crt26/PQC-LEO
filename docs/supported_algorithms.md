@@ -46,15 +46,13 @@ The PQC-LEO project supports all key encapsulation mechanisms (KEMs) and digital
 
 - **Stateful signature schemes (XMSS and LMS)** are currently excluded from this project. Although Liboqs supports them, they are disabled by default and require hazardous experimental build flags to enable key generation and signing. These schemes are not part of the NIST standardisation process, and Liboqs explicitly warns that support may be removed in future releases if misused. Their inclusion within this project may be reconsidered in a future release if justified.
 
-These exceptions are reflected in the tables below. If users wish to enable HQC despite the associated risks, detailed instructions are provided in the advanced setup guide.
-
 All Liboqs algorithms listed below are also supported for computational energy usage testing. Information presented in the tables below on algorithm specifications are taken from the algorithm spec sheets included in the [Liboqs v0.16.0 documentation](https://github.com/open-quantum-safe/liboqs/tree/5a1a854b0dc9f2141bdc771c555ee60c37950183/docs/algorithms).
 
-In addition to standard algorithm implementations, Liboqs offers memory optimised implementation, where available upstream, which offer reduced memory footprint at the cost of performance. To utilise this feature, users can enable memory optimisation during the setup process. These implementations are disabled by default but can be enabled by passing the `--liboqs-memory-optimisation` flag to the setup script. For more information, please see the [Advanced Setup Configuration Guide](./advanced_setup_configuration.md).
+In addition to standard algorithm implementations, Liboqs offers memory optimised implementations, where available upstream, which offer reduced memory footprint at the cost of performance. To utilise this feature, users can enable memory optimisation during the setup process. These implementations are disabled by default but can be enabled by passing the `--liboqs-memory-optimisation` flag to the setup script. For more information, please see the [Advanced Setup Configuration Guide](./advanced_setup_configuration.md).
 
 For further context and guidance:
 
-- See the [Advanced Setup Configuration Guide](./advanced_setup_configuration.md) for instructions on enabling HQC.
+- See the [Advanced Setup Configuration Guide](./advanced_setup_configuration.md) for advanced setup options.
 - Refer to the [Disclaimer Document](../DISCLAIMER.md) for security warnings and usage guidance.
 
 ### Supported KEM Algorithms
@@ -394,9 +392,6 @@ Algorithms provided by OpenSSL that are used within standard TLS handshake and T
 ### Algorithm Support Summary
 The majority of algorithms provided by the OQS-Provider are supported by this project for automated TLS handshake and TLS speed benchmarking. However, a few exceptions exist due to known limitations in protocol compliance or tool compatibility.
 
-#### Known General Limitations
-**HQC** and its variants are disabled by default in both Liboqs and the OQS-Provider due to their current implementations not conforming to the latest specification, which includes important security fixes. As a result, HQC algorithms are excluded from all performance benchmarking unless explicitly enabled by the user using dedicated flags during the setup process.
-
 #### Known TLS Handshake Testing Limitations
 Certain variations of the supported digital signature schemes are excluded from TLS handshake testing due to non-compliance with [RFC 8446](https://datatracker.ietf.org/doc/html/rfc8446), which defines the specifications of the TLS 1.3 protocol. These include:
 
@@ -418,184 +413,195 @@ Whilst a significant number of these scheme variations can not be used in TLS Ha
 With native support of various PQC algorithms in OpenSSL 3.6.1, the OQS-Provider library automatically disables its implementations of overlapping algorithms (e.g., ML-KEM, ML-DSA, SLH-DSA) to prevent provider conflicts during initialisation. For more information, see the relevant OQS-Provider documentation below.
 
 #### Supported Algorithms for Energy Usage Testing
-All algorithms listed below that are supported for TLS handshake testing and TLS speed testing are also supported for the corresponding TLS handshake energy usage testing and TLS speed energy usage testing.
+All algorithms supported for TLS handshake and speed testing are also supported for their corresponding energy usage tests.
 
 #### Additional Information
-For further details on algorithm support, compatibility, HQC implementation issues, or enabling OQS-Provider algorithms suppourted by PQC-LEO that are disabled by default, see:
+For further details on algorithm support, compatibility, or enabling OQS-Provider algorithms suppourted by PQC-LEO that are disabled by default, see:
 
-- [OQS-Provider Notice](https://github.com/open-quantum-safe/oqs-provider/tree/a635e341d6a4624d9bba36d158804762f316fe5e#35-and-greater)
+- [OQS-Provider Notice](https://github.com/open-quantum-safe/oqs-provider/tree/1670a8a91bbca997d33e6b6851309d6241cc224c#35-and-greater)
 - [Advanced Setup Configuration Guide](./advanced_setup_configuration.md)
 - [README - Choosing Installation Mode](../README.md#choosing-installation-mode)
 - [Disclaimer Document](../DISCLAIMER.md)
 
 ### Supported KEM Algorithms
 
-| **Algorithm Name**   | **Hybrid Algorithm (*)** | **TLS Handshake Test Support (*)** | **OpenSSL Speed Test Support (*)** | **Requires Enabling (*)** |
-|----------------------|:------------------------:|:----------------------------------:|:----------------------------------:|:-------------------------:|
-| bikel1               |                          |                  *                 |                  *                 |             *             |
-| bikel3               |                          |                  *                 |                  *                 |                           |
-| bikel5               |                          |                  *                 |                  *                 |                           |
-| p256_bikel1          |             *            |                  *                 |                  *                 |             *             |
-| x25519_bikel1        |             *            |                  *                 |                  *                 |             *             |
-| p384_bikel3          |             *            |                  *                 |                  *                 |                           |
-| x448_bikel3          |             *            |                  *                 |                  *                 |                           |
-| p521_bikel5          |             *            |                  *                 |                  *                 |                           |
-| frodo640aes          |                          |                  *                 |                  *                 |                           |
-| frodo640shake        |                          |                  *                 |                  *                 |                           |
-| frodo976aes          |                          |                  *                 |                  *                 |                           |
-| frodo976shake        |                          |                  *                 |                  *                 |                           |
-| frodo1344aes         |                          |                  *                 |                  *                 |                           |
-| frodo1344shake       |                          |                  *                 |                  *                 |                           |
-| p256_frodo640aes     |             *            |                  *                 |                  *                 |                           |
-| x25519_frodo640aes   |             *            |                  *                 |                  *                 |                           |
-| p256_frodo640shake   |             *            |                  *                 |                  *                 |                           |
-| x25519_frodo640shake |             *            |                  *                 |                  *                 |                           |
-| p384_frodo976aes     |             *            |                  *                 |                  *                 |                           |
-| x448_frodo976aes     |             *            |                  *                 |                  *                 |                           |
-| p384_frodo976shake   |             *            |                  *                 |                  *                 |                           |
-| x448_frodo976shake   |             *            |                  *                 |                  *                 |                           |
-| p521_frodo1344aes    |             *            |                  *                 |                  *                 |                           |
-| p521_frodo1344shake  |             *            |                  *                 |                  *                 |                           |
-| p256_mlkem512        |             *            |                  *                 |                  *                 |                           |
-| x25519_mlkem512      |             *            |                  *                 |                  *                 |                           |
-| bp256_mlkem512       |             *            |                  *                 |                  *                 |                           |
-| p384_mlkem768        |             *            |                  *                 |                  *                 |                           |
-| x448_mlkem768        |             *            |                  *                 |                  *                 |                           |
-| bp384_mlkem768       |             *            |                  *                 |                  *                 |                           |
-| p521_mlkem1024       |             *            |                  *                 |                  *                 |                           |
-| bp512_mlkem1024      |             *            |                  *                 |                  *                 |                           |
-| hqc128               |                          |                  *                 |                  *                 |             *             |
-| hqc192               |                          |                  *                 |                  *                 |             *             |
-| hqc256               |                          |                  *                 |                  *                 |             *             |
-| p256_hqc128          |             *            |                  *                 |                  *                 |             *             |
-| x25519_hqc128        |             *            |                  *                 |                  *                 |             *             |
-| p384_hqc192          |             *            |                  *                 |                  *                 |             *             |
-| x448_hqc192          |             *            |                  *                 |                  *                 |             *             |
-| p521_hqc256          |             *            |                  *                 |                  *                 |             *             |
-
+| **Algorithm Name**    | **Hybrid Algorithm (*)** | **TLS Handshake Test Support (*)** | **OpenSSL Speed Test Support (*)** | **Requires Enabling (*)** |
+|-----------------------|--------------------------|------------------------------------|------------------------------------|---------------------------|
+| bikel1                |                          |                  *                 |                  *                 |             *             |
+| bikel3                |                          |                  *                 |                  *                 |                           |
+| bikel5                |                          |                  *                 |                  *                 |                           |
+| p256_bikel1           |             *            |                  *                 |                  *                 |             *             |
+| x25519_bikel1         |             *            |                  *                 |                  *                 |             *             |
+| p384_bikel3           |             *            |                  *                 |                  *                 |                           |
+| x448_bikel3           |             *            |                  *                 |                  *                 |                           |
+| p521_bikel5           |             *            |                  *                 |                  *                 |                           |
+| efrodo640aes          |                          |                  *                 |                  *                 |                           |
+| efrodo640shake        |                          |                  *                 |                  *                 |                           |
+| efrodo976aes          |                          |                  *                 |                  *                 |                           |
+| efrodo976shake        |                          |                  *                 |                  *                 |                           |
+| efrodo1344aes         |                          |                  *                 |                  *                 |                           |
+| efrodo1344shake       |                          |                  *                 |                  *                 |                           |
+| p256_efrodo640aes     |             *            |                  *                 |                  *                 |                           |
+| x25519_efrodo640aes   |             *            |                  *                 |                  *                 |                           |
+| p256_efrodo640shake   |             *            |                  *                 |                  *                 |                           |
+| x25519_efrodo640shake |             *            |                  *                 |                  *                 |                           |
+| p384_efrodo976aes     |             *            |                  *                 |                  *                 |                           |
+| x448_efrodo976aes     |             *            |                  *                 |                  *                 |                           |
+| p384_efrodo976shake   |             *            |                  *                 |                  *                 |                           |
+| x448_efrodo976shake   |             *            |                  *                 |                  *                 |                           |
+| p521_efrodo1344aes    |             *            |                  *                 |                  *                 |                           |
+| p521_efrodo1344shake  |             *            |                  *                 |                  *                 |                           |
+| frodo640aes           |                          |                  *                 |                  *                 |                           |
+| frodo640shake         |                          |                  *                 |                  *                 |                           |
+| frodo976aes           |                          |                  *                 |                  *                 |                           |
+| frodo976shake         |                          |                  *                 |                  *                 |                           |
+| frodo1344aes          |                          |                  *                 |                  *                 |                           |
+| frodo1344shake        |                          |                  *                 |                  *                 |                           |
+| p256_frodo640aes      |             *            |                  *                 |                  *                 |                           |
+| x25519_frodo640aes    |             *            |                  *                 |                  *                 |                           |
+| p256_frodo640shake    |             *            |                  *                 |                  *                 |                           |
+| x25519_frodo640shake  |             *            |                  *                 |                  *                 |                           |
+| p384_frodo976aes      |             *            |                  *                 |                  *                 |                           |
+| x448_frodo976aes      |             *            |                  *                 |                  *                 |                           |
+| p384_frodo976shake    |             *            |                  *                 |                  *                 |                           |
+| x448_frodo976shake    |             *            |                  *                 |                  *                 |                           |
+| p521_frodo1344aes     |             *            |                  *                 |                  *                 |                           |
+| p521_frodo1344shake   |             *            |                  *                 |                  *                 |                           |
+| hqc1                  |                          |                  *                 |                  *                 |                           |
+| hqc3                  |                          |                  *                 |                  *                 |                           |
+| hqc5                  |                          |                  *                 |                  *                 |                           |
+| p256_hqc1             |             *            |                  *                 |                  *                 |                           |
+| x25519_hqc1           |             *            |                  *                 |                  *                 |                           |
+| p384_hqc3             |             *            |                  *                 |                  *                 |                           |
+| x448_hqc3             |             *            |                  *                 |                  *                 |                           |
+| p521_hqc5             |             *            |                  *                 |                  *                 |                           |
+| p256_mlkem512         |             *            |                  *                 |                  *                 |                           |
+| x25519_mlkem512       |             *            |                  *                 |                  *                 |                           |
+| bp256_mlkem512        |             *            |                  *                 |                  *                 |                           |
+| p384_mlkem768         |             *            |                  *                 |                  *                 |                           |
+| x448_mlkem768         |             *            |                  *                 |                  *                 |                           |
+| bp384_mlkem768        |             *            |                  *                 |                  *                 |                           |
+| p521_mlkem1024        |             *            |                  *                 |                  *                 |                           |
+| bp512_mlkem1024       |             *            |                  *                 |                  *                 |                           |
 
 ### Supported Digital Signature Algorithms
 
-| **Algorithm Name**             | **Hybrid Algorithm (*)** | **TLS Handshake Test Support (*)** | **OpenSSL Speed Test Support (*)** | **Requires Enabling (*)** |
-|--------------------------------|:------------------------:|:----------------------------------:|:----------------------------------:|:-------------------------:|
-| p256_mldsa44                   |             *            |                  *                 |                  *                 |                           |
-| rsa3072_mldsa44                |             *            |                  *                 |                  *                 |                           |
-| p384_mldsa65                   |             *            |                  *                 |                  *                 |                           |
-| p521_mldsa87                   |             *            |                  *                 |                  *                 |                           |
-| falcon512                      |                          |                  *                 |                  *                 |                           |
-| falconpadded512                |                          |                  *                 |                  *                 |                           |
-| falcon1024                     |                          |                  *                 |                  *                 |                           |
-| falconpadded1024               |                          |                  *                 |                  *                 |                           |
-| p256_falcon512                 |             *            |                  *                 |                  *                 |                           |
-| rsa3072_falcon512              |             *            |                  *                 |                  *                 |                           |
-| p256_falconpadded512           |             *            |                  *                 |                  *                 |                           |
-| rsa3072_falconpadded512        |             *            |                  *                 |                  *                 |                           |
-| p521_falcon1024                |             *            |                  *                 |                  *                 |                           |
-| p521_falconpadded1024          |             *            |                  *                 |                  *                 |                           |
-| sphincssha2128fsimple          |                          |                  *                 |                  *                 |                           |
-| sphincssha2128ssimple          |                          |                  *                 |                  *                 |                           |
-| sphincssha2192fsimple          |                          |                  *                 |                  *                 |                           |
-| sphincssha2192ssimple          |                          |                  *                 |                  *                 |             *             |
-| sphincssha2256fsimple          |                          |                  *                 |                  *                 |             *             |
-| sphincssha2256ssimple          |                          |                  *                 |                  *                 |             *             |
-| p256_sphincssha2128fsimple     |             *            |                  *                 |                  *                 |                           |
-| rsa3072_sphincssha2128fsimple  |             *            |                  *                 |                  *                 |                           |
-| p256_sphincssha2128ssimple     |             *            |                  *                 |                  *                 |                           |
-| rsa3072_sphincssha2128ssimple  |             *            |                  *                 |                  *                 |                           |
-| p384_sphincssha2192fsimple     |             *            |                  *                 |                  *                 |                           |
-| p384_sphincssha2192ssimple     |             *            |                  *                 |                  *                 |             *             |
-| p521_sphincssha2256fsimple     |             *            |                  *                 |                  *                 |             *             |
-| p521_sphincssha2256ssimple     |             *            |                  *                 |                  *                 |             *             |
-| sphincsshake128fsimple         |                          |                  *                 |                  *                 |                           |
-| sphincsshake128ssimple         |                          |                  *                 |                  *                 |             *             |
-| sphincsshake192fsimple         |                          |                  *                 |                  *                 |             *             |
-| sphincsshake192ssimple         |                          |                  *                 |                  *                 |             *             |
-| sphincsshake256fsimple         |                          |                  *                 |                  *                 |             *             |
-| sphincsshake256ssimple         |                          |                  *                 |                  *                 |             *             |
-| p256_sphincsshake128fsimple    |             *            |                  *                 |                  *                 |                           |
-| rsa3072_sphincsshake128fsimple |             *            |                  *                 |                  *                 |                           |
-| p256_sphincsshake128ssimple    |             *            |                  *                 |                  *                 |             *             |
-| rsa3072_sphincsshake128ssimple |             *            |                  *                 |                  *                 |             *             |
-| p384_sphincsshake192fsimple    |             *            |                  *                 |                  *                 |             *             |
-| p384_sphincsshake192ssimple    |             *            |                  *                 |                  *                 |             *             |
-| p521_sphincsshake256fsimple    |             *            |                  *                 |                  *                 |             *             |
-| p521_sphincsshake256ssimple    |             *            |                  *                 |                  *                 |             *             |
-| mayo1                          |                          |                  *                 |                  *                 |                           |
-| mayo2                          |                          |                  *                 |                  *                 |                           |
-| mayo3                          |                          |                  *                 |                  *                 |                           |
-| mayo5                          |                          |                  *                 |                  *                 |                           |
-| p256_mayo1                     |             *            |                  *                 |                  *                 |                           |
-| p256_mayo2                     |             *            |                  *                 |                  *                 |                           |
-| p384_mayo3                     |             *            |                  *                 |                  *                 |                           |
-| p521_mayo5                     |             *            |                  *                 |                  *                 |                           |
-| CROSSrsdp128balanced           |                          |                  *                 |                  *                 |                           |
-| CROSSrsdp128fast               |                          |                  *                 |                  *                 |             *             |
-| CROSSrsdp128small              |                          |                  *                 |                  *                 |             *             |
-| CROSSrsdp192balanced           |                          |                  *                 |                  *                 |             *             |
-| CROSSrsdp192fast               |                          |                  *                 |                  *                 |             *             |
-| CROSSrsdp192small              |                          |                  *                 |                  *                 |             *             |
-| CROSSrsdp256small              |                          |                                    |                  *                 |             *             |
-| CROSSrsdpg128balanced          |                          |                  *                 |                  *                 |             *             |
-| CROSSrsdpg128fast              |                          |                  *                 |                  *                 |             *             |
-| CROSSrsdpg128small             |                          |                  *                 |                  *                 |             *             |
-| CROSSrsdpg192balanced          |                          |                  *                 |                  *                 |             *             |
-| CROSSrsdpg192fast              |                          |                  *                 |                  *                 |             *             |
-| CROSSrsdpg192small             |                          |                  *                 |                  *                 |             *             |
-| CROSSrsdpg256balanced          |                          |                  *                 |                  *                 |             *             |
-| CROSSrsdpg256fast              |                          |                  *                 |                  *                 |             *             |
-| CROSSrsdpg256small             |                          |                  *                 |                  *                 |             *             |
-| OV_Is                          |                          |                                    |                  *                 |             *             |
-| OV_Ip                          |                          |                                    |                  *                 |             *             |
-| OV_III                         |                          |                                    |                  *                 |             *             |
-| OV_V                           |                          |                                    |                  *                 |             *             |
-| OV_Is_pkc                      |                          |                                    |                  *                 |             *             |
-| OV_Ip_pkc                      |                          |                  *                 |                  *                 |                           |
-| OV_III_pkc                     |                          |                                    |                  *                 |             *             |
-| OV_V_pkc                       |                          |                                    |                  *                 |             *             |
-| OV_Is_pkc_skc                  |                          |                                    |                  *                 |             *             |
-| OV_Ip_pkc_skc                  |                          |                  *                 |                  *                 |                           |
-| OV_III_pkc_skc                 |                          |                                    |                  *                 |             *             |
-| OV_V_pkc_skc                   |                          |                                    |                  *                 |             *             |
-| p256_OV_Is                     |             *            |                                    |                  *                 |             *             |
-| p256_OV_Ip                     |             *            |                                    |                  *                 |             *             |
-| p384_OV_III                    |             *            |                                    |                  *                 |             *             |
-| p521_OV_V                      |             *            |                                    |                  *                 |             *             |
-| p256_OV_Is_pkc                 |             *            |                                    |                  *                 |             *             |
-| p256_OV_Ip_pkc                 |             *            |                  *                 |                  *                 |                           |
-| p384_OV_III_pkc                |             *            |                                    |                  *                 |             *             |
-| p521_OV_V_pkc                  |             *            |                                    |                  *                 |             *             |
-| p256_OV_Is_pkc_skc             |             *            |                                    |                  *                 |             *             |
-| p256_OV_Ip_pkc_skc             |             *            |                  *                 |                  *                 |                           |
-| p384_OV_III_pkc_skc            |             *            |                                    |                  *                 |             *             |
-| p521_OV_V_pkc_skc              |             *            |                                    |                  *                 |             *             |
-| snova2454                      |                          |                  *                 |                  *                 |                           |
-| snova2454shake                 |                          |                                    |                  *                 |             *             |
-| snova2454esk                   |                          |                  *                 |                  *                 |                           |
-| snova2454shakeesk              |                          |                                    |                  *                 |             *             |
-| snova37172                     |                          |                  *                 |                  *                 |                           |
-| snova2583                      |                          |                                    |                  *                 |             *             |
-| snova56252                     |                          |                                    |                  *                 |             *             |
-| snova49113                     |                          |                                    |                  *                 |             *             |
-| snova3784                      |                          |                                    |                  *                 |             *             |
-| snova2455                      |                          |                  *                 |                  *                 |                           |
-| snova60104                     |                          |                                    |                  *                 |             *             |
-| snova2965                      |                          |                  *                 |                  *                 |                           |
-| p256_snova2454                 |             *            |                  *                 |                  *                 |                           |
-| p256_snova2454shake            |             *            |                                    |                  *                 |             *             |
-| p256_snova2454esk              |             *            |                  *                 |                  *                 |                           |
-| p256_snova2454shakeesk         |             *            |                                    |                  *                 |             *             |
-| p256_snova37172                |             *            |                  *                 |                  *                 |                           |
-| p256_snova2583                 |             *            |                                    |                  *                 |             *             |
-| p384_snova56252                |             *            |                                    |                  *                 |             *             |
-| p384_snova49113                |             *            |                                    |                  *                 |             *             |
-| p384_snova3784                 |             *            |                                    |                  *                 |             *             |
-| p384_snova2455                 |             *            |                  *                 |                  *                 |                           |
-| p521_snova60104                |             *            |                                    |                  *                 |             *             |
-| p521_snova2965                 |             *            |                  *                 |                  *                 |                           |
+| **Algorithm Name**        | **Hybrid Algorithm (*)** | **TLS Handshake Test Support (*)** | **OpenSSL Speed Test Support (*)** | **Requires Enabling (*)** |
+|---------------------------|--------------------------|------------------------------------|------------------------------------|---------------------------|
+| p256_mldsa44              |             *            |                  *                 |                  *                 |                           |
+| rsa3072_mldsa44           |             *            |                  *                 |                  *                 |                           |
+| p384_mldsa65              |             *            |                  *                 |                  *                 |                           |
+| p521_mldsa87              |             *            |                  *                 |                  *                 |                           |
+| falcon512                 |                          |                  *                 |                  *                 |                           |
+| falconpadded512           |                          |                  *                 |                  *                 |                           |
+| falcon1024                |                          |                  *                 |                  *                 |                           |
+| falconpadded1024          |                          |                  *                 |                  *                 |                           |
+| p256_falcon512            |             *            |                  *                 |                  *                 |                           |
+| rsa3072_falcon512         |             *            |                  *                 |                  *                 |                           |
+| p256_falconpadded512      |             *            |                  *                 |                  *                 |                           |
+| rsa3072_falconpadded512   |             *            |                  *                 |                  *                 |                           |
+| p521_falcon1024           |             *            |                  *                 |                  *                 |                           |
+| p521_falconpadded1024     |             *            |                  *                 |                  *                 |                           |
+| mayo1                     |                          |                  *                 |                  *                 |                           |
+| mayo2                     |                          |                  *                 |                  *                 |                           |
+| mayo3                     |                          |                  *                 |                  *                 |                           |
+| mayo5                     |                          |                  *                 |                  *                 |                           |
+| p256_mayo1                |             *            |                  *                 |                  *                 |                           |
+| p256_mayo2                |             *            |                  *                 |                  *                 |                           |
+| p384_mayo3                |             *            |                  *                 |                  *                 |                           |
+| p521_mayo5                |             *            |                  *                 |                  *                 |                           |
+| CROSSrsdp128balanced      |                          |                  *                 |                  *                 |                           |
+| CROSSrsdp128fast          |                          |                  *                 |                  *                 |             *             |
+| CROSSrsdp128small         |                          |                  *                 |                  *                 |             *             |
+| CROSSrsdp192balanced      |                          |                  *                 |                  *                 |             *             |
+| CROSSrsdp192fast          |                          |                  *                 |                  *                 |             *             |
+| CROSSrsdp192small         |                          |                  *                 |                  *                 |             *             |
+| CROSSrsdp256small         |                          |                                    |                  *                 |             *             |
+| CROSSrsdpg128balanced     |                          |                  *                 |                  *                 |             *             |
+| CROSSrsdpg128fast         |                          |                  *                 |                  *                 |             *             |
+| CROSSrsdpg128small        |                          |                  *                 |                  *                 |             *             |
+| CROSSrsdpg192balanced     |                          |                  *                 |                  *                 |             *             |
+| CROSSrsdpg192fast         |                          |                  *                 |                  *                 |             *             |
+| CROSSrsdpg192small        |                          |                  *                 |                  *                 |             *             |
+| CROSSrsdpg256balanced     |                          |                  *                 |                  *                 |             *             |
+| CROSSrsdpg256fast         |                          |                  *                 |                  *                 |             *             |
+| CROSSrsdpg256small        |                          |                  *                 |                  *                 |             *             |
+| OV_Is                     |                          |                                    |                  *                 |             *             |
+| OV_Ip                     |                          |                                    |                  *                 |             *             |
+| OV_III                    |                          |                                    |                  *                 |             *             |
+| OV_V                      |                          |                                    |                  *                 |             *             |
+| OV_Is_pkc                 |                          |                                    |                  *                 |             *             |
+| OV_Ip_pkc                 |                          |                  *                 |                  *                 |                           |
+| OV_III_pkc                |                          |                                    |                  *                 |             *             |
+| OV_V_pkc                  |                          |                                    |                  *                 |             *             |
+| OV_Is_pkc_skc             |                          |                                    |                  *                 |             *             |
+| OV_Ip_pkc_skc             |                          |                  *                 |                  *                 |                           |
+| OV_III_pkc_skc            |                          |                                    |                  *                 |             *             |
+| OV_V_pkc_skc              |                          |                                    |                  *                 |             *             |
+| p256_OV_Is                |             *            |                                    |                  *                 |             *             |
+| p256_OV_Ip                |             *            |                                    |                  *                 |             *             |
+| p384_OV_III               |             *            |                                    |                  *                 |             *             |
+| p521_OV_V                 |             *            |                                    |                  *                 |             *             |
+| p256_OV_Is_pkc            |             *            |                                    |                  *                 |             *             |
+| p256_OV_Ip_pkc            |             *            |                  *                 |                  *                 |                           |
+| p384_OV_III_pkc           |             *            |                                    |                  *                 |             *             |
+| p521_OV_V_pkc             |             *            |                                    |                  *                 |             *             |
+| p256_OV_Is_pkc_skc        |             *            |                                    |                  *                 |             *             |
+| p256_OV_Ip_pkc_skc        |             *            |                  *                 |                  *                 |                           |
+| p384_OV_III_pkc_skc       |             *            |                                    |                  *                 |             *             |
+| p521_OV_V_pkc_skc         |             *            |                                    |                  *                 |             *             |
+| snova2454                 |                          |                  *                 |                  *                 |                           |
+| snova2454shake            |                          |                                    |                  *                 |             *             |
+| snova2454esk              |                          |                  *                 |                  *                 |                           |
+| snova2454shakeesk         |                          |                                    |                  *                 |             *             |
+| snova37172                |                          |                  *                 |                  *                 |                           |
+| snova2583                 |                          |                                    |                  *                 |             *             |
+| snova56252                |                          |                                    |                  *                 |             *             |
+| snova49113                |                          |                                    |                  *                 |             *             |
+| snova3784                 |                          |                                    |                  *                 |             *             |
+| snova2455                 |                          |                  *                 |                  *                 |                           |
+| snova60104                |                          |                                    |                  *                 |             *             |
+| snova2965                 |                          |                  *                 |                  *                 |                           |
+| p256_snova2454            |             *            |                  *                 |                  *                 |                           |
+| p256_snova2454shake       |             *            |                                    |                  *                 |             *             |
+| p256_snova2454esk         |             *            |                  *                 |                  *                 |                           |
+| p256_snova2454shakeesk    |             *            |                                    |                  *                 |             *             |
+| p256_snova37172           |             *            |                  *                 |                  *                 |                           |
+| p256_snova2583            |             *            |                                    |                  *                 |             *             |
+| p384_snova56252           |             *            |                                    |                  *                 |             *             |
+| p384_snova49113           |             *            |                                    |                  *                 |             *             |
+| p384_snova3784            |             *            |                                    |                  *                 |             *             |
+| p384_snova2455            |             *            |                  *                 |                  *                 |                           |
+| p521_snova60104           |             *            |                                    |                  *                 |             *             |
+| p521_snova2965            |             *            |                  *                 |                  *                 |                           |
+| mqom2cat1gf16fastr5       |                          |                  *                 |                  *                 |                           |
+| mqom2cat1gf16fastr3       |                          |                  *                 |                  *                 |             *             |
+| mqom2cat1gf16shortr5      |                          |                  *                 |                  *                 |             *             |
+| mqom2cat1gf16shortr3      |                          |                  *                 |                  *                 |             *             |
+| mqom2cat3gf16fastr5       |                          |                  *                 |                  *                 |                           |
+| mqom2cat3gf16fastr3       |                          |                  *                 |                  *                 |             *             |
+| mqom2cat3gf16shortr5      |                          |                  *                 |                  *                 |             *             |
+| mqom2cat3gf16shortr3      |                          |                  *                 |                  *                 |             *             |
+| mqom2cat5gf16fastr5       |                          |                  *                 |                  *                 |                           |
+| mqom2cat5gf16fastr3       |                          |                  *                 |                  *                 |             *             |
+| mqom2cat5gf16shortr5      |                          |                  *                 |                  *                 |             *             |
+| mqom2cat5gf16shortr3      |                          |                  *                 |                  *                 |             *             |
+| p256_mqom2cat1gf16fastr5  |             *            |                  *                 |                  *                 |                           |
+| p256_mqom2cat1gf16fastr3  |             *            |                  *                 |                  *                 |             *             |
+| p256_mqom2cat1gf16shortr5 |             *            |                  *                 |                  *                 |             *             |
+| p256_mqom2cat1gf16shortr3 |             *            |                  *                 |                  *                 |             *             |
+| p384_mqom2cat3gf16fastr5  |             *            |                  *                 |                  *                 |                           |
+| p384_mqom2cat3gf16fastr3  |             *            |                  *                 |                  *                 |             *             |
+| p384_mqom2cat3gf16shortr5 |             *            |                  *                 |                  *                 |             *             |
+| p384_mqom2cat3gf16shortr3 |             *            |                  *                 |                  *                 |             *             |
+| p521_mqom2cat5gf16fastr5  |             *            |                  *                 |                  *                 |                           |
+| p521_mqom2cat5gf16fastr3  |             *            |                  *                 |                  *                 |             *             |
+| p521_mqom2cat5gf16shortr5 |             *            |                  *                 |                  *                 |             *             |
+| p521_mqom2cat5gf16shortr3 |             *            |                  *                 |                  *                 |             *             |
 
 ## External Documentation
 For additional reference, the upstream dependency documentation corresponding to the pinned versions used by PQC-LEO can be found below:
 
 - [Liboqs v0.16.0 – Supported Algorithms](https://github.com/open-quantum-safe/liboqs/blob/5a1a854b0dc9f2141bdc771c555ee60c37950183/ALGORITHMS.md)
 - [OpenSSL 3.6.1 – PQC Listed in Documenation Overviews](https://docs.openssl.org/3.6/man7/)
-- [OQS-Provider v0.11.0 – Supported Algorithms](https://github.com/open-quantum-safe/oqs-provider/blob/a635e341d6a4624d9bba36d158804762f316fe5e/ALGORITHMS.md)
+- [OQS-Provider v0.11.0+ – Supported Algorithms](https://github.com/open-quantum-safe/oqs-provider/blob/1670a8a91bbca997d33e6b6851309d6241cc224c/ALGORITHMS.md)
