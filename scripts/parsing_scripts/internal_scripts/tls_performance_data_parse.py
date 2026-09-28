@@ -2,10 +2,10 @@
 Copyright (c) 2023-2026 Callum Turino
 SPDX-License-Identifier: MIT
 
-Result parsing script for PQC TLS performance benchmarking.
-Parses raw TLS handshake and OpenSSL speed test outputs produced by the automated test suite, 
-structures the results into clean CSV files, and computes averaged metrics using the results_averager module. 
-Supports setups using both OpenSSL-native PQC algorithms and the OQS-Provider.
+Result parsing script for PQC TLS performance benchmarking.Parses raw TLS handshake and OpenSSL speed test 
+outputs produced by the automated test suite, structures the results into clean CSV files, and computes 
+averaged metrics using the results_averager module. Supports setups using both OpenSSL-native PQC algorithms 
+and the OQS-Provider.
 """
 
 #------------------------------------------------------------------------------------------------------------------------------
@@ -101,8 +101,8 @@ def setup_parse_env(root_dir):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
-    """ Function for handling the presence of older parsed results, ensuring that the user
-        is aware of the old results and can choose how to handle them before the parsing continues. """
+    """ Function for handling the presence of older parsed results, ensuring that the user is aware of the old results 
+        and can choose how to handle them before the parsing continues. """
 
     # Check if there are any old parsed results for the current Machine-ID and handle any clashes
     if os.path.exists(dir_paths["mach_results_dir"]):
@@ -125,13 +125,13 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
         else:
 
             # Output the warning message to the terminal
-            print(f"[WARNING] - Parsed TLS performance results already exist for Machine-ID ({machine_id})\n")
+            print(f"\n[WARNING] - Parsed TLS performance results already exist for Machine-ID ({machine_id})")
 
             # Get the decision from the user on how to handle old results before parsing continues
             while True:
 
                 # Output the potential options and handle user choice
-                print(f"From the following options, choose how you would like to handle the existing TLS performance results:\n")
+                print(f"\nFrom the following options, choose how you would like to handle the existing TLS performance results:")
                 print("Option 1 - Replace old parsed results with new ones")
                 print("Option 2 - Exit parsing programme to move old results and rerun after (if you choose this option, please move the entire folder not just its contents)")
                 print("Option 3 - Make parsing script programme wait until you have move files before continuing")
@@ -158,7 +158,8 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
 
                     # Halting script until old results have been moved for the current Machine-ID
                     while True:
-
+                        
+                        # Wait for the user to indicate they have moved the old results before continuing
                         input(f"Halting parsing script so old parsed results for Machine-ID ({machine_id}) can be moved, press enter to continue")
 
                         # Checking if old results have been moved before continuing
@@ -186,8 +187,8 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def get_metrics(current_row, test_filepath, get_reuse_metrics):
-    """ Helper function to extract signature/KEM handshake metrics from s_time output files, 
-        handling both session ID first use and reuse metrics. """
+    """ Helper function to extract signature/KEM handshake metrics from s_time output files, handling both session ID first 
+        use and reuse metrics. """
 
     # Get the relevant data from the supplied performance metrics output file
     try:
@@ -247,7 +248,7 @@ def get_metrics(current_row, test_filepath, get_reuse_metrics):
     except:
 
         # Output the file not found error and the missing filename
-        print(f"missing file - {test_filepath}")
+        print(f"[WARNING] - missing file - {test_filepath}")
 
         # Create an empty row as a placeholder for a missing file
         for _ in range(1,6):
@@ -257,9 +258,9 @@ def get_metrics(current_row, test_filepath, get_reuse_metrics):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def pqc_based_pre_processing(current_run, type_index, pqc_type_vars, col_headers, algs_dict, dir_paths):
-    """ Function for pre-processing PQC and PQC-Hybrid TLS results for the current run. This function
-        will loop through the sig/kem combinations and extract the metrics for each combination. This creates the 
-        full base results for the current run which can later be separated into individual CSV files for each sig/kem combo """
+    """ Function for pre-processing PQC and PQC-Hybrid TLS results for the current run. This function will loop through 
+        the sig/kem combinations and extract the metrics for each combination. This creates the  full base results for the 
+        current run which can later be separated into individual CSV files for each sig/kem combo """
     
     # Check if the stored up-results match the number of algorithms in the alg list files, only if run 1
     if current_run == 1:
@@ -316,9 +317,9 @@ def pqc_based_pre_processing(current_run, type_index, pqc_type_vars, col_headers
 
 #------------------------------------------------------------------------------------------------------------------------------
 def pqc_based_processing(current_run, dir_paths, algs_dict, pqc_type_vars, col_headers):
-    """ Function to parse and process both PQC and PQC-Hybrid TLS results for the current run. 
-        Generates base results and separates them into individual CSV files for each sig/KEM combo. """
-
+    """ Function to parse and process both PQC and PQC-Hybrid TLS results for the current run. Generates base results and 
+        separates them into individual CSV files for each sig/KEM combo. """
+    
     # Process the results for both PQC (0) and PQC-Hybrid (1) TLS results
     for type_index in range (0,2):
 
@@ -350,8 +351,7 @@ def pqc_based_processing(current_run, dir_paths, algs_dict, pqc_type_vars, col_h
 
 #------------------------------------------------------------------------------------------------------------------------------
 def classic_based_processing(current_run, dir_paths, algs_dict, col_headers):
-    """ Function to process TLS handshake results for classic cipher algorithms, 
-        extracting metrics and generating CSV files. """
+    """ Function to process TLS handshake results for classic cipher algorithms, extracting metrics and generating CSV files. """
 
     # Set the up-results directory path and create the dataframe used in test processing
     classic_up_results_dir = os.path.join(dir_paths['mach_up_results_dir'], "handshake_results", "classic")
@@ -394,8 +394,7 @@ def classic_based_processing(current_run, dir_paths, algs_dict, col_headers):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def tls_speed_drop_last(data_cells):
-    """ Helper function for removing unwanted characters from 
-        metric values during the tls-speed results parsing """
+    """ Helper function for removing unwanted characters from metric values during the tls-speed results parsing """
 
     # Loop through the values and remove any s chars present in metrics
     for cell_index in range(1, len(data_cells)):
@@ -407,8 +406,7 @@ def tls_speed_drop_last(data_cells):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def get_speed_metrics(speed_filepath, alg_type, speed_headers):
-    """ Function to extract speed metrics from raw OpenSSL s_speed output for the specified 
-        algorithm type (KEM or SIG). """
+    """ Function to extract speed metrics from raw OpenSSL s_speed output for the specified algorithm type (KEM or SIG). """
 
     # Declare the variables needed for getting metrics and setting up the dataframe with test/alg type headers
     start = False
@@ -449,8 +447,7 @@ def get_speed_metrics(speed_filepath, alg_type, speed_headers):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def speed_processing(current_run, dir_paths, speed_headers, algs_dict):
-    """ Function to process OpenSSL and OQS-Provider s_speed metrics for both 
-        PQC and PQC-Hybrid algorithms in the current run. """
+    """ Function to process OpenSSL and OQS-Provider s_speed metrics for both PQC and PQC-Hybrid algorithms in the current run. """
 
     # Define the alg type list 
     alg_types = ["kem", "sig"]
@@ -483,7 +480,7 @@ def speed_processing(current_run, dir_paths, speed_headers, algs_dict):
             speed_metrics_df.to_csv(output_filepath, index=False)
 
 #------------------------------------------------------------------------------------------------------------------------------
-def output_processing(num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers):
+def output_processing(num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers, skip_tls_speed):
     """ Function to process the results of s_time and s_speed TLS benchmarking tests for the current machine. """
 
     # Set the result directories paths in the central paths dictionary
@@ -498,16 +495,21 @@ def output_processing(num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers
     os.makedirs(dir_paths['classic_handshake_results'])
     os.makedirs(dir_paths['hybrid_base_results'])
 
-    # Loop through the runs and call result processing functions
+    # Loop through the runs and call the result processing functions
     for current_run in range(1, num_runs+1):
+
+        # Call the mandatory parsing functions
         pqc_based_processing(current_run, dir_paths, algs_dict, pqc_type_vars, col_headers)
         classic_based_processing(current_run, dir_paths, algs_dict, col_headers)
-        speed_processing(current_run, dir_paths, speed_headers, algs_dict)
+
+        # Check if TLS speed processing needs to be skipped
+        if skip_tls_speed is False:
+            speed_processing(current_run, dir_paths, speed_headers, algs_dict)
 
 #------------------------------------------------------------------------------------------------------------------------------
-def process_tests(machine_id, num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers, replace_old_results):
-    """ Function for controlling the parsing scripts for the PQC TLS performance testing up-result files
-        and calling average calculation scripts """
+def process_tests(machine_id, num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers, conf_flags):
+    """ Function for controlling the parsing scripts for the PQC TLS performance testing up-result files and calling average 
+        calculation scripts """
 
     # Create an instance of the TLS average generator class before processing results
     tls_avg = TLSAverager(dir_paths, num_runs, algs_dict, pqc_type_vars, col_headers)
@@ -537,30 +539,37 @@ def process_tests(machine_id, num_runs, dir_paths, algs_dict, pqc_type_vars, col
         sys.exit(1)
 
     # Create the results directory for the current machine and handle Machine-ID clashes
-    handle_results_dir_creation(machine_id, dir_paths, replace_old_results)
+    handle_results_dir_creation(machine_id, dir_paths, conf_flags[0])
 
-    # Call the processing function and the average calculation methods for the current machine
-    output_processing(num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers)
+    # Call the processing function to parse the results
+    output_processing(num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers, conf_flags[1])
+
+    # Perform the mandatory average calculations for the TLS results
     tls_avg.gen_pqc_avgs()
     tls_avg.gen_classic_avgs()
-    tls_avg.gen_speed_avgs(speed_headers)
+
+    # Check if TLS speed result averaging needs to be skipped (skip_tls_speed = True)
+    if conf_flags[1] is False:
+        tls_avg.gen_speed_avgs(speed_headers)
 
 #------------------------------------------------------------------------------------------------------------------------------
-def parse_tls_performance(test_opts, replace_old_results):
-    """ Entrypoint function for parsing OQS-Provider TLS handshake and speed results. 
-        Controls the parsing flow and triggers relevant functions. """
+def parse_tls_performance(test_opts, replace_old_results, skip_tls_speed):
+    """ Entrypoint function for parsing OQS-Provider TLS handshake and speed results. Controls the parsing flow and triggers 
+        relevant functions. """
     
     # Get test options and set test parameter vars
-    machine_id = test_opts[0]
-    num_runs = test_opts[1]
-    root_dir = test_opts[2]
+    machine_id = test_opts["machine_id"]
+    num_runs = test_opts["total_runs"]
+    root_dir = test_opts["root_dir"]
 
-    # Setup script environment
+    # Store the passed conf flags in a list for passing to the process_tests function
+    conf_flags = [replace_old_results, skip_tls_speed]
+
+    # Setup the script environment
     print(f"\nPreparing to Parse TLS Performance Results:\n")
     dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers = setup_parse_env(root_dir)
 
     # Process the OQS-Provider results
-    print(f"Parsing results...\n")
     process_tests(
         machine_id,
         num_runs,
@@ -569,5 +578,5 @@ def parse_tls_performance(test_opts, replace_old_results):
         pqc_type_vars,
         col_headers,
         speed_headers,
-        replace_old_results
+        conf_flags
     )

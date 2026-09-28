@@ -7,20 +7,19 @@
 # in the PQC-LEO benchmarking suite. It is not intended to be executed manually. Instead, it is automatically invoked 
 # during the setup process to modify source files in the OQS-Provider and OpenSSL libraries as required for benchmarking 
 # configuration.
-
+#
 # The first argument passed to this script must always specify the modification tool to use (e.g., `oqs_enable_algs`
 # or `modify_openssl_src`). Subsequent arguments must include the required flags and values specific to the selected
 # tool. These include options such as enabling specific algorithms, adjusting OpenSSL internal constants, or applying
 # user-defined values.
-
+#
 # The script includes validation checks, fallback logic, and interactive prompts to handle edge cases or unexpected
 # source states, ensuring a safe and guided modification process.
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function get_user_yes_no() {
-    # Helper function to prompt the user for a yes or no response. The function loops until
-    # a valid response ('y' or 'n') is provided and sets the global variable `user_y_n_response`
-    # to 1 for 'yes' and 0 for 'no'.
+    # Helper function to prompt the user for a yes or no response. The function loops until a valid response ('y' or 'n') is 
+    # provided and sets the global variable 'user_y_n_response' to 1 for 'yes' and 0 for 'no'.
 
     # Set the local user prompt variable to what was passed to the function
     local user_prompt="$1"
@@ -55,17 +54,16 @@ function get_user_yes_no() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
-function output_help_message() {
-    # Helper function for outputting the help message to the user when the --help flag is present or
-    # when incorrect arguments are passed. It will determine which modification tool is being used
-    # and output the relevant help message for that tool.
+function output_help() {
+    # Helper function for outputting the help message to the user when the --help flag is present or when incorrect arguments 
+    # are passed. It will determine which modification tool is being used and output the relevant help message for that tool.
 
     # Determine which modification tool is being used and set the help message accordingly
     if [ "$modification_tool" == "oqs_enable_algs" ]; then
 
             # Output the help message for the oqs_enable_algs modification tool
             echo "Usage: source_code_modifier.sh oqs_enable_algs [options]"
-            echo "Required Flags:"
+            echo "Options:"
             echo "  --enable-hqc-algs=[0|1]        Set to 1 to enable the HQC KEM algorithms in the OQS-Provider library."
             echo "  --enable-disabled-algs=[0|1]   Set to 1 to enable all disabled signature algorithms in the OQS-Provider library."
             echo "  --help                         Display this help message."
@@ -74,7 +72,7 @@ function output_help_message() {
 
         # Output the help message for the modify_openssl_src modification tool
         echo "Usage: source_code_modifier.sh modify_openssl_src [options]"
-        echo "Required Flags:"
+        echo "Options:"
         echo "  --user-defined-flag=[0|1]           Set to 1 to use a user-defined value for MAX_KEM_NUM and MAX_SIG_NUM in OpenSSL's speed.c file."
         echo "  --user-defined-speed-value=[int]    Set a new value for MAX_KEM_NUM and MAX_SIG_NUM in OpenSSL's speed.c file. Can be 0 if --user-defined-flag is 0."
         echo "  --help                              Display this help message."
@@ -91,12 +89,12 @@ function output_help_message() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function parse_args() {
-    # Function for parsing command-line arguments and setting global flags based on detected options.
-    # Supports arguments for both oqs_enable_algs and modify_openssl_src tools, with validation for required flags.
+    # Function for parsing command-line arguments and setting global flags based on detected options. Supports arguments for 
+    # both oqs_enable_algs and modify_openssl_src tools, with validation for required flags.
 
     # Check for the --help flag and display the help message
     if [[ "$*" =~ --help ]]; then
-        output_help_message
+        output_help
         exit 0
     fi
 
@@ -117,7 +115,7 @@ function parse_args() {
                     # Ensure that the value attached to the flag is either 0 or 1
                     if [[ "$enable_hqc" != "0" && "$enable_hqc" != "1" ]]; then
                         echo "[ERROR] - Invalid value for --enable-hqc-algs, must be 0 or 1"
-                        output_help_message
+                        output_help
                         exit 1
                     fi
                     
@@ -132,7 +130,7 @@ function parse_args() {
                     # Ensure that the value attached to the flag is either 0 or 1
                     if [[ "$enable_disabled_algs" != "0" && "$enable_disabled_algs" != "1" ]]; then
                         echo "[ERROR] - Invalid value for --enable-disabled-algs, must be 0 or 1"
-                        output_help_message
+                        output_help
                         exit 1
                     fi
                     
@@ -143,7 +141,7 @@ function parse_args() {
 
                     # Output an error message if an unknown option is passed
                     echo "[ERROR] - Unknown option passed to the utility script: $1"
-                    output_help_message
+                    output_help
                     exit 1
                     ;;
 
@@ -154,7 +152,7 @@ function parse_args() {
         # Ensure that all the required flags have been set before continuing
         if [ -z "$enable_hqc" ] || [ -z "$enable_disabled_algs" ]; then
             echo "[ERROR] - Missing required command line arguments for the oqs_enable_algs function in the utility script"
-            output_help_message
+            output_help
             exit 1
         fi
 
@@ -174,7 +172,7 @@ function parse_args() {
                     # Ensure that the value attached to the flag is either 0 or 1
                     if [[ "$user_defined_speed_flag" != "0" && "$user_defined_speed_flag" != "1" ]]; then
                         echo "[ERROR] - Invalid value for --user-defined-flag, must be 0 or 1"
-                        output_help_message
+                        output_help
                         exit 1
                     fi
 
@@ -190,7 +188,7 @@ function parse_args() {
                     # Check if it's a valid positive integer
                     if ! [[ "$user_defined_speed_value" =~ ^[0-9]+$ ]]; then
                         echo "[ERROR] - Invalid value for --user-defined-speed-value, must be a positive integer"
-                        output_help_message
+                        output_help
                         exit 1
                     fi
 
@@ -201,7 +199,7 @@ function parse_args() {
 
                     # Output an error message if an unknown option is passed
                     echo "[ERROR] - Unknown option passed to the utility script: $1"
-                    output_help_message
+                    output_help
                     exit 1
                     ;;
 
@@ -212,7 +210,7 @@ function parse_args() {
         # Ensure that if the user_defined_speed_flag is set, both user_defined_speed_flag and user_defined_speed_value are set
         if [ -z "$user_defined_speed_flag" ] || [ -z "$user_defined_speed_value" ]; then
             echo "[ERROR] - Missing required command line arguments for the modify_openssl_src function in the utility script"
-            output_help_message
+            output_help
             exit 1
         fi
 
@@ -232,9 +230,10 @@ function parse_args() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_base_env() {
-    # Function for setting up the foundational global variables required for the test suite. This includes determining the project's root directory,
-    # establishing paths for libraries, scripts, and test data, and validating the presence of required libraries. Additionally, it sets up environment
-    # variables for control ports and sleep timers, ensuring proper configuration for the test suite's execution.
+    # Function for setting up the foundational global variables required for the test suite. This includes determining the project's 
+    # root directory, establishing paths for libraries, scripts, and test data, and validating the presence of required libraries. 
+    # Additionally, it sets up environment variables for control ports and sleep timers, ensuring proper configuration for the test 
+    # suite's execution.
 
     # Determine the directory that the script is being executed from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -301,9 +300,9 @@ function set_new_speed_values() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function modify_openssl_src() {
-    # Function for modifying OpenSSL's speed.c file to adjust MAX_KEM_NUM and MAX_SIG_NUM values.
-    # Handles errors, fallback values, and user-defined adjustments. It requires that the 
-    # user_defined_speed_flag and user_defined_speed_value flags have been passed to the script.
+    # Function for modifying OpenSSL's speed.c file to adjust MAX_KEM_NUM and MAX_SIG_NUM values. Handles errors, fallback values, 
+    # and user-defined adjustments. It requires that the user_defined_speed_flag and user_defined_speed_value flags have been passed 
+    # to the script.
 
     # Output the current task to the terminal
     echo -e "[NOTICE] - Enable all disabled OQS-Provider algorithms flag is set, modifying the OpenSSL speed.c file to adjust the MAX_KEM_NUM/MAX_SIG_NUM values...\n"
@@ -491,9 +490,9 @@ function modify_openssl_src() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function enable_oqs_algs() {
-    # Function for enabling disabled algorithms in the OQS-Provider library.
-    # Modifies generate.yml to enable selected KEMs/signatures and runs generate.py to apply changes.
-    # It requires that the enable_disabled_algs and enable_hqc flags have been passed to the script.
+    # Function for enabling disabled algorithms in the OQS-Provider library. Modifies generate.yml to enable selected 
+    # KEMs/signatures and runs generate.py to apply changes. It requires that the enable_disabled_algs and enable_hqc flags 
+    # have been passed to the script.
 
     # Define paths for the generate.yml file
     backup_generate_file="$root_dir/modded_lib_files/generate.yml"
@@ -589,8 +588,8 @@ awk '
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function modifier_entrypoint() {
-    # Entrypoint function for the script. Determines the selected modification tool,
-    # parses relevant arguments, and calls the appropriate handler function.
+    # Entrypoint function for the script. Determines the selected modification tool, parses relevant arguments, and calls the 
+    # appropriate handler function.
 
     # Setup the base environment and parse the command line arguments
     setup_base_env

@@ -19,9 +19,8 @@ from internal_scripts.results_averager import ComputationalAverager
 
 #------------------------------------------------------------------------------------------------------------------------------
 def setup_parse_env(root_dir):
-    """ Function for setting up the environment for parsing computational performance results.
-        The function will set the various directory paths, read in the algorithm 
-        lists and set the root directories. """
+    """ Function for setting up the environment for parsing computational performance results. The function will set the 
+        various directory paths, read in the algorithm lists and set the root directories. """
 
     # Declare the algorithm list and directory paths dict variables
     kem_algs = []
@@ -30,7 +29,7 @@ def setup_parse_env(root_dir):
 
     # Ensure the root_dir path is correct before continuing
     if not os.path.isfile(os.path.join(root_dir, ".pqc_leo_dir_marker.tmp")):
-        print("Project root directory path file not correct, the main parse_results.py file is not able to establish the correct path!!!")
+        print("[ERROR] - The root directory path is not correct, please ensure the correct path is being passed to this parsing script")
         sys.exit(1)
 
     # Set the test results directory paths in central paths dictionary
@@ -52,15 +51,13 @@ def setup_parse_env(root_dir):
         for line in alg_file:
             sig_algs.append(line.strip())
 
-
     # Return the algorithm lists and directory paths
     return kem_algs, sig_algs, dir_paths
 
 #------------------------------------------------------------------------------------------------------------------------------
 def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
-    """ Function for handling the presence of older parsed results, 
-        ensuring that the user is aware of the old results and can choose 
-        how to handle them before the parsing continues. """
+    """ Function for handling the presence of older parsed results, ensuring that the user is aware of the old results 
+        and can choose how to handle them before the parsing continues. """
 
     # Check if there are any old parsed results for the current Machine-ID and handle any clashes
     if os.path.exists(dir_paths["type_mem_dir"]) or os.path.exists(dir_paths["type_speed_dir"]):
@@ -83,13 +80,13 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
         else:
 
             # Output the warning message to the terminal
-            print(f"[WARNING] - There are already parsed computational testing results present for Machine-ID ({machine_id})\n")
+            print(f"\n[WARNING] - There are already parsed computational testing results present for Machine-ID ({machine_id})")
 
             # Get the decision from the user on how to handle old results before parsing continues
             while True:
 
                 # Output the potential options and handle user choice
-                print(f"From the following options, choose how would you like to handle the old computational performance results:\n")
+                print(f"\nFrom the following options, choose how would you like to handle the old computational performance results:")
                 print("Option 1 - Replace old parsed results with new ones")
                 print("Option 2 - Exit parsing programme to move old results and rerun after (if you choose this option, please move the entire folder not just its contents)")
                 print("Option 3 - Make parsing script programme wait until you have move files before continuing")
@@ -117,6 +114,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
                     # Halt the script until the old results have been moved for the current Machine-ID
                     while True:
 
+                        # Wait for the user to indicate they have moved the old results before continuing
                         input(f"Halting parsing script so old parsed results for Machine-ID ({machine_id}) can be moved, press enter to continue")
 
                         # Check if the old results have been moved before continuing
@@ -134,7 +132,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
                 else:
 
                     # Output a warning message if the user input is not valid
-                    print("Incorrect value, please select (1/2/3)")
+                    print("[WARNING] - Incorrect value, please select (1/2/3)")
 
     else:
 
@@ -144,9 +142,8 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def check_data_mismatch(df_len, alg_list_len, context):
-    """ Helper function for detecting if there is a mismatch between the 
-        number of algorithms in the alg-list and the number of algorithms in the 
-        dataframe. If there is a mismatch, the function will output an error message
+    """ Helper function for detecting if there is a mismatch between the number of algorithms in the alg-list and the 
+        number of algorithms in the dataframe. If there is a mismatch, the function will output an error message
         and exit the script. """
     
     # Check if the dataframe length is not equal to the number of algorithms in the alg-list
@@ -158,10 +155,8 @@ def check_data_mismatch(df_len, alg_list_len, context):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def get_peak(mem_file, peak_metrics):
-    """ Helper function for taking the passed massif.out file and getting 
-        the peak memory metrics, returning the values to continue
-        processing. The function comes from the run_mem.py script 
-        found in the OQS Profiling Project
+    """ Helper function for taking the passed massif.out file and getting the peak memory metrics, returning the values 
+        to continue processing. The function comes from the run_mem.py script found in the OQS Profiling Project:
         https://github.com/open-quantum-safe/profiling """
 
     # Get the peak memory metric for the current algorithm's cryptographic operation
@@ -182,8 +177,7 @@ def get_peak(mem_file, peak_metrics):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def pre_speed_processing(dir_paths, num_runs):
-    """ Function for preparing speed up-result data by removing system information, 
-        making it ready for further processing. """
+    """ Function for preparing speed up-result data by removing system information, making it ready for further processing. """
 
     # Setup the destination directory in the current machine's up-results for pre-processed speed files
     if not os.path.exists(dir_paths['up_speed_dir']):
@@ -199,7 +193,7 @@ def pre_speed_processing(dir_paths, num_runs):
     # Pre-format the KEM and sig csv speed files to remove system information from the file
     for run_count in range(1, num_runs+1):
 
-        """ Pre-format the kem CSV files """
+        """ Pre-format the KEM CSV files """
         # Set the filename based on current run
         kem_pre_filename = kem_prefix + str(run_count) + ".csv"
         kem_filename = os.path.join(dir_paths["raw_speed_dir"], kem_pre_filename)
@@ -237,8 +231,7 @@ def pre_speed_processing(dir_paths, num_runs):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def speed_processing(dir_paths, num_runs, kem_algs, sig_algs):
-    """ Function for processing CPU speed up-results and exporting the data 
-        into a clean CSV format. """
+    """ Function for processing CPU speed up-results and exporting the data into a clean CSV format. """
 
     # Set the filename prefix variables
     kem_prefix = "test_kem_speed_"
@@ -313,8 +306,7 @@ def speed_processing(dir_paths, num_runs, kem_algs, sig_algs):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
-    """ Function for taking in the memory up-results, processing,
-        and outputting the results into a CSV format """
+    """ Function for taking in the memory up-results, processing, and outputting the results into a CSV format """
 
     # Set the un-parsed memory results directory variables
     kem_up_dir = os.path.join(dir_paths["up_mem_dir"], "kem_mem_metrics")
@@ -424,8 +416,8 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def process_tests(machine_id, num_runs, dir_paths, kem_algs, sig_algs, replace_old_results):
-    """ Function for parsing results for one or more machines, storing them as CSV files, 
-        and calculating averages once the up-results are processed. """
+    """ Function for parsing results for one or more machines, storing them as CSV files, and calculating averages once 
+        the up-results are processed. """
 
     # Declare the algorithm operations dictionary
     alg_operations = {'kem_operations': ["keygen", "encaps", "decaps"], 'sig_operations': ["keypair", "sign", "verify"]}
@@ -459,18 +451,16 @@ def process_tests(machine_id, num_runs, dir_paths, kem_algs, sig_algs, replace_o
 
 #------------------------------------------------------------------------------------------------------------------------------
 def parse_comp_performance(test_opts, replace_old_results):
-    """ Entrypoint for parsing computational benchmarking results. 
-        Calls the necessary functions to process the results. """
+    """ Entrypoint for parsing computational benchmarking results. Calls the necessary functions to process the results. """
     
     # Get the test options
-    machine_id = test_opts[0]
-    num_runs = test_opts[1]
-    root_dir = test_opts[2]
+    machine_id = test_opts["machine_id"]
+    num_runs = test_opts["total_runs"]
+    root_dir = test_opts["root_dir"]
 
     # Setup the script environment
     print(f"\nPreparing to parse Computational Performance Results:\n")
     kem_algs, sig_algs, dir_paths = setup_parse_env(root_dir)
 
     # Process the results
-    print(f"Parsing results...\n")
     process_tests(machine_id, num_runs, dir_paths, kem_algs, sig_algs, replace_old_results)

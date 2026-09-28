@@ -2,6 +2,8 @@
 Copyright (c) 2023-2026 Callum Turino
 SPDX-License-Identifier: MIT
 
+TO-DO Figure out what approach will be taken for averaging energy results
+
 Result averaging module for PQC benchmarking tools. Defines classes for calculating average metrics 
 from multi-run benchmarking outputs produced by the computational and TLS performance test suites. This module is 
 used internally by the main parsing scripts and is not intended to be run standalone. It computes per-algorithm averages 
@@ -12,6 +14,7 @@ for memory, CPU speed, and TLS handshake, and TLS speed results, and exports the
 import pandas as pd
 import os
 import numpy as np
+import sys
 
 #------------------------------------------------------------------------------------------------------------------------------
 class ComputationalAverager:
@@ -20,8 +23,8 @@ class ComputationalAverager:
     def __init__(self, dir_paths, kem_algs, sig_algs, num_runs, alg_operations):
         """ Class for generating average metrics from computational performance results.
             Computes per-algorithm averages across multiple benchmarking runs for both 
-            memory usage and CPU speed results. Called by the computational performance parsing 
-            script after results have been processed into structured CSVs. """
+            memory usage and CPU speed results. Called by the computational performance 
+            parsing script after results have been processed into structured CSVs. """
 
         # Set the global class variables used in the class methods
         self.dir_paths = dir_paths
@@ -32,9 +35,8 @@ class ComputationalAverager:
 
     #------------------------------------------------------------------------------
     def avg_mem(self):
-        """ Method for taking in the provided memory 
-            results and generating an average for all the runs for
-            the machine-ID included in the results paths """
+        """ Method for taking in the provided memory results and generating an average 
+            for all the runs for the machine-ID included in the results paths """
 
         # Declare the filepath prefix variables
         kem_mem_file_prefix = os.path.join(self.dir_paths['type_mem_dir'], "kem_mem_metrics_")
@@ -127,9 +129,8 @@ class ComputationalAverager:
 
     #------------------------------------------------------------------------------
     def avg_speed(self):
-        """ Method for taking in the provided speed 
-            results and generating an average for all the runs for
-            the machine-ID included in the results paths """
+        """ Method for taking in the provided speed results and generating an average 
+            for all the runs for the machine-ID included in the results paths """
 
         # Declare the filepath prefix variables and fieldnames list
         kem_filename_prefix = os.path.join(self.dir_paths['type_speed_dir'], "test_kem_speed_")
@@ -234,9 +235,9 @@ class TLSAverager:
     #------------------------------------------------------------------------------
     def __init__(self, dir_paths, num_runs, algs_dict, pqc_type_vars, col_headers):
         """ Class for generating average metrics from PQC TLS benchmarking results.
-            Supports PQC, PQC-Hybrid, and classic handshake results, as well as OpenSSL speed tests.
-            Computes per-algorithm averages across multiple runs and outputs them to CSV format. 
-            Called by the TLS performance parsing script. """
+            Supports PQC, PQC-Hybrid, and classic handshake results, as well as OpenSSL 
+            speed tests. Computes per-algorithm averages across multiple runs and outputs 
+            them to CSV format. Called by the TLS performance parsing script. """
         
         # Set the global class variables used in the class methods
         self.dir_paths = dir_paths
@@ -247,9 +248,9 @@ class TLSAverager:
 
     #------------------------------------------------------------------------------
     def gen_pqc_avgs(self):
-        """ Method for taking in the provided PQC TLS handshake
-            results and generating an average for all the runs for
-            the machine-ID included in the results paths """
+        """ Method for taking in the provided PQC TLS handshake results and 
+            generating an average for all the runs for the machine-ID included in 
+            the results paths """
                
         # Process the result averages for both PQC (0) and PQC-Hybrid (1) TLS test types
         for type_index in range (0,2):
@@ -341,7 +342,11 @@ class TLSAverager:
                     sig_avg_df.loc[len(sig_avg_df)] = sig_reused_average_row
 
                 # Append the current signing algorithm averages to the base average dataframe for the current test type
-                base_avg_df = pd.concat([base_avg_df, sig_avg_df], ignore_index=True, sort=False)
+                if base_avg_df.empty:
+                    base_avg_df = sig_avg_df.copy()
+
+                else:
+                    base_avg_df = pd.concat([base_avg_df, sig_avg_df], ignore_index=True, sort=False)
 
                 # Output the averages for the current signing algorithm to csv file
                 avg_out_filename = f"tls_handshake_{sig}_avg.csv"
@@ -355,9 +360,9 @@ class TLSAverager:
 
     #------------------------------------------------------------------------------
     def gen_classic_avgs(self):
-        """ Method for taking in the provided classic TLS handshake
-            results and generating an average for all the runs for
-            the machine-ID included in the results paths"""
+        """ Method for taking in the provided classic TLS handshake results and 
+            generating an average for all the runs for the machine-ID included in 
+            the results paths"""
 
         # Declaring main average dataframe
         classic_avg_df = pd.DataFrame(columns=self.col_headers['classic_headers'])
@@ -430,9 +435,9 @@ class TLSAverager:
 
     #------------------------------------------------------------------------------
     def gen_speed_avgs(self, speed_headers):
-        """ Method for taking in the provided TLS speed results 
-            and generating an average for all the runs for the 
-            machine-ID included in the results paths """
+        """ Method for taking in the provided TLS speed results and generating an 
+            average for all the runs for the machine-ID included in the results 
+            paths """
         
         # Define the alg_types list for average processing
         alg_types = ["kem", "sig"]
@@ -494,3 +499,132 @@ class TLSAverager:
                 speed_avg_filename = f"{pqc_fileprefix}_{alg_type}_avg.csv"
                 speed_avg_filepath = os.path.join(dir_list[1], speed_avg_filename)
                 speed_avg_df.to_csv(speed_avg_filepath, index=False)
+
+#------------------------------------------------------------------------------------------------------------------------------
+class EnergyAverager:
+
+    #------------------------------------------------------------------------------
+    def __init__(self, dir_paths, num_runs):
+        """ Class for condensing per-run energy result data into grouped metrics.
+            It provides methods for condensing the per-run energy results into a 
+            single row per algorithm/operation combination, with min, max, average, 
+            and standard deviation values for the poll metrics, and maximum observed
+            total values for the total metrics. """
+
+        # Set the global class variables used in the class methods
+        self.dir_paths = dir_paths
+        self.num_runs = num_runs
+        self.metric_col_names = ["Voltage (V)", "Current (A)", "Power (W)", "mWh", "mAh", "Joules", "Elapsed Time (ms)"]
+        self.poll_metric_col_names = ["Voltage (V)", "Current (A)", "Power (W)"]
+        self.total_metric_col_names = ["mWh", "mAh", "Joules", "Elapsed Time (ms)"]
+
+    #------------------------------------------------------------------------------
+    def condensed_col_formatter(self, df_col_headers):
+        """ Helper method for formatting the condensed column headers based on the 
+            default column headers from the per-run energy results. It creates new 
+            column headers for the condensed dataframe, including min, max, average, 
+            and standard deviation for poll metrics, and max-aggregated totals for
+            total metrics. """
+
+        # Find the first metrics column index to know where the actual results start from
+        first_metric_col_index = None
+        for index, column in enumerate(df_col_headers):
+            if "Voltage" in column:
+                first_metric_col_index = index
+                break
+
+        # Ensure that the first metric column index was found, otherwise exit with an error
+        if first_metric_col_index is None:
+            print("[ERROR] - Unable to find first metric column while formatting condensed energy columns")
+            sys.exit(1)
+
+        # Create the base condensed column headers list with the non-metric columns
+        condensed_col_headers = df_col_headers[:first_metric_col_index]
+
+        # Starting from the first metric column, format aggregated columns by metric type (poll vs total)
+        for column in df_col_headers[first_metric_col_index:]:
+
+            # Determine if the current column is a poll metric or a total metric and format accordingly
+            if column in self.poll_metric_col_names:
+                condensed_col_headers.extend([f"{column} Min", f"{column} Max", f"{column} Avg", f"{column} Std. Dev"])
+
+            elif column in self.total_metric_col_names:
+                condensed_col_headers.append(f"Total {column}")
+        
+        # Add the total energy reading count column to the end of the headers list
+        condensed_col_headers.append("Total Record Count")
+
+        return condensed_col_headers
+    
+    #------------------------------------------------------------------------------
+    def flatten_col_tuple(self, column):
+        """ Helper method for flattening the column tuples produced by the groupby 
+            aggregation in the condensed dataframe. It formats the column names 
+            based on the metric and calculation type, ensuring that they are 
+            human-readable and consistent with the condensed column headers. """
+
+        # Ensure that the passed column is not just a string
+        if isinstance(column, str):
+            return column
+        
+        # Separate the column tuple into its metrics and calculation type components
+        metric, calculated_value = column
+
+        # If the value is empty, return column with trailing space removed as this is not metric/calculation column
+        if calculated_value == "":
+            return metric
+
+        # Define the mapping of the calculation types and their desired formatting
+        value_name_lookup = {
+            "min": "Min",
+            "max": "Max",
+            "mean": "Avg",
+            "std": "Std. Dev",
+        }
+
+        # Format the column name based on the metric and calculation type
+        if metric in self.total_metric_col_names and calculated_value == "max":
+            return f"Total {metric}"
+
+        formatted_column = f"{metric} {value_name_lookup[calculated_value]}"
+
+        return formatted_column
+
+    #------------------------------------------------------------------------------
+    def df_run_condenser(self, run_df, non_metric_columns):
+        """ Method for condensing the per-run energy results dataframe into a single 
+            row per algorithm/operation combination, with min, max, average, and 
+            standard deviation for poll metrics, and max-aggregated totals for total
+            metrics. It returns a new condensed dataframe with the aggregated values 
+            for each algorithm/operation combination. """
+        
+        # Create the column headers for the condensed dataframe
+        df_col_headers = run_df.columns.to_list()
+        col_headers = self.condensed_col_formatter(df_col_headers)
+
+        # Declare the main condensed dataframe
+        condensed_df = pd.DataFrame(columns=col_headers)
+
+        # Group alg and operations and perform metric calculations to create the condensed values
+        metric_aggregation_map = {
+            metric: ["min", "max", "mean", "std"] for metric in self.poll_metric_col_names
+        }
+        metric_aggregation_map.update({metric: ["max"] for metric in self.total_metric_col_names})
+        condensed_df = run_df.groupby(non_metric_columns, as_index=False).agg(metric_aggregation_map)
+        
+        # Flatten the grouped dataframe back to the desired format 
+        condensed_df.columns = [self.flatten_col_tuple(column) for column in condensed_df.columns]
+
+        # Check for any instance of NaN values for the std calculations as this occurs when there in only one record
+        std_columns = [column for column in condensed_df.columns if column.endswith(" Std. Dev")]
+        condensed_df[std_columns] = condensed_df[std_columns].fillna(0.0)
+
+        # For each algorithm/operation combo, calculate the number of record counts and add that column
+        count_df = run_df.groupby(non_metric_columns, as_index=False).size().rename(columns={"size": "Total Record Count"})
+        condensed_df = condensed_df.merge(count_df, on=non_metric_columns, how="left")
+
+        # Ensure that the columns are in the expected order
+        condensed_df = condensed_df[col_headers]
+
+        return condensed_df
+    

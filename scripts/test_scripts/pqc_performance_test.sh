@@ -10,9 +10,8 @@
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function get_user_yes_no() {
-    # Helper function to prompt the user for a yes or no response. The function loops until
-    # a valid response ('y' or 'n') is provided and sets the global variable `user_y_n_response`
-    # to 1 for 'yes' and 0 for 'no'.
+    # Helper function to prompt the user for a yes or no response. The function loops until a valid response ('y' or 'n') is 
+    # provided and sets the global variable 'user_y_n_response' to 1 for 'yes' and 0 for 'no'.
 
     # Set the local user prompt variable to what was passed to the function
     local user_prompt="$1"
@@ -47,12 +46,12 @@ function get_user_yes_no() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
-function output_help_message() {
-    # Helper function for outputting the help message to the user when the --help flag is present or
-    # when incorrect arguments are passed.
+function output_help() {
+    # Helper function for outputting the help message to the user when the --help flag is present or when incorrect arguments 
+    # are passed.
 
     # Output the supported options and their usage to the user
-    echo "Usage: pqc_performance.sh [options]"
+    echo "Usage: pqc_performance_test.sh [options]"
     echo "Options:"
     echo "  --disable-result-parsing       Disable the result parsing for the test suite."
     echo "  --help                         Display this help message."
@@ -66,7 +65,7 @@ function parse_args() {
 
     # Check if the help flag is passed at any position in the command line arguments
     if [[ "$*" =~ --help ]]; then
-        output_help_message
+        output_help
         exit 0
     fi
 
@@ -100,7 +99,7 @@ function parse_args() {
 
                 # Output an error message if an unknown option is passed
                 echo "[ERROR] - Unknown option: $1"
-                output_help_message
+                output_help
                 exit 1
                 ;;
 
@@ -112,8 +111,9 @@ function parse_args() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function enable_arm_pmu() {
-    # Function for enabling the ARM PMU and allowing it to be used in user space. The function will also check if the system is a Raspberry Pi
-    # and install the Pi kernel headers if they are not already installed. The function will then enable the PMU and set the enabled_pmu flag.
+    # Function for enabling the ARM PMU and allowing it to be used in user space. The function will also check if the system is 
+    # a Raspberry Pi and install the Pi kernel headers if they are not already installed. The function will then enable the PMU 
+    # and set the enabled_pmu flag.
 
     # Checking if the system is a Raspberry Pi and install the Pi kernel headers
     if ! dpkg -s "raspberrypi-kernel-headers" >/dev/null 2>&1; then
@@ -164,8 +164,8 @@ function enable_arm_pmu() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function resolve_arm_pmu_access() {
-    # Function for resolving ARM PMU access issues. Checks if PQAX is installed and attempts to enable PMU access.
-    # Falls back to a clean installation if necessary.
+    # Function for resolving ARM PMU access issues. Checks if PQAX is installed and attempts to enable PMU access. Falls back 
+    # to a clean installation if necessary.
 
     # Check if a PQAX install is already present, and if not, call the function to enable it
     if [ -d "$libs_dir/pqax" ]; then
@@ -198,9 +198,8 @@ function resolve_arm_pmu_access() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_base_env() {
-    # Function for setting up the global environment variables for the test suite.
-    # This includes determining the project's root directory, configuring paths for libraries,
-    # test data, and temporary files, and verifying system architecture and dependencies.
+    # Function for setting up the global environment variables for the test suite. This includes determining the project's root 
+    # directory, configuring paths for libraries, test data, and temporary files, and verifying system architecture and dependencies.
 
     # Determine the directory that the script is being executed from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -314,8 +313,8 @@ function get_machine_num() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function handle_machine_id_clash() {
-    # Helper function for handling the clash of pre-existing results for the machine-ID being already present when 
-    # assigning the machine-ID for the results. It prompts the user to either replace the old results or assign a new machine-ID.
+    # Helper function for handling the clash of pre-existing results for the machine-ID being already present when assigning
+    # the machine-ID for the results. It prompts the user to either replace the old results or assign a new machine-ID.
 
     # Prompt the user for their choice until a valid response is given
     while true; do
@@ -541,9 +540,8 @@ function setup_test_suite() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function speed_tests() {
-    # Function for performing the PQC CPU speed benchmarking tests via Liboqs. This includes 
-    # running the KEM and digital signature speed tests for the specified number of runs and storing 
-    # the results in the appropriate results directories.
+    # Function for performing the PQC CPU speed benchmarking tests via Liboqs. This includes running the KEM and digital 
+    # signature speed tests for the specified number of runs and storing the results in the appropriate results directories.
 
     # Output the current task to the terminal
     echo "##############################"
@@ -653,9 +651,9 @@ function mem_tests() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function handle_result_parsing() {
-    # Function for handling automatic result parsing based on user-defined flags. This function determines whether 
-    # to parse results automatically, replace old results, or skip parsing based on the flags set during the test 
-    # setup. It calls the parsing script with the appropriate arguments and verifies the success of the parsing process.
+    # Function for handling automatic result parsing based on user-defined flags. This function determines whether to parse 
+    # results automatically, replace old results, or skip parsing based on the flags set during the test setup. It calls the 
+    # parsing script with the appropriate arguments and verifies the success of the parsing process.
 
     # Check if the automatic result parsing flag is set to enabled
     if [ $parse_results -eq 1 ]; then
@@ -683,12 +681,9 @@ function handle_result_parsing() {
         fi
 
         # Ensure that the parsing script completed successfully
-        if [ $exit_status -eq 0 ]; then
-            echo -e "\nParsed results can be found in the following directory:"
-            echo "$parsed_results_path"
-        else
+        if [ $exit_status -ne 0 ]; then
             echo -e "\n[WARNING] - Result parsing failed, manual calling of parsing script is now required\n"
-        fi 
+        fi
 
     elif [ $parse_results -eq 0 ]; then
 

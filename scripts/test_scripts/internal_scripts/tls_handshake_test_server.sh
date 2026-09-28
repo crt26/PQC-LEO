@@ -8,7 +8,7 @@
 # and Key Encapsulation Mechanism (KEM) algorithms using OpenSSL 3.6.1, with support for both native PQC 
 # implementations and those integrated via OQS-Provider. The script performs three main test suites: 
 # PQC-only, Hybrid-PQC, and Classic handshake tests. It is called by the TLS benchmarking controller script 
-# and uses globally defined test parameters, certificate and key files, and control signalling for synchronisation with the client. 
+# and uses globally defined test parameters, certificate and key files, and control signalling for synchronisation with the client.
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_base_env() {
@@ -36,7 +36,7 @@ function setup_base_env() {
 
         # If the system's root directory is reached and the file is not found, exit the script
         if [ "$current_dir" == "/" ]; then
-            echo -e "Root directory path file not present, please ensure the path is correct and try again."
+            echo -e "[ERROR] - Root directory path file not present, please ensure the path is correct and try again."
             exit 1
         fi
 
@@ -184,9 +184,8 @@ function set_test_env() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function check_control_port() {
-    # Helper function that waits until the client is listening on the control port 
-    # before allowing the client to send a control signal. If enabled, it includes 
-    # a short delay to ensure the client is ready to receive the connection.
+    # Helper function that waits until the client is listening on the control port before allowing the client to send a 
+    # control signal. If enabled, it includes a short delay to ensure the client is ready to receive the connection.
 
     # Wait until the client is listening on the control port before sending the signal
     until nc -z "$CLIENT_IP" "$CLIENT_CONTROL_PORT" > /dev/null 2>&1; do
@@ -284,9 +283,9 @@ function control_signal() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function pqc_tests() {
-    # Function for performing the PQC and Hybrid-PQC TLS handshake tests. Digital signature and KEM algorithms are 
-    # loaded based on the selected test type (0=pqc, 1=hybrid) via set_test_env. Using the current sig/kem
-    # algorithm combination, the function starts an OpenSSL s_server process that the client can connect to.
+    # Function for performing the PQC and Hybrid-PQC TLS handshake tests. Digital signature and KEM algorithms are loaded 
+    # based on the selected test type (0=pqc, 1=hybrid) via set_test_env. Using the current sig/kem algorithm combination, the 
+    # function starts an OpenSSL s_server process that the client can connect to.
 
     # Loop through all PQC/Hybrid-PQC sig algorithms to be used for signing
     for sig in "${sig_algs[@]}"; do
@@ -375,9 +374,9 @@ function pqc_tests() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function classic_tests() {
-    # Function for performing the Classic TLS handshake tests using predefined signature algorithms and ciphers.
-    # The function will loop through all classic algorithms and ciphers, starting a new OpenSSL s_server process
-    # for each combination so that the client can connect to.
+    # Function for performing the Classic TLS handshake tests using predefined signature algorithms and ciphers. The function 
+    # will loop through all classic algorithms and ciphers, starting a new OpenSSL s_server process for each combination so 
+    # that the client can connect to.
 
     # Loop through all the classic ciphers to be used for testing
     for cipher in "${ciphers[@]}"; do
@@ -479,9 +478,9 @@ function classic_tests() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function tls_server_test_entrypoint() {
-    # Main entry point for the server-side TLS handshake testing script.
-    # Coordinates setup, connection to the server, and execution of PQC, Hybrid-PQC, and Classic handshake tests
-    # over a specified number of runs. Ensures the test environment is configured and handles control signalling.
+    # Main entry point for the server-side TLS handshake testing script. Coordinates setup, connection to the server, and 
+    # execution of PQC, Hybrid-PQC, and Classic handshake tests over a specified number of runs. Ensures the test environment 
+    # is configured and handles control signalling.
 
     # Setup the base environment for the test suite
     setup_base_env

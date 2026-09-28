@@ -5,12 +5,14 @@
 
 # Client-side script for executing TLS handshake performance tests in coordination with a remote server.
 # It evaluates all supported combinations of classic, Post-Quantum Cryptography (PQC), and Hybrid-PQC signature
-# and Key Encapsulation Mechanism (KEM) algorithms using OpenSSL 3.6.1, with support for both native PQC 
-# implementations and those integrated via OQS-Provider. The script performs three main test suites: 
-# PQC-only, Hybrid-PQC, and Classic handshake tests. It is called by the TLS benchmarking controller script 
+# and Key Encapsulation Mechanism (KEM) algorithms using OpenSSL 3.6.1, with support for both native PQC
+# implementations and those integrated via OQS-Provider. The script performs three main test suites:
+# PQC-only, Hybrid-PQC, and Classic handshake tests. It is called by the TLS benchmarking controller script
 # and uses globally defined test parameters, certificate files, and control signalling for synchronisation with the server.
 # As the client-side script, it stores the output of the tests based on parameters passed to it from the main controller script,
-# saving the results to the designated directories for later analysis.
+# saving the results to the designated directories for later analysis. The script also provides support for energy consumption testing 
+# by coordinating with an energy collector utility, sending control signals to indicate test boundaries. This must be enabled during the 
+# call of the main TLS benchmarking controller script and requires additional parameters to be passed for configuration.
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_base_env() {
@@ -61,6 +63,11 @@ function setup_base_env() {
     classic_cert_dir="$key_storage_path/classic"
     hybrid_cert_dir="$key_storage_path/hybrid"
 
+    # Define path to energy testing util scripts and import the com flags array
+    energy_collector_path="$libs_dir/energy_collector"
+    control_sender="$energy_collector_path/build/bin/control_sender"
+    com_flags=($COM_FLAGS)
+
     # Declare global test flags
     test_type=0 #0=pqc, 1=hybrid, 2=classic
 
@@ -73,6 +80,13 @@ function setup_base_env() {
 
     # Export the OpenSSL library filepath
     export LD_LIBRARY_PATH="$openssl_lib_path:$LD_LIBRARY_PATH"
+
+    # Set the OpenSSL command based on whether standard testing or energy testing is being performed
+    if [ "$ENABLE_ENERGY_TESTING" -eq 0 ]; then
+        openssl_cmd="$openssl_path/bin/openssl"
+    else
+        openssl_cmd="taskset -c $TARGET_CPU_CORE $openssl_path/bin/openssl"
+    fi
 
     # Declare the current group var that will be passed to DEFAULT_GROUP env var when changing the test type
     current_group=""
@@ -92,6 +106,28 @@ function setup_base_env() {
         echo "[ERROR] - Control sleep time env variable not set. This likely indicates a broader issue with the TLS benchmarking controller script."
         exit 1
     fi
+    
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
+function get_baseline() {
+    # Function for performing the baseline measurement for energy testing. It sends a control signal to the energy collector 
+    # machine to indicate the start of the baseline measurement, then sleeps for a specified amount of time to allow the 
+    # measurement of the systems idle power consumption to be taken.
+    
+    # Send the GETREADY message to the collector machine for baseline measurement
+    "$control_sender" -s \
+        -T "tls_handshake_baseline" \
+        -A "baseline" \
+        -R "1" \
+        -P "$ENERGY_POLL_RATE" \
+        "${com_flags[@]}"
+
+    # Sleep for 10 seconds to allow baseline measurement to be taken
+    sleep 10
+
+    # Send test stop message to the collector machine
+    "$control_sender" -t "${com_flags[@]}"
     
 }
 
@@ -285,6 +321,34 @@ function control_signal() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
+function test_success_check() {
+    # Helper function for checking the exit status of a test attempt and determining whether to retry or not. It uses a fail 
+    # counter to track the number of consecutive failures for a test combination, and if the number of failures exceeds a 
+    #specified limit, it reports a hard failure to the caller.
+    # Return codes: 0=success, 1=retry, 2=failed after max retries.
+
+    # Declare the local variables to store test check variables
+    local test_exit_code="$1"
+    local max_fail_count=3000
+
+    # Exit code 0 means the attempt succeeded
+    if [ "$test_exit_code" -eq 0 ]; then
+        return 0
+    fi
+
+    # While below the retry limit, increment the failure counter and request a retry
+    if [ "$fail_counter" -lt "$max_fail_count" ]; then
+        ((fail_counter++))
+        echo "[ERROR] - s_time process failed $fail_counter times, retrying"
+        return 1
+    fi
+
+    # Retry limit reached: report hard failure to the caller
+    return 2
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
 function pqc_tests() {
     # Function for performing the PQC and Hybrid-PQC TLS handshake tests. Digital signature and KEM algorithms are 
     # loaded based on the selected test type (0=pqc, 1=hybrid) via set_test_env. Each sig/KEM pair is tested
@@ -333,36 +397,96 @@ function pqc_tests() {
                     # Set the output filename based on the current combination and run
                     output_name="tls_handshake_${run_num}_${sig_name}_${kem}.txt"
 
+                    # Define the output file path based on various env flags and test type
+                    if [ "$ENABLE_ENERGY_TESTING" -eq 0 ]; then
+                        output_path="$handshake_dir/$output_name"
+
+                    elif [ "$ENABLE_ENERGY_TESTING" -eq 1 ] && [ "$STORE_TEST_RESULTS" -eq 0 ]; then
+                        output_path="/dev/null"
+                    
+                    elif [ "$ENABLE_ENERGY_TESTING" -eq 1 ] && [ "$STORE_TEST_RESULTS" -eq 1 ]; then
+                        output_path="$handshake_dir/$output_name"
+                    
+                    fi
+
                     # Reset the fail counter
                     fail_counter=0
 
                     # Perform the testing until successful or the fail counter reaches its limit
                     while true; do
 
-                        # Run the OpenSSL s_time process with the current test parameters and grab the exit code
-                        "$openssl_path/bin/openssl" s_time \
-                            -connect "${SERVER_IP}:${S_SERVER_PORT}" \
-                            -CAfile  "$cert_file" \
-                            -time    "$TIME_NUM" \
-                            -verify  1 \
-                            -provider default \
-                            -provider oqsprovider \
-                            -provider-path "$provider_path" > "$handshake_dir/$output_name"
-                        exit_code=$?
+                        # Track if the current attempt failed (0=success, 1=failed)
+                        attempt_exit_code=0
 
-                        # Check if the test was successful and retry if not
-                        if [ $exit_code -eq 0 ]; then
+                        # Perform necessary steps to perform TLS handshake testing based on whether energy testing is enabled or not
+                        if [ "$ENABLE_ENERGY_TESTING" -eq 0 ]; then
+                            
+                            # Run the OpenSSL s_time process with the current test parameters and grab the exit code
+                            $openssl_cmd s_time \
+                                -connect "${SERVER_IP}:${S_SERVER_PORT}" \
+                                -CAfile  "$cert_file" \
+                                -time    "$TIME_NUM" \
+                                -verify  1 \
+                                -provider default \
+                                -provider oqsprovider \
+                                -provider-path "$provider_path" > "$output_path"
+                            attempt_exit_code=$?
+
+                        elif [ "$ENABLE_ENERGY_TESTING" -eq 1 ]; then
+
+                            # Define the session-ID test type flags
+                            session_id_types=("new" "reuse")
+
+                            # Perform both new and reuse session ID testing if energy testing is enabled
+                            for session_id in "${session_id_types[@]}"; do
+
+                                # Send control signal to energy collector to get ready for a new test
+                                "$control_sender" -s \
+                                    -T "tls_handshake_${session_id}" \
+                                    -A "$sig_name@$kem" \
+                                    -R "$run_num" \
+                                    -P "$ENERGY_POLL_RATE" \
+                                    "${com_flags[@]}"
+
+                                # Run the OpenSSL s_time process with the current test parameters and grab the exit code
+                                $openssl_cmd s_time \
+                                    -connect "${SERVER_IP}:${S_SERVER_PORT}" \
+                                    -CAfile  "$cert_file" \
+                                    -time    "$TIME_NUM" \
+                                    -verify  1 \
+                                    -provider default \
+                                    -provider oqsprovider \
+                                    -provider-path "$provider_path" \
+                                    "-${session_id}" >> "$output_path"
+                                session_exit_code=$?
+
+                                # Send energy test complete signal for the current session-ID test
+                                "$control_sender" -t "${com_flags[@]}"
+
+                                # If any session-ID test fails, mark attempt failed and retry entire combination
+                                if [ "$session_exit_code" -ne 0 ]; then
+                                    attempt_exit_code=1
+                                    break
+                                fi
+
+                            done
+
+                        fi
+
+                        # Check if the attempt was successful and decide whether to retry
+                        test_success_check "$attempt_exit_code"
+                        check_status=$?
+
+                        if [ "$check_status" -eq 0 ]; then
                             fail_flag=0
                             break
 
-                        elif [ $fail_counter -ne 3000 ]; then
-                            ((fail_counter++))
-                            echo "[ERROR] - s-time process failed $fail_counter times, retrying"
+                        elif [ "$check_status" -eq 1 ]; then
+                            continue
 
                         else
                             fail_flag=1
                             break
-
                         fi
                         
                     done
@@ -428,27 +552,84 @@ function classic_tests() {
                 output_name="tls_handshake_classic_${run_num}_${cipher}_${classic_alg}.txt"
                 classic_cert_file="$classic_cert_dir/${classic_alg}_srv.crt"
 
+                # Define the output file path based on various env flags and test type
+                if [ "$ENABLE_ENERGY_TESTING" -eq 0 ]; then
+                    output_path="$CLASSIC_HANDSHAKE/$output_name"
+
+                elif [ "$ENABLE_ENERGY_TESTING" -eq 1 ] && [ "$STORE_TEST_RESULTS" -eq 0 ]; then
+                    output_path="/dev/null"
+                
+                elif [ "$ENABLE_ENERGY_TESTING" -eq 1 ] && [ "$STORE_TEST_RESULTS" -eq 1 ]; then
+                    output_path="$CLASSIC_HANDSHAKE/$output_name"
+                
+                fi
+
                 # Reset the fail counter
                 fail_counter=0
 
                 # Perform the testing until successful or the fail counter reaches its limit
                 while true; do
 
-                    # Run the OpenSSL s_time process with the current test parameters and grab the exit code
-                    "$openssl_path/bin/openssl" s_time \
-                        -connect $SERVER_IP:$S_SERVER_PORT \
-                        -CAfile $classic_cert_file \
-                        -time $TIME_NUM > "$CLASSIC_HANDSHAKE/$output_name"
-                    exit_code=$?
+                    # Track if the current attempt failed (0=success, 1=failed)
+                    attempt_exit_code=0
 
-                    # Check if the test was successful and retry if not
-                    if [ $exit_code -eq 0 ]; then
+                    # Perform necessary steps to perform TLS handshake testing based on whether energy testing is enabled or not
+                    if [ "$ENABLE_ENERGY_TESTING" -eq 0 ]; then
+
+                        # Run the OpenSSL s_time process with the current test parameters and grab the exit code
+                        $openssl_cmd s_time \
+                            -connect "${SERVER_IP}:${S_SERVER_PORT}" \
+                            -CAfile "$classic_cert_file" \
+                            -time "$TIME_NUM" > "$output_path"
+                        attempt_exit_code=$?
+
+                    elif [ "$ENABLE_ENERGY_TESTING" -eq 1 ]; then
+
+                        # Define the session-ID test type flags
+                        session_id_types=("new" "reuse")
+
+                        # Perform both new and reuse session ID testing if energy testing is enabled
+                        for session_id in "${session_id_types[@]}"; do
+
+                            # Send control signal to energy collector to get ready for a new test
+                            "$control_sender" -s \
+                                -T "tls_handshake_${session_id}" \
+                                -A "$classic_alg@$cipher" \
+                                -R "$run_num" \
+                                -P "$ENERGY_POLL_RATE" \
+                                "${com_flags[@]}"
+
+                            # Run the OpenSSL s_time process with the current test parameters and grab the exit code
+                            $openssl_cmd s_time \
+                                -connect "${SERVER_IP}:${S_SERVER_PORT}" \
+                                -CAfile "$classic_cert_file" \
+                                -time "$TIME_NUM" \
+                                "-${session_id}" >> "$output_path"
+                            session_exit_code=$?
+
+                            # Send energy test complete signal for the current session-ID test
+                            "$control_sender" -t "${com_flags[@]}"
+
+                            # If any session-ID test fails, mark attempt failed and retry entire combination
+                            if [ "$session_exit_code" -ne 0 ]; then
+                                attempt_exit_code=1
+                                break
+                            fi
+
+                        done
+
+                    fi
+
+                    # Check if the attempt was successful and decide whether to retry
+                    test_success_check "$attempt_exit_code"
+                    check_status=$?
+
+                    if [ "$check_status" -eq 0 ]; then
                         fail_flag=0
                         break
 
-                    elif [ $fail_counter -ne 3000 ]; then
-                        ((fail_counter++))
-                        echo "[ERROR] - s-time process failed $fail_counter times, retrying"
+                    elif [ "$check_status" -eq 1 ]; then
+                        continue
 
                     else
                         fail_flag=1
@@ -484,9 +665,9 @@ function classic_tests() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function tls_client_test_entrypoint() {
-    # Main entry point for the client-side TLS handshake testing script.
-    # Coordinates setup, connection to the server, and execution of PQC, Hybrid-PQC, and Classic handshake tests
-    # over a specified number of runs. Ensures the test environment is configured and handles control signalling.
+    # Main entry point for the client-side TLS handshake testing script. Coordinates setup, connection to the server, and 
+    # execution of PQC, Hybrid-PQC, and Classic handshake tests over a specified number of runs. Ensures the test environment 
+    # is configured and handles control signalling.
 
     # Setup the base environment for the test suite
     setup_base_env
@@ -497,6 +678,13 @@ function tls_client_test_entrypoint() {
         echo "Custom TCP ports detected - Server Control Port: $SERVER_CONTROL_PORT, Client Control Port: $CLIENT_CONTROL_PORT, S_Server Port: $S_SERVER_PORT"
         echo "Please ensure that the server has been passed the same custom TCP port values, otherwise tests will fail"
         echo -e "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
+    fi
+
+    # Perform the baseline measurement if energy testing is enabled
+    if [ "$ENABLE_ENERGY_TESTING" -eq 1 ]; then
+        echo -e "Gathering baseline energy measurement...\n"
+        get_baseline
+        echo -e "Baseline energy measurement complete\n"
     fi
 
     # Output the waiting message and begin the initial handshake
@@ -557,6 +745,11 @@ function tls_client_test_entrypoint() {
         echo "[OUTPUT] - All $run_num Testing Completed"
 
     done
+
+    # Send test complete control signal if energy testing is enabled
+    if [ "$ENABLE_ENERGY_TESTING" -eq 1 ]; then
+        "$control_sender" --end-testing "${com_flags[@]}"
+    fi
 
 }
 tls_client_test_entrypoint

@@ -35,6 +35,8 @@ Different testing categories within this project rely on distinct combinations o
 
 Although the OQS-Provider depends on Liboqs for algorithm implementations, it exposes a different set of algorithms. As such, its supported algorithms are documented separately in this guide.
 
+Each testing category also provides support for energy usage evaluations. However, there are some algorithms that are not supported for this, and any exclusions are discussed in the relevant sections.
+
 ## Liboqs Algorithms
 
 ### Algorithm Support Summary
@@ -47,6 +49,8 @@ The PQC-LEO project supports all key encapsulation mechanisms (KEMs) and digital
 - **Stateful signature schemes (XMSS and LMS)** are currently excluded from this project. Although Liboqs supports them, they are disabled by default and require hazardous experimental build flags to enable key generation and signing. These schemes are not part of the NIST standardisation process, and Liboqs explicitly warns that support may be removed in future releases if misused. Their inclusion within this project may be reconsidered in a future release if justified.
 
 These exceptions are reflected in the tables below. If users wish to enable HQC despite the associated risks, detailed instructions are provided in the advanced setup guide.
+
+All Liboqs algorithms listed below are also supported for computational energy usage testing.
 
 For further context and guidance:
 
@@ -339,6 +343,15 @@ To provide performance baselines for comparison, classical algorithms are also i
 
 These schemes help assess the overhead and feasibility of PQC adoption in real-world contexts.
 
+#### Supported Algorithms for Energy Usage Evaluations
+Algorithms provided by OpenSSL that are used within standard TLS handshake and TLS speed testing are also supported for energy usage evaluation testing. However, there are the following exceptions for Hybrid-PQC TLS speed energy usage testing. This is due to the current version of OpenSSL not providing encoding paths for the Hybrid-PQC KEM algorithms, preventing key export and file-based cryptographic operations required by the benchmarking process. This will continue to be reviewed in future releases of PQC-LEO to provide support for these algorithms in energy usage testing where possible.
+
+**Unsupported Algorithms for TLS Speed Energy Usage Testing:**
+- X25519MLKEM768
+- X448MLKEM1024
+- SecP256r1MLKEM768
+- SecP384r1MLKEM1024
+
 ### Supported KEM Algorithms
 
 | **Algorithm Name** | **Hybrid Algorithm (*)** | **TLS Handshake Test Support (*)** | **OpenSSL Speed Test Support (*)** |
@@ -397,6 +410,9 @@ Whilst a significant number of these scheme variations can not be used in TLS Ha
 
 #### OpenSSL 3.6.1 Compatibility
 With native support of various PQC algorithms in OpenSSL 3.6.1, the OQS-Provider library automatically disables its implementations of overlapping algorithms (e.g., ML-KEM, ML-DSA, SLH-DSA) to prevent provider conflicts during initialisation. For more information, see the relevant OQS-Provider documentation below.
+
+#### Supported Algorithms for Energy Usage Testing
+All algorithms listed below that are supported for TLS handshake testing and TLS speed testing are also supported for the corresponding TLS handshake energy usage testing and TLS speed energy usage testing.
 
 #### Additional Information
 For further details on algorithm support, compatibility, HQC implementation issues, or enabling OQS-Provider algorithms suppourted by PQC-LEO that are disabled by default, see:
