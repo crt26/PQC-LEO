@@ -324,7 +324,7 @@ int control_handler(TestController *test_controller, TestParams *test_params) {
         case 1:
 
             // Declare the GETREADY message and its size
-            char get_ready_message[256];
+            char get_ready_message[512];
             size_t message_size = sizeof(get_ready_message);
 
             // Prepare the GETREADY message with the test parameters

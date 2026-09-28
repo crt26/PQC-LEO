@@ -4,10 +4,10 @@
 # SPDX-License-Identifier: MIT
 
 # Client-side script for executing TLS handshake performance tests in coordination with a remote server.
-# It evaluates all supported combinations of classic, Post-Quantum Cryptography (PQC), and Hybrid-PQC signature
-# and Key Encapsulation Mechanism (KEM) algorithms using OpenSSL 4.0.1, with support for both native PQC
-# implementations and those integrated via OQS-Provider. The script performs three main test suites:
-# PQC-only, Hybrid-PQC, and Classic handshake tests. It is called by the TLS benchmarking controller script
+# It evaluates PQC and Hybrid-PQC signature/KEM pairs and every configured classical
+# signature/key-exchange-group/ciphersuite combination using OpenSSL 4.0.1, with support for both native PQC
+# implementations and those integrated via the OQS-Provider. The script performs three main test suites:
+# PQC, Hybrid-PQC, and classical handshake tests. It is called by the TLS benchmarking controller script
 # and uses globally defined test parameters, certificate files, and control signalling for synchronisation with the server.
 # As the client-side script, it stores the output of the tests based on parameters passed to it from the main controller script,
 # saving the results to the designated directories for later analysis. The script also provides support for energy consumption testing 
@@ -96,10 +96,9 @@ function setup_base_env() {
     sig_alg_file="$test_data_dir/alg_lists/tls_sig_algs.txt"
     hybrid_kem_alg_file="$test_data_dir/alg_lists/tls_hybr_kem_algs.txt"
     hybrid_sig_alg_file="$test_data_dir/alg_lists/tls_hybr_sig_algs.txt"
-
-    # Set the test classic algorithms and ciphers arrays
-    classic_algs=( "RSA_2048" "RSA_3072" "RSA_4096" "prime256v1" "secp384r1" "secp521r1")
-    ciphers=("TLS_AES_256_GCM_SHA384" "TLS_CHACHA20_POLY1305_SHA256" "TLS_AES_128_GCM_SHA256")
+    classic_sig_alg_file="$test_data_dir/alg_lists/tls_classic_sig_algs.txt"
+    classic_key_exchange_group_file="$test_data_dir/alg_lists/tls_classic_key_exchange_groups.txt"
+    classic_ciphersuite_file="$test_data_dir/alg_lists/tls_classic_ciphersuites.txt"
 
     # Ensure that the control sleep time env variables has been passed if not disabled
     if [ -z "$CONTROL_SLEEP_TIME" ] && [ -z "$DISABLE_CONTROL_SLEEP" ]; then
@@ -204,8 +203,37 @@ function set_test_env() {
 
     elif [ "$test_type" -eq 2 ]; then
 
-        # Set the configurations in openssl.cnf file for classic algorithm testing
-        current_group="ffdhe2048:ffdhe3072:ffdhe4096:prime256v1:secp384r1:secp521r1"
+        # Set the classic signature algorithms
+        classic_sig_algs=()
+        while IFS= read -r line || [[ -n "$line" ]]; do
+            if [[ -n "$line" ]]; then
+                classic_sig_algs+=("$line")
+            fi
+        done < "$classic_sig_alg_file"
+
+        # Set the classic TLS key exchange groups
+        classic_key_exchange_groups=()
+        while IFS= read -r line || [[ -n "$line" ]]; do
+            if [[ -n "$line" ]]; then
+                classic_key_exchange_groups+=("$line")
+            fi
+        done < "$classic_key_exchange_group_file"
+
+        # Set the classic TLS ciphersuites
+        classic_ciphersuites=()
+        while IFS= read -r line || [[ -n "$line" ]]; do
+            if [[ -n "$line" ]]; then
+                classic_ciphersuites+=("$line")
+            fi
+        done < "$classic_ciphersuite_file"
+
+        # Populate the current group string with the configured classic TLS key exchange groups
+        for classic_group in "${classic_key_exchange_groups[@]}"; do
+            current_group+=":$classic_group"
+        done
+
+        # Remove the leading colon from the group string
+        current_group="${current_group:1}"
 
         # Set the configurations in openssl.cnf file for classic algorithm testing
         if ! "$util_scripts/configure_openssl_cnf.sh" $configure_mode; then
@@ -569,87 +597,71 @@ function pqc_tests() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function classic_tests() {
-    # Function for performing the Classic TLS handshake tests using predefined signature algorithms and ciphers.
-    # Each classic cipher/sig combination is tested using OpenSSL's s_time utility.
+    # Function for performing the Classic TLS handshake tests using the generated signature algorithm, key exchange group, and
+    # ciphersuite lists. Each configured combination is tested using OpenSSL's s_time utility.
 
-    # Loop through all the classic ciphers to be used for testing
-    for cipher in "${ciphers[@]}"; do
+    # Loop through all configured classic signature algorithms
+    for classic_sig in "${classic_sig_algs[@]}"; do
 
-        # Loop through all the classic signature algorithms and perform tests with the current cipher
-        for classic_alg in "${classic_algs[@]}"; do
+        # Loop through all configured classic TLS key exchange groups
+        for key_exchange_group in "${classic_key_exchange_groups[@]}"; do
 
-            # Set the fail flag to the default value of false
-            fail_flag=0
+            # Restrict the s_time client to the current TLS key exchange group through the OpenSSL configuration
+            export DEFAULT_GROUPS="$key_exchange_group"
 
-            # Perform the current run cipher/sig combination test until it passes
-            while true; do
+            # Loop through all configured classic TLS ciphersuites
+            for ciphersuite in "${classic_ciphersuites[@]}"; do
 
-                # Output the current TLS handshake test info
-                echo -e "\n-------------------------------------------------------------------------"
-                echo "[OUTPUT] - Classic Cipher Tests, Run - $run_num, Cipher - $cipher, Sig Alg - $classic_alg"
+                # Set the fail flag to the default value of false
+                fail_flag=0
 
-                # Perform the iteration handshake
-                control_signal "iteration_handshake"
-
-                # Send the client ready signal and wait for the server ready signal
-                control_signal "control_send" "ready"
-                control_signal "control_wait"
-
-                # Set the output filename based on the current combination and run and CA file
-                output_name="tls_handshake_classic_${run_num}_${cipher}_${classic_alg}.txt"
-                classic_cert_file="$classic_cert_dir/${classic_alg}_CA.crt"
-
-                # Define the output file path based on various env flags and test type
-                if [ "$ENABLE_ENERGY_TESTING" -eq 0 ]; then
-                    output_path="$CLASSIC_HANDSHAKE/$output_name"
-
-                elif [ "$ENABLE_ENERGY_TESTING" -eq 1 ] && [ "$STORE_TEST_RESULTS" -eq 0 ]; then
-                    output_path="/dev/null"
-                
-                elif [ "$ENABLE_ENERGY_TESTING" -eq 1 ] && [ "$STORE_TEST_RESULTS" -eq 1 ]; then
-                    output_path="$CLASSIC_HANDSHAKE/$output_name"
-                
-                fi
-
-                # Reset the fail counter
-                fail_counter=0
-
-                # Perform the testing until successful or the fail counter reaches its limit
+                # Perform the current signature/group/ciphersuite combination test until it passes
                 while true; do
 
-                    # Track if the current attempt failed (0=success, 1=failed)
-                    attempt_exit_code=0
+                    # Output the current TLS handshake test info
+                    echo -e "\n-------------------------------------------------------------------------"
+                    echo "[OUTPUT] - Classic Tests, Run - $run_num, Signature - $classic_sig, Key Exchange Group - $key_exchange_group, Ciphersuite - $ciphersuite"
 
-                    # Perform necessary steps to perform TLS handshake testing based on whether energy testing is enabled or not
+                    # Perform the iteration handshake
+                    control_signal "iteration_handshake"
+
+                    # Send the client ready signal and wait for the server ready signal
+                    control_signal "control_send" "ready"
+                    control_signal "control_wait"
+
+                    # Set the output filename and CA certificate based on the current test combination
+                    output_name="tls_handshake_classic_${run_num}_${classic_sig}_${key_exchange_group}_${ciphersuite}.txt"
+                    classic_cert_file="$classic_cert_dir/${classic_sig}_CA.crt"
+
+                    # Ensure that the CA certificate for the current signature algorithm is present
+                    if [[ ! -f "$classic_cert_file" ]]; then
+                        echo "[ERROR] - Missing classic CA certificate for signature algorithm: $classic_sig"
+                        exit 1
+                    fi
+
+                    # Define the output file path based on various env flags and test type
                     if [ "$ENABLE_ENERGY_TESTING" -eq 0 ]; then
+                        output_path="$CLASSIC_HANDSHAKE/$output_name"
 
-                        # Create a temporary file for the s_time error output
-                        s_time_error_file=$(mktemp) || {
-                            echo "[ERROR] - Failed to create a temporary file for the s_time error output."
-                            exit 1
-                        }
+                    elif [ "$ENABLE_ENERGY_TESTING" -eq 1 ] && [ "$STORE_TEST_RESULTS" -eq 0 ]; then
+                        output_path="/dev/null"
 
-                        # Run the OpenSSL s_time process with the current test parameters and grab the exit code
-                        $openssl_cmd s_time \
-                            -connect "${SERVER_IP}:${S_SERVER_PORT}" \
-                            -CAfile "$classic_cert_file" \
-                            -time "$TIME_NUM" \
-                            -verify 1 \
-                            >> "$output_path" 2>"$s_time_error_file"
-                        attempt_exit_code=$?
+                    elif [ "$ENABLE_ENERGY_TESTING" -eq 1 ] && [ "$STORE_TEST_RESULTS" -eq 1 ]; then
+                        output_path="$CLASSIC_HANDSHAKE/$output_name"
 
-                        # Check the process result and stderr output, then remove the temporary file
-                        if ! check_s_time_errors "$attempt_exit_code" "$s_time_error_file"; then
-                            attempt_exit_code=1
-                        fi
+                    fi
 
-                    elif [ "$ENABLE_ENERGY_TESTING" -eq 1 ]; then
+                    # Reset the fail counter
+                    fail_counter=0
 
-                        # Define the session-ID test type flags
-                        session_id_types=("new" "reuse")
+                    # Perform the testing until successful or the fail counter reaches its limit
+                    while true; do
 
-                        # Perform both new and reuse session ID testing if energy testing is enabled
-                        for session_id in "${session_id_types[@]}"; do
+                        # Track if the current attempt failed (0=success, 1=failed)
+                        attempt_exit_code=0
+
+                        # Perform necessary steps to perform TLS handshake testing based on whether energy testing is enabled or not
+                        if [ "$ENABLE_ENERGY_TESTING" -eq 0 ]; then
 
                             # Create a temporary file for the s_time error output
                             s_time_error_file=$(mktemp) || {
@@ -657,76 +669,108 @@ function classic_tests() {
                                 exit 1
                             }
 
-                            # Send control signal to energy collector to get ready for a new test
-                            "$control_sender" -s \
-                                -T "tls_handshake_${session_id}" \
-                                -A "$classic_alg@$cipher" \
-                                -R "$run_num" \
-                                -P "$ENERGY_POLL_RATE" \
-                                "${com_flags[@]}"
-
                             # Run the OpenSSL s_time process with the current test parameters and grab the exit code
                             $openssl_cmd s_time \
                                 -connect "${SERVER_IP}:${S_SERVER_PORT}" \
                                 -CAfile "$classic_cert_file" \
                                 -time "$TIME_NUM" \
                                 -verify 1 \
-                                "-${session_id}" \
+                                -ciphersuites "$ciphersuite" \
                                 >> "$output_path" 2>"$s_time_error_file"
-                            session_exit_code=$?
+                            attempt_exit_code=$?
 
                             # Check the process result and stderr output, then remove the temporary file
-                            if ! check_s_time_errors "$session_exit_code" "$s_time_error_file"; then
-                                session_exit_code=1
-                            fi
-
-                            # Send energy test complete signal for the current session-ID test
-                            "$control_sender" -t "${com_flags[@]}"
-
-                            # If any session-ID test fails, mark attempt failed and retry entire combination
-                            if [ "$session_exit_code" -ne 0 ]; then
+                            if ! check_s_time_errors "$attempt_exit_code" "$s_time_error_file"; then
                                 attempt_exit_code=1
-                                break
                             fi
 
-                        done
+                        elif [ "$ENABLE_ENERGY_TESTING" -eq 1 ]; then
 
-                    fi
+                            # Define the session-ID test type flags
+                            session_id_types=("new" "reuse")
 
-                    # Check if the attempt was successful and decide whether to retry
-                    test_success_check "$attempt_exit_code"
-                    check_status=$?
+                            # Perform both new and reuse session ID testing if energy testing is enabled
+                            for session_id in "${session_id_types[@]}"; do
 
-                    if [ "$check_status" -eq 0 ]; then
-                        fail_flag=0
+                                # Create a temporary file for the s_time error output
+                                s_time_error_file=$(mktemp) || {
+                                    echo "[ERROR] - Failed to create a temporary file for the s_time error output."
+                                    exit 1
+                                }
+
+                                # Send control signal to energy collector to get ready for a new test
+                                "$control_sender" -s \
+                                    -T "tls_handshake_${session_id}" \
+                                    -A "$classic_sig@$key_exchange_group@$ciphersuite" \
+                                    -R "$run_num" \
+                                    -P "$ENERGY_POLL_RATE" \
+                                    "${com_flags[@]}"
+
+                                # Run the OpenSSL s_time process with the current test parameters and grab the exit code
+                                $openssl_cmd s_time \
+                                    -connect "${SERVER_IP}:${S_SERVER_PORT}" \
+                                    -CAfile "$classic_cert_file" \
+                                    -time "$TIME_NUM" \
+                                    -verify 1 \
+                                    -ciphersuites "$ciphersuite" \
+                                    "-${session_id}" \
+                                    >> "$output_path" 2>"$s_time_error_file"
+                                session_exit_code=$?
+
+                                # Check the process result and stderr output, then remove the temporary file
+                                if ! check_s_time_errors "$session_exit_code" "$s_time_error_file"; then
+                                    session_exit_code=1
+                                fi
+
+                                # Send energy test complete signal for the current session-ID test
+                                "$control_sender" -t "${com_flags[@]}"
+
+                                # If any session-ID test fails, mark attempt failed and retry entire combination
+                                if [ "$session_exit_code" -ne 0 ]; then
+                                    attempt_exit_code=1
+                                    break
+                                fi
+
+                            done
+
+                        fi
+
+                        # Check if the attempt was successful and decide whether to retry
+                        test_success_check "$attempt_exit_code"
+                        check_status=$?
+
+                        if [ "$check_status" -eq 0 ]; then
+                            fail_flag=0
+                            break
+
+                        elif [ "$check_status" -eq 1 ]; then
+                            continue
+
+                        else
+                            fail_flag=1
+                            break
+
+                        fi
+
+                    done
+
+                    # Send the test complete or failed signal to the server
+                    if [ "$fail_flag" -eq 0 ]; then
+
+                        # Send the complete signal to the server
+                        control_signal "control_send" "complete"
                         break
-
-                    elif [ "$check_status" -eq 1 ]; then
-                        continue
 
                     else
-                        fail_flag=1
-                        break
+
+                        # Send the failed signal and restart the current signature/group/ciphersuite combination after 4 seconds
+                        echo "[ERROR] - Failed to establish test connection, restarting current signature/group/ciphersuite combination"
+                        control_signal "control_send" "failed"
+                        sleep 4
 
                     fi
-                    
+
                 done
-
-                # Send the test complete or failed signal to the server
-                if [ $fail_flag -eq 0 ]; then
-
-                    # Send the complete signal to the server
-                    control_signal "control_send" "complete"
-                    break
-
-                else
-
-                    # Send the failed signal to the server and restart the current run cipher/sig combination after 4 seconds
-                    echo "[ERROR] - Failed to establish test connection, restarting current run cipher/sig combination"
-                    control_signal "control_send" "failed"
-                    sleep 4
-
-                fi
 
             done
 

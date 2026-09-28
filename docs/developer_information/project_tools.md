@@ -140,7 +140,7 @@ The script accepts the following command line arguments:
 | `-t`                   | `--stop-test`           | Send a test stop message.                                                              |
 | `-e`                   | `--end-testing`         | Send a message to end the entire testing session.                                      |
 | `-T`                   | `--test-type `          | Specify the test type (e.g., performance, tls_handshake, etc.)                         |
-| `-A`                   | `--test-algs `          | String to specify the algorithm/s that are being tested.                               |
+| `-A`                   | `--test-algs `          | Algorithm metadata; TLS handshakes use `sig@kem` or `sig@group@ciphersuite`.           |
 | `-R`                   | `--run-num `            | Specify the run number for the test (positive integer).                                |
 | `-P`                   | `--polling-rate `       | Specify the polling rate in milliseconds (a value of 0 means no delays between polls). |
 | `-Z`                   | `--controller-method `  | Specify the control signalling method to use (serial or network).                      |

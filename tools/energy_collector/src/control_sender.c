@@ -30,7 +30,7 @@ void output_help() {
     printf("-t, --stop-test                                 Send a test stop message\n");
     printf("-e, --end-testing                               Send a message to end the entire testing session\n");
     printf("-T, --test-type=<type>                          Specify the test type (e.g., performance, tls_handshake, etc.)\n");
-    printf("-A, --test-algs=<algs>                          Specify the algorithms to test (comma-separated values, e.g., alg1,alg2)\n");
+    printf("-A, --test-algs=<algs>                          Specify algorithm metadata (e.g., kem or sig@kem or sig@group@ciphersuite)\n");
     printf("-R, --run-num=<number>                          Specify the run number for the test (positive integer)\n");
     printf("-P, --polling-rate=<rate>                       Specify the polling rate in milliseconds (a value of 0 means no delays between polls)\n");
     printf("-Z,  --controller-method=<serial|network>       Specify the control signalling method to use (serial or network)\n");

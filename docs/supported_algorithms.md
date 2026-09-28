@@ -1,9 +1,9 @@
-# Supported PQC Algorithms <!-- omit from toc -->
+# Supported Algorithms <!-- omit from toc -->
 
 ## Support Overview <!-- omit from toc -->
-This document outlines the Key Encapsulation Mechanisms (KEMs) and digital signature algorithms supported by this project, based on its upstream cryptographic dependencies: Liboqs, OQS-Provider, and OpenSSL. While the PQC-LEO project integrates nearly all algorithms from these libraries, there are a few exceptions.
+This document outlines the post quantum cryptography (PQC), Hybrid-PQC, and classical cryptographic algorithms supported by this framework, based on its upstream cryptographic dependencies: Liboqs, OQS-Provider, and OpenSSL. While the PQC-LEO framework integrates nearly all algorithms from these libraries, there are a few exceptions.
 
-It contains comprehensive lists of all supported PQC algorithms, along with any exclusions and the rationale behind them.
+It contains comprehensive lists of the supported algorithms, along with any exclusions and the rationale behind them.
 
 > **Notice:** If you use the --latest-dependency-versions flag with the main setup script to pull the most recent versions of the OQS libraries, the supported algorithms may differ from what is documented here. This documentation reflects support based on the last tested versions of the dependencies and may not be accurate for upstream updates.
 
@@ -15,13 +15,15 @@ It contains comprehensive lists of all supported PQC algorithms, along with any 
   - [Supported Digital Signature Algorithms](#supported-digital-signature-algorithms)
 - [OpenSSL Algorithms](#openssl-algorithms)
   - [Algorithm Support Summary](#algorithm-support-summary-1)
-  - [Supported KEM Algorithms](#supported-kem-algorithms-1)
-  - [Supported Digital Signature Algorithms](#supported-digital-signature-algorithms-1)
-  - [Supported Classical Algorithms](#supported-classical-algorithms)
+  - [Supported PQC KEM Algorithms](#supported-pqc-kem-algorithms)
+  - [Supported PQC Digital Signature Algorithms](#supported-pqc-digital-signature-algorithms)
+  - [Supported Classical Digital Signature Algorithms](#supported-classical-digital-signature-algorithms)
+  - [Supported Classical Key Exchange Algorithms](#supported-classical-key-exchange-algorithms)
+  - [Supported Classical Ciphersuites](#supported-classical-ciphersuites)
 - [OQS-Provider Algorithms](#oqs-provider-algorithms)
   - [Algorithm Support Summary](#algorithm-support-summary-2)
-  - [Supported KEM Algorithms](#supported-kem-algorithms-2)
-  - [Supported Digital Signature Algorithms](#supported-digital-signature-algorithms-2)
+  - [Supported KEM Algorithms](#supported-kem-algorithms-1)
+  - [Supported Digital Signature Algorithms](#supported-digital-signature-algorithms-1)
 - [External Documentation](#external-documentation)
 
 ## Dependency Usage by Testing Category
@@ -343,12 +345,11 @@ The TLS handshake transmission cost test uses the same algorithm lists as standa
 - The **X448MLKEM1024** Hybrid-PQC KEM is implemented and supported by OpenSSL's `speed` tool, but not registered as a TLS group. It is excluded from TLS handshake and transmission cost testing, though it remains available for TLS speed testing within this project.
 
 #### Classical Algorithm Benchmarks
-To provide performance baselines for comparison, classical algorithms are also included in TLS benchmarking:
+To provide performance baselines for comparison, TLS handshake, TLS speed, and transmission-cost testing includes a set of classical digital signature algorithms, key-exchange groups, and TLS 1.3 ciphersuites. Every supported classical signing algorithm is tested with every supported key-exchange-group and ciphersuite combination. However, in TLS speed testing, only the signing and key-exchange algorithms are benchmarked, excluding ciphersuites. The complete lists are provided in the classical algorithm tables below.
 
-- RSA-2048, RSA-3072, RSA-4096
-- prime256v1, secp384r1, secp521r1
+RSA-PSS is supported for TLS handshake, transmission-cost, and TLS speed energy usage testing. However, it is not supported for standard TLS speed testing. The absence of RSA-PSS in standard TLS speed testing is due to the limitations of the `openssl speed` command interface, which does not provide a separate RSA-PSS selector or result category. Instead, it only exposes size-based RSA selectors (e.g., `rsa2048`, `rsa3072`, `rsa4096`) that benchmark the standard RSA/PKCS#1 v1.5 path.
 
-These schemes help assess the overhead and feasibility of PQC adoption in real-world contexts.
+These configurations help assess the overhead and feasibility of PQC adoption in real-world contexts by providing a comprehensive comparison of performance metrics.
 
 #### Supported Algorithms for Energy Usage Evaluations
 Algorithms provided by OpenSSL that are used within standard TLS handshake and TLS speed testing are also supported for energy usage evaluation testing. However, there are the following exceptions for Hybrid-PQC TLS speed energy usage testing. This is due to the current version of OpenSSL not providing encoding paths for the Hybrid-PQC KEM algorithms, preventing key export and file-based cryptographic operations required by the benchmarking process. This will continue to be reviewed in future releases of PQC-LEO to provide support for these algorithms in energy usage testing where possible.
@@ -360,7 +361,7 @@ Algorithms provided by OpenSSL that are used within standard TLS handshake and T
 - SecP384r1MLKEM1024
 - curveSM2MLKEM768
 
-### Supported KEM Algorithms
+### Supported PQC KEM Algorithms
 
 | **Algorithm Name** | **Hybrid Algorithm (*)** | **TLS Handshake Test Support (*)** | **OpenSSL Speed Test Support (*)** | **TLS Handshake Bytes Test Support (*)** |
 |--------------------|--------------------------|------------------------------------|------------------------------------|------------------------------------------|
@@ -373,7 +374,7 @@ Algorithms provided by OpenSSL that are used within standard TLS handshake and T
 | SecP384r1MLKEM1024 |             *            |                  *                 |                  *                 |                     *                    |
 | curveSM2MLKEM768   |             *            |                  *                 |                  *                 |                     *                    |
 
-### Supported Digital Signature Algorithms
+### Supported PQC Digital Signature Algorithms
 
 | **Algorithm Name** | **Hybrid Algorithm (*)** | **TLS Handshake Test Support (*)** | **OpenSSL Speed Test Support (*)** | **TLS Handshake Bytes Test Support (*)** |
 |--------------------|--------------------------|------------------------------------|------------------------------------|------------------------------------------|
@@ -381,16 +382,48 @@ Algorithms provided by OpenSSL that are used within standard TLS handshake and T
 | MLDSA65            |                          |                  *                 |                  *                 |                     *                    |
 | MLDSA87            |                          |                  *                 |                  *                 |                     *                    |
 
-### Supported Classical Algorithms
+### Supported Classical Digital Signature Algorithms
 
-| **Algorithm Name** | **TLS Handshake Test Support (*)** | **OpenSSL Speed Test Support (*)** | **TLS Handshake Bytes Test Support (*)** |
-|--------------------|------------------------------------|------------------------------------|------------------------------------------|
-| RSA-2048           |                  *                 |                  *                 |                     *                    |
-| RSA-3072           |                  *                 |                  *                 |                     *                    |
-| RSA-4096           |                  *                 |                  *                 |                     *                    |
-| prime256v1         |                  *                 |                  *                 |                     *                    |
-| secp384r1          |                  *                 |                  *                 |                     *                    |
-| secp521r1          |                  *                 |                  *                 |                     *                    |
+| **Algorithm Name** | **TLS Handshake Test Support (*)** | **OpenSSL Speed Test Support (*)** | **TLS Speed Energy Test Support (*)** | **TLS Handshake Bytes Test Support (*)** |
+|--------------------|:----------------------------------:|:----------------------------------:|:-------------------------------------:|:----------------------------------------:|
+| RSA_2048           |                  *                 |                  *                 |                   *                   |                     *                    |
+| RSA_3072           |                  *                 |                  *                 |                   *                   |                     *                    |
+| RSA_4096           |                  *                 |                  *                 |                   *                   |                     *                    |
+| RSA-PSS_2048       |                  *                 |                                    |                   *                   |                     *                    |
+| RSA-PSS_3072       |                  *                 |                                    |                   *                   |                     *                    |
+| RSA-PSS_4096       |                  *                 |                                    |                   *                   |                     *                    |
+| prime256v1         |                  *                 |                  *                 |                   *                   |                     *                    |
+| secp384r1          |                  *                 |                  *                 |                   *                   |                     *                    |
+| secp521r1          |                  *                 |                  *                 |                   *                   |                     *                    |
+| ed25519            |                  *                 |                  *                 |                   *                   |                     *                    |
+| ed448              |                  *                 |                  *                 |                   *                   |                     *                    |
+| brainpoolP256r1    |                  *                 |                  *                 |                   *                   |                     *                    |
+| brainpoolP384r1    |                  *                 |                  *                 |                   *                   |                     *                    |
+| brainpoolP512r1    |                  *                 |                  *                 |                   *                   |                     *                    |
+
+The blank OpenSSL speed-test cells for `RSA-PSS_*` indicate that `openssl speed` does not produce a distinct RSA-PSS benchmark category. They do not indicate that RSA-PSS is unsupported by OpenSSL or TLS.
+
+### Supported Classical Key Exchange Algorithms
+
+| **Key Exchange Group** | **TLS Handshake Test Support (*)** | **OpenSSL Speed Test Support (*)** | **TLS Speed Energy Test Support (*)** | **TLS Handshake Bytes Test Support (*)** |
+|------------------------|:----------------------------------:|:----------------------------------:|:-------------------------------------:|:----------------------------------------:|
+| x25519                 |                  *                 |                  *                 |                   *                   |                     *                    |
+| x448                   |                  *                 |                  *                 |                   *                   |                     *                    |
+| secp256r1              |                  *                 |                  *                 |                   *                   |                     *                    |
+| secp384r1              |                  *                 |                  *                 |                   *                   |                     *                    |
+| secp521r1              |                  *                 |                  *                 |                   *                   |                     *                    |
+| brainpoolP256r1tls13   |                  *                 |                  *                 |                   *                   |                     *                    |
+| brainpoolP384r1tls13   |                  *                 |                  *                 |                   *                   |                     *                    |
+| brainpoolP512r1tls13   |                  *                 |                  *                 |                   *                   |                     *                    |
+
+### Supported Classical Ciphersuites
+
+| **Ciphersuite**              | **TLS Handshake Test Support (*)** | **OpenSSL Speed Test Support (*)** | **TLS Speed Energy Test Support (*)** | **TLS Handshake Bytes Test Support (*)** |
+|------------------------------|:----------------------------------:|:----------------------------------:|:-------------------------------------:|:----------------------------------------:|
+| TLS_AES_128_GCM_SHA256       |                  *                 |                                    |                                       |                     *                    |
+| TLS_AES_256_GCM_SHA384       |                  *                 |                                    |                                       |                     *                    |
+| TLS_CHACHA20_POLY1305_SHA256 |                  *                 |                                    |                                       |                     *                    |
+| TLS_AES_128_CCM_SHA256       |                  *                 |                                    |                                       |                     *                    |
 
 ## OQS-Provider Algorithms
 

@@ -217,7 +217,7 @@ int ret = controller_send(&controller, message);
 Control signal messages can be received using the `controller_receive()` function. The following is an example of how to receive a control signal message using the controller instance:
 
 ```c
-char msg_buffer[256];
+char msg_buffer[512];
 int ret = controller_receive(&controller, msg_buffer, sizeof(msg_buffer));
 ```
 
@@ -448,7 +448,7 @@ typedef struct {
 - `char *control_method`: Control communication method ("serial" or "network").
 - `int control_type`: Numeric control message type identifier used by internal logic.
 - `char *test_type`: Test category/name.
-- `const char *test_algs`: Tested algorithm/s.
+- `const char *test_algs`: Tested algorithm metadata. TLS handshakes use `signing-alg@kem-alg` for PQC/Hybrid-PQC or `signing-alg@key-exchange-group@ciphersuite` for classical configurations.
 - `int total_runs`: Total number of runs configured for the test.
 - `int run_num`: Run number for the current test.
 - `int iterations`: Number of iterations configured for the run.
@@ -652,7 +652,7 @@ Example usage of the `message_parser()` function is shown below:
 #include "controller_utils.h"
 
 // Define a buffer to hold the received message
-char received_message[256];
+char received_message[512];
 
 // Wait for a GETREADY message to be received from the control port
 int ret = controller_receive(&controller, received_message, sizeof(received_message));
@@ -677,15 +677,15 @@ Example usage of the `get_ready_formatter()` function is shown below:
 TestParams test_params;
 test_params.control_method = "serial";
 test_params.control_type = 1;
-test_params.test_type = "tls_speed";
-test_params.test_algs = "ML-KEM-512";
+test_params.test_type = "tls_handshake";
+test_params.test_algs = "ed25519@x25519@TLS_AES_128_GCM_SHA256";
 test_params.total_runs = 5;
 test_params.run_num = 1;
 test_params.iterations = 100;
 test_params.polling_rate = 100.0;
 
 // Define a buffer to hold the formatted GETREADY message
-char get_ready_message[256];
+char get_ready_message[512];
 size_t message_size = sizeof(get_ready_message);
 
 // Format the GETREADY message with the test parameters

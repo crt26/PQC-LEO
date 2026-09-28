@@ -158,8 +158,8 @@ An example of how the `control_sender` program can be called to send a GETREADY 
 
 ```bash
 ./control_sender -s \
-  -T "tls_speed_signature_verify" \
-  -A "ML-DSA" \
+  -T "tls_speed_sig_verify" \
+  -A "MLDSA44" \
   -R "1" \
   -P "100" \
   -Z "serial" \
@@ -175,7 +175,7 @@ The `control_sender` program accepts the following command line arguments, which
 | `-t`                   | `--stop-test`           | Send a test stop message.                                                              |
 | `-e`                   | `--end-testing`         | Send a message to end the entire testing session.                                      |
 | `-T`                   | `--test-type `          | Specify the test type (e.g., performance, tls_handshake, etc.)                         |
-| `-A`                   | `--test-algs `          | String to specify the algorithm/s that are being tested.                               |
+| `-A`                   | `--test-algs `          | Algorithm metadata. TLS handshakes use `sig@kem` or `sig@group@ciphersuite`.           |
 | `-R`                   | `--run-num `            | Specify the run number for the test (positive integer).                                |
 | `-P`                   | `--polling-rate `       | Specify the polling rate in milliseconds (a value of 0 means no delays between polls). |
 | `-Z`                   | `--controller-method `  | Specify the control signalling method to use (serial or network).                      |
@@ -185,3 +185,12 @@ The `control_sender` program accepts the following command line arguments, which
 | `-N`                   | `--custom-local-port `  | Specify a custom local port for network communication.                                 |
 | `-J`                   | `--custom-remote-port ` | Specify a custom remote port for network communication.                                |
 | `-h`                   | `--help`                | Display the help message.                                                              |
+
+For TLS handshake energy collection, quote the `--test-algs` value and use one of the following formats:
+
+- PQC/Hybrid-PQC: `"signing-alg@kem-alg"`
+- Classical: `"signing-alg@key-exchange-group@ciphersuite"`
+
+The collector preserves this metadata in the result filename so the energy parsing script can distinguish PQC/Hybrid-PQC results from classical results and populate the appropriate CSV columns.
+
+For all other testing types, the `--test-algs` value can be any string that represents the algorithm being tested.

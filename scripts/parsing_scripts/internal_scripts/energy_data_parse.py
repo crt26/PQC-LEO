@@ -14,7 +14,8 @@ which is then used to structure the parsed results.
 The file naming format expected for each of the different types of energy usage testing results is as follows:
 
 Computational Energy Usage Result - (test-type)_(alg-type)_(operation)_(alg-name)_(run-number).txt  
-TLS Handshake Energy Usage Result - (test-type)_(session-id-type)_(signing-alg)@(kem-alg)_(run-number).txt
+PQC/Hybrid TLS Handshake Energy Result - (test-type)_(session-id-type)_(signing-alg)@(kem-alg)_(run-number).txt
+Classic TLS Handshake Energy Result - (test-type)_(session-id-type)_(signing-alg)@(key-exchange-group)@(ciphersuite)_(run-number).txt
 TLS Speed Energy Usage Result - (test-type)_(alg-type)_(operation)_(alg-name)_(run-number).txt
 """
 
@@ -277,11 +278,9 @@ def process_tls_handshake_results(dir_paths, result_files, num_runs, eng_avgr):
     """ Function for processing the results from the TLS handshake energy usage testing, extracting the relevant data from 
         the result files, and organising the data into csv files for each test run. Refer to script header comment for 
         expected filename format of un-parsed result files. """
-    
-    # Define the main column headers for the dataframe and the all rows list
-    main_col_headers = [
-        "Signing Algorithm", 
-        "KEM Algorithm", 
+
+    # Define the core column header lists for the TLS handshake results
+    metric_col_headers = [
         "Session ID Reuse (*)", 
         "Run Number",
         "Voltage (V)", 
@@ -292,26 +291,24 @@ def process_tls_handshake_results(dir_paths, result_files, num_runs, eng_avgr):
         "Joules",
         "Elapsed Time (ms)",
     ]
-    all_rows = []
+    pqc_based_col_headers = ["Signing Algorithm", "KEM Algorithm", *metric_col_headers]
+    classic_based_alg_col_headers = ["Signing Algorithm", "Key Exchange Group", "Ciphersuite", *metric_col_headers]
 
-    # Define the regex patterns for result classification
+    # Define the dict for storing the extracted results for each testing category
+    all_results = {
+        "pqc": [],
+        "hybrid_pqc": [],
+        "classic": [],
+    }
+
+    # Define the regex pattern for matching Hybrid-PQC algorithms
     hybrid_prefix_pattern = re.compile(r'^(rsa[0-9]+|p[0-9]+|x[0-9]+|bp[0-9]+|X25519|X448|SecP256r1|SecP384r1|SecP521r1|curveSM2)[a-zA-Z0-9_-]+$')
-    classical_sig_pattern = re.compile(r'^(RSA_(?:[1-9][0-9]{3,4})|prime(?:192|224|256|384|521)v1|secp(?:192|224|256|384|521)r1)$')
-
-    # Define the regex pattern for matching classical ciphers used in testing
-    classical_cipher_pattern = re.compile(
-        r'^TLS_(?:'
-        r'AES_(?:128|192|256)_GCM(?:_SHA(?:256|384))?'
-        r'|AES(?:128|192|256)_GCM(?:_SHA(?:256|384))?'
-        r'|CHACHA20_POLY1305(?:_SHA256)?'
-        r')$'
-    )
 
     # Loop through the result files and process the data
     for filename in result_files:
 
-        # Define the filename path so it can be read in
-        result_filepath = os.path.join(dir_paths['up_results'], filename)
+        # Define the filepath for the current result file
+        result_filepath = os.path.join(dir_paths["up_results"], filename)
 
         # If the current file is the baseline, process it differently then move onto the next file
         if "baseline" in filename:
@@ -322,74 +319,119 @@ def process_tls_handshake_results(dir_paths, result_files, num_runs, eng_avgr):
 
         # Remove the file extension and perform regex match on the filename to extract test params
         filename_no_extension = filename.rsplit(".", 1)[0]
-        regex_matches = re.match(r"^tls_handshake_(new|reuse)_(.+?)@(.+)_(\d+)$", filename_no_extension)
+        regex_matches = re.fullmatch(r"tls_handshake_(new|reuse)_(.+)_(\d+)", filename_no_extension)
 
         # Ensure that the regex match returned values before proceeding
         if not regex_matches:
             print(f"[ERROR] - Bad TLS handshake energy result filename format: {filename}")
             sys.exit(1)
-            continue
 
-        # Extract the test metadata from the regex match groups
+        # Extract the test parameters from the regex match groups
         session_id_type = regex_matches.group(1)
-        sig_alg = regex_matches.group(2)
-        kem_alg = regex_matches.group(3)
-        run_number = int(regex_matches.group(4))
+        session_id_type = "*" if session_id_type == "reuse" else ""
+        algorithm_fields = regex_matches.group(2).split("@")
+        run_number = int(regex_matches.group(3))
 
-        ext_test_params = {
-            "signing-alg": sig_alg,
-            "kem-alg": kem_alg,
-            "session-id-reuse": "*" if session_id_type == "reuse" else "",
-            "run-number": run_number
-        }
+        # Ensure that none of the extracted algorithm fields are empty before proceeding
+        if any(not field for field in algorithm_fields):
+            print(f"[ERROR] - Bad TLS handshake energy result filename format: {filename}")
+            sys.exit(1)
 
-        # Read in the results for the current file
+        # Set the default values for the test type flags
+        test_type = None
+
+        # Get the signing, kem/key exchange, and ciphersuite algorithm names from the algorithm fields
+        if len(algorithm_fields) == 2:
+
+            # Extract the signing and KEM/algorithm names
+            sig_alg = algorithm_fields[0]
+            kem_alg = algorithm_fields[1]
+            
+        elif  len(algorithm_fields) == 3:
+
+            # Extract the signing, key exchange, and ciphersuite algorithm names
+            sig_alg = algorithm_fields[0]
+            key_exchange_group = algorithm_fields[1]
+            cipher_suite = algorithm_fields[2]
+
+            # Set the classic test flag to true since the filename contains a ciphersuite
+            test_type = "classic"
+
+        else:
+            print(f"[ERROR] - Bad TLS handshake energy result filename format: {filename}")
+            sys.exit(1)
+
+        # If not already determined to be a classic test, check if it is PQC or Hybrid-PQC based on the signing and kem algorithm names
+        if test_type != "classic":
+
+            # Check if the signing and KEM algorithm names match the Hybrid-PQC regex pattern
+            sig_is_hybrid = bool(hybrid_prefix_pattern.fullmatch(sig_alg))
+            kem_is_hybrid = bool(hybrid_prefix_pattern.fullmatch(kem_alg))
+
+            # Ensure there is no mismatch between the signing and KEM algorithm types being hybrid or non-hybrid
+            if sig_is_hybrid != kem_is_hybrid:
+                print(f"[ERROR] - Mismatch between signing and KEM algorithm types for TLS handshake energy result filename: {filename}")
+                sys.exit(1)
+
+            # Determine the test type based on the signing and KEM algorithm names
+            test_type = "hybrid_pqc" if sig_is_hybrid and kem_is_hybrid else "pqc"
+
+        # Set the test parameters dictionary for the current result file based on test type
+        if test_type in ["pqc", "hybrid_pqc"]:
+            ext_test_params = {
+                "signing-alg": sig_alg,
+                "kem-alg": kem_alg,
+                "session-id-type": session_id_type,
+                "run-number": run_number
+            }
+
+        elif test_type == "classic":
+            ext_test_params = {
+                "signing-alg": sig_alg,
+                "key-exchange-group": key_exchange_group,
+                "ciphersuite": cipher_suite,
+                "session-id-type": session_id_type,
+                "run-number": run_number
+            }
+
+        else:
+            print(f"[ERROR] - Test type could not be determined for TLS handshake energy result filename: {filename}")
+            sys.exit(1)
+        
+        # Extract the energy usage data from the result file
         extracted_results = read_in_energy_data(result_filepath)
 
-        # Take the extracted data and add it to the main rows list
+        # Take the extracted data and add it to the relevant results list based on test type
         for result_data in extracted_results:
             row_values = [ext_test_params[key] for key in ext_test_params.keys()]
             row_values.extend(result_data)
-            all_rows.append(row_values)
+            all_results[test_type].append(row_values)
 
-    # Create the main dataframe using all of the parsed result data
-    main_result_df = pd.DataFrame(all_rows, columns=main_col_headers)
+    # Loop through each test type and handle result processing
+    for test_group in all_results.keys():
 
-    # Sort the data frame by signing-alg, kem-alg, run-number
-    main_result_df = main_result_df.sort_values(
-        by=["Signing Algorithm", "KEM Algorithm", "Run Number", "Elapsed Time (ms)"],
-        ascending=[True, True, True, True],
-        kind="stable"
-    ).reset_index(drop=True)
+        # Create the result dataframe for the current test group and define the algorithm columns for the test type
+        if test_group in ["pqc", "hybrid_pqc"]:
+            group_df = pd.DataFrame(all_results[test_group], columns=pqc_based_col_headers)
+            alg_columns = pqc_based_col_headers[0:2]
 
-    # Determine rows for classical, hybrid-PQC, and PQC result combinations
-    sig_is_classic = main_result_df["Signing Algorithm"].str.match(classical_sig_pattern, na=False)
-    cipher_is_classic = main_result_df["KEM Algorithm"].str.match(classical_cipher_pattern, na=False)
-    classic_mask = sig_is_classic & cipher_is_classic
+        elif test_group == "classic":
+            group_df = pd.DataFrame(all_results[test_group], columns=classic_based_alg_col_headers)
+            alg_columns = classic_based_alg_col_headers[0:3]
 
-    sig_is_hybrid = main_result_df["Signing Algorithm"].str.match(hybrid_prefix_pattern, na=False)
-    kem_is_hybrid = main_result_df["KEM Algorithm"].str.match(hybrid_prefix_pattern, na=False)
-    hybrid_mask = (sig_is_hybrid & kem_is_hybrid) & (~classic_mask)
-    pqc_mask = ~(hybrid_mask | classic_mask)
+        # Define the sort columns and non-metric columns for the current test group
+        sort_columns = [*alg_columns, "Run Number", "Session ID Reuse (*)"]
+        non_metric_columns = [*alg_columns, "Session ID Reuse (*)"]
 
-    # Create separate dataframes for classic, PQC, and Hybrid-PQC testing combinations
-    result_groups = {
-        "classic": main_result_df[classic_mask].copy(),
-        "pqc": main_result_df[pqc_mask].copy(),
-        "hybrid_pqc": main_result_df[hybrid_mask].copy(),
-    }
+        # Sort the dataframe by the relevant columns and reset the index
+        group_df = group_df.sort_values(
+            by=sort_columns,
+            kind="stable"
+        ).reset_index(drop=True)
 
-    # Define the sub result dirs in the dir_paths dict
-    dir_paths["classic"] = os.path.join(dir_paths["results_dir"], "classic")
-    dir_paths["pqc"] = os.path.join(dir_paths["results_dir"], "pqc")
-    dir_paths["hybrid_pqc"] = os.path.join(dir_paths["results_dir"], "hybrid_pqc")
-
-    # Build and sort the subgroup dataframes and export for each run
-    for group_name, group_df in result_groups.items():
-
-        # Create the sub-result directory for the current group
-        dir_paths[group_name] = os.path.join(dir_paths["results_dir"], group_name)
-        os.mkdir(dir_paths[group_name])
+        # Define the result subdirectory path and create it
+        dir_paths[f"{test_group}_subdir"] = os.path.join(dir_paths["results_dir"], test_group)
+        os.mkdir(dir_paths[f"{test_group}_subdir"])
 
         # Organise and export the results for each of the test runs performed
         for current_run in range(1, num_runs+1):
@@ -398,27 +440,17 @@ def process_tls_handshake_results(dir_paths, result_files, num_runs, eng_avgr):
             current_run_df = group_df[group_df["Run Number"] == current_run].copy()
             current_run_df = current_run_df.drop(columns=["Run Number"])
 
-            # Rename the KEM Algorithm column to Ciphersuite for the classic group to match the expected output format
-            if group_name == "classic":
-                current_run_df = current_run_df.rename(columns={"KEM Algorithm": "Ciphersuite"})
-
             # Define the filepath for the results and export the data to a csv
-            result_filepath = os.path.join(dir_paths[group_name], f"tls_handshake_{group_name}_{current_run}.csv")
+            result_filepath = os.path.join(dir_paths[f"{test_group}_subdir"], f"tls_handshake_{test_group}_{current_run}.csv")
             current_run_df.to_csv(result_filepath, index=False)
-
-            # Define the non-metric columns for the current group to be used in the condensed sheet generation
-            if group_name != "classic":
-                non_metric_columns = ["Signing Algorithm", "KEM Algorithm", "Session ID Reuse (*)"]
-            else:
-                non_metric_columns = ["Signing Algorithm", "Ciphersuite", "Session ID Reuse (*)"]
 
             # Create the condensed sheet for the current run
             condensed_df = eng_avgr.df_run_condenser(current_run_df, non_metric_columns)
 
             # Export the condensed dataframe to a csv file
-            condensed_filepath = os.path.join(dir_paths[group_name], f"tls_handshake_{group_name}_{current_run}_condensed.csv")
+            condensed_filepath = os.path.join(dir_paths[f"{test_group}_subdir"], f"tls_handshake_{test_group}_{current_run}_condensed.csv")
             condensed_df.to_csv(condensed_filepath, index=False)
-
+        
 #------------------------------------------------------------------------------------------------------------------------------
 def process_tls_speed_results(dir_paths, result_files, num_runs, eng_avgr):
     """ Function for processing the results from the TLS speed energy usage testing, extracting the relevant data from 
@@ -441,8 +473,28 @@ def process_tls_speed_results(dir_paths, result_files, num_runs, eng_avgr):
     ]
     all_rows = []
 
-    # Define the PQC-Hybrid algorithm prefix regex pattern
-    hybrid_prefix_pattern = re.compile(r'^(rsa[0-9]+|p[0-9]+|x[0-9]+|bp[0-9]+|X25519|X448|SecP256r1|SecP384r1|SecP521r1|curveSM2)[a-zA-Z0-9_-]+$')
+    # Define the PQC-Hybrid algorithm regex matching pattern
+    hybrid_pattern = re.compile(
+        r"^(?:"
+        r"(?:rsa[0-9]+|p[0-9]+|x[0-9]+|bp[0-9]+)"
+        r"_[A-Za-z0-9_-]+"
+        r"|"
+        r"(?:X25519|X448|SecP256r1|SecP384r1|SecP521r1|curveSM2)"
+        r"[A-Za-z][A-Za-z0-9_-]*"
+        r")$"
+    )
+
+    # Define the classical algorithm regex matching pattern
+    classic_pattern = re.compile(
+        r"^(?:"
+        r"RSA(?:-PSS)?_(?:2048|3072|4096)"
+        r"|prime256v1"
+        r"|secp(?:256|384|521)r1"
+        r"|ed(?:25519|448)"
+        r"|x(?:25519|448)"
+        r"|brainpoolP(?:256|384|512)r1(?:tls13)?"
+        r")$"
+    )
 
     # Loop through the result files and process the data
     for filename in result_files:
@@ -474,6 +526,10 @@ def process_tls_speed_results(dir_paths, result_files, num_runs, eng_avgr):
             "operation": parameter_fields[3],
         }
 
+        # If the alg-type is key-exchange, replace the dash with underscore
+        if ext_test_params["alg-type"] == "key-exchange":
+            ext_test_params["alg-type"] = "key_exchange"
+
         # Read in the results for the current file
         extracted_results = read_in_energy_data(result_filepath)
 
@@ -486,43 +542,68 @@ def process_tls_speed_results(dir_paths, result_files, num_runs, eng_avgr):
     # Create the main dataframe using all of the parsed result data
     main_result_df = pd.DataFrame(all_rows, columns=main_col_headers)
 
-    # Separate the main dataframe into PQC/Hybrid-PQC only dataframes
+    # Using the Hybrid-PQC and classical matching patterns, define dataframe masks for the two alg groups
+    hybrid_df_mask = main_result_df["Algorithm Name"].str.fullmatch(hybrid_pattern, na=False)
+    classic_df_mask = main_result_df["Algorithm Name"].str.fullmatch(classic_pattern, na=False)
+
+    # Separate the main dataframe into PQC/Hybrid-PQC/classic only dataframes and define the relevant parameters for each group
     result_groups = {
-        "pqc": main_result_df[~main_result_df["Algorithm Name"].str.match(hybrid_prefix_pattern, na=False)].copy(),
-        "hybrid_pqc": main_result_df[main_result_df["Algorithm Name"].str.match(hybrid_prefix_pattern, na=False)].copy(),
+        "pqc": {
+            "dataframe": main_result_df[~hybrid_df_mask & ~classic_df_mask].copy(),
+            "alg_types": ["kem", "sig"],
+            "output_subdir": "pqc",
+        },
+        "hybrid_pqc": {
+            "dataframe": main_result_df[hybrid_df_mask].copy(),
+            "alg_types": ["kem", "sig"],
+            "output_subdir": "hybrid",
+        },
+        "classic": {
+            "dataframe": main_result_df[classic_df_mask].copy(),
+            "alg_types": ["sig", "key_exchange"],
+            "output_subdir": "classic",
+        },
     }
 
     # Build and sort the subgroup dataframes and export for each run
-    for alg_group in result_groups.keys():
-        for alg_type in ("kem", "sig"):
-            
+    for alg_group, group_config in result_groups.items():
+
+        # Define the group dataframe, its algorithm types, and create its output subdirectory
+        group_df = group_config["dataframe"]
+        group_alg_types = group_config["alg_types"]
+        group_output_dir = os.path.join(dir_paths["results_dir"], group_config["output_subdir"])
+        os.makedirs(group_output_dir, exist_ok=True)
+
+        # For each alg type, create and export the sub-group results
+        for alg_type in group_alg_types:
+
             # Create the current alg_group/alg_type dataframe and drop algorithm type column
-            sub_group_df = result_groups[alg_group][result_groups[alg_group]["Algorithm Type"] == alg_type].copy()
+            sub_group_df = group_df[group_df["Algorithm Type"] == alg_type].copy()
             sub_group_df = sub_group_df.drop(columns=["Algorithm Type"])
 
             # Sort the dataframe by alg-name, then run-number, then operation
             sub_group_df = sub_group_df.sort_values(
                 by=["Algorithm Name", "Run Number", "Operation"],
                 ascending=[True, True, True],
-                kind="stable"
+                kind="stable",
             ).reset_index(drop=True)
 
             # For the specified number of runs, create individual run dataframes and export it to csv
-            for current_run in range(1, num_runs+1):
+            for current_run in range(1, num_runs + 1):
 
                 # Copy over all of the current run data and drop the run number column
                 current_run_df = sub_group_df[sub_group_df["Run Number"] == current_run].copy()
                 current_run_df = current_run_df.drop(columns=["Run Number"])
 
                 # Define the filepath for the results and export the data to a csv
-                result_filepath = os.path.join(dir_paths["results_dir"], f"tls_speed_{alg_group}_{alg_type}_{current_run}.csv")
+                result_filepath = os.path.join(group_output_dir, f"tls_speed_{alg_group}_{alg_type}_{current_run}.csv")
                 current_run_df.to_csv(result_filepath, index=False)
 
                 # Create the condensed sheet for the current run
                 condensed_df = eng_avgr.df_run_condenser(current_run_df, ["Algorithm Name", "Operation"])
 
                 # Define the filepath for the condensed results and export the data to a csv
-                condensed_filepath = os.path.join(dir_paths["results_dir"], f"tls_speed_{alg_group}_{alg_type}_{current_run}_condensed.csv")
+                condensed_filepath = os.path.join(group_output_dir, f"tls_speed_{alg_group}_{alg_type}_{current_run}_condensed.csv")
                 condensed_df.to_csv(condensed_filepath, index=False)
 
 #------------------------------------------------------------------------------------------------------------------------------

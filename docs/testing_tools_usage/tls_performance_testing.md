@@ -1,7 +1,7 @@
 # Automated PQC TLS Performance Benchmarking Tool - Usage Guide <!-- omit from toc -->
 
 ## Overview <!-- omit from toc -->
-This tool provides automated benchmarking for PQC-enabled TLS 1.3 handshakes and cryptographic operations within OpenSSL 4.0.1. It supports testing of both OpenSSL-native PQC algorithms and those integrated into OpenSSL via the OQS-Provider library. The benchmarking process evaluates TLS handshakes using Post-Quantum Cryptography (PQC) and Hybrid-PQC ciphersuites, as well as traditional cryptographic algorithms for a baseline comparison.
+This tool provides automated benchmarking for PQC-enabled TLS 1.3 handshakes and cryptographic operations within OpenSSL 4.0.1. It supports OpenSSL-native algorithms and PQC algorithms integrated into OpenSSL through the OQS-Provider library. The handshake tests evaluate PQC and Hybrid-PQC signing-algorithm/KEM pairings alongside classical signing-algorithm, key-exchange-group, and ciphersuite combinations. The OpenSSL speed tests benchmark PQC/Hybrid-PQC KEM and signature operations together with classical signature and key-exchange operations.
 
 Tests can be conducted either on a single machine (localhost) or across two networked machines, using a physical or virtual connection. The tool records detailed performance and timing metrics for each algorithm pairing evaluated during testing.
 
@@ -15,7 +15,7 @@ To compare the size of the network data exchanged by one-way and mutually authen
 
 ### Contents <!-- omit from toc -->
 - [Supported Hardware](#supported-hardware)
-- [Supported PQC Algorithms](#supported-pqc-algorithms)
+- [Supported Algorithms](#supported-algorithms)
 - [Preparing the Testing Environment](#preparing-the-testing-environment)
   - [Control Ports and Firewall Setup for Testing](#control-ports-and-firewall-setup-for-testing)
   - [Generating Required Certificates and Private Keys](#generating-required-certificates-and-private-keys)
@@ -39,10 +39,12 @@ The automated testing tool is currently only supported on the following devices:
 - x86 Linux Machines using a Debian-based operating system
 - ARM Linux devices using a 64-bit Debian-based Operating System
 
-## Supported PQC Algorithms
-This tool supports all PQC and Hybrid-PQC algorithms available through OpenSSL 4.0.1 and the OQS-Provider. However, due to known incompatibilities and dependency limitations, a small number of algorithms are excluded from testing.
+## Supported Algorithms
+This tool supports PQC and Hybrid-PQC algorithms available through OpenSSL 4.0.1 and the OQS-Provider, with a small number excluded because of known incompatibilities and dependency limitations. TLS handshake testing also covers a set of classical digital signature algorithms, TLS key-exchange groups, and TLS 1.3 ciphersuites. Every supported classical signing algorithm is tested with every supported key-exchange-group and ciphersuite combination. TLS speed testing covers supported PQC/Hybrid-PQC KEMs and signatures, classical RSA/EC/Ed signature algorithms, and classical ECDH/XDH key-exchange groups.
 
-Additional information on the excluded algorithms can be found in the OpenSSL and OQS-Provider subsections in the following project documentation:
+RSA-PSS is included in classical TLS handshake testing, but standard TLS speed testing does not produce separate RSA-PSS results. The underlying `openssl speed` command provides size-based RSA selectors only and uses its standard RSA/PKCS#1 v1.5 benchmark path; it does not provide an RSA-PSS selector that the test could invoke or parse as a distinct result.
+
+The complete algorithm lists and information about exclusions are provided in the following project documentation:
 
 [Supported Algorithms](../supported_algorithms.md)
 
@@ -100,7 +102,7 @@ The testing tool will prompt you to enter the parameters for the test. These par
 
 **Note:** Using durations below 5 seconds may produce `inf` result values for some algorithm combinations. It is recommended to use higher test durations for more consistent results. See the [Inf Result Value Occurrence Details](#inf-result-value-occurrence-details) section for more information.
 
-**††** Defines the duration (in seconds) for benchmarking individual cryptographic operations (e.g., signing or key encapsulation) using the OpenSSL `s_speed` tool.
+**††** Defines the duration (in seconds) for benchmarking individual cryptographic operations (for example, signing, key encapsulation, or key derivation) using the OpenSSL `speed` tool.
 
 ### Single Machine Testing
 If running the full test locally (single-machine), perform the following steps after generating the required certificates:
@@ -160,6 +162,8 @@ By default, the TLS performance testing script automatically triggers the parsin
 These parsed results are saved in:
 
 `test_data/results/tls_performance/machine_x`
+
+TLS speed results are separated into `pqc`, `hybrid`, and `classic` subdirectories under each machine's `speed_results` directory. Classical signature results are further separated into RSA and EC/Ed CSV files, while classical key-exchange results are separated into ECDH and XDH CSV files. Per-run CSVs and averages across all configured runs are generated for each category.
 
 > **Note:** When using multiple machines for testing, the results will only be stored on the client machine, not the server machine.
 

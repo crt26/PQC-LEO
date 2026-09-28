@@ -1,13 +1,13 @@
 # Automated TLS Handshake Transmission Cost Testing - Usage Guide  <!-- omit from toc -->
 
 ## Overview <!-- omit from toc -->
-This tool provides automated testing for TLS 1.3 handshake transmission costs using Post-Quantum Cryptography (PQC), Hybrid-PQC, and classical algorithms. It measures the number of bytes sent and received during one-way and mutually authenticated TLS handshakes for every supported signature and KEM/ciphersuite pairing. It utilises the PQC, Hybrid-PQC, and classical algorithms integrated into OpenSSL 4.0.1 and the OQS-Provider library.
+This tool provides automated testing for TLS 1.3 handshake transmission costs using Post-Quantum Cryptography (PQC), Hybrid-PQC, and classical algorithms. It measures the number of bytes sent and received during one-way and mutually authenticated TLS handshakes for every supported signing-algorithm/KEM pairing and classical signing-algorithm/key-exchange-group/ciphersuite combination. It utilises the PQC, Hybrid-PQC, and classical algorithms integrated into OpenSSL 4.0.1 and the OQS-Provider library.
 
-For every supported signature and KEM combination, the tool performs both one-way authentication and mutual authentication. Classical configurations use each supported signature and TLS 1.3 ciphersuite combination as a baseline to which the PQC and Hybrid-PQC algorithms can be compared.
+The tool performs both one-way and mutual authentication for every supported PQC, Hybrid-PQC, and classical algorithm configuration. The results are outputted as CSV files, with each file containing the handshake transmission costs for a specific algorithm category. 
 
 ### Contents <!-- omit from toc -->
 - [Supported Hardware](#supported-hardware)
-- [Supported PQC Algorithms](#supported-pqc-algorithms)
+- [Supported Algorithms](#supported-algorithms)
 - [Preparing the Testing Environment](#preparing-the-testing-environment)
 - [Performing the TLS Handshake Transmission Cost Test](#performing-the-tls-handshake-transmission-cost-test)
 - [Outputted Results](#outputted-results)
@@ -19,8 +19,8 @@ The automated testing tool is currently only supported on the following devices:
 - x86 Linux Machines using a Debian-based operating system
 - ARM Linux devices using a 64-bit Debian-based Operating System
 
-## Supported PQC Algorithms
-This tool supports all PQC and Hybrid-PQC algorithms available through OpenSSL 4.0.1 and the OQS-Provider. However, due to known incompatibilities and dependency limitations, a small number of algorithms are excluded from testing.
+## Supported Algorithms
+This tool supports PQC and Hybrid-PQC algorithms available through OpenSSL 4.0.1 and the OQS-Provider, with a small number excluded because of known incompatibilities and dependency limitations. It also supports various classical digital signature, key-exchange-group, and ciphersuite combinations which can be used a baseline to compare PQC/Hybrid-PQC results to.
 
 The algorithms used within this category of testing are the same as those used for TLS handshake performance testing. The supported algorithms are listed in the following project documentation:
 
@@ -52,7 +52,7 @@ python3 get_pqc_tls_bytes.py
 
 The script will prompt the user to ask if they wish to assign a custom Machine-ID or use the default Machine-ID of `1`. The Machine-ID is used to create a unique directory for storing the results of the test. If the selected Machine-ID directory already exists, the tool will prompt to either replace that directory or select another Machine-ID.
 
-Once the Machine-ID is selected, the tool will perform the TLS handshake transmission cost tests for all supported signature and KEM/ciphersuite combinations, using both one-way and mutual authentication.
+Once the Machine-ID is selected, the tool tests every supported PQC and Hybrid-PQC signing-algorithm/KEM pairing and every supported classical signing-algorithm/key-exchange-group/ciphersuite combination, using both one-way and mutual authentication.
 
 ## Outputted Results
 Results are extracted directly from the OpenSSL `s_client` handshake summary and written as CSV files. They do not require the framework's result parsing scripts. Because the results are already structured in the testing script, there are no unparsed results generated for this testing category.

@@ -2,9 +2,9 @@
 Copyright (c) 2023-2026 Callum Turino
 SPDX-License-Identifier: MIT
 
-Utility script for retrieving supported cryptographic algorithms from the Liboqs, OpenSSL (classic + PQC), and OQS-Provider libraries. 
-It outputs these algorithms to text files used by benchmarking and parsing scripts to determine which 
-algorithms to test and evaluate for computational performance and TLS handshakes testing.
+Utility script for retrieving supported cryptographic algorithms from the Liboqs, OpenSSL (classical and PQC), and
+OQS-Provider libraries. It outputs algorithm lists used by the computational performance, TLS handshake,
+transmission-cost, TLS speed, energy-testing, and result-parsing scripts.
 
 Primarily intended to be called by the main setup.sh script, this utility accepts an argument that specifies 
 the installation type and determines which algorithm lists should be generated. It can also be executed manually.
@@ -357,21 +357,81 @@ def get_tls_pqc_algs():
 
 #------------------------------------------------------------------------------------------------------------------------------
 def set_tls_classic_algs():
-    """ Function to set the classic algorithm lists for the TLS benchmarking. The classic algorithms are not subject to change, 
-        so they can be set in the script and then outputted to text files for the benchmarking and parsing scripts. """
+    """ Function to define and output the classical algorithm lists used by the TLS benchmarking and parsing scripts,
+        including the corresponding OpenSSL speed aliases for classical signature and key-exchange testing. """
 
-    # Set the classic algorithms for the TLS benchmarking
-    classic_kems = ["prime256v1", "secp384r1", "secp521r1"]
-    classic_sigs = ["RSA_2048", "RSA_3072", "RSA_4096", "prime256v1", "secp384r1", "secp521r1"]
+    # Define the classic algorithms and ciphers for TLS benchmarking
+    classic_algs = {
+        "classic_sigs": [
+            "RSA_2048",
+            "RSA_3072",
+            "RSA_4096",
+            "RSA-PSS_2048",
+            "RSA-PSS_3072",
+            "RSA-PSS_4096",
+            "prime256v1",
+            "secp384r1",
+            "secp521r1",
+            "ed25519",
+            "ed448",
+            "brainpoolP256r1",
+            "brainpoolP384r1",
+            "brainpoolP512r1",
+        ],
+        "classic_key_exchange_groups": [
+            "x25519",
+            "x448",
+            "secp256r1",
+            "secp384r1",
+            "secp521r1",
+            "brainpoolP256r1tls13",
+            "brainpoolP384r1tls13",
+            "brainpoolP512r1tls13",
+        ],
+        "classic_ciphersuites": [
+            "TLS_AES_128_GCM_SHA256",
+            "TLS_AES_256_GCM_SHA384",
+            "TLS_CHACHA20_POLY1305_SHA256",
+            "TLS_AES_128_CCM_SHA256",
+        ],
+        "speed_classic_sigs": [
+            "rsa2048",
+            "rsa3072",
+            "rsa4096",
+            "ecdsap256",
+            "ecdsap384",
+            "ecdsap521",
+            "ed25519",
+            "ed448",
+            "ecdsabrp256r1",
+            "ecdsabrp384r1",
+            "ecdsabrp512r1",
+        ],
+        "speed_classic_key_exchange_groups": [
+            "x25519",
+            "x448",
+            "ecdhp256",
+            "ecdhp384",
+            "ecdhp521",
+            "ecdhbrp256r1",
+            "ecdhbrp384r1",
+            "ecdhbrp512r1",
+        ]
+    }
 
-    # Set the output directory and text file names
+    # Define the mapping of algorithm categories to their corresponding output file paths
     output_dir = os.path.join(root_dir, "test_data", "alg_lists")
-    kem_list_file = os.path.join(output_dir, "classic_tls_kem_algs.txt")
-    sig_list_file = os.path.join(output_dir, "classic_tls_sig_algs.txt")
-    
-    # Write out the classic algorithms to the list files
-    write_to_file(classic_kems, kem_list_file)
-    write_to_file(classic_sigs, sig_list_file)
+    file_list_mapping = [
+        ["classic_sigs", os.path.join(output_dir, "tls_classic_sig_algs.txt")],
+        ["classic_key_exchange_groups", os.path.join(output_dir, "tls_classic_key_exchange_groups.txt")],
+        ["classic_ciphersuites", os.path.join(output_dir, "tls_classic_ciphersuites.txt")],
+        ["speed_classic_sigs", os.path.join(output_dir, "tls_speed_classic_sig_algs.txt")],
+        ["speed_classic_key_exchange_groups", os.path.join(output_dir, "tls_speed_classic_key_exchange_groups.txt")]
+    ]
+
+    # Loop through each algorithm category and write the corresponding algorithms lists
+    for alg_list, output_file in file_list_mapping:
+        write_to_file(classic_algs[alg_list], output_file)
 
 #------------------------------------------------------------------------------------------------------------------------------
 def parse_oqs_provider_algorithms_md():

@@ -2,10 +2,10 @@
 Copyright (c) 2023-2026 Callum Turino
 SPDX-License-Identifier: MIT
 
-Result parsing script for PQC TLS performance benchmarking.Parses raw TLS handshake and OpenSSL speed test 
-outputs produced by the automated test suite, structures the results into clean CSV files, and computes 
-averaged metrics using the results_averager module. Supports setups using both OpenSSL-native PQC algorithms 
-and the OQS-Provider.
+Result parsing script for TLS performance benchmarking. Parses raw TLS handshake and OpenSSL speed-test
+outputs produced by the automated test suite, structures the results into clean CSV files, and computes
+averaged metrics using the results_averager module. Supports PQC, Hybrid-PQC, and classical algorithms from
+OpenSSL and the OQS-Provider.
 """
 
 #------------------------------------------------------------------------------------------------------------------------------
@@ -18,7 +18,7 @@ from internal_scripts.results_averager import TLSAverager
 
 #------------------------------------------------------------------------------------------------------------------------------
 def setup_parse_env(root_dir):
-    """ Function for setting up the environment for parsing PQC TLS results. Sets directory paths, reads algorithm lists, 
+    """ Function for setting up the environment for parsing TLS results. Sets directory paths, reads algorithm lists,
         and defines column headers for output CSV files. """
 
     # Define the central paths dictionary that will be used by the various methods and functions
@@ -41,17 +41,20 @@ def setup_parse_env(root_dir):
         "speed_sig_algs": [],
         "hybrid_speed_kem_algs": [],
         "hybrid_speed_sig_algs": [],
-        'classic_algs': ["RSA_2048", "RSA_3072", "RSA_4096", "prime256v1", "secp384r1", "secp521r1"], 
-        'ciphers': ["TLS_AES_256_GCM_SHA384", "TLS_CHACHA20_POLY1305_SHA256", "TLS_AES_128_GCM_SHA256"]
+        "classic_sig_algs": [],
+        "classic_key_exchange_groups": [],
+        "ciphersuites": [],
+        "speed_classic_sig_algs": [],
+        "speed_classic_key_exchange_groups": []
     }
 
     # Declare the column headers dictionary that will be used by the various methods and functions
     base_data_columns = ["Reused Session ID", "Connections in User Time", "User Time (s)", "Connections Per User Second", "Connections in Real Time", "Real Time (s)"]
     col_headers = {
-        'pqc_based_headers': ["Signing Algorithm", "KEM Algorithm", *base_data_columns],
-        'pqc_based_avg_headers': ["Signing Algorithm", "KEM Algorithm", *base_data_columns, "Runs used for Average", "Total Runs"],
-        'classic_headers': ["Ciphersuite", "Classic Algorithm", *base_data_columns],
-        'classic_avg_headers': ["Ciphersuite", "Classic Algorithm", *base_data_columns, "Runs used for Average", "Total Runs"]
+        "pqc_based_headers": ["Signing Algorithm", "KEM Algorithm", *base_data_columns],
+        "pqc_based_avg_headers": ["Signing Algorithm", "KEM Algorithm", *base_data_columns, "Runs used for Average", "Total Runs"],
+        "classic_headers": ["Signing Algorithm", "Key Exchange Group", "Ciphersuite", *base_data_columns],
+        "classic_avg_headers": ["Signing Algorithm", "Key Exchange Group", "Ciphersuite", *base_data_columns, "Runs used for Average", "Total Runs"]
     }
     del base_data_columns
 
@@ -65,18 +68,26 @@ def setup_parse_env(root_dir):
         "base_type": ["pqc_base_results", "hybrid_base_results"]
     }
 
-    # Declare the dictionary which contains testing types and define the speed column headers
-    speed_headers = [
-        ["Algorithm", "Keygen", "encaps", "decaps", "Keygen/s", "Encaps/s", "Decaps/s"], 
-        ["Algorithm", "Keygen", "Signs", "Verify", "Keygen/s", "sign/s", "verify/s"]
-    ]
+    # Declare the speed headers dictionary that will be used by the various methods and functions
+    speed_headers = {
+        "pqc_speed": [
+            ["Algorithm", "Keygen", "encaps", "decaps", "Keygen/s", "Encaps/s", "Decaps/s"], 
+            ["Algorithm", "Keygen", "Signs", "Verify", "Keygen/s", "sign/s", "verify/s"],
+        ],
+        "classic_speed": {
+            "ec": ["Algorithm", "sign", "verify", "sign/s", "verify/s"],
+            "rsa": ["Algorithm", "keygen", "sign", "verify", "keygen/s", "sign/s", "verify/s"],
+            "ecdh": ["Algorithm", "op", "op/s"],
+            "xdh": ["Algorithm", "keygen", "encaps", "decaps", "keygen/s", "encaps/s", "decaps/s"],
+        }
+    }
 
     # Set the test results directory paths in the central paths dictionary
     dir_paths['root_dir'] = root_dir
     dir_paths['results_dir'] = os.path.join(root_dir, "test_data", "results", "tls_performance")
     dir_paths['up_results'] = os.path.join(root_dir, "test_data", "up_results", "tls_performance")
 
-    # Set the alg-list filenames for the various PQC test types (PQC and PQC-Hybrid)
+    # Set the alg-list filenames for the various TLS test types
     alg_list_files = {
         "kem_algs": os.path.join(root_dir, "test_data", "alg_lists", "tls_kem_algs.txt"),
         "sig_algs": os.path.join(root_dir, "test_data", "alg_lists", "tls_sig_algs.txt"),
@@ -86,13 +97,20 @@ def setup_parse_env(root_dir):
         "speed_sig_algs": os.path.join(root_dir, "test_data", "alg_lists", "tls_speed_sig_algs.txt"),
         "hybrid_speed_kem_algs": os.path.join(root_dir, "test_data", "alg_lists", "tls_speed_hybr_kem_algs.txt"),
         "hybrid_speed_sig_algs": os.path.join(root_dir, "test_data", "alg_lists", "tls_speed_hybr_sig_algs.txt"),
+        "classic_sig_algs": os.path.join(root_dir, "test_data", "alg_lists", "tls_classic_sig_algs.txt"),
+        "classic_key_exchange_groups": os.path.join(root_dir, "test_data", "alg_lists", "tls_classic_key_exchange_groups.txt"),
+        "ciphersuites": os.path.join(root_dir, "test_data", "alg_lists", "tls_classic_ciphersuites.txt"),
+        "speed_classic_sig_algs": os.path.join(root_dir, "test_data", "alg_lists", "tls_speed_classic_sig_algs.txt"),
+        "speed_classic_key_exchange_groups": os.path.join(root_dir, "test_data", "alg_lists", "tls_speed_classic_key_exchange_groups.txt")
     }
 
     # Pull the algorithm names from the alg-lists files and create the relevant alg lists
     for alg_type, filepath in alg_list_files.items():
         with open(filepath, "r") as alg_file:
             for line in alg_file:
-                algs_dict[alg_type].append(line.strip())
+                algorithm = line.strip()
+                if algorithm:
+                    algs_dict[alg_type].append(algorithm)
 
     # Empty the alg_list_files dict as no longer needed
     alg_list_files = None
@@ -100,7 +118,21 @@ def setup_parse_env(root_dir):
     return dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers
 
 #------------------------------------------------------------------------------------------------------------------------------
-def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
+def create_dir_helper(dir_paths, skip_tls_speed):
+    """ Helper function for creating the parsed TLS handshake directory and, when TLS speed processing is enabled,
+        the TLS speed result directories for each supported test type. """
+
+    # Create the TLS handshake directory for the current machine-ID
+    os.makedirs(dir_paths["mach_handshake_dir"])
+
+    # Create the TLS speed and its subdirectories for the current machine-ID if TLS speed processing is enabled
+    if skip_tls_speed is False:
+        os.makedirs(dir_paths["mach_speed_results_dir"])
+        for dir_list in dir_paths['speed_types_dirs'].values():
+            os.makedirs(dir_list[1], exist_ok=True)
+
+#------------------------------------------------------------------------------------------------------------------------------
+def handle_results_dir_creation(machine_id, dir_paths, replace_old_results, skip_tls_speed):
     """ Function for handling the presence of older parsed results, ensuring that the user is aware of the old results 
         and can choose how to handle them before the parsing continues. """
 
@@ -118,9 +150,8 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
             print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...\n")
             shutil.rmtree(os.path.join(dir_paths["results_dir"], f"machine_{machine_id}"))
 
-            # Create the new directories for parsed results
-            os.makedirs(dir_paths["mach_handshake_dir"])
-            os.makedirs(dir_paths["mach_speed_results_dir"])
+            # Create the TLS handshake directory for the current machine-ID
+            create_dir_helper(dir_paths, skip_tls_speed)
         
         else:
 
@@ -143,9 +174,9 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
                     print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...\n")
                     shutil.rmtree(os.path.join(dir_paths["results_dir"], f"machine_{machine_id}"))
 
-                    # Create the new directories for parsed results
-                    os.makedirs(dir_paths["mach_handshake_dir"])
-                    os.makedirs(dir_paths["mach_speed_results_dir"])
+                    # Create the TLS handshake directory for the current machine-ID
+                    create_dir_helper(dir_paths, skip_tls_speed)
+
                     break
 
                 elif user_choice == "2":
@@ -168,8 +199,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
 
                         else:
                             print("Old results have been moved, now continuing with parsing script")
-                            os.makedirs(dir_paths["mach_handshake_dir"])
-                            os.makedirs(dir_paths["mach_speed_results_dir"])
+                            create_dir_helper(dir_paths, skip_tls_speed)
                             break
                     
                     break
@@ -182,8 +212,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
     else:
         
         # No old parsed results for current machine-id present, so creating new dirs
-        os.makedirs(dir_paths["mach_handshake_dir"])
-        os.makedirs(dir_paths["mach_speed_results_dir"])
+        create_dir_helper(dir_paths, skip_tls_speed)
 
 #------------------------------------------------------------------------------------------------------------------------------
 def get_metrics(current_row, test_filepath, get_reuse_metrics):
@@ -351,41 +380,40 @@ def pqc_based_processing(current_run, dir_paths, algs_dict, pqc_type_vars, col_h
 
 #------------------------------------------------------------------------------------------------------------------------------
 def classic_based_processing(current_run, dir_paths, algs_dict, col_headers):
-    """ Function to process TLS handshake results for classic cipher algorithms, extracting metrics and generating CSV files. """
+    """ Function to process classic TLS handshake results for each signature, key exchange group, and ciphersuite combination,
+        extracting the performance metrics and generating the corresponding CSV output. """
 
     # Set the up-results directory path and create the dataframe used in test processing
     classic_up_results_dir = os.path.join(dir_paths['mach_up_results_dir'], "handshake_results", "classic")
     cipher_metrics_df = pd.DataFrame(columns=col_headers['classic_headers'])
 
-    # Loop through each ciphersuite
-    for cipher in algs_dict['ciphers']:
+    # Loop through each classic signing algorithm to process the result files
+    for classic_sig in algs_dict["classic_sig_algs"]:
 
-        # Looping through each digital signature algorithm for the current ciphersuite
-        for alg in algs_dict['classic_algs']:
+        # Loop through each key exchange group and ciphersuite combo for the current signing algorithm
+        for key_exchange_group in algs_dict["classic_key_exchange_groups"]:
+            for ciphersuite in algs_dict["ciphersuites"]:
 
-            # Set the filename and path
-            filename = f"tls_handshake_classic_{current_run}_{cipher}_{alg}.txt"
-            test_filepath = os.path.join(classic_up_results_dir, filename)
-            
-            # Get the session ID first use metrics for the current signature
-            current_row = [alg, ""]
-            current_row = get_metrics(current_row, test_filepath, get_reuse_metrics=False)
-            current_row.insert(0, cipher)
+                # Set the result filename and path
+                filename = f"tls_handshake_classic_{current_run}_{classic_sig}_{key_exchange_group}_{ciphersuite}.txt"
+                test_filepath = os.path.join(classic_up_results_dir, filename)
 
-            # Add the session ID first use row to the dataframe
-            new_row_df = pd.DataFrame([current_row], columns=col_headers['classic_headers'])
-            cipher_metrics_df = pd.concat([cipher_metrics_df, new_row_df], ignore_index=True)
-            current_row.clear()
-            
-            # Get the session ID reused metrics for the current signature
-            current_row = [alg, "*"]
-            current_row = get_metrics(current_row, test_filepath, get_reuse_metrics=True)
-            current_row.insert(0, cipher)
+                # Get the session ID first-use metrics for the current combination
+                current_row = [classic_sig, key_exchange_group, ciphersuite, ""]
+                current_row = get_metrics(current_row, test_filepath, get_reuse_metrics=False)
 
-            # Add the session id reused use row to dataframe
-            new_row_df = pd.DataFrame([current_row], columns=col_headers['classic_headers'])
-            cipher_metrics_df = pd.concat([cipher_metrics_df, new_row_df], ignore_index=True)
-            current_row.clear()
+                # Add the session ID first-use row to the dataframe
+                new_row_df = pd.DataFrame([current_row], columns=col_headers['classic_headers'])
+                cipher_metrics_df = pd.concat([cipher_metrics_df, new_row_df], ignore_index=True)
+                
+
+                # Get the session ID reused metrics for the current combination
+                current_row = [classic_sig, key_exchange_group, ciphersuite, "*"]
+                current_row = get_metrics(current_row, test_filepath, get_reuse_metrics=True)
+
+                # Add the session ID reused row to the dataframe
+                new_row_df = pd.DataFrame([current_row], columns=col_headers['classic_headers'])
+                cipher_metrics_df = pd.concat([cipher_metrics_df, new_row_df], ignore_index=True)
 
     # Output the full base Classic TLS metrics for current run
     cipher_out_filename = f"classic_results_run_{current_run}.csv"
@@ -405,8 +433,8 @@ def tls_speed_drop_last(data_cells):
     return data_cells
 
 #------------------------------------------------------------------------------------------------------------------------------
-def get_speed_metrics(speed_filepath, alg_type, speed_headers):
-    """ Function to extract speed metrics from raw OpenSSL s_speed output for the specified algorithm type (KEM or SIG). """
+def get_pqc_speed_metrics(speed_filepath, alg_type, speed_headers):
+    """ Function to extract metrics from raw OpenSSL speed output for the specified PQC algorithm type (KEM or SIG). """
 
     # Declare the variables needed for getting metrics and setting up the dataframe with test/alg type headers
     start = False
@@ -446,14 +474,18 @@ def get_speed_metrics(speed_filepath, alg_type, speed_headers):
     return speed_metrics_df
 
 #------------------------------------------------------------------------------------------------------------------------------
-def speed_processing(current_run, dir_paths, speed_headers, algs_dict):
-    """ Function to process OpenSSL and OQS-Provider s_speed metrics for both PQC and PQC-Hybrid algorithms in the current run. """
+def pqc_speed_processing(current_run, dir_paths, speed_headers, algs_dict):
+    """ Function to process OpenSSL speed metrics for both PQC and Hybrid-PQC algorithms in the current run. """
 
     # Define the alg type list 
     alg_types = ["kem", "sig"]
 
     # Loop through the test types and process up-results for speed metrics
     for test_type, dir_list in dir_paths['speed_types_dirs'].items():
+
+        # Do not process classic speed results here
+        if test_type == "classic":
+            continue
 
         # Set the file prefix depending on the current test type
         pqc_fileprefix = "tls_speed" if test_type == "pqc" else "tls_speed_hybrid"
@@ -463,7 +495,7 @@ def speed_processing(current_run, dir_paths, speed_headers, algs_dict):
 
             # Set the up-results filepath and pull metrics from the raw file
             speed_filepath = os.path.join(dir_list[0], f"{pqc_fileprefix}_{alg_type}_{str(current_run)}.txt")
-            speed_metrics_df = get_speed_metrics(speed_filepath, alg_type, speed_headers)
+            speed_metrics_df = get_pqc_speed_metrics(speed_filepath, alg_type, speed_headers["pqc_speed"])
 
             # Set the alg list dict key based on the current test and algorithm type
             alg_list_key = f"speed_{alg_type}_algs" if test_type == "pqc" else f"hybrid_speed_{alg_type}_algs"
@@ -480,8 +512,155 @@ def speed_processing(current_run, dir_paths, speed_headers, algs_dict):
             speed_metrics_df.to_csv(output_filepath, index=False)
 
 #------------------------------------------------------------------------------------------------------------------------------
+def get_classic_speed_metrics(speed_filepath, alg_type, sub_test_alg, headers):
+    """ Function to extract classical signature or key exchange metrics from raw OpenSSL speed output. """
+
+    # Determine which classical result table and algorithms need to be parsed
+    if alg_type == "sig":
+
+        # Set the desired algorithms, table header, and metric count based on the sub-test algorithm type
+        if sub_test_alg == "ec":
+            desired_alg_strings = ["prime256v1", "secp384r1", "secp521r1", "brainpoolp256r1", "brainpoolp384r1", "brainpoolp512r1", "Ed25519", "Ed448"]
+            result_name_mapping = {
+                "prime256v1": "prime256v1",
+                "secp384r1": "secp384r1",
+                "secp521r1": "secp521r1",
+                "brainpoolp256r1": "brainpoolP256r1",
+                "brainpoolp384r1": "brainpoolP384r1",
+                "brainpoolp512r1": "brainpoolP512r1",
+                "ed25519": "ed25519",
+                "ed448": "ed448",
+            }
+            table_header = ["sign", "verify", "sign/s", "verify/s"]
+            metric_count = 4
+            parenthesised_alg_name = True
+
+        elif sub_test_alg == "rsa":
+            desired_alg_strings = ["rsa2048", "rsa3072", "rsa4096"]
+            result_name_mapping = {
+                "rsa2048": "RSA_2048",
+                "rsa3072": "RSA_3072",
+                "rsa4096": "RSA_4096",
+            }
+            table_header = ["keygen", "signs", "verify", "keygens/s", "sign/s", "verify/s"]
+            metric_count = 6
+            parenthesised_alg_name = False
+
+        else:
+            print(f"[ERROR] - Invalid classical signature sub-type ({sub_test_alg}) specified for speed metrics extraction.")
+            sys.exit(1)
+
+    elif alg_type == "key_exchange":
+
+        # Set the desired algorithms, table header, and metric count based on the sub-test algorithm type
+        if sub_test_alg == "ecdh":
+            desired_alg_strings = ["prime256v1", "secp384r1", "secp521r1", "brainpoolp256r1", "brainpoolp384r1", "brainpoolp512r1"]
+            result_name_mapping = {
+                "prime256v1": "secp256r1",
+                "secp384r1": "secp384r1",
+                "secp521r1": "secp521r1",
+                "brainpoolp256r1": "brainpoolP256r1tls13",
+                "brainpoolp384r1": "brainpoolP384r1tls13",
+                "brainpoolp512r1": "brainpoolP512r1tls13",
+            }
+            table_header = ["op", "op/s"]
+            metric_count = 2
+            parenthesised_alg_name = True
+
+        elif sub_test_alg == "xdh":
+            desired_alg_strings = ["X25519", "X448"]
+            result_name_mapping = {
+                "x25519": "x25519",
+                "x448": "x448",
+            }
+            table_header = ["keygen", "encaps", "decaps", "keygens/s", "encaps/s", "decaps/s"]
+            metric_count = 6
+            parenthesised_alg_name = False
+
+        else:
+            print(f"[ERROR] - Invalid classical key exchange sub-type ({sub_test_alg}) specified for speed metrics extraction.")
+            sys.exit(1)
+
+    else:
+        print(f"[ERROR] - Invalid classical algorithm type ({alg_type}) specified for speed metrics extraction.")
+        sys.exit(1)
+
+    # Extract the results from the selected OpenSSL result table
+    result_df = pd.DataFrame(columns=headers)
+    table_started = False
+
+    # Loop through each line of the result file to process the current test category and sub-test algorithm type
+    with open(speed_filepath, "r") as speed_file:
+        for line in speed_file:
+            data_cells = line.split()
+
+            # Start parsing once the required result table header is found
+            if [cell.lower() for cell in data_cells] == table_header:
+                table_started = True
+                continue
+
+            # Check if the current line falls outwith the desired result table for the current test category and sub-test algorithm type
+            if not table_started or not any(alg.lower() in line.lower() for alg in desired_alg_strings):
+                continue
+
+            # Extract the algorithm name using the format used by the current result table
+            if parenthesised_alg_name:
+                algorithm = line.split("(", 1)[1].split(")", 1)[0]
+            else:
+                algorithm = data_cells[0]
+
+            # Convert the OpenSSL speed alias into the corresponding TLS handshake algorithm name
+            algorithm = result_name_mapping[algorithm.lower()]
+
+            # Extract the metric values and remove the seconds suffix from time values
+            data_values = data_cells[-metric_count:]
+            data_values.insert(0, algorithm)
+            data_values = tls_speed_drop_last(data_values)
+
+            # Add the new data row to the result dataframe
+            result_df.loc[len(result_df)] = data_values
+
+    return result_df
+
+#------------------------------------------------------------------------------------------------------------------------------
+def classic_speed_processing(current_run, dir_paths, speed_headers, algs_dict):
+    """ Function to process classical OpenSSL speed metrics for the current run. """
+
+    # Define the alg type list
+    alg_types = ["sig", "key_exchange"]
+
+    # Loop through the test types and process up-results for speed metrics
+    for test_type in alg_types:
+
+        # Define the filepath for the current test type and run
+        filename = f"tls_speed_classic_{test_type}_{str(current_run)}.txt"
+        up_result_filepath = os.path.join(dir_paths['speed_types_dirs']['classic'][0], filename)
+
+        # Based on the test type, define the sub-alg type categories and the corresponding headers for that category
+        if test_type == "sig":
+            sub_alg_types = ["ec", "rsa"]
+        else:
+            sub_alg_types = ["ecdh", "xdh"]
+
+        # Loop through each of the sub-alg types 
+        for sub_test_alg in sub_alg_types:
+
+            # Set the headers for the current test category and sub-alg type
+            headers = speed_headers["classic_speed"][sub_test_alg]
+
+            # Extract the speed metrics for the current test type and sub-alg type
+            speed_metrics_df = get_classic_speed_metrics(up_result_filepath, test_type, sub_test_alg, headers)
+
+            # Define the output filename and path based on the current test type and sub-alg type
+            output_filename = f"tls_speed_classic_{test_type}_{sub_test_alg}_{str(current_run)}.csv"
+            output_filepath = os.path.join(dir_paths['speed_types_dirs']['classic'][1], output_filename)
+
+            # Export the speed metrics CSV for the current test type and sub-alg type
+            speed_metrics_df.to_csv(output_filepath, index=False)
+
+#------------------------------------------------------------------------------------------------------------------------------
 def output_processing(num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers, skip_tls_speed):
-    """ Function to process the results of s_time and s_speed TLS benchmarking tests for the current machine. """
+    """ Function to process the results of OpenSSL s_time and speed TLS benchmarking tests for the current machine. """
 
     # Set the result directories paths in the central paths dictionary
     dir_paths['pqc_handshake_results'] = os.path.join(dir_paths['mach_handshake_dir'], "pqc")
@@ -504,11 +683,12 @@ def output_processing(num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers
 
         # Check if TLS speed processing needs to be skipped
         if skip_tls_speed is False:
-            speed_processing(current_run, dir_paths, speed_headers, algs_dict)
+            pqc_speed_processing(current_run, dir_paths, speed_headers, algs_dict)
+            classic_speed_processing(current_run, dir_paths, speed_headers, algs_dict)
 
 #------------------------------------------------------------------------------------------------------------------------------
 def process_tests(machine_id, num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers, conf_flags):
-    """ Function for controlling the parsing scripts for the PQC TLS performance testing up-result files and calling average 
+    """ Function for controlling the parsing of TLS performance up-result files and calling the average
         calculation scripts """
 
     # Create an instance of the TLS average generator class before processing results
@@ -521,8 +701,9 @@ def process_tests(machine_id, num_runs, dir_paths, algs_dict, pqc_type_vars, col
     dir_paths['mach_up_speed_dir'] = os.path.join(dir_paths['up_results'], f"machine_{str(machine_id)}", "speed_results")
     dir_paths['mach_speed_results_dir'] = os.path.join(dir_paths['results_dir'], f"machine_{str(machine_id)}", "speed_results")
     dir_paths['speed_types_dirs'] = {
-        "pqc": [os.path.join(dir_paths['mach_up_speed_dir'], "pqc"), dir_paths['mach_speed_results_dir']], 
-        "hybrid": [os.path.join(dir_paths['mach_up_speed_dir'], "hybrid"), dir_paths['mach_speed_results_dir']],
+        "pqc": [os.path.join(dir_paths['mach_up_speed_dir'], "pqc"), os.path.join(dir_paths['mach_speed_results_dir'], "pqc")],
+        "hybrid": [os.path.join(dir_paths['mach_up_speed_dir'], "hybrid"), os.path.join(dir_paths['mach_speed_results_dir'], "hybrid")],
+        "classic": [os.path.join(dir_paths['mach_up_speed_dir'], "classic"), os.path.join(dir_paths['mach_speed_results_dir'], "classic")]
     }
 
     # Set the pqc-var types dictionary so that both PQC and PQC-hybrid results can be processed
@@ -530,7 +711,7 @@ def process_tests(machine_id, num_runs, dir_paths, algs_dict, pqc_type_vars, col
         "up_results_path": [
             os.path.join(dir_paths['mach_up_results_dir'], "handshake_results", "pqc"), 
             os.path.join(dir_paths['mach_up_results_dir'], "handshake_results", "hybrid")
-        ], 
+        ],
     })
 
     # Ensure that the machine's up-results directory exists before continuing
@@ -539,7 +720,7 @@ def process_tests(machine_id, num_runs, dir_paths, algs_dict, pqc_type_vars, col
         sys.exit(1)
 
     # Create the results directory for the current machine and handle Machine-ID clashes
-    handle_results_dir_creation(machine_id, dir_paths, conf_flags[0])
+    handle_results_dir_creation(machine_id, dir_paths, conf_flags[0], conf_flags[1])
 
     # Call the processing function to parse the results
     output_processing(num_runs, dir_paths, algs_dict, pqc_type_vars, col_headers, speed_headers, conf_flags[1])
@@ -550,11 +731,12 @@ def process_tests(machine_id, num_runs, dir_paths, algs_dict, pqc_type_vars, col
 
     # Check if TLS speed result averaging needs to be skipped (skip_tls_speed = True)
     if conf_flags[1] is False:
-        tls_avg.gen_speed_avgs(speed_headers)
+        tls_avg.gen_pqc_speed_avgs(speed_headers)
+        tls_avg.gen_classic_speed_avgs(speed_headers)
 
 #------------------------------------------------------------------------------------------------------------------------------
 def parse_tls_performance(test_opts, replace_old_results, skip_tls_speed):
-    """ Entrypoint function for parsing OQS-Provider TLS handshake and speed results. Controls the parsing flow and triggers 
+    """ Entrypoint function for parsing PQC, Hybrid-PQC, and classical TLS handshake and speed results. Controls the parsing flow and triggers
         relevant functions. """
     
     # Get test options and set test parameter vars

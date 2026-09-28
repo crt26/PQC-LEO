@@ -2,11 +2,11 @@
 Copyright (c) 2023-2026 Callum Turino
 SPDX-License-Identifier: MIT
 
-TLS handshake transmission cost testing script for PQC-LEO. This script runs OpenSSL TLS 1.3
-handshake tests across PQC, Hybrid-PQC, and classic algorithm types. For each signature and
-KEM/ciphersuite pairing, the script executes both one-way and mutual authentication handshakes,
-extracts the transmitted byte counts from the OpenSSL client output, and structures the results
-into clean CSV files.
+TLS handshake transmission-cost testing script for PQC-LEO. This script runs OpenSSL TLS 1.3
+handshake tests across PQC, Hybrid-PQC, and classical algorithm types. It tests PQC and Hybrid-PQC
+signature/KEM pairs and classical signature/key-exchange-group/ciphersuite combinations. For each
+combination, the script executes both one-way and mutual-authentication handshakes, extracts the
+transmitted byte counts from the OpenSSL client output, and structures the results into clean CSV files.
 
 Before running tests, the script checks that required key/certificate and algorithm-list files
 are present, resolves the project root from the marker file, and sets the OpenSSL library path
@@ -109,13 +109,16 @@ def setup_base_env():
     # Define the global openssl_bin path
     openssl_bin = os.path.join(dir_paths["openssl_path"], "bin", "openssl")
 
-    # Define the alg_list and alg_list_paths dicts
+    # Define the algorithm-list dictionaries for each PQC, Hybrid-PQC, and classical algorithm category
     alg_lists = {}
     alg_list_paths = {
         "pqc_kem": os.path.join(dir_paths["alg_list_dir"], "tls_kem_algs.txt"),
         "pqc_sig": os.path.join(dir_paths["alg_list_dir"], "tls_sig_algs.txt"),
         "hybrid_kem": os.path.join(dir_paths["alg_list_dir"], "tls_hybr_kem_algs.txt"),
         "hybrid_sig": os.path.join(dir_paths["alg_list_dir"], "tls_hybr_sig_algs.txt"),
+        "classic_sig": os.path.join(dir_paths["alg_list_dir"], "tls_classic_sig_algs.txt"),
+        "classic_key_exchange": os.path.join(dir_paths["alg_list_dir"], "tls_classic_key_exchange_groups.txt"),
+        "classic_ciphersuite": os.path.join(dir_paths["alg_list_dir"], "tls_classic_ciphersuites.txt")
     }
 
     # Loop through each algorithm category and read in the algorithm lists from the corresponding files
@@ -128,11 +131,6 @@ def setup_base_env():
         with open(list_path, "r") as alg_file:
             for line in alg_file:
                 alg_lists[alg_cat].append(line.strip())
-
-    # Add the classic signature algorithms and ciphersuites
-    # (just going to call the classic ciphersuites "KEM" to avoid making the code that calls the dict more complex than it needs to be)
-    alg_lists["classic_sig"] = ["RSA_2048", "RSA_3072", "RSA_4096", "prime256v1", "secp384r1", "secp521r1"]
-    alg_lists["classic_kem"] = ["TLS_AES_256_GCM_SHA384", "TLS_CHACHA20_POLY1305_SHA256", "TLS_AES_128_GCM_SHA256"]
 
     # Return the created dir_paths dict
     return dir_paths, alg_lists
@@ -249,7 +247,7 @@ def configure_result_path(dir_paths):
     return dir_paths
 
 #------------------------------------------------------------------------------------------------------------------------------
-def define_openssl_cmds(dir_paths, test_type, cert_key_paths, sig_kem_pair, auth_type):
+def define_openssl_cmds(dir_paths, test_type, cert_key_paths, alg_params, auth_type):
     """ Function for defining the OpenSSL s_server and s_client command lists. Commands are built from the provided test type, 
         signature/KEM pair, and authentication type, then returned for execution with subprocess. """
 
@@ -267,6 +265,7 @@ def define_openssl_cmds(dir_paths, test_type, cert_key_paths, sig_kem_pair, auth
         "-key", cert_key_paths["server_key"],
         "-www",
         "-tls1_3",
+        "-groups", alg_params[1],
         "-accept", SERVER_ENDPOINT,
     ]
 
@@ -277,6 +276,7 @@ def define_openssl_cmds(dir_paths, test_type, cert_key_paths, sig_kem_pair, auth
         "-state",
         "-servername", "localhost",
         "-tls1_3",
+        "-groups", alg_params[1],
         "-CAfile", cert_key_paths["CA_cert"],
         "-showcerts",
     ]
@@ -284,32 +284,15 @@ def define_openssl_cmds(dir_paths, test_type, cert_key_paths, sig_kem_pair, auth
     # Adjust the base OpenSSL commands based on the test type
     if test_type == "pqc-based":
 
-        # Adjust the s_server command to include KEM groups an provider args
-        server_cmd += [
-            "-groups", sig_kem_pair[1],
-            *provider_args
-        ]
+        # Add the provider arguments to the s_server command for PQC-based tests
+        server_cmd += provider_args
+        client_cmd += provider_args
 
-        # Adjust the s_client command to include KEM groups an provider args
-        client_cmd += [
-            "-groups", sig_kem_pair[1],
-            *provider_args
-        ]
+    elif test_type == "classic-based":
 
-    elif test_type == "classic-based-ecdsa":
-    
-        # Adjust the s_server command to include the named curve and ciphersuite for the ECDSA signature algorithm
-        server_cmd += [
-            "-named_curve", sig_kem_pair[0],
-            "-ciphersuites", sig_kem_pair[1],
-        ]
-
-    elif test_type == "classic-based-rsa":
-
-        # Adjust the s_server command to include the ciphersuite for the RSA signature algorithm
-        server_cmd += [
-            "-ciphersuites", sig_kem_pair[1],
-        ]
+        # Add the ciphersuite argument to the s_server command for classic-based tests
+        server_cmd += ["-ciphersuites", alg_params[2]]
+        client_cmd += ["-ciphersuites", alg_params[2]]
 
     else:
         print(f"[ERROR] - Invalid test type '{test_type}' provided to define_openssl_cmds function.")
@@ -344,7 +327,7 @@ def check_port_availability():
             raise RuntimeError(f"Port {SERVER_PORT} is already in use, the OpenSSL s_server process cannot be started. Please ensure the port is free and try again.")
 
 #------------------------------------------------------------------------------------------------------------------------------
-def process_client_results_output(results_df, client_stdout, current_sig, current_kem, auth_type):
+def process_client_results_output(results_df, client_stdout, test_metadata):
     """ Helper function for processing OpenSSL s_client output. Extracts bytes sent/received during the TLS handshake, updates 
         the provided results dataframe with the extracted values, and returns it. """
 
@@ -365,22 +348,108 @@ def process_client_results_output(results_df, client_stdout, current_sig, curren
     else:
 
         # If no match is found, print an error message and exit the script
-        print(f"[ERROR] - Could not find the expected data line in the client output for KEM: {current_kem}, Signature: {current_sig}, Auth: {auth_type}")
-        sys.exit(1)
+        raise RuntimeError("Could not find the TLS handshake byte-count line")
 
-    # Create the new results row for the current KEM/Sig/Auth combo
-    new_results_row = [current_sig, current_kem, auth_type, bytes_written, bytes_read, total_bytes]
+    # Determine the test type and then use the params held in the test_metadata dict to define the result row
+    new_result_row = []
+    if test_metadata["test_type"] == "pqc-based":
+        new_result_row = [
+            test_metadata["sig_alg"], 
+            test_metadata["kem_alg"], 
+            test_metadata["auth_type"], 
+            bytes_written, 
+            bytes_read, 
+            total_bytes
+        ]
+
+    elif test_metadata["test_type"] == "classic-based":
+        new_result_row = [
+            test_metadata["sig_alg"],
+            test_metadata["key_exchange_group"],
+            test_metadata["ciphersuite"],
+            test_metadata["auth_type"],
+            bytes_written,
+            bytes_read,
+            total_bytes
+        ]
+
+    else:
+        raise RuntimeError(f"Unsupported test type supplied to process_client_results_output - {test_metadata['test_type']}")
 
     # Append the new results row to the results dataframe
-    results_df.loc[len(results_df)] = new_results_row
+    results_df.loc[len(results_df)] = new_result_row
 
     return results_df
 
 #------------------------------------------------------------------------------------------------------------------------------
+def run_openssl_test(server_cmd, client_cmd):
+    """ Function for running a single OpenSSL TLS handshake test using the provided s_server and s_client commands. The function
+        checks that the server port is available, starts the server, runs the client after the server is ready, validates the
+        client output, and ensures that the server process is terminated. The captured client output is returned for 
+        processing. """
+
+    # Attempt to run the OpenSSL s_server and s_client commands for the current algorithm/authentication combination
+    server_process = None
+    try:
+
+        # Ensure that the port is available for use before starting the OpenSSL s_server process
+        check_port_availability()
+
+        # Start the OpenSSL s_server process and give it time to initialize before running the s_client command
+        server_process = subprocess.Popen(server_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+        # Wait for the server ACCEPT message to appear in the server's stdout before proceeding with the client connection
+        while True:
+
+            # Read in a line from the server process's stdout
+            line = server_process.stdout.readline()
+
+            # Check if the server process has outputted the ACCEPT string to the stdout
+            if "ACCEPT" in line:
+                break
+
+            # Check if the server process has terminated unexpectedly
+            if line == "" and server_process.poll() is not None:
+                raise RuntimeError(f"Server failed to start:\n{server_process.stderr.read()}")
+            
+        # Run the OpenSSL s_client command and capture its output
+        client_result = subprocess.run(client_cmd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
+        client_stdout = client_result.stdout
+        client_stderr = client_result.stderr
+
+        # Ensure there were no errors outputted by the client process during the handshake
+        if client_result.returncode != 0:
+            raise RuntimeError(f"Client error occurred:\n{client_stderr}")
+
+        # Ensure that the client directed data to stdout
+        if not client_stdout:
+            raise RuntimeError("No output was received from the client process, indicating a potential handshake failure.")
+
+    finally:
+
+        # Terminate the OpenSSL s_server process if it is running
+        if server_process is not None:
+
+            # Check if the server process is still running before attempting to terminate it
+            if server_process.poll() is None:
+                server_process.terminate()
+
+            # Wait for the server process to terminate within 5 seconds, if not force terminate it
+            try:
+                server_process.wait(timeout=5)
+                
+            except subprocess.TimeoutExpired:
+                server_process.kill()
+                server_process.wait()
+
+    # Return the client output for further processing
+    return client_stdout
+
+#------------------------------------------------------------------------------------------------------------------------------
 def run_tests(dir_paths, alg_lists):
-    """ Function for running TLS handshake byte-count tests and outputting CSV results. For each algorithm category, the 
-        function loops through signature and KEM/ciphersuite combinations, runs OpenSSL s_server and s_client commands, extracts 
-        handshake byte counts from client output, and writes results to CSV. """
+    """ Function for running the TLS handshake byte-count tests for PQC, Hybrid-PQC, and classic algorithm categories. The
+        function tests the configured signature, key exchange, ciphersuite, and authentication combinations, processes the
+        captured client output, and writes a separate results CSV file for each algorithm category. """
 
     # Output the current task to the terminal
     print("---------------------------------")
@@ -398,26 +467,19 @@ def run_tests(dir_paths, alg_lists):
             result_columns = ["Signature Algorithm", "KEM Algorithm", "Authentication Type", "Bytes Sent", "Bytes Received", "Total Bytes"]
 
         elif alg_category == "classic":
-            result_columns = ["Signature Algorithm", "Ciphersuite", "Authentication Type", "Bytes Sent", "Bytes Received", "Total Bytes"]
-        
+            result_columns = ["Signature Algorithm", "Key Exchange Group", "Ciphersuite", "Authentication Type", "Bytes Sent", "Bytes Received", "Total Bytes"]
+
         # Define the results algorithm category dataframe
         results_df = pandas.DataFrame(columns=result_columns)
 
-        # Loop through each signature algorithm to test
+        # Loop through each signature algorithm for the current algorithm category
         for current_sig in alg_lists[f"{alg_category}_sig"]:
-
-            # Set the test type based on the algorithm category and type of signature being tested
-            if alg_category == "pqc" or alg_category == "hybrid":
-                test_type = "pqc-based"
-
-            elif alg_category == "classic":
-                test_type = ("classic-based-rsa" if current_sig.startswith("RSA_") else "classic-based-ecdsa")
 
             # Define the signature certificate and key files
             cert_key_paths = {
                 "CA_cert": os.path.join(dir_paths[f"{alg_category}_keys_dir"], f"{current_sig}_CA.crt"),
-                "server_cert": os.path.join(dir_paths[f"{alg_category}_keys_dir"], f"{current_sig}_srv.crt"),
-                "server_key": os.path.join(dir_paths[f"{alg_category}_keys_dir"], f"{current_sig}_srv.key"),
+                "server_cert": os.path.join(dir_paths[f"{alg_category}_keys_dir"], f"{current_sig}_server.crt"),
+                "server_key": os.path.join(dir_paths[f"{alg_category}_keys_dir"], f"{current_sig}_server.key"),
                 "client_cert": os.path.join(dir_paths[f"{alg_category}_keys_dir"], f"{current_sig}_client.crt"),
                 "client_key": os.path.join(dir_paths[f"{alg_category}_keys_dir"], f"{current_sig}_client.key")
             }
@@ -428,78 +490,98 @@ def run_tests(dir_paths, alg_lists):
                     print(f"[ERROR] - The {file_type} file for the {current_sig} signature algorithm is missing, please re-run the 'tls_generate_keys.sh' script")
                     sys.exit(1)
 
-            # Loop through each KEM algorithm to test with the signature algorithm (when its classic the KEM is actually the ciphersuite, just saves making the code more complex)
-            for current_kem in alg_lists[f"{alg_category}_kem"]:
+            # Determine which set of testing loops must be performed based on the algorithm category
+            if alg_category == "pqc" or alg_category == "hybrid":
 
-                # Perform both one-way and mutual authentication tests for the current KEM/Sig combo
-                for auth_type in ["one_way_auth", "mutual_auth"]:
+                # Loop through each KEM algorithm to test with the signature algorithm
+                for current_kem in alg_lists[f"{alg_category}_kem"]:
 
-                    # Output the current KEM/Sig/Auth combo being tested to the terminal
-                    print(f"Testing Signature: {current_sig}, KEM: {current_kem}, Authentication Type: {auth_type}...")
+                    # Perform both one-way and mutual authentication tests for the current KEM/Sig combo
+                    for auth_type in ["one_way_auth", "mutual_auth"]:
 
-                    # Attempt to run the OpenSSL s_server and s_client commands for the current KEM/Sig/Auth combo
-                    server_process = None
-                    try:
+                        # Set captured client output to default state of none before proceeding
+                        captured_client_output = None
+
+                        # Output the current KEM/Sig/Auth combo being tested to the terminal
+                        print(f"Testing Signature: {current_sig}, KEM: {current_kem}, Authentication Type: {auth_type}...")
+
+                        # Define the test type based on the algorithm category and type of signature being tested
+                        test_type = "pqc-based"
 
                         # Define the OpenSSL s_server and s_client commands for the current KEM/Sig/Auth combo
-                        server_cmd, client_cmd = define_openssl_cmds(dir_paths, test_type, cert_key_paths, [current_sig, current_kem], auth_type)
+                        alg_params = [current_sig, current_kem]
+                        server_cmd, client_cmd = define_openssl_cmds(dir_paths, test_type, cert_key_paths, alg_params, auth_type)
 
-                        # Ensure that the port is available for use before starting the OpenSSL s_server process
-                        check_port_availability()
+                        # Attempt to run the testing and process the results
+                        try:
 
-                        # Start the OpenSSL s_server process and give it time to initialize before running the s_client command
-                        server_process = subprocess.Popen(server_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                            # Run the OpenSSL s_server and s_client test, capturing the client output
+                            captured_client_output = run_openssl_test(server_cmd, client_cmd)
 
-                        # Wait for the server ACCEPT message to appear in the server's stdout before proceeding with the client connection
-                        while True:
+                            # Process the captured client output to extract the bytes sent/received and update the results dataframe
+                            test_metadata = {
+                                "test_type": test_type, 
+                                "sig_alg": current_sig, 
+                                "kem_alg": current_kem, 
+                                "auth_type": auth_type
+                            }
+                            results_df = process_client_results_output(results_df, captured_client_output, test_metadata)
 
-                            # Read in a line from the server process's stdout
-                            line = server_process.stdout.readline()
+                        except RuntimeError as error:
+                            print(f"[ERROR] - During the test for Signature: {current_sig}, "
+                                  f"KEM: {current_kem}, "
+                                  f"Authentication Type: {auth_type}, "
+                                  f"the following error occurred:\n{error}"
+                            )
+                            sys.exit(1)
 
-                            # Check if the server process has outputted the ACCEPT string to the stdout
-                            if "ACCEPT" in line:
-                                break
+            elif alg_category == "classic":
 
-                            # Check if the server process has terminated unexpectedly
-                            if line == "" and server_process.poll() is not None:
-                                raise Exception(f"Server failed to start:\n{server_process.stderr.read()}")
-                            
-                        # Run the OpenSSL s_client command and capture its output
-                        client_result = subprocess.run(client_cmd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False)
-                        client_stdout = client_result.stdout
-                        client_stderr = client_result.stderr
+                # Loop through each key exchange group and ciphersuite to test with the signature algorithm
+                for current_key_group in alg_lists["classic_key_exchange"]:
+                    for current_ciphersuite in alg_lists["classic_ciphersuite"]:
 
-                        # Ensure there were no errors outputted by the client process during the handshake
-                        if client_result.returncode != 0:
-                            raise Exception(f"Client error occurred:\n{client_stderr}")
+                        # Perform both one-way and mutual authentication tests for the current key exchange/ciphersuite/Sig combo
+                        for auth_type in ["one_way_auth", "mutual_auth"]:
 
-                        # Ensure that the client directed data to stdout
-                        if not client_stdout:
-                            raise Exception("No output was received from the client process, indicating a potential handshake failure.")
+                            # Set captured client output to default state of none before proceeding
+                            captured_client_output = None
 
-                    except Exception as error:
-                        print(f"[ERROR] - During testing of KEM: {current_kem}, Signature: {current_sig}, Auth: {auth_type}, the following error occurred:\n{error}")
-                        sys.exit(1)
+                            # Output the current key exchange/ciphersuite/Sig/Auth combo being tested to the terminal
+                            print(f"Testing Signature: {current_sig}, Key Exchange: {current_key_group}, Ciphersuite: {current_ciphersuite}, Authentication Type: {auth_type}...")
 
-                    finally:
+                            # Define the test type based on the algorithm category and type of signature being tested
+                            test_type = "classic-based"
 
-                        # Terminate the OpenSSL s_server process if it is running
-                        if server_process is not None:
+                            # Define the OpenSSL s_server and s_client commands for the current key exchange/ciphersuite/Sig/Auth combo
+                            alg_params = [current_sig, current_key_group, current_ciphersuite]
+                            server_cmd, client_cmd = define_openssl_cmds(dir_paths, test_type, cert_key_paths, alg_params, auth_type)
 
-                            # Check if the server process is still running before attempting to terminate it
-                            if server_process.poll() is None:
-                                server_process.terminate()
-
-                            # Wait for the server process to terminate within 5 seconds, if not force terminate it
+                            # Attempt to run the testing and process the results
                             try:
-                                server_process.wait(timeout=5)
-                                
-                            except subprocess.TimeoutExpired:
-                                server_process.kill()
-                                server_process.wait()
-                        
-                    # Process the client output to extract the number of bytes sent and received during the handshake
-                    results_df = process_client_results_output(results_df, client_stdout, current_sig, current_kem, auth_type)
+
+                                # Run the OpenSSL s_server and s_client test, capturing the client output
+                                captured_client_output = run_openssl_test(server_cmd, client_cmd)
+
+                                # Process the captured client output to extract the bytes sent/received and update the results dataframe
+                                test_metadata = {
+                                    "test_type": test_type, 
+                                    "sig_alg": current_sig, 
+                                    "key_exchange_group": current_key_group, 
+                                    "ciphersuite": current_ciphersuite, 
+                                    "auth_type": auth_type
+                                }
+                                results_df = process_client_results_output(results_df, captured_client_output, test_metadata)
+
+                            except RuntimeError as error:
+                                print(
+                                    f"[ERROR] - During the test for Signature: {current_sig}, "
+                                    f"Key Exchange: {current_key_group}, "
+                                    f"Ciphersuite: {current_ciphersuite}, "
+                                    f"Authentication Type: {auth_type}, "
+                                    f"the following error occurred:\n{error}"
+                                )
+                                sys.exit(1)
 
         # Output the current algorithm category results dataframe to a CSV file
         results_csv_path = os.path.join(dir_paths["results_dir"], f"{alg_category}_tls_handshake_bytes_results.csv")

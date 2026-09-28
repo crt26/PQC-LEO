@@ -3,13 +3,11 @@
 # Copyright (c) 2023-2026 Callum Turino
 # SPDX-License-Identifier: MIT
 
-# Client-side script for benchmarking the performance of cryptographic algorithms used in TLS, including 
-# Post-Quantum Cryptography (PQC), and Hybrid-PQC signature and Key Encapsulation Mechanism (KEM) algorithms.
-# This benchmarking is performed using OpenSSL 4.0.1's s_speed utility, which measures the execution time of 
-# cryptographic operations for each algorithm. The script evaluates both native PQC implementations available in 
-# OpenSSL and those integrated via OQS-Provider. The results are stored in machine-specific directories according 
-# to the selected test type (PQC, Hybrid-PQC, or Classic). Test parameters are passed from the main OQS-Provider 
-# benchmarking control script, which coordinates the execution and ensures synchronisation of the tests.
+# Client-side script for benchmarking cryptographic operations used in TLS. It uses OpenSSL 4.0.1's `speed`
+# command to test PQC and Hybrid-PQC signatures and KEMs, classical RSA/EC/Ed signatures, and classical
+# ECDH/XDH key exchange. PQC implementations may be native to OpenSSL or provided by the OQS-Provider.
+# Results are stored in machine-specific PQC, Hybrid-PQC, and classical directories. The main TLS benchmarking
+# controller passes the test parameters and coordinates execution.
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_test_env() {
@@ -80,6 +78,8 @@ function setup_test_env() {
     sig_alg_file="$test_data_dir/alg_lists/tls_speed_sig_algs.txt"
     hybrid_kem_alg_file="$test_data_dir/alg_lists/tls_speed_hybr_kem_algs.txt"
     hybrid_sig_alg_file="$test_data_dir/alg_lists/tls_speed_hybr_sig_algs.txt"
+    classic_sig_alg_file="$test_data_dir/alg_lists/tls_speed_classic_sig_algs.txt"
+    classic_key_exchange_group_file="$test_data_dir/alg_lists/tls_speed_classic_key_exchange_groups.txt"
 
     # Create the PQC KEM and digital signature algorithm list arrays
     kem_algs=()
@@ -103,33 +103,70 @@ function setup_test_env() {
         hybrid_sig_algs+=("$line")
     done < $hybrid_sig_alg_file
 
+    # Create the classical digital signature and key exchange algorithm list arrays
+    classic_sig_algs=()
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        if [[ -n "$line" ]]; then
+            classic_sig_algs+=("$line")
+        fi
+    done < "$classic_sig_alg_file"
+
+    classic_key_exchange_groups=()
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        if [[ -n "$line" ]]; then
+            classic_key_exchange_groups+=("$line")
+        fi
+    done < "$classic_key_exchange_group_file"
+
     # Create the result output directories and remove old ones if needed
     if [ -d $PQC_SPEED ]; then
         rm -rf $PQC_SPEED
     fi
     mkdir -p $PQC_SPEED
 
+    if [ -d $CLASSIC_SPEED ]; then
+        rm -rf $CLASSIC_SPEED
+    fi
+    mkdir -p $CLASSIC_SPEED
+
     if [ -d $HYBRID_SPEED ]; then
         rm -rf $HYBRID_SPEED
     fi
     mkdir -p $HYBRID_SPEED
 
+    
+
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function tls_speed_test() {
-    # Function for running TLS speed tests on various algorithm types, measuring cryptographic performance using OpenSSL 
-    # 4.0.1's `s_speed` utility. The utility benchmarks signature and key exchange algorithms, supporting both native 
-    # PQC algorithms and those provided via the OQS-Provider.
+    # Function for running TLS speed tests across PQC, Hybrid-PQC, and classical algorithm types using OpenSSL 4.0.1's
+    # `speed` command. It benchmarks signature, KEM, and key-exchange operations supported by OpenSSL and the OQS-Provider.
 
     # Set the test parameter arrays
-    test_types=("PQC-KEMs" "PQC-Digital Signatures" "Hybrid-PQC KEMs" "Hybrid-PQC-Digital-Signatures")
-    alg_lists=("${kem_algs[*]}" "${sig_algs[*]}" "${hybrid_kem_algs[*]}" "${hybrid_sig_algs[*]}")
+    test_types=(
+        "PQC-KEMs"
+        "PQC-Digital-Signatures"
+        "Hybrid-PQC-KEMs"
+        "Hybrid-PQC-Digital-Signatures"
+        "Classic-Digital-Signatures"
+        "Classic-Key-Exchange-Groups"
+    )
+    alg_lists=(
+        "${kem_algs[*]}"
+        "${sig_algs[*]}"
+        "${hybrid_kem_algs[*]}" 
+        "${hybrid_sig_algs[*]}"
+        "${classic_sig_algs[*]}"
+        "${classic_key_exchange_groups[*]}"
+    )
     output_files=(
-        "$PQC_SPEED/tls_speed_kem" 
-        "$PQC_SPEED/tls_speed_sig" 
+        "$PQC_SPEED/tls_speed_kem"
+        "$PQC_SPEED/tls_speed_sig"
         "$HYBRID_SPEED/tls_speed_hybrid_kem"
         "$HYBRID_SPEED/tls_speed_hybrid_sig"
+        "$CLASSIC_SPEED/tls_speed_classic_sig"
+        "$CLASSIC_SPEED/tls_speed_classic_key_exchange"
     )
 
     # Perform the TLS speed tests for the specified number of runs

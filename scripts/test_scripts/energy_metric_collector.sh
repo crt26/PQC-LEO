@@ -3,11 +3,11 @@
 # Copyright (c) 2023-2026 Callum Turino
 # SPDX-License-Identifier: MIT
 
-# Controller script for collecting energy consumption metrics from PQC testing suites. Provides an interactive 
+# Controller script for collecting energy consumption metrics from PQC-LEO testing suites. Provides an interactive
 # configuration interface for collection parameters (test type, machine ID, test runs), manages result directories 
-# and pre-existing result handling, and invokes the energy collector binary. Supports PQC performance, TLS handshake, 
-# and TLS speed collection types, plus custom workflows. The script will also automatically call the parsing script to 
-# parses results into structured CSV files via the central parser.
+# and pre-existing result handling, and invokes the energy collector binary. Supports computational performance, TLS handshake,
+# and TLS speed collection types, including their PQC, Hybrid-PQC, and classical coverage, plus custom workflows. The script
+# can also call the central parser automatically to structure the collected results as CSV files.
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function get_user_yes_no() {
@@ -509,7 +509,7 @@ function handle_result_parsing() {
 #-------------------------------------------------------------------------------------------------------------------------------
 function main() {
     # Main function for controlling the energy metric collection machine used to collect energy consumption metrics for 
-    # the various types of PQC testing supported by PQC-LEO.
+    # the computational and TLS testing categories supported by PQC-LEO.
 
     # Output the welcome message to the terminal
     echo -e "###############################"
@@ -537,6 +537,7 @@ function main() {
     # Ensure that the collector script executed successfully, if not output an error message to the user
     if [ $exit_status -ne 0 ]; then
         echo -e "[ERROR] - Energy collector script did not execute successfully, stored results may be incomplete or corrupted."
+        exit 1
     fi
 
     # Handle the automatic result parsing based on the user input flags

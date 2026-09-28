@@ -105,9 +105,13 @@ The automated energy usage result parsing scripts support processing for the fol
 - TLS speed energy usage
 
 For each of these testing types, the following filename structure is expected:
+
 - **Computational Energy Usage Result** - `comp_(alg-type)_(operation)_(alg-name)_(run-number).txt`
-- **TLS Handshake Energy Usage Result** - `tls_handshake_(session-id-type)_(signing-alg)@(kem-alg)_(run-number).txt`
+- **PQC/Hybrid-PQC TLS Handshake Energy Result** - `tls_handshake_(session-id-type)_(signing-alg)@(kem-alg)_(run-number).txt`
+- **Classical TLS Handshake Energy Result** - `tls_handshake_(session-id-type)_(signing-alg)@(key-exchange-group)@(ciphersuite)_(run-number).txt`
 - **TLS Speed Energy Usage Result** - `tls_speed_(alg-type)_(operation)_(alg-name)_(run-number).txt`
+
+For TLS speed energy results, `alg-type` is `kem`, `sig`, or `key-exchange`. The parser normalises `key-exchange` to `key_exchange`, classifies each algorithm as `pqc`, `hybrid_pqc`, or `classic`, and writes per-run detailed and condensed CSVs. PQC and Hybrid-PQC outputs are split into KEM and signature files; classical outputs are split into signature and key-exchange files. These CSVs are stored in `pqc`, `hybrid`, and `classic` sub-directories beneath the machine directory, while the baseline CSV remains in the machine directory itself.
 
 ## Parsed Results Output
 Once parsing is complete, the parsed results will be stored in the newly created `test_data/results` directory. This includes CSV files containing the detailed test results and automatically calculated averages for each test category. These files are ready for further analysis or can be imported into graphing tools for visualisation.

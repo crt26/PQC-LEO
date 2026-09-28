@@ -3,10 +3,14 @@
 # Copyright (c) 2023-2026 Callum Turino
 # SPDX-License-Identifier: MIT
 
-# Script for controlling automated TLS operation energy benchmarking. It accepts test parameters from the user
-# and performs KEM and signature operation testing with energy measurement after configuring the required environment
-# and system state. The script accepts command line flags to enable custom system state configuration and custom network
-# control ports for energy collector communication, and restores system state upon completion or interruption.
+# Script for controlling automated TLS operation energy benchmarking. It measures key generation, encapsulation, and
+# decapsulation for PQC and Hybrid-PQC KEMs; key generation, signing, and verification for PQC, Hybrid-PQC, and classical
+# signatures; and key generation and shared-secret derivation for classical key-exchange algorithms. The script configures 
+# the required environment and system state, supports custom energy-collector control ports, and restores system state upon 
+# completion or interruption.
+
+# DEVELOPER NOTE: Some of the PQC and classic functions could definitely be combined to reduce code duplication at some point.
+# It was just done this way to get it working really, this will be refactored in the future to make it more concise.
 
 # Declare global script variables
 sys_state_configure_flag="--set-default" # options (--set-default (default method) | --set-custom)
@@ -264,6 +268,8 @@ function setup_env() {
     sig_alg_file="$test_data_dir/alg_lists/tls_speed_sig_algs.txt"
     hybrid_kem_alg_file="$test_data_dir/alg_lists/tls_speed_hybr_kem_algs.txt"
     hybrid_sig_alg_file="$test_data_dir/alg_lists/tls_speed_hybr_sig_algs.txt"
+    classic_sig_alg_file="$test_data_dir/alg_lists/tls_classic_sig_algs.txt"
+    classic_key_exchange_alg_file="$test_data_dir/alg_lists/tls_classic_key_exchange_groups.txt"
 
     # Create the PQC KEM and digital signature algorithm list arrays
     kem_algs=()
@@ -316,6 +322,17 @@ function setup_env() {
 
     done
     hybrid_kem_algs=("${filtered_hybrid_kem_algs[@]}")
+
+    # Create the classic digital signature and key exchange algorithm list arrays used in result filenames
+    classic_filename_sig_algs=()
+    while IFS= read -r line; do
+        classic_filename_sig_algs+=("$line")
+    done < $classic_sig_alg_file
+
+    classic_filename_key_exchange_algs=()
+    while IFS= read -r line; do
+        classic_filename_key_exchange_algs+=("$line")
+    done < $classic_key_exchange_alg_file
 
 }
 
@@ -642,15 +659,47 @@ function get_baseline() {
 #-------------------------------------------------------------------------------------------------------------------------------
 function create_common_files() {
     # Helper function for precomputing the common files required for TLS operation testing. The function takes in the algorithm type
-    # (KEM or signature) and the specific algorithm to create the required files for. The function generates the necessary keypairs,
-    # messages, ciphertexts, and signatures as needed for the testing operations.
+    # (PQC KEM, PQC signature, classical signature, or classical key exchange) and the specific algorithm. It generates the
+    # necessary keypairs, messages, ciphertexts, signatures, and peer shared-secret material for the measured operations. If 
+    # the algorithm type is a classical signature or key exchange, the function also takes in the relevant OpenSSL command line 
+    # arguments.
 
     # Store the passed arguments in local variables
     local alg_type="$1"
     local testing_alg="$2"
+    local classic_keygen_args="$3"
+    local classic_sign_args="$4"
+    local -a classic_keygen_arg_array=()
+    local -a classic_sign_arg_array=()
+
+    # Ensure that if it is a classic test, that all the required arguments have been passed
+    if [ "$alg_type" == "Classic-Sig" ]; then
+
+        # Ensure that both the keygen and sign args have been passed
+        if [ -z "$classic_keygen_args" ] || [ -z "$classic_sign_args" ]; then
+            echo -e "[ERROR] - Classic Signature algorithm type passed to create_common_files function, but not all required args were provided."
+            exit 1
+        fi
+
+        # Read in the passed classic keygen and sign args into arrays for use in the OpenSSL commands
+        read -r -a classic_keygen_arg_array <<< "$classic_keygen_args"
+        read -r -a classic_sign_arg_array <<< "$classic_sign_args"
+
+    elif [ "$alg_type" == "Classic-KEX" ]; then
+
+        # Ensure that the keygen args have been passed
+        if [ -z "$classic_keygen_args" ]; then
+            echo -e "[ERROR] - Classic Key Exchange algorithm type passed to create_common_files function, but not all required args were provided."
+            exit 1
+        fi
+
+        # Read in the passed classic keygen args into an array for use in the OpenSSL commands
+        read -r -a classic_keygen_arg_array <<< "$classic_keygen_args"
+
+    fi
 
     # Create the common files based on the algorithm type
-    if [ "$alg_type" == "KEM" ]; then
+    if [ "$alg_type" == "PQC-KEM" ]; then
 
         # Define the path/filenames for the common testing files
         priv_key_path="$temp_test_storage/${testing_alg}_priv.pem"
@@ -676,7 +725,7 @@ function create_common_files() {
             exit 1
         fi
 
-    elif [ "$alg_type" == "sig" ]; then
+    elif [ "$alg_type" == "PQC-Sig" ]; then
 
         # Define the path/filenames for the common testing files
         priv_key_path="$temp_test_storage/${testing_alg}_priv.pem"
@@ -706,7 +755,89 @@ function create_common_files() {
             exit 1
         fi
 
+    elif [ "$alg_type" == "Classic-Sig" ]; then
+
+        # Define the path/filenames for the common testing files
+        priv_key_path="$temp_test_storage/${testing_alg}_priv.pem"
+        pub_key_path="$temp_test_storage/${testing_alg}_pub.pem"
+        sig_path="$temp_test_storage/${testing_alg}_sig.bin"
+        msg_path="$temp_test_storage/${testing_alg}_msg.bin"
+
+        # Ensure that the common files for this alg do not already exist and remove if they do
+        if [[ -f "$priv_key_path" || -f "$pub_key_path" || -f "$sig_path" || -f "$msg_path" ]]; then
+            echo -e "[NOTICE] - Removing existing common files for $testing_alg"
+            rm -f "$priv_key_path" "$pub_key_path" "$sig_path" "$msg_path"
+        fi
+
+        # Setup the keypair for the classic signature algorithm
+        "$openssl_bin" genpkey $provider_flags "${classic_keygen_arg_array[@]}" -out "$priv_key_path"
+        "$openssl_bin" pkey $provider_flags -in "$priv_key_path" -pubout -out "$pub_key_path"
+
+        # Create the fixed random message for signing/verification testing
+        head -c 512 /dev/urandom > "$msg_path"
+
+        # Precompute the signature for the verification testing
+        "$openssl_bin" pkeyutl \
+            $provider_flags \
+            -sign \
+            "${classic_sign_arg_array[@]}" \
+            -inkey "$priv_key_path" \
+            -in "$msg_path" \
+            -out "$sig_path"
+
+        # Ensure that all required files were created
+        if [[ ! -f "$priv_key_path" || ! -f "$pub_key_path" || ! -f "$sig_path" || ! -f "$msg_path" ]]; then
+            echo -e "Error generating keys, message, or signature for $testing_alg, please check the OpenSSL installation and try again."
+            exit 1
+        fi
+
+    elif [ "$alg_type" == "Classic-KEX" ]; then
+
+        # Define the path/filenames for the common testing files
+        local_priv_key_path="$temp_test_storage/${testing_alg}_local_priv.pem"
+        local_pub_key_path="$temp_test_storage/${testing_alg}_local_pub.pem"
+        peer_priv_key_path="$temp_test_storage/${testing_alg}_peer_priv.pem"
+        peer_pub_key_path="$temp_test_storage/${testing_alg}_peer_pub.pem"
+        local_secret_path="$temp_test_storage/${testing_alg}_local_secret.bin"
+        peer_secret_path="$temp_test_storage/${testing_alg}_peer_secret.bin"
+
+        # Ensure that the common files for this alg do not already exist and remove if they do
+        local file_vars=($local_priv_key_path $local_pub_key_path $peer_priv_key_path $peer_pub_key_path $local_secret_path $peer_secret_path)
+
+        for file in "${file_vars[@]}"; do
+            if [[ -f "$file" ]]; then
+                echo -e "[NOTICE] - Removing existing common file: $file"
+                rm -f "$file"
+            fi
+        done
+
+        # Create the local and peer keypairs for the classic key exchange algorithm
+        "$openssl_bin" genpkey $provider_flags "${classic_keygen_arg_array[@]}" -out "$local_priv_key_path"
+        "$openssl_bin" pkey $provider_flags -in "$local_priv_key_path" -pubout -out "$local_pub_key_path"
+        "$openssl_bin" genpkey $provider_flags "${classic_keygen_arg_array[@]}" -out "$peer_priv_key_path"
+        "$openssl_bin" pkey $provider_flags -in "$peer_priv_key_path" -pubout -out "$peer_pub_key_path"
+
+        # Test the local and peer derivation to ensure that both peers derive the same shared secret
+        "$openssl_bin" pkeyutl $provider_flags -derive -inkey "$local_priv_key_path" -peerkey "$peer_pub_key_path" -out "$local_secret_path"
+        "$openssl_bin" pkeyutl $provider_flags -derive -inkey "$peer_priv_key_path" -peerkey "$local_pub_key_path" -out "$peer_secret_path"
+
+        # Confirm that both peers derived the same shared secret
+        if ! cmp -s "$local_secret_path" "$peer_secret_path"; then
+            echo "[ERROR] - Derived secrets do not match for $testing_alg"
+            exit 1
+        fi
+
+        # Ensure that all required files were created
+        for file in "${file_vars[@]}"; do
+            if [[ ! -f "$file" ]]; then
+                echo -e "Error generating keys or shared secrets for $testing_alg, please check the OpenSSL installation and try again."
+                exit 1
+            fi
+        done
+
     else
+
+        # Output an error message and exit if an invalid algorithm type is passed
         echo -e "[ERROR] - Invalid algorithm type passed to create_common_files function, please check the code and try again."
         exit 1
 
@@ -715,7 +846,7 @@ function create_common_files() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
-function kem_testing()  {
+function pqc_kem_testing()  {
     # Function for performing the KEM operation testing for both the KEM and hybrid KEM algorithms. The function loops through 
     # the algorithms in the defined lists and performs the keygen, encapsulation, and decapsulation operations for each algorithm 
     # for the defined number of iterations.
@@ -735,7 +866,7 @@ function kem_testing()  {
     for kem_alg in "${all_kems[@]}"; do
 
         # Create the common files required for this KEM algorithm
-        create_common_files "KEM" "$kem_alg"
+        create_common_files "PQC-KEM" "$kem_alg"
 
         # Output current testing to the user
         echo "Testing KEM $kem_alg - Keygen"
@@ -855,7 +986,7 @@ function kem_testing()  {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
-function sig_testing() {
+function pqc_sig_testing() {
     # Function for performing the signature operation testing for both the signature and hybrid signature algorithms. The function 
     # loops through the algorithms in the defined lists and performs the keygen, signing, and verification operations for each 
     # algorithm for the defined number of iterations.
@@ -875,7 +1006,7 @@ function sig_testing() {
     for sig_alg in "${all_sigs[@]}"; do
 
         # Create the common files required for this signature algorithm
-        create_common_files "sig" "$sig_alg"
+        create_common_files "PQC-Sig" "$sig_alg"
 
         # Output the current testing to the user
         echo "Testing SIG $sig_alg - Keygen"
@@ -995,6 +1126,342 @@ function sig_testing() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
+function classic_sig_testing() {
+    # Function for measuring key generation, signing, and verification energy usage for the configured classical signatures.
+    # The function loops through the defined classical signature algorithms and performs the keygen, signing, and verification
+    # operations for each algorithm for the defined number of iterations.
+
+    # Ensure that the temp storage directory is present and empty
+    if [[ -d "$temp_test_storage" ]]; then
+        rm -rf "$temp_test_storage"/*
+    else
+        echo "[NOTICE] - Temporary test storage directory does not exist, creating it now..."
+        mkdir -p "$temp_test_storage"
+    fi
+
+    # Define the OpenSSL key-generation arguments for the classical signature tests
+    local classic_sig_openssl_args=(
+        "-algorithm RSA -pkeyopt rsa_keygen_bits:2048"
+        "-algorithm RSA -pkeyopt rsa_keygen_bits:3072"
+        "-algorithm RSA -pkeyopt rsa_keygen_bits:4096"
+        "-algorithm RSA-PSS -pkeyopt rsa_keygen_bits:2048"
+        "-algorithm RSA-PSS -pkeyopt rsa_keygen_bits:3072"
+        "-algorithm RSA-PSS -pkeyopt rsa_keygen_bits:4096"
+        "-algorithm EC -pkeyopt ec_paramgen_curve:prime256v1"
+        "-algorithm EC -pkeyopt ec_paramgen_curve:secp384r1"
+        "-algorithm EC -pkeyopt ec_paramgen_curve:secp521r1"
+        "-algorithm ED25519"
+        "-algorithm ED448"
+        "-algorithm EC -pkeyopt ec_paramgen_curve:brainpoolP256r1"
+        "-algorithm EC -pkeyopt ec_paramgen_curve:brainpoolP384r1"
+        "-algorithm EC -pkeyopt ec_paramgen_curve:brainpoolP512r1"
+    )
+
+    # Loop through the classic signature algorithms and perform the keygen, signing, and verification operations for each
+    for alg_name_index in "${!classic_filename_sig_algs[@]}"; do
+
+        # Set the current OpenSSL algorithm name and param for the signature testing
+        sig_alg="${classic_filename_sig_algs[$alg_name_index]}"
+        algorithm_arg_string="${classic_sig_openssl_args[$alg_name_index]}"
+
+        # Define the arrays for storing the OpenSSL command arguments for the current signature algorithm
+        keygen_args=()
+        sign_args=()
+
+        # Read in the keygen arguments from the algorithm name string and store them in the keygen_args array
+        read -r -a keygen_args <<< "$algorithm_arg_string"
+
+        # Based on the algorithm type, set the signing arguments accordingly
+        case "$sig_alg" in
+
+            RSA_2048|RSA_3072|RSA_4096)
+                sign_args=(-rawin -digest sha256 -pkeyopt rsa_padding_mode:pss -pkeyopt rsa_pss_saltlen:digest)
+                ;;
+
+            RSA-PSS_2048|RSA-PSS_3072|RSA-PSS_4096)
+                sign_args=(-rawin -digest sha256 -pkeyopt rsa_padding_mode:pss -pkeyopt rsa_pss_saltlen:digest)
+                ;;
+
+            prime256v1|brainpoolP256r1)
+                sign_args=(-rawin -digest sha256)
+                ;;
+
+            secp384r1|brainpoolP384r1)
+                sign_args=(-rawin -digest sha384)
+                ;;
+
+            secp521r1|brainpoolP512r1)
+                sign_args=(-rawin -digest sha512)
+                ;;
+
+            ed25519|ed448)
+                sign_args=(-rawin)
+                ;;
+
+            *)
+                echo "[ERROR] - Unsupported classical signature algorithm: $sig_alg"
+                exit 1
+                ;;
+
+        esac
+
+        # Create the common files for the current signature algorithm
+        create_common_files "Classic-Sig" "$sig_alg" "${keygen_args[*]}" "${sign_args[*]}"
+        
+
+        # Output the current test to the user
+        echo "Testing Classic SIG $sig_alg - Keygen"
+
+        # Send the GETREADY message to the collector for keygen testing
+        "$control_sender" -s \
+            -T "tls_speed_sig_keygen" \
+            -A "$sig_alg" \
+            -R "$run_num" \
+            -P "$energy_poll_rate" \
+            "${com_flags[@]}"
+        exit_code=$?
+
+        # Ensure no issues with the command
+        if [ $exit_code -ne 0 ]; then
+            echo -e "[ERROR] - Error sending GETREADY message to energy collector, please check the connection and try again."
+            exit 1
+        fi
+
+        # Perform the keygen test for the defined number of iterations
+        for ((i=1; i<=operation_iterations; i++)); do
+
+            # Perform the keygen operation
+            taskset -c "$TARGET_CPU_CORE" "$openssl_bin" genpkey $provider_flags "${keygen_args[@]}" -out /dev/null
+            exit_code=$?
+
+            # Check for errors during the operation
+            if [ $exit_code -ne 0 ]; then
+                echo -e "[ERROR] - Error during $sig_alg keygen operation"
+                exit 1
+            fi
+
+        done
+
+        # Send the testing complete message to the collector
+        "$control_sender" -t "${com_flags[@]}"
+
+        # Output the current test to the user
+        echo "Testing Classic SIG $sig_alg - Sign"
+
+        # Send the GETREADY message to the collector for signing testing
+        "$control_sender" -s \
+            -T "tls_speed_sig_sign" \
+            -A "$sig_alg" \
+            -R "$run_num" \
+            -P "$energy_poll_rate" \
+            "${com_flags[@]}"
+        exit_code=$?
+
+        # Ensure no issues with the command
+        if [ $exit_code -ne 0 ]; then
+            echo -e "[ERROR] - Error sending GETREADY message to energy collector, please check the connection and try again."
+            exit 1
+        fi
+
+        # Perform the signing test for the defined number of iterations
+        for ((i=1; i<=operation_iterations; i++)); do
+
+            # Perform the signing operation
+            taskset -c "$TARGET_CPU_CORE" \
+                "$openssl_bin" pkeyutl \
+                $provider_flags \
+                -sign \
+                "${sign_args[@]}" \
+                -inkey "$priv_key_path" \
+                -in "$msg_path" \
+                -out /dev/null
+            exit_code=$?
+
+            # Check for errors during the operation
+            if [ $exit_code -ne 0 ]; then
+                echo -e "[ERROR] - Error during $sig_alg signing operation"
+                exit 1
+            fi
+
+        done
+
+        # Send the testing complete message to the collector
+        "$control_sender" -t "${com_flags[@]}"
+
+        # Output the current test to the user
+        echo "Testing Classic SIG $sig_alg - Verify"
+
+        # Send the GETREADY message to the collector for verification testing
+        "$control_sender" -s \
+            -T "tls_speed_sig_verify" \
+            -A "$sig_alg" \
+            -R "$run_num" \
+            -P "$energy_poll_rate" \
+            "${com_flags[@]}"
+        exit_code=$?
+
+        # Ensure no issues with the command
+        if [ $exit_code -ne 0 ]; then
+            echo -e "[ERROR] - Error sending GETREADY message to energy collector, please check the connection and try again."
+            exit 1
+        fi
+
+        # Perform the verification test for the defined number of iterations
+        for ((i=1; i<=operation_iterations; i++)); do
+
+            # Perform the verification operation
+            taskset -c "$TARGET_CPU_CORE" \
+                "$openssl_bin" pkeyutl \
+                $provider_flags \
+                -verify \
+                "${sign_args[@]}" \
+                -pubin \
+                -inkey "$pub_key_path" \
+                -in "$msg_path" \
+                -sigfile "$sig_path" \
+                > /dev/null
+            exit_code=$?
+
+            # Check for errors during the operation
+            if [ $exit_code -ne 0 ]; then
+                echo -e "[ERROR] - Error during $sig_alg verification operation"
+                exit 1
+            fi
+
+        done
+
+        # Send the testing complete message to the collector
+        "$control_sender" -t "${com_flags[@]}"
+
+    done
+
+    # Clean up the temp storage directory
+    if [[ -d "$temp_test_storage" ]]; then
+        rm -rf "$temp_test_storage"/*
+    fi
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
+function classic_key_exchange_testing() {
+    # Function for measuring key-generation and shared-secret-derivation energy usage for the configured classical
+    # XDH, NIST-curve ECDH, and Brainpool ECDH key-exchange algorithms. The function loops through the defined classical key 
+    # exchange algorithms and performs the keygen and derivation operations for each algorithm for the defined number of iterations.
+    
+    # Define the OpenSSL algorithm name and param array for the key-exchange testing
+    local classic_kex_openssl_args=(
+        "-algorithm X25519"
+        "-algorithm X448"
+        "-algorithm EC -pkeyopt ec_paramgen_curve:prime256v1"
+        "-algorithm EC -pkeyopt ec_paramgen_curve:secp384r1"
+        "-algorithm EC -pkeyopt ec_paramgen_curve:secp521r1"
+        "-algorithm EC -pkeyopt ec_paramgen_curve:brainpoolP256r1"
+        "-algorithm EC -pkeyopt ec_paramgen_curve:brainpoolP384r1"
+        "-algorithm EC -pkeyopt ec_paramgen_curve:brainpoolP512r1"
+    )
+
+    # Loop through the classic key exchange algorithms and perform the keygen and derivation testing
+    for alg_name_index in "${!classic_filename_key_exchange_algs[@]}"; do
+
+        # Set the current OpenSSL algorithm name and param for the key exchange testing
+        key_exchange_alg="${classic_filename_key_exchange_algs[$alg_name_index]}"
+        algorithm_arg_string="${classic_kex_openssl_args[$alg_name_index]}"
+
+        # Define the keygen OpenSSL arguments for the current key exchange algorithm
+        keygen_args=()
+        read -r -a keygen_args <<< "$algorithm_arg_string"
+
+        # Create the common files for the current key exchange algorithm
+        create_common_files "Classic-KEX" "$key_exchange_alg" "${keygen_args[*]}"
+
+        # Output the current test to the user
+        echo "Testing Classic Key Exchange $key_exchange_alg - Keygen"
+
+        # Send the GETREADY message to the collector for keygen testing
+        "$control_sender" -s \
+            -T "tls_speed_key-exchange_keygen" \
+            -A "$key_exchange_alg" \
+            -R "$run_num" \
+            -P "$energy_poll_rate" \
+            "${com_flags[@]}"
+        exit_code=$?
+
+        # Ensure no issues with the command
+        if [ $exit_code -ne 0 ]; then
+            echo -e "[ERROR] - Error sending GETREADY message to energy collector, please check the connection and try again."
+            exit 1
+        fi
+
+        # Perform the keygen test for the defined number of iterations
+        for ((i=1; i<=operation_iterations; i++)); do
+
+            # Perform the keygen operation
+            taskset -c "$TARGET_CPU_CORE" "$openssl_bin" genpkey $provider_flags "${keygen_args[@]}" -out /dev/null
+            exit_code=$?
+
+            # Check for errors during the operation
+            if [ $exit_code -ne 0 ]; then
+                echo -e "[ERROR] - Error during $key_exchange_alg keygen operation"
+                exit 1
+            fi
+
+        done
+
+        # Send the keygen testing complete message to the collector
+        "$control_sender" -t "${com_flags[@]}"
+
+        # Output the current test to the user
+        echo "Testing Classic Key Exchange $key_exchange_alg - Derive"
+
+        # Send the GETREADY message to the collector for derivation testing
+        "$control_sender" -s \
+            -T "tls_speed_key-exchange_derive" \
+            -A "$key_exchange_alg" \
+            -R "$run_num" \
+            -P "$energy_poll_rate" \
+            "${com_flags[@]}"
+        exit_code=$?
+
+        # Ensure no issues with the command
+        if [ $exit_code -ne 0 ]; then
+            echo -e "[ERROR] - Error sending GETREADY message to energy collector, please check the connection and try again."
+            exit 1
+        fi
+
+        # Perform the derivation test for the defined number of iterations
+        for ((i=1; i<=operation_iterations; i++)); do
+
+            # Perform the derivation operation
+            taskset -c "$TARGET_CPU_CORE" \
+                "$openssl_bin" pkeyutl \
+                $provider_flags \
+                -derive \
+                -inkey "$local_priv_key_path" \
+                -peerkey "$peer_pub_key_path" \
+                -out /dev/null
+            exit_code=$?
+
+            # Check for errors during the operation
+            if [ $exit_code -ne 0 ]; then
+                echo -e "[ERROR] - Error during $key_exchange_alg derivation operation"
+                exit 1
+            fi
+
+        done
+
+        # Send the testing complete message to the collector
+        "$control_sender" -t "${com_flags[@]}"
+
+    done
+
+    # Clean up the temp storage directory
+    if [[ -d "$temp_test_storage" ]]; then
+        rm -rf "$temp_test_storage"/*
+    fi
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
 function main() {
     # Main function for controlling the automated TLS operation energy testing suite.
 
@@ -1042,9 +1509,11 @@ function main() {
         echo "Starting test run $run_num of $number_of_runs"
         echo -e "------------------------\n"
 
-        # Perform the KEM and signature testing
-        kem_testing
-        sig_testing
+        # Perform the various TLS operation tests for the current run
+        pqc_kem_testing
+        pqc_sig_testing
+        classic_sig_testing
+        classic_key_exchange_testing
 
     done
 

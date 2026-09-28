@@ -190,7 +190,9 @@ The repository provides four categories of automated PQC benchmarking:
 
 - **Computational Performance Testing** – Benchmarks the standalone performance of PQC cryptographic operations, gathering data on CPU and peak memory usage.
 
-- **TLS Performance Testing** – Benchmarks PQC, Hybrid-PQC, and classic algorithms integrated into the TLS 1.3 protocol, including handshake and cryptographic operation performance.
+- **TLS Performance Testing** – Benchmarks PQC, Hybrid-PQC, and classical TLS 1.3 handshake configurations and cryptographic operation performance.
+
+- **TLS Handshake Transmission Cost Testing** – Measures the bytes sent and received during one-way and mutually authenticated TLS 1.3 handshakes.
 
 - **TLS Handshake Transmission Cost Testing** – Measures the bytes sent and received during one-way and mutually authenticated TLS 1.3 handshakes.
 
@@ -212,9 +214,9 @@ This tool benchmarks the performance of PQC, Hybrid-PQC, and classical algorithm
 
 It conducts two types of testing:
 
-- **TLS handshake performance testing** – Measures the performance of PQC and Hybrid-PQC algorithms during TLS 1.3 handshakes.
+- **TLS handshake performance testing** – Measures the performance of PQC, Hybrid-PQC, and classical algorithms during TLS 1.3 handshakes.
 
-- **Cryptographic operation benchmarking** – Measures the CPU performance of individual PQC/Hybrid-PQC digital signature and Key Encapsulation Mechanism (KEM) cryptographic operations when integrated within OpenSSL.
+- **Cryptographic operation benchmarking** – Measures the CPU performance of individual PQC/Hybrid-PQC digital signature and Key Encapsulation Mechanism (KEM) operations, together with classical digital signature and key-exchange operations, when integrated within OpenSSL.
 
 Testing can be performed on a single machine or across two machines connected via a physical/virtual network. While the multi-machine setup involves additional configuration, it is fully supported by the automation tools.
 
@@ -225,7 +227,7 @@ For detailed usage instructions, please refer to:
 >**Notice:** The versions of project dependencies used in PQC-LEO version 0.5.0 contains a known issue where certain signature/KEM combinations may produce values of `inf` for "Connections Per User Second" results in TLS handshake testing when using smaller testing windows. Please refer to the [TLS Handshake Inf Result Handling](./docs/performance_results/tls_handshake_inf_result_handling.md) documentation for further information.
 
 ### TLS Handshake Transmission Cost Testing
-This tool measures the amount of data exchanged during TLS 1.3 handshakes using PQC, Hybrid-PQC, and classical algorithm configurations. It tests every supported signature and KEM/ciphersuite pairing using both one-way and mutual authentication, then records the bytes sent, bytes received, and total bytes from the client's perspective.
+This tool measures the amount of data exchanged during TLS 1.3 handshakes using PQC, Hybrid-PQC, and classical algorithm configurations. It tests every supported signing algorithm and KEM pairing for PQC and Hybrid-PQC, and every supported signing algorithm, key exchange group, and ciphersuite combination for classical TLS. Each configuration is tested using both one-way and mutual authentication and the bytes sent, bytes received, and total bytes during the handshake are recorded from the client's perspective.
 
 The test runs locally over the loopback interface and writes final CSV results directly to the `results` directory.
 
@@ -234,7 +236,7 @@ For detailed usage instructions, please refer to:
 [TLS Handshake Transmission Cost Testing Instructions](docs/testing_tools_usage/tls_handshake_transmission_cost_testing.md)
 
 ### PQC Energy Usage Testing
-This tool benchmarks the energy consumption of supported PQC algorithms during both computational and TLS performance testing. It provides tools and automations scripts to collect energy usage metrics using supported energy meters and a collecting device. It supports automation for the following categories of energy usage testing:
+This tool benchmarks the energy consumption of supported cryptographic algorithms during computational and TLS testing, including PQC, Hybrid-PQC, and classical configurations where applicable. It provides tools and automation scripts to collect energy usage metrics using supported energy meters and a collection device. It supports automation for the following categories of energy usage testing:
 
 - Computational Performance Energy Testing
 - TLS Handshake Energy Testing
