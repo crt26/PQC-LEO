@@ -6,7 +6,7 @@
 # Controller script for collecting energy consumption metrics from PQC-LEO testing suites. Provides an interactive
 # configuration interface for collection parameters (test type, machine ID, test runs), manages result directories 
 # and pre-existing result handling, and invokes the energy collector binary. Supports computational performance, TLS handshake,
-# and TLS speed collection types, including their PQC, Hybrid-PQC, and classical coverage, plus custom workflows. The script
+# and TLS operations collection types, including their PQC, Hybrid-PQC, and classical coverage, plus custom workflows. The script
 # can also call the central parser automatically to structure the collected results as CSV files.
 
 #-------------------------------------------------------------------------------------------------------------------------------
@@ -155,6 +155,33 @@ function setup_base_env() {
     provider_path="$libs_dir/oqs_provider/lib"
     provider_flags="-provider default -provider oqsprovider -provider-path $provider_path"
 
+    # If the use PQC-LEO OpenSSL build with energy testing flag is present, set the OpenSSL path to the PQC-LEO OpenSSL build
+    if [ -f "$tmp_dir/energy_tools_pqc_leo_openssl.flag" ]; then
+
+        # Check if the PQC-LEO OpenSSL build is present before proceeding, if not output an error message and exit the script
+        if [ ! -d "$openssl_path" ]; then
+            echo -e "[ERROR] - PQC-LEO OpenSSL build not found, please ensure the build is present and try again."
+            exit 1
+        fi
+
+        # Use the same lib64-then-lib selection order as the energy-tool makefiles
+        if [[ -f "$openssl_path/lib64/libcrypto.so" ]]; then
+            openssl_lib_path="$openssl_path/lib64"
+
+        elif [[ -f "$openssl_path/lib/libcrypto.so" ]]; then
+            openssl_lib_path="$openssl_path/lib"
+
+        else
+            echo "[ERROR] - Selected OpenSSL installation does not contain libcrypto.so: $openssl_path"
+            exit 1
+
+        fi
+
+        # Export the LD_LIBRARY_PATH to include the OpenSSL lib directory for the collector binary
+        export LD_LIBRARY_PATH="$openssl_lib_path${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
+    fi
+
     # Declare the internal test script path variables
     result_parser_script="$parsing_scripts/parse_results.py"
 
@@ -290,7 +317,7 @@ function get_collection_options() {
         echo "Available options for test collection type:"
         echo "1) PQC Performance Energy Testing"
         echo "2) TLS Handshake Performance Energy Testing"
-        echo "3) TLS Speed Performance Energy Testing"
+        echo "3) TLS Operations Energy Testing"
         echo "4) Custom Option"
         read -p "Please select collection type (1-4): " collection_response
 
@@ -315,10 +342,10 @@ function get_collection_options() {
 
             3)
 
-                # Set the collection type variable to TLS speed testing
+                # Set the collection type variable to TLS operations energy testing
                 collection_type=3
-                result_dir_name="tls_speed_energy_results"
-                echo -e "\nCollection type set to TLS Speed Performance Energy Testing\n"
+                result_dir_name="tls_operations_energy_results"
+                echo -e "\nCollection type set to TLS Operations Energy Testing\n"
                 break;;
 
             4)  

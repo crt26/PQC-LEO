@@ -30,18 +30,25 @@ The computational energy usage testing by default is built when energy usage tes
 It is also important to note that the computational energy usage testing tool cannot be built by itself, the `energy_collector` tool included within PQC-LEO must also be built as the computational energy usage testing tool utilises the controller API functions included within the `energy_collector` tool to perform the energy usage testing. The main makefile that is located in the PQC-LEO `tools` directory will automatically build the `energy_collector` tool when the computational energy usage testing tool is built.
 
 To be compiled, the computational energy usage testing tool relies on the following libraries:
-- liboqs
-- libcontroller.a (from the energy_collector tool)
-- libmeter.a (from the energy_collector tool)
 
-To compile the computational energy usage testing tool, you can run the following command from PQC-LEO project root directory:
+- liboqs
+- `libcontroller_api.a` (from the energy collector tool)
+- `libmeter_api.a` (from the energy collector tool)
+- OpenSSL Version 3.3.0 or higher
+- libserialport (`libserialport-dev`)
+
+To compile the computational energy usage testing tool with the system OpenSSL, you can run the following commands from PQC-LEO project root directory. Clean the build directories before compiling, including when changing OpenSSL installations:
 
 ```bash
 cd tools
 make
 ```
 
+To use a custom OpenSSL installation, replace `make` with `make OPENSSL_PATH=/path/to/openssl`, using an absolute path (for the PQC-LEO build, the project's `lib/openssl_4.0.1` directory). This setting applies to both tools. See [OpenSSL Compatibility for Energy Tools](../developer_information/project_dependencies.md#openssl-compatibility-for-energy-tools) for the requirements.
+
 The compiled binaries will then be located in the `tools/comp_energy_tester/build/bin` directory.
+
+Before running the tool manually with the project or custom OpenSSL, add its corresponding `lib64` or `lib` directory to `LD_LIBRARY_PATH`, as shown in the [Energy Collector Tool Usage Guide](energy_collector_usage_guide.md#building-the-energy-usage-collector-tools). The automated `pqc_performance_energy_test.sh` script configures this path for the project build automatically when not using the system OpenSSL.
 
 ## Tool Usage
 

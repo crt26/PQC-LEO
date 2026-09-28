@@ -3,7 +3,7 @@
 ## Overview <!-- omit from toc -->
 This document provides a general guide for using the automated energy usage testing tools provided by PQC-LEO. It covers the supported testing types, required hardware and software setup, energy meter configuration, control signalling between devices, and the general process followed when collecting energy usage metrics during automated tests.
 
-The automated energy usage testing tools support PQC computational energy usage testing, TLS handshake energy usage testing, and TLS speed energy usage testing. These tools provide the mechanisms for coordinating and collecting energy usage metrics data during testing, and are designed to be used in conjunction with the `energy_collector_tools` provided by PQC-LEO.
+The automated energy usage testing tools support PQC computational energy usage testing, TLS handshake energy usage testing, and TLS operations energy usage testing. These tools provide the mechanisms for coordinating and collecting energy usage metrics data during testing, and are designed to be used in conjunction with the `energy_collector_tools` provided by PQC-LEO.
 
 The relevant automated energy usage testing scripts can be found in the `scripts/test_scripts` directory from the project's root.
 
@@ -33,7 +33,7 @@ The automated testing scripts provided by PQC-LEO currently support three types 
 
 - PQC computational energy usage testing
 - TLS handshake energy usage testing
-- TLS speed energy usage testing
+- TLS operations energy usage testing
 
 #### PQC Computational Energy Usage Testing
 This testing category evaluates the energy usage of the raw cryptographic operations performed by the supported PQC algorithms provided by the Liboqs library. It supports key generation, encapsulation, and decapsulation testing for KEM algorithms, as well as key generation, signing, and verification testing for digital signature algorithms.
@@ -41,7 +41,7 @@ This testing category evaluates the energy usage of the raw cryptographic operat
 #### TLS Handshake Energy Usage Testing
 This testing category evaluates the energy usage of supported PQC, Hybrid-PQC, and classical algorithms within a TLS 1.3 handshake. PQC and Hybrid-PQC testing uses signing-algorithm/KEM pairings, while classical testing uses every configured signing-algorithm/key-exchange-group/ciphersuite combination.
 
-#### TLS Speed Energy Usage Testing
+#### TLS Operations Energy Usage Testing
 This testing category evaluates the energy usage of PQC, Hybrid-PQC, and classical algorithms when performing cryptographic operations through the OpenSSL command-line tool. This includes the overhead introduced by using these algorithms through the OpenSSL library. It supports key generation, encapsulation, and decapsulation for PQC/Hybrid-PQC KEMs; key generation, signing, and verification for PQC/Hybrid-PQC and classical digital signatures; and key generation and shared-secret derivation for classical key-exchange algorithms.
 
 ## Software and Hardware Requirements
@@ -49,11 +49,13 @@ This testing category evaluates the energy usage of PQC, Hybrid-PQC, and classic
 ### General Requirements
 To utilise the automated testing script for PQC energy usage evaluation, there are a few general requirements and details to be aware of:
 
-- Installation mode `1` or `2` of the setup script must be selected, with yes being selected when prompted to install the energy usage testing tools and dependencies.
+- On the testing machine, select installation mode `1` or `2` for computational testing, or mode `2` (or `3` with an existing computational setup) for TLS testing, and enable the energy usage testing tools when prompted. Use mode `4` for a collector-only machine.
 
 - A supported energy meter must be properly set up and configured for use with the testing scripts. For details on supported energy meters and testing environment setup instructions, please refer to the [Supported Energy Meters](../energy_meter_guides/energy_meter_support.md).
 
 - A sufficient form of communication between the testing and collection machine must be available and operational for control signalling to effectively take place. For details on the required communication setup and configuration, please refer to the [Enabling Support for Test Control Signalling](#enabling-support-for-test-control-signalling) section.
+
+All setup modes use the [OpenSSL selection process for energy tools](../developer_information/project_dependencies.md#openssl-compatibility-for-energy-tools). The automated collector and computational energy scripts configure `LD_LIBRARY_PATH` for the project build when selected during setup; manual tool execution requires the library path configuration described in the tool usage guides.
 
 ### Supported Hardware
 The automated testing tool is currently only supported on the following devices:
@@ -77,9 +79,9 @@ For details on how to add support for new energy meters, please refer to the fol
 ## Supported Algorithms
 The PQC, Hybrid-PQC, and classical algorithms that are supported for standard performance testing are also supported for energy usage testing.
 
-Computational energy testing covers PQC algorithms from Liboqs. TLS handshake and TLS speed energy testing cover PQC, Hybrid-PQC, and classical algorithms. Classical TLS speed energy testing includes all configured classical digital signature and key-exchange algorithms. The following OpenSSL Hybrid-PQC KEMs are exceptions and are not supported by TLS speed energy testing because the required key encoders are unavailable:
+Computational energy testing covers PQC algorithms from Liboqs. TLS handshake and TLS operations energy testing cover PQC, Hybrid-PQC, and classical algorithms. Classical TLS operations energy testing includes all configured classical digital signature and key-exchange algorithms. The following OpenSSL Hybrid-PQC KEMs are exceptions and are not supported by TLS operations energy testing because the required key encoders are unavailable:
 
-For RSA signature measurements, the TLS speed energy test invokes OpenSSL operations directly and explicitly selects PSS padding. This permits separate results for generic RSA keys (`RSA_*`) and RSA-PSS-restricted keys (`RSA-PSS_*`), which the standard `openssl speed` command cannot test as distinct categories.
+For RSA signature measurements, the TLS operations energy test explicitly selects PSS padding. This permits separate results for generic RSA keys (`RSA_*`) and RSA-PSS-restricted keys (`RSA-PSS_*`), which the standard `openssl speed` command cannot test as distinct categories.
 
 - X25519MLKEM768
 - X448MLKEM1024
@@ -172,7 +174,7 @@ Please refer to the following guides for details on how to perform each of the s
 
 - [PQC Computational Energy Usage Testing Guide](./energy_usage_testing_guides/comp_energy_usage_testing.md)
 - [TLS Handshake Energy Usage Testing Guide](./energy_usage_testing_guides/tls_handshake_energy_usage_testing.md)
-- [TLS Speed Energy Usage Testing Guide](./energy_usage_testing_guides/tls_speed_energy_usage_testing.md)
+- [TLS Operations Energy Usage Testing Guide](./energy_usage_testing_guides/tls_operations_energy_usage_testing.md)
 
 Once testing has been completed, the collected energy usage metrics will be available on the collection machine. Please refer to the **Outputted Results** section of the relevant testing guide for details on where the collected energy usage metrics data is stored and how to access it.
 

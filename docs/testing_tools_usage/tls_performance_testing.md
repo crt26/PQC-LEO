@@ -7,7 +7,7 @@ Tests can be conducted either on a single machine (localhost) or across two netw
 
 The relevant PQC TLS Performance testing scripts can be found in the `scripts/test_scripts` directory from the project's root.
 
-If you wish to perform TLS handshake and speed energy usage testing, please refer to the [PQC Energy Usage Testing Guide](./pqc_energy_usage_testing.md) for further details.
+If you wish to perform TLS handshake or TLS operations energy usage testing, please refer to the [PQC Energy Usage Testing Guide](./pqc_energy_usage_testing.md) for further details.
 
 To compare the size of the network data exchanged by one-way and mutually authenticated TLS 1.3 handshakes, refer to the separate [TLS Handshake Transmission Cost Testing Guide](./tls_handshake_transmission_cost_testing.md).
 

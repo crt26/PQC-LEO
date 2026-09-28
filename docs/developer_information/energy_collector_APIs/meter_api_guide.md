@@ -29,7 +29,7 @@ Based on the parameters passed to the meter API functions, the API determines wh
 
 The following library file is produced when the energy collector tools are built, which contains the meter API functions:
 
-- libmeter.a
+- `libmeter_api.a`
 
 It consists of the following header file that contains the function prototypes for the meter API functions:
 

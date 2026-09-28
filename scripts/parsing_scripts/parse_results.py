@@ -7,7 +7,7 @@ computational and TLS test suites. Supports parsing of:
 
 - Computational performance results
 - TLS performance results
-- Energy consumption results (computational energy, TLS handshake energy, TLS speed energy)
+- Energy consumption results (computational energy, TLS handshake energy, TLS operations energy)
 
 The script accepts parameters via command-line arguments or an interactive prompt, collects the
 required test options (Machine-ID, number of runs, energy test type), invokes the appropriate
@@ -33,7 +33,7 @@ def handle_args():
     parser.add_argument('--parse-mode', type=str, help='The parsing mode to be used (computational, tls, or energy)')
     parser.add_argument('--machine-id', type=int, help='The Machine-ID of the results to be parsed')
     parser.add_argument('--total-runs', type=int, help='The number of test runs to be parsed')
-    parser.add_argument('--energy-test-type', type=int, help='The type of energy usage testing performed (1: PQC Computational, 2; TLS Handshake, 3: TLS Speed)')
+    parser.add_argument('--energy-test-type', type=int, help='The type of energy usage testing performed (1: PQC Computational, 2: TLS Handshake, 3: TLS Operations)')
     parser.add_argument("--replace-old-results", action="store_true", help="Replace old results for the passed Machine-ID if this flag is set")
     parser.add_argument("--skip-tls-speed", action="store_true", help="When parse mode is set to TLS, this flag indicates to skip parsing TLS speed results")
     
@@ -76,7 +76,7 @@ def handle_args():
         if parse_mode == "energy":
             
             # Define the valid energy test types
-            valid_energy_test_types = {1: "pqc_performance_energy_results", 2: "tls_handshake_energy_results", 3: "tls_speed_energy_results"}
+            valid_energy_test_types = {1: "pqc_performance_energy_results", 2: "tls_handshake_energy_results", 3: "tls_operations_energy_results"}
 
             # Check that the energy test type argument is provided and valid
             if energy_test_type is not None:
@@ -174,7 +174,7 @@ def get_test_opts(root_dir, user_parse_mode):
             print("Please select from the available energy usage testing types:")
             print("1) PQC Performance Energy Testing")
             print("2) TLS Handshake Performance Energy Testing")
-            print("3) TLS Speed Performance Energy Testing")
+            print("3) TLS Operations Energy Testing")
             
             # Attempt to read in the users response and determine their choice
             try:
@@ -192,7 +192,7 @@ def get_test_opts(root_dir, user_parse_mode):
                     break
 
                 elif test_type_choice == 3:
-                    test_opts["eng_test_type"] = "tls_speed_energy_results"
+                    test_opts["eng_test_type"] = "tls_operations_energy_results"
                     break
 
                 else:

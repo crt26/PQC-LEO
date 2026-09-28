@@ -31,11 +31,14 @@ The tool consists of the following source files:
 - comp_energy_tester.c
 
 To be compiled it relies on the following libraries:
-- liboqs
-- libcontroller.a
-- libmeter.a
 
-Where libcontroller.a and libmeter.a are the libraries produced by the `energy usage collector` tool.
+- liboqs
+- `libcontroller_api.a`
+- `libmeter_api.a`
+- OpenSSL
+- libserialport
+
+The `libcontroller_api.a` and `libmeter_api.a` libraries are produced by the energy usage collector tool. Both energy tools use the OpenSSL installation selected during setup; see [OpenSSL Compatibility for Energy Tools](project_dependencies.md#openssl-compatibility-for-energy-tools) for compatibility and linking requirements.
 
 Detailed usage instructions for the computational energy usage testing tool can be found in the following documentation files:
 
