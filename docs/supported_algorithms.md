@@ -46,15 +46,13 @@ The PQC-LEO project supports all key encapsulation mechanisms (KEMs) and digital
 
 - **Stateful signature schemes (XMSS and LMS)** are currently excluded from this project. Although Liboqs supports them, they are disabled by default and require hazardous experimental build flags to enable key generation and signing. These schemes are not part of the NIST standardisation process, and Liboqs explicitly warns that support may be removed in future releases if misused. Their inclusion within this project may be reconsidered in a future release if justified.
 
-These exceptions are reflected in the tables below. If users wish to enable HQC despite the associated risks, detailed instructions are provided in the advanced setup guide.
-
 All Liboqs algorithms listed below are also supported for computational energy usage testing. Information presented in the tables below on algorithm specifications are taken from the algorithm spec sheets included in the [Liboqs v0.16.0 documentation](https://github.com/open-quantum-safe/liboqs/tree/5a1a854b0dc9f2141bdc771c555ee60c37950183/docs/algorithms).
 
-In addition to standard algorithm implementations, Liboqs offers memory optimised implementation, where available upstream, which offer reduced memory footprint at the cost of performance. To utilise this feature, users can enable memory optimisation during the setup process. These implementations are disabled by default but can be enabled by passing the `--liboqs-memory-optimisation` flag to the setup script. For more information, please see the [Advanced Setup Configuration Guide](./advanced_setup_configuration.md).
+In addition to standard algorithm implementations, Liboqs offers memory optimised implementations, where available upstream, which offer reduced memory footprint at the cost of performance. To utilise this feature, users can enable memory optimisation during the setup process. These implementations are disabled by default but can be enabled by passing the `--liboqs-memory-optimisation` flag to the setup script. For more information, please see the [Advanced Setup Configuration Guide](./advanced_setup_configuration.md).
 
 For further context and guidance:
 
-- See the [Advanced Setup Configuration Guide](./advanced_setup_configuration.md) for instructions on enabling HQC.
+- See the [Advanced Setup Configuration Guide](./advanced_setup_configuration.md) for advanced setup options.
 - Refer to the [Disclaimer Document](../DISCLAIMER.md) for security warnings and usage guidance.
 
 ### Supported KEM Algorithms
@@ -394,9 +392,6 @@ Algorithms provided by OpenSSL that are used within standard TLS handshake and T
 ### Algorithm Support Summary
 The majority of algorithms provided by the OQS-Provider are supported by this project for automated TLS handshake and TLS speed benchmarking. However, a few exceptions exist due to known limitations in protocol compliance or tool compatibility.
 
-#### Known General Limitations
-**HQC** and its variants are disabled by default in both Liboqs and the OQS-Provider due to their current implementations not conforming to the latest specification, which includes important security fixes. As a result, HQC algorithms are excluded from all performance benchmarking unless explicitly enabled by the user using dedicated flags during the setup process.
-
 #### Known TLS Handshake Testing Limitations
 Certain variations of the supported digital signature schemes are excluded from TLS handshake testing due to non-compliance with [RFC 8446](https://datatracker.ietf.org/doc/html/rfc8446), which defines the specifications of the TLS 1.3 protocol. These include:
 
@@ -420,16 +415,8 @@ With native support of various PQC algorithms in OpenSSL 3.6.1, the OQS-Provider
 #### Supported Algorithms for Energy Usage Testing
 All algorithms supported for TLS handshake and speed testing are also supported for their corresponding energy usage tests.
 
-The **only exceptions** are the following hybrid HQC variants, which are not supported for TLS speed energy usage testing:
-
-- p256_hqc1
-- x25519_hqc1
-- p384_hqc3
-- x448_hqc3
-- p521_hqc5
-
 #### Additional Information
-For further details on algorithm support, compatibility, HQC implementation issues, or enabling OQS-Provider algorithms suppourted by PQC-LEO that are disabled by default, see:
+For further details on algorithm support, compatibility, or enabling OQS-Provider algorithms suppourted by PQC-LEO that are disabled by default, see:
 
 - [OQS-Provider Notice](https://github.com/open-quantum-safe/oqs-provider/tree/1670a8a91bbca997d33e6b6851309d6241cc224c#35-and-greater)
 - [Advanced Setup Configuration Guide](./advanced_setup_configuration.md)

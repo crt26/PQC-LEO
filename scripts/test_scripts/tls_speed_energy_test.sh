@@ -287,30 +287,19 @@ function setup_env() {
         hybrid_sig_algs+=("$line")
     done < $hybrid_sig_alg_file
 
-    # Temporary fix - Remove instances of HQC from KEM algorithm list as OIDs are not accessible to modify 
-    filtered_kem_algs=()
-    for alg in "${kem_algs[@]}"; do
-        if [[ "$alg" != *hqc* ]]; then
-            filtered_kem_algs+=("$alg")
-        fi
-    done
-    kem_algs=("${filtered_kem_algs[@]}")
-
-    # Temporary fix - Remove X25519MLKEM768 from hybrid KEM algorithm list as it is currently
+    # Define the list of hybrid KEM algorithms to be excluded from testing due to known issues accessing their KEM encoder
     excluded_hybrid_kems=(
         "X25519MLKEM768"
         "X448MLKEM1024"
         "SecP256r1MLKEM768"
         "SecP384r1MLKEM1024"
-        "p256_hqc1"
-        "x25519_hqc1"
-        "p384_hqc3"
-        "x448_hqc3"
-        "p521_hqc5"
     )
 
+    # Filter the hybrid KEM algorithm list to remove any excluded algorithms
     filtered_hybrid_kem_algs=()
     for alg in "${hybrid_kem_algs[@]}"; do
+
+        # Check if the current algorithm is in the excluded list and set the exclude_alg flag accordingly
         exclude_alg=0
         for excluded in "${excluded_hybrid_kems[@]}"; do
             if [[ "$alg" == "$excluded" ]]; then
@@ -319,9 +308,11 @@ function setup_env() {
             fi
         done
 
+        # If the algorithm is not excluded, add it to the filtered list
         if [[ $exclude_alg -eq 0 ]]; then
             filtered_hybrid_kem_algs+=("$alg")
         fi
+
     done
     hybrid_kem_algs=("${filtered_hybrid_kem_algs[@]}")
 

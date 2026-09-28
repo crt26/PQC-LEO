@@ -158,11 +158,6 @@ function define_oid_var_arrays() {
         "OQS_OID_SECP256R1MLKEM768"
         "OQS_OID_SECP384R1MLKEM1024"
         "OQS_OID_X448MLKEM1024"
-        "OQS_OID_P256_HQC1"
-        "OQS_OID_X25519_HQC1"
-        "OQS_OID_P384_HQC3"
-        "OQS_OID_X448_HQC3"
-        "OQS_OID_P521_HQC5"
     )
 
     # Define OID variables for algorithms which are disabled by default in OQS-Provider

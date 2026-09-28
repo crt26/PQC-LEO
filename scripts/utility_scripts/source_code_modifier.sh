@@ -9,9 +9,7 @@
 # configuration.
 #
 # The first argument passed to this script must always specify the modification tool to use (e.g., `oqs_enable_algs`
-# or `modify_openssl_src`). Subsequent arguments must include the required flags and values specific to the selected
-# tool. These include options such as enabling specific algorithms, adjusting OpenSSL internal constants, or applying
-# user-defined values.
+# or `modify_openssl_src`). The `modify_openssl_src` tool also requires its supported flags and values.
 #
 # The script includes validation checks, fallback logic, and interactive prompts to handle edge cases or unexpected
 # source states, ensuring a safe and guided modification process.
@@ -54,176 +52,87 @@ function get_user_yes_no() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
-function output_help() {
-    # Helper function for outputting the help message to the user when the --help flag is present or when incorrect arguments 
-    # are passed. It will determine which modification tool is being used and output the relevant help message for that tool.
+function output_openssl_modder_help() {
+    # Helper function to output the help message for the modify_openssl_src modification tool. It provides usage instructions
+    # and details about the available command-line options, including the user-defined flag and speed value.
 
-    # Determine which modification tool is being used and set the help message accordingly
-    if [ "$modification_tool" == "oqs_enable_algs" ]; then
-
-            # Output the help message for the oqs_enable_algs modification tool
-            echo "Usage: source_code_modifier.sh oqs_enable_algs [options]"
-            echo "Options:"
-            echo "  --enable-hqc-algs=[0|1]        Set to 1 to enable the HQC KEM algorithms in the OQS-Provider library."
-            echo "  --enable-disabled-algs=[0|1]   Set to 1 to enable all disabled signature algorithms in the OQS-Provider library."
-            echo "  --help                         Display this help message."
-            
-    elif [ "$modification_tool" == "modify_openssl_src" ]; then
-
-        # Output the help message for the modify_openssl_src modification tool
-        echo "Usage: source_code_modifier.sh modify_openssl_src [options]"
-        echo "Options:"
-        echo "  --user-defined-flag=[0|1]           Set to 1 to use a user-defined value for MAX_KEM_NUM and MAX_SIG_NUM in OpenSSL's speed.c file."
-        echo "  --user-defined-speed-value=[int]    Set a new value for MAX_KEM_NUM and MAX_SIG_NUM in OpenSSL's speed.c file. Can be 0 if --user-defined-flag is 0."
-        echo "  --help                              Display this help message."
-
-    else
-
-        # Output an error message if the modification tool is unknown
-        echo "[ERROR] - Unknown modification tool passed as first argument: $modification_tool"
-        exit 1
-
-    fi
+    # Output the help message for the modify_openssl_src modification tool
+    echo "Usage: source_code_modifier.sh modify_openssl_src [options]"
+    echo "Options:"
+    echo "  --user-defined-flag=[0|1]           Set to 1 to use a user-defined value for MAX_KEM_NUM and MAX_SIG_NUM in OpenSSL's speed.c file."
+    echo "  --user-defined-speed-value=[int]    Set a new value for MAX_KEM_NUM and MAX_SIG_NUM in OpenSSL's speed.c file. Can be 0 if --user-defined-flag is 0."
+    echo "  --help                              Display this help message."
 
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
-function parse_args() {
-    # Function for parsing command-line arguments and setting global flags based on detected options. Supports arguments for 
-    # both oqs_enable_algs and modify_openssl_src tools, with validation for required flags.
+function parse_openssl_modder_args() {
+    # Function for parsing the modify_openssl_src command-line arguments and validating its required flags.
 
     # Check for the --help flag and display the help message
     if [[ "$*" =~ --help ]]; then
-        output_help
+        output_openssl_modder_help
         exit 0
     fi
 
-    # Determine which set of arguments needs to be parsed based on the supplied modification tool
-    if [ "$modification_tool" == "oqs_enable_algs" ]; then
+    # Loop through the passed command line arguments and check for the supported options
+    while [[ $# -gt 0 ]]; do
 
-        # Loop through the passed command line arguments and check for the supported options
-        while [[ $# -gt 0 ]]; do
+        # Check if the argument is a valid option, then shift to the next argument
+        case "$1" in
 
-            # Check if the argument is a valid option, then shift to the next argument
-            case "$1" in
+            --user-defined-flag=*)
 
-                --enable-hqc-algs=*)
+                # Extract the value from the argument and ensure it is either 0 or 1
+                user_defined_speed_flag=$(echo "$1" | cut -d '=' -f 2)
 
-                    # Set the enable_hqc flag based on the value passed
-                    enable_hqc=$(echo "$1" | cut -d '=' -f 2)
-
-                    # Ensure that the value attached to the flag is either 0 or 1
-                    if [[ "$enable_hqc" != "0" && "$enable_hqc" != "1" ]]; then
-                        echo "[ERROR] - Invalid value for --enable-hqc-algs, must be 0 or 1"
-                        output_help
-                        exit 1
-                    fi
-                    
-                    shift
-                    ;;
-
-                --enable-disabled-algs=*)
-
-                    # Set the enable_disabled_algs flag based on the value passed
-                    enable_disabled_algs=$(echo "$1" | cut -d '=' -f 2)
-
-                    # Ensure that the value attached to the flag is either 0 or 1
-                    if [[ "$enable_disabled_algs" != "0" && "$enable_disabled_algs" != "1" ]]; then
-                        echo "[ERROR] - Invalid value for --enable-disabled-algs, must be 0 or 1"
-                        output_help
-                        exit 1
-                    fi
-                    
-                    shift
-                    ;;
-                    
-                *)
-
-                    # Output an error message if an unknown option is passed
-                    echo "[ERROR] - Unknown option passed to the utility script: $1"
-                    output_help
+                # Ensure that the value attached to the flag is either 0 or 1
+                if [[ "$user_defined_speed_flag" != "0" && "$user_defined_speed_flag" != "1" ]]; then
+                    echo "[ERROR] - Invalid value for --user-defined-flag, must be 0 or 1"
+                    output_openssl_modder_help
                     exit 1
-                    ;;
+                fi
 
-            esac
+                shift
+                ;;
+            --user-defined-speed-value=*)
 
-        done
+                # Set the user-defined speed value based on the value passed
+                user_defined_speed_value=$(echo "$1" | cut -d '=' -f 2)
 
-        # Ensure that all the required flags have been set before continuing
-        if [ -z "$enable_hqc" ] || [ -z "$enable_disabled_algs" ]; then
-            echo "[ERROR] - Missing required command line arguments for the oqs_enable_algs function in the utility script"
-            output_help
-            exit 1
-        fi
-
-    elif [ "$modification_tool" == "modify_openssl_src" ]; then
-
-        # Loop through the passed command line arguments and check for the supported options
-        while [[ $# -gt 0 ]]; do
-
-            # Check if the argument is a valid option, then shift to the next argument
-            case "$1" in
-
-                --user-defined-flag=*)
-
-                    # Extract the value from the argument and ensure it is either 0 or 1
-                    user_defined_speed_flag=$(echo "$1" | cut -d '=' -f 2)
-
-                    # Ensure that the value attached to the flag is either 0 or 1
-                    if [[ "$user_defined_speed_flag" != "0" && "$user_defined_speed_flag" != "1" ]]; then
-                        echo "[ERROR] - Invalid value for --user-defined-flag, must be 0 or 1"
-                        output_help
-                        exit 1
-                    fi
-
-                    shift
-                    ;;
-            
-
-                --user-defined-speed-value=*)
-
-                    # Set the user-defined speed value based on the value passed
-                    user_defined_speed_value=$(echo "$1" | cut -d '=' -f 2)
-
-                    # Check if it's a valid positive integer
-                    if ! [[ "$user_defined_speed_value" =~ ^[0-9]+$ ]]; then
-                        echo "[ERROR] - Invalid value for --user-defined-speed-value, must be a positive integer"
-                        output_help
-                        exit 1
-                    fi
-
-                    shift
-                    ;;
-
-                *)
-
-                    # Output an error message if an unknown option is passed
-                    echo "[ERROR] - Unknown option passed to the utility script: $1"
-                    output_help
+                # Check if it's a valid positive integer
+                if ! [[ "$user_defined_speed_value" =~ ^[0-9]+$ ]]; then
+                    echo "[ERROR] - Invalid value for --user-defined-speed-value, must be a positive integer"
+                    output_openssl_modder_help
                     exit 1
-                    ;;
+                fi
 
-            esac
+                shift
+                ;;
 
-        done
+            *)
 
-        # Ensure that if the user_defined_speed_flag is set, both user_defined_speed_flag and user_defined_speed_value are set
-        if [ -z "$user_defined_speed_flag" ] || [ -z "$user_defined_speed_value" ]; then
-            echo "[ERROR] - Missing required command line arguments for the modify_openssl_src function in the utility script"
-            output_help
-            exit 1
-        fi
+                # Output an error message if an unknown option is passed
+                echo "[ERROR] - Unknown option passed to the utility script: $1"
+                output_openssl_modder_help
+                exit 1
+                ;;
 
-        # Ensure that if the user_defined_speed_flag is set, that user defined speed value is not 0
-        if [ "$user_defined_speed_flag" -eq 1 ] && [ "$user_defined_speed_value" -eq 0 ]; then
-            echo "[ERROR] - The new speed value for the MAX_KEM_NUM/MAX_SIG_NUM variables can not be 0"
-            exit 1
-        fi
+        esac
 
-    else
-        echo "[ERROR] - Unknown modification tool passed as first argument: $modification_tool"
+    done
+
+    # Ensure that if the user_defined_speed_flag is set, both user_defined_speed_flag and user_defined_speed_value are set
+    if [ -z "$user_defined_speed_flag" ] || [ -z "$user_defined_speed_value" ]; then
+        echo "[ERROR] - Missing required command line arguments for the modify_openssl_src function in the utility script"
+        output_openssl_modder_help
         exit 1
+    fi
 
+    # Ensure that if the user_defined_speed_flag is set, that user defined speed value is not 0
+    if [ "$user_defined_speed_flag" -eq 1 ] && [ "$user_defined_speed_value" -eq 0 ]; then
+        echo "[ERROR] - The new speed value for the MAX_KEM_NUM/MAX_SIG_NUM variables can not be 0"
+        exit 1
     fi
 
 }
@@ -490,9 +399,8 @@ function modify_openssl_src() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function enable_oqs_algs() {
-    # Function for enabling disabled algorithms in the OQS-Provider library. Modifies generate.yml to enable selected 
-    # KEMs/signatures and runs generate.py to apply changes. It requires that the enable_disabled_algs and enable_hqc flags 
-    # have been passed to the script.
+    # Function for enabling disabled algorithms in the OQS-Provider library. Modifies generate.yml to enable selected
+    # KEMs/signatures and runs generate.py to apply changes.
 
     # Define paths for the generate.yml file
     backup_generate_file="$root_dir/modded_lib_files/generate.yml"
@@ -517,72 +425,48 @@ function enable_oqs_algs() {
 
     fi
 
-    # Determine if the algorithms disabled by default should be enabled
-    if [ $enable_disabled_algs -eq 1 ]; then
+    # Ensure that the generate.yml file follows the expected enable: true/false and enable_tls: true/false format field before proceeding
+    if ! grep -Eq "enable:[[:space:]]*(true|false)" "$oqs_provider_generate_file" || ! grep -Eq "enable_tls:[[:space:]]*(true|false)" "$oqs_provider_generate_file"; then
 
-        # Ensure that the generate.yml file follows the expected enable: true/false and enable_tls: true/false format field before proceeding
-        if ! grep -Eq "enable:[[:space:]]*(true|false)" "$oqs_provider_generate_file" || ! grep -Eq "enable_tls:[[:space:]]*(true|false)" "$oqs_provider_generate_file"; then
+        # Output the error message to the user and prompt for their choice on proceeding
+        echo -e "\n[WARNING] - The generate.yml file in the OQS-Provider library does not follow the expected enable:[True/False] or enable_tls:[True/False] format"
+        echo -e "This setup script cannot automatically enable all disabled signature algorithms or enable TLS for bikel1.\n"
+        get_user_yes_no "Would you like to continue with the setup process anyway?"
 
-            # Output the error message to the user and prompt for their choice on proceeding
-            echo -e "\n[WARNING] - The generate.yml file in the OQS-Provider library does not follow the expected enable:[True/False] or enable_tls:[True/False] format"
-            echo -e "this setup script cannot automatically enable all disabled signature algorithms or enable TLS for bikel1\n"
-            get_user_yes_no "Would you like to continue with the setup process anyway?"
-
-            # Determine the next action based on the user's response
-            if [ $user_y_n_response -eq 0 ]; then
-                echo -e "Exiting setup script..."
-                exit 1
-            else
-                echo "Continuing setup process..."
-                return 0
-            fi
-
-        fi
-
-        # Modify the generate.yml file to enable all the disabled signature algorithms
-        sed -i -E 's/enable:[[:space:]]*false/enable: true/g' "$oqs_provider_generate_file"
-
-        # Enable TLS operations for bikel1 its hybrid variants
-        sed -i "/name_group: 'bikel1'/,/family:/ s/enable_tls:[[:space:]]*false/enable_tls: true/" "$oqs_provider_generate_file"
-
-        # Check if the generate.yml file was successfully modified
-        if ! grep -q "enable: true" "$oqs_provider_generate_file"; then
-            echo -e "\n[ERROR] - Enabling all disabled signature algorithms in the OQS-Provider library failed, please verify the setup and run a clean install"
+        # Determine the next action based on the user's response
+        if [ $user_y_n_response -eq 0 ]; then
+            echo -e "Exiting setup script..."
             exit 1
-        fi
-
-        # Check if bikel1 TLS was enabled successfully
-        if ! grep -A15 "name_group: 'bikel1'" "$oqs_provider_generate_file" | grep -q "enable_tls: true"; then
-            echo -e "\n[ERROR] - Enabling TLS for bikel1 failed (could not find enable_tls: true under name_group: 'bikel1')"
-            exit 1
+        else
+            echo "Continuing setup process..."
+            return 0
         fi
 
     fi
 
-    # Determine if the HQC KEM algorithms should be enabled
-    if [ $enable_hqc -eq 1 ]; then
+    # Modify the generate.yml file to enable all the disabled signature algorithms
+    sed -i -E 's/enable:[[:space:]]*false/enable: true/g' "$oqs_provider_generate_file"
 
-    tmp_file=$(mktemp)
-awk '
-  BEGIN { hqc_block = 0 }
-  /family: .HQC./ { hqc_block = 1 }
-  /family:/ && $0 !~ /HQC/ { hqc_block = 0 }
-  hqc_block && /enable_kem: false/ { sub(/enable_kem: false/, "enable_kem: true") }
-  { print }
-' "$oqs_provider_generate_file" > "$tmp_file" && mv "$tmp_file" "$oqs_provider_generate_file"
+    # Enable TLS operations for bikel1 and its hybrid variants
+    sed -i "/name_group: 'bikel1'/,/family:/ s/enable_tls:[[:space:]]*false/enable_tls: true/" "$oqs_provider_generate_file"
 
+    # Check if the generate.yml file was successfully modified
+    if ! grep -q "enable: true" "$oqs_provider_generate_file"; then
+        echo -e "\n[ERROR] - Enabling all disabled signature algorithms in the OQS-Provider library failed, please verify the setup and run a clean install"
+        exit 1
     fi
 
-    # Check if the generate.py script needs to be executed
-    if [ $enable_disabled_algs -eq 1 ] || [ $enable_hqc -eq 1 ]; then
-
-        # Run the generate.py script to enable all disabled signature algorithms in the OQS-Provider library
-        export LIBOQS_SRC_DIR="$liboqs_source"
-        cd $oqs_provider_source
-        python3 $oqs_provider_source/oqs-template/generate.py
-        cd $root_dir
-
+    # Check if bikel1 TLS was enabled successfully
+    if ! grep -A15 "name_group: 'bikel1'" "$oqs_provider_generate_file" | grep -q "enable_tls: true"; then
+        echo -e "\n[ERROR] - Enabling TLS for bikel1 failed (could not find enable_tls: true under name_group: 'bikel1')"
+        exit 1
     fi
+
+    # Run generate.py to apply the OQS-Provider configuration changes
+    export LIBOQS_SRC_DIR="$liboqs_source"
+    cd $oqs_provider_source
+    python3 $oqs_provider_source/oqs-template/generate.py
+    cd $root_dir
 
 }
 
@@ -609,9 +493,6 @@ function modifier_entrypoint() {
         # Enable all disabled OQS-Provider algorithms
         oqs_enable_algs)
 
-            # Parse the command line arguments for the enable_oqs_algs function
-            parse_args "$@"
-
             # Call the function to enable all disabled OQS-Provider algorithms
             enable_oqs_algs
 
@@ -621,7 +502,7 @@ function modifier_entrypoint() {
         modify_openssl_src)
 
             # Parse the command line arguments for the modify_openssl_src function
-            parse_args "$@"
+            parse_openssl_modder_args "$@"
 
             # Call the function to modify OpenSSL's speed.c file
             modify_openssl_src
@@ -631,7 +512,9 @@ function modifier_entrypoint() {
 
             # Output an error message if an unknown modification tool is passed
             echo "[ERROR] - Unknown modification tool passed as first argument: $modification_tool"
-            echo "The required modification tool must be the first argument passed to the script."
+            echo "The required modification tool must be the first argument passed to the script:"
+            echo "  - oqs_enable_algs"
+            echo "  - modify_openssl_src"
             exit 1
             ;;
 

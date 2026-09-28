@@ -87,9 +87,7 @@ The script is run interactively but supports the following optional arguments fo
 |--------------------------------|-----------------------------------------------------------------------------------------------------------------|
 | `--latest-dependency-versions` | Use the latest upstream versions of Liboqs and OQS-Provider (may cause compatibility issues with this project). |
 | `--set-speed-new-value=<int>`  | Manually set `MAX_KEM_NUM` and `MAX_SIG_NUM` values in OpenSSL’s speed.c source file.                           |
-| `--enable-liboqs-hqc-algs`     | Enable HQC KEM algorithms in Liboqs. Disabled by default due to spec non-conformance and security concerns.     |
-| `--enable-oqs-hqc-algs`        | Enable HQC KEM algorithms in OQS-Provider. Requires Liboqs HQC to also be enabled.                              |
-| `--enable-all-hqc-algs`        | Enable HQC KEM algorithms in both Liboqs and OQS-Provider. Overrides the other two HQC flags if present.        |
+| `--liboqs-memory-optimisation` | Enable liboqs algorithm memory optimisation feature for supported algorithms (disabled by default).             |
 | `--help`                       | Display the help message for all supported options.                                                             |
 
 For further information on the main setup script's usage, please refer to the main [README](../../README.md) and [Advanced Setup Configuration](../advanced_setup_configuration.md) file.
@@ -168,22 +166,14 @@ The algorithms that are included within this script are based on the algorithms 
 This Python utility script is used for handling serial (com) port selection in the energy testing bash scripts when serial control signalling has been selected by the user. The script uses the `pyserial` package to detect available serial ports on the system, outputs a numbered list of available ports to the user, validates the selected option value, and returns the selected serial device path to the calling Bash script This utility script is intended to be called by the automated testing scripts (for example, `tls_speed_energy_test.sh` and `pqc_tls_performance_test.sh`) and is **not intended to be run manually**. To support properly grabbing the selected serial port path from the utility script in bash, interactive menu output and warning messages are written to standard error, while only the selected serial device path is written to standard output.
 
 ### source_code_modifier.sh
-This internal utility script automates source code modifications for OpenSSL and OQS-Provider during the setup process. **It is not intended to be run manually from the terminal.** The `setup.sh` script automatically invokes it to adjust hardcoded OpenSSL constants, enable HQC algorithms, and re-enable signature algorithms disabled by default in OQS-Provider, depending on the setup configuration. It is located in the `scripts/utility_scripts/` directory. 
+This internal utility script automates source code modifications for OpenSSL and OQS-Provider during the setup process. **It is not intended to be run manually from the terminal.** Depending on the setup configuration, the `setup.sh` script automatically invokes it to adjust hardcoded OpenSSL constants and enable algorithms that are disabled by default in OQS-Provider. It is located in the `scripts/utility_scripts/` directory.
 
 It provides the following internal modification tools, each of which accepts its own set of arguments:
 
-- **oqs_enable_algs** - Used for enabling HQC KEM algorithms, enabling signature algorithms disabled by default, or both.
+- **oqs_enable_algs** - Used for enabling OQS-Provider algorithms that are disabled by default.
 - **modify_openssl_src** - Used to modify the OpenSSL `speed.c` source code to increase hardcoded values. Only called if disabled signature algorithms are re-enabled in OQS-Provider.
 
-When calling the utility script, the first argument must always be the modification tool to use. Subsequent arguments can be in any order, but must include all of the accepted arguments listed below for each tool.
-
-**Accepted Arguments for oqs_enable_algs**:
-
-| **Flag**                        | **Description**                                                                                       |
-|---------------------------------|-------------------------------------------------------------------------------------------------------|
-| `--enable-hqc-algs=[0\|1]`      | Set to `1` to enable HQC KEM algorithms in OQS-Provider by modifying the generate.yml file.           |
-| `--enable-disabled-algs=[0\|1]` | Set to `1` to enable signature algorithms that are disabled by default in OQS-Provider.               |
-| `--help`                        | Displays the help message for this tool. Intended primarily for debugging from within another script. |
+When calling the utility script, the first argument must always be the modification tool to use. If using the `modify_openssl_src` tool, additional arguments must be provided to specify specific modification values. If using the `oqs_enable_algs` tool, no additional arguments are required, as it automatically enables all disabled algorithms in OQS-Provider.
 
 **Accepted Arguments for modify_openssl_src**:
 
@@ -196,7 +186,7 @@ When calling the utility script, the first argument must always be the modificat
 
 Example Usage includes:
 ```
-source_code_modifier.sh "oqs_enable_algs" "--enable-hqc-algs=1" "--enable-disabled-algs=1"
+source_code_modifier.sh "oqs_enable_algs"
 ```
 
 ```
