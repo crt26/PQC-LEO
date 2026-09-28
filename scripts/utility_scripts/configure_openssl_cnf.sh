@@ -8,17 +8,17 @@
 # required for compatibility with scheme groups supported by the OQS-Provider when integrated with OpenSSL 3.6.1.
 
 #-------------------------------------------------------------------------------------------------------------------------------
-function output_help_message() {
-    # Helper function for outputting the help message to the user when the --help flag is present or
-    # when incorrect arguments are passed.
+function output_help() {
+    # Helper function for outputting the help message to the user when the --help flag is present or when incorrect arguments 
+    # are passed.
 
     # Output the supported options and their usage to the user
     echo "Usage: configure-openssl-cnf.sh [options]"
     echo "Options:"
-    echo "  0                     Modify default OpenSSL Configuration file to include OQS-Provider directives (for setup only)"
-    echo "  1                     Configure OpenSSL Configuration for Key Generation mode"
-    echo "  2                     Configure OpenSSL for TLS testing mode"
-    echo "  --help                Display this help message and exit"
+    echo "0                     Modify default OpenSSL Configuration file to include OQS-Provider directives (for setup only)"
+    echo "1                     Configure OpenSSL Configuration for Key Generation mode"
+    echo "2                     Configure OpenSSL for TLS testing mode"
+    echo "--help                Display this help message and exit"
 
 }
 
@@ -29,7 +29,7 @@ function parse_args() {
 
     # Check if the help flag is passed at any position in the command line arguments
     if [[ "$*" =~ --help ]]; then
-        output_help_message
+        output_help
         exit 0
     fi
 
@@ -91,7 +91,7 @@ function parse_args() {
 
                 # Output the error message for unknown options and display the help message
                 echo -e "[ERROR] - Invalid argument passed to configure-openssl-cnf.sh"
-                output_help_message
+                output_help
                 exit 1
                 ;;
 
@@ -103,9 +103,10 @@ function parse_args() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_base_env() {
-    # Function for setting up the foundational global variables required for the test suite. This includes determining the project's root directory,
-    # establishing paths for libraries, scripts, and test data, and validating the presence of required libraries. Additionally, it sets up environment
-    # variables for control ports and sleep timers, ensuring proper configuration for the test suite's execution.
+    # Function for setting up the foundational global variables required for the test suite. This includes determining the 
+    # project's root directory, establishing paths for libraries, scripts, and test data, and validating the presence of required 
+    # libraries. Additionally, it sets up environment variables for control ports and sleep timers, ensuring proper configuration 
+    # for the test suite's execution.
 
     # Determine the directory that the script is being executed from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -221,9 +222,9 @@ ssl_conf   = ssl_sect
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function main() {
-    # Main function that processes command-line arguments, sets up the environment, 
-    # and modifies the OpenSSL configuration based on the selected mode (key generation, 
-    # TLS testing, or OQS-Provider setup) to ensure proper configuration for the script's execution.
+    # Main function that processes command-line arguments, sets up the environment, and modifies the OpenSSL configuration based 
+    # on the selected mode (key generation, TLS testing, or OQS-Provider setup) to ensure proper configuration for the script's 
+    # execution.
 
     # Declare the global configuration mode flag
     configure_mode=""
@@ -234,7 +235,7 @@ function main() {
 
     else
         echo "[ERROR] - No arguments passed to configure-openssl-cnf.sh"
-        output_help_message
+        output_help
         exit 1
 
     fi

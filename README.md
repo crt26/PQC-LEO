@@ -1,9 +1,9 @@
 # PQC-LEO <!-- omit from toc -->
 
 ## Project Description <!-- omit from toc -->
-PQC-LEO (PQC-Library Evaluation Operator) provides an automated and comprehensive evaluation framework for benchmarking Post-Quantum Cryptography (PQC) algorithms. It is designed for researchers and developers looking to evaluate the feasibility of integrating PQC into their environments. The framework streamlines the setup and testing of PQC implementations, enabling the collection of computational and networking performance metrics across x86 and ARM systems through a suite of dedicated automation scripts.
+PQC-LEO (PQC-Library Evaluation Operator) provides an automated and comprehensive evaluation framework for benchmarking Post-Quantum Cryptography (PQC) algorithms. It is designed for researchers and developers looking to evaluate the feasibility of integrating PQC into their environments. The framework streamlines the setup and testing of PQC implementations, enabling the collection of computational and networking performance metrics across x86 and ARM systems through a suite of dedicated automation scripts. Furthermore, the framework supports energy usage testing of PQC algorithms using supported energy meters, providing insights into the energy efficiency of these algorithms in real-world scenarios.
 
-PQC implementations are sourced from multiple libraries, including algorithms natively supported in OpenSSL 3.6.1 and those available from the [Open Quantum Safe (OQS)](https://openquantumsafe.org/) project's `Liboqs` and `OQS-Provider` libraries. The framework also provides automated mechanisms for testing PQC TLS handshake performance across physical or virtual networks, providing valuable insight into real-world environment testing. Results are outputted as raw CSV files that are automatically processed using the provided Python parsing scripts to provide detailed metrics and averages ready for analysis.
+PQC implementations are sourced from multiple libraries, including algorithms natively supported in OpenSSL 3.6.1 and those available from the [Open Quantum Safe (OQS)](https://openquantumsafe.org/) project's `Liboqs` and `OQS-Provider` libraries. PQC-LEO supports automated TLS handshake testing over loopback or physical networks and provides energy measurement tools to capture power usage during both computational and TLS benchmarks. Results are output as raw CSV and text files and are automatically parsed into structured metrics and averages using the provided Python scripts.
 
 Future versions of the project aim to support additional PQC libraries, further expanding the scope of supported benchmarking.
 
@@ -19,6 +19,8 @@ The project provides automation for:
 - Gathering networking performance data for PQC schemes integrated into the TLS 1.3 protocol using the PQC support available natively in OpenSSL 3.6.1 and via the OQS-Provider.
 
 - Coordinated PQC TLS handshake tests run over the loopback interface or across physical networks between a server and client device.
+
+- Measuring energy consumption for computational and TLS benchmarks using supported energy meters and collection environments.
 
 - Automatic or manual parsing of raw performance data, including calculating averages across multiple test runs.
 
@@ -46,6 +48,7 @@ Paper DOI: [10.1109/TPS-ISA67132.2025.00033](https://doi.org/10.1109/TPS-ISA6713
 ## Contents <!-- omit from toc -->
 - [Supported Hardware and Software](#supported-hardware-and-software)
 - [Supported Cryptographic Algorithms](#supported-cryptographic-algorithms)
+- [Supported Environments for PQC Energy Usage Testing](#supported-environments-for-pqc-energy-usage-testing)
 - [Installation Instructions](#installation-instructions)
   - [Cloning the Repository](#cloning-the-repository)
   - [Choosing Installation Mode](#choosing-installation-mode)
@@ -54,6 +57,7 @@ Paper DOI: [10.1109/TPS-ISA67132.2025.00033](https://doi.org/10.1109/TPS-ISA6713
 - [Automated Testing Tools](#automated-testing-tools)
   - [Computational Performance Testing](#computational-performance-testing)
   - [TLS Performance Testing](#tls-performance-testing)
+  - [PQC Energy Usage Testing](#pqc-energy-usage-testing)
   - [Testing Output Files](#testing-output-files)
 - [Parsing Test Results](#parsing-test-results)
 - [Additional Documentation](#additional-documentation)
@@ -92,6 +96,15 @@ For further information on the classical and PQC algorithms this project provide
 
 **Notice:** The HQC KEM algorithms are disabled by default in recent versions of both Liboqs and the OQS-Provider, due to their current implementations not conforming to the latest specification, which includes important security fixes. For benchmarking purposes, the setup process includes an optional flag to enable HQC in these libraries, accompanied by a user confirmation prompt and warning. Enabling HQC is done at the user's own discretion, and this project assumes no responsibility for its use. For instructions on enabling HQC, see the [Advanced Setup Configuration Guide](docs/advanced_setup_configuration.md), and refer to the [Disclaimer Document](./DISCLAIMER.md) for more information on this issue.
 
+## Supported Environments for PQC Energy Usage Testing
+The [energy collector tools](./docs/developer_information/project_tools.md) included with PQC-LEO provide mechanisms for measuring the energy usage of PQC algorithms across different environments. PQC-LEO also includes automated Bash scripts that use these tools to evaluate the energy usage of PQC computational operations and TLS performance. However, the energy collector tools can also be used independently of the provided scripts, allowing energy usage testing to be adapted for other environments and use cases.
+
+Energy usage testing is currently supported only on Linux-based systems and for a limited number of energy meter devices. For more information on supported devices and collection tools, see the [Supported Energy Meters](./docs/energy_meter_guides/energy_meter_support.md) documentation.
+
+To support future expansion, the energy collector tools have been designed with modular control signal and data collection mechanisms. This allows additional energy meters and collection techniques to be integrated more easily, both within the automated testing scripts provided by PQC-LEO and in external testing workflows. Please refer to the relevant [Integrating New Energy Meters](./docs/developer_information/energy_collector_APIs/integrating_new_energy_meters.md) documentation for guidance on extending energy meter support.
+
+The energy usage testing components of PQC-LEO are still in the early stages of development. Support for a wider range of energy collection methods and techniques will continue to be expanded and improved as the project progresses.
+
 ## Installation Instructions
 The standard setup process uses the last tested commits of the project's dependency libraries to ensure compatibility with this project's automation tools. The setup script performs system detection, installs all required components, and supports multiple installation modes depending on the desired testing configuration.
 
@@ -128,13 +141,17 @@ When executing the setup script, you will be prompted to select one of the follo
 
 3. **TLS Testing Libraries Only** - Installs only the TLS benchmarking components. (**Requires Option 1 has already been completed**).
 
+4. **Energy Collector Machine Setup** - Installs only the energy collector tools and its dependencies for use on the energy usage collection device. This device is used to poll the energy meter and collect energy usage data during testing and is separate from the main testing machines.
+
 The setup script will also build [OpenSSL 3.6.1](https://github.com/openssl/openssl/releases/tag/openssl-3.6.1) inside the repository’s `lib` directory. This version is required to support the OQS libraries and is built separately from the system’s default OpenSSL installation. It will not interfere with system-level binaries.
+
+Once a installation option has been selected, the setup script will ask if **energy measurement tools** should be installed. If this option is selected, the setup script will also install the energy measurement tools and dependencies required for energy usage testing using supported energy meters. Certain features such as the use of UART communication for energy testing control signalling will require additional configuration after setup, so please refer to the relevant internal and external documentation.
 
 If the TLS testing libraries are installed (Options 2 or 3), you will be prompted with the following additional setup options:
 
 - **Enable all disabled OQS-Provider algorithms supported by PQC-LEO** – Enables OQS-Provider algorithms supported by PQC-LEO that are disabled by default. This ensures the full range of supported algorithms can be tested in the TLS performance benchmarking **†**.
 
-- **Enable KEM encoders** – Adds support for OpenSSL’s optional KEM encoder functionality. The benchmarking suite does not currently use this feature, but it is available for developers who wish to experiment with it.
+- **Enable KEM encoders** – Adds support for OpenSSL’s optional KEM encoder functionality. This option is **automatically enabled** if energy measurement tools are configured to be installed as the KEM encoders are required for TLS speed energy usage testing.
 
 Once all the relevant options have been selected, the setup script will download, configure and build each library. It will also tailor the builds for your system architecture by applying appropriate build flags.
 
@@ -168,11 +185,13 @@ For advanced setup options, including:
 Please refer to the [Advanced Setup Configuration Guide](docs/advanced_setup_configuration.md).
 
 ## Automated Testing Tools
-The repository provides two categories of automated PQC benchmarking:
+The repository provides three categories of automated PQC benchmarking:
 
 - **Computational Performance Testing** – Benchmarks the standalone performance of PQC cryptographic operations, gathering data on CPU and peak memory usage.
 
 - **TLS Performance Testing** – Benchmarks PQC, Hybrid-PQC, and classic algorithms integrated into the TLS 1.3 protocol, including handshake and cryptographic operation performance.
+
+- **PQC Energy Usage Testing** – Benchmarks the energy consumption of PQC algorithms during computational and TLS performance testing using supported energy meters.
 
 The testing tools are located in the `scripts/test_scripts` directory and are fully automated. The tools support assigning custom machine-IDs to the gathered results to make it easy to compare performance on differing systems.
 
@@ -202,6 +221,23 @@ For detailed usage instructions, please refer to:
 
 >**Notice:** The versions of project dependencies used in PQC-LEO version 0.5.0 contains a known issue where certain signature/KEM combinations may produce values of `inf` for "Connections Per User Second" results in TLS handshake testing when using smaller testing windows. Please refer to the [TLS Handshake Inf Result Handling](./docs/performance_results/tls_handshake_inf_result_handling.md) documentation for further information.
 
+### PQC Energy Usage Testing
+This tool benchmarks the energy consumption of supported PQC algorithms during both computational and TLS performance testing. It provides tools and automations scripts to collect energy usage metrics using supported energy meters and a collecting device. It supports automation for the following categories of energy usage testing:
+
+- Computational Performance Energy Testing
+- TLS Handshake Energy Testing
+- TLS Speed Energy Testing
+
+This component of the PQC-LEO framework includes two core elements, the automated energy usage testing scripts and the [energy collector tools](./docs/developer_information/project_tools.md). The energy collector tools provide a flexible way in which to orchestrate testing between collection and testing devices using serial or network communications and provide a modular way to integrate support for different energy meters. The automated energy usage testing scripts provide an easy to use interface for utilising the energy collector tools.
+
+Current support for energy meter devices is limited, but the framework is designed to allow the integration of additional meters in the future in a simple as possible way.
+
+For detailed usage instructions, please refer to:
+
+[Energy Usage Testing Instructions](docs/testing_tools_usage/pqc_energy_usage_testing.md)
+
+>**Notice:** Certain OpenSSL Hybrid-PQC KEM algorithms that are supported for normal TLS speed performance testing are not supported for TLS speed energy usage testing due to limitations in encoder support. Please refer to OpenSSL algorithms section of the [Supported Algorithms](docs/supported_algorithms.md#openssl-algorithms) documentation for further details.
+
 ### Testing Output Files
 After the testing has been completed, unparsed results and automatically parsed results will be stored in the generated `test_data/` directory:
 
@@ -216,8 +252,11 @@ Parsed results will be stored in the following directories, depending on which t
 
 - `test_data/results/computational_performance/machine_x`
 - `test_data/results/tls_performance/machine_x`
+- `test_data/results/energy_test_results/[test_type]/machine_x`
 
-Where `machine_x` is the Machine-ID number assigned to the results when executing the testing scripts. If no custom Machine-ID is assigned, the default ID of 1 will be set for the results.
+`machine_x` is the Machine-ID number assigned to the results when executing the testing scripts. If no custom Machine-ID is assigned, the default ID of 1 will be used.
+
+For energy usage testing results, `test_type` refers to one of the following testing categories based on the type of results that were parsed.
 
 If needed, automatic parsing can be disabled when calling the testing scripts by passing a flag to the testing script. This then facilitates the manual calling of the Python parsing scripts.
 
@@ -231,13 +270,15 @@ For complete details on parsing functionality and a breakdown of the collected p
 ### Internal Project Documentation <!-- omit from toc -->
 Links below provide access to the various internal project documentation. However, the majority of these documents can be found in the `docs` directory at the project's root.
 
-| **Category**                                     | **Documentation**                                                                                                                                                                                                                                  |
-|--------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Testing Tools Usage**                          | - [Automated Computational Performance Testing](docs/testing_tools_usage/computational_performance_testing.md) <br> - [Automated TLS Performance Testing](docs/testing_tools_usage/tls_performance_testing.md)                                     |
-| **Setup & Configuration**                        | - [Advanced Setup Configuration](docs/advanced_setup_configuration.md) <br> - [Supported Algorithms](docs/supported_algorithms.md)                                                                                                                 |
-| **Project Dependencies & Developer Information** | - [Project Dependencies](./docs/developer_information/project_dependencies.md) <br> - [Project Scripts](docs/developer_information/project_scripts.md) <br> - [Repository Structure](docs/developer_information/repository_directory_structure.md) |
-| **Performance Results**                          | - [Parsing Performance Results Usage Guide](docs/performance_results/parsing_scripts_usage_guide.md) <br> - [Performance Metrics Guide](docs/performance_results/performance_metrics_guide.md)                                                     |
-| **Other Resources**                              | - [Project Disclaimer](./DISCLAIMER.md)                                                                                                                                                                                                            |
+| **Category**                                     | **Documentation**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+|--------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Testing Tools Usage**                          | - [Automated Computational Performance Testing](docs/testing_tools_usage/computational_performance_testing.md) <br> - [Automated TLS Performance Testing](docs/testing_tools_usage/tls_performance_testing.md) <br> - [PQC Energy Usage Testing](docs/testing_tools_usage/pqc_energy_usage_testing.md) <br> - [Computational Energy Usage Testing](docs/testing_tools_usage/energy_usage_testing_guides/comp_energy_usage_testing.md) <br> - [TLS Handshake Energy Usage Testing](docs/testing_tools_usage/energy_usage_testing_guides/tls_handshake_energy_usage_testing.md) <br> - [TLS Speed Energy Usage Testing](docs/testing_tools_usage/energy_usage_testing_guides/tls_speed_energy_usage_testing.md) |
+| **Setup & Configuration**                        | - [Advanced Setup Configuration](docs/advanced_setup_configuration.md) <br> - [Supported Algorithms](docs/supported_algorithms.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| **Project Dependencies & Developer Information** | - [Project Dependencies](./docs/developer_information/project_dependencies.md) <br> - [Project Scripts](docs/developer_information/project_scripts.md) <br> - [Project Tools](docs/developer_information/project_tools.md) <br> - [Repository Structure](docs/developer_information/repository_directory_structure.md) <br> - [Energy Collector Controller API Guide](docs/developer_information/energy_collector_APIs/controller_api_guide.md) <br> - [Energy Collector Meter API Guide](docs/developer_information/energy_collector_APIs/meter_api_guide.md) <br> - [Integrating New Energy Meters](docs/developer_information/energy_collector_APIs/integrating_new_energy_meters.md)                      |
+| **Project Tools Guides**                         | - [Computational Energy Tester Usage Guide](docs/project_tools_guides/comp_energy_tester_usage_guide.md) <br> - [Energy Collector Usage Guide](docs/project_tools_guides/energy_collector_usage_guide.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **Energy Meter Guides**                          | - [Energy Meter Support](docs/energy_meter_guides/energy_meter_support.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **Performance Results**                          | - [Parsing Performance Results Usage Guide](docs/performance_results/parsing_scripts_usage_guide.md) <br> - [Performance Metrics Guide](docs/performance_results/performance_metrics_guide.md) <br> - [TLS Handshake Inf Result Handling](docs/performance_results/tls_handshake_inf_result_handling.md)                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **Other Resources**                              | - [Project Disclaimer](./DISCLAIMER.md)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 ### Project Wiki Page <!-- omit from toc -->
 The information provided in the internal documentation is also available through the project's GitHub Wiki:

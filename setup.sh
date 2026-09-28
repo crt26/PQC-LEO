@@ -7,13 +7,14 @@
 # the required cryptographic libraries (Liboqs, OQS-Provider, and OpenSSL) and their dependencies. The script handles directory
 # creation, dependency installation, library downloads, and compilation. It also allows customisation of build options,
 # such as enabling additional algorithms or modifying OpenSSL configurations. The script ensures compatibility
-# with the system environment and provides user-friendly prompts for setup decisions.
+# with the system environment and provides user-friendly prompts for setup decisions. It also includes optional
+# energy-collection setup support for the energy collector, computational energy tester, and related workflow flags.
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_base_env() {
-    # Function for initialising global variables and directory paths required for the setup process.
-    # Sets paths for libraries, temporary files, test data, and utility scripts. Also defines default
-    # values for flags and configuration options, ensuring a consistent environment for the setup script.
+    # Function for initialising global variables and directory paths required for the setup process. Sets paths for libraries, 
+    # temporary files, test data, and utility scripts. Also defines default values for flags and configuration options, ensuring 
+    # a consistent environment for the setup script.
 
     # Declare the global main directory path variables
     root_dir=$(pwd)
@@ -22,6 +23,8 @@ function setup_base_env() {
     test_data_dir="$root_dir/test_data"
     alg_lists_dir="$test_data_dir/alg_lists"
     util_scripts="$root_dir/scripts/utility_scripts"
+    tools_dir="$root_dir/tools"
+    test_scripts="$root_dir/scripts/test_scripts"
 
     # Declare the global dependency library version variables
     openssl_version="3.6.1"
@@ -39,18 +42,25 @@ function setup_base_env() {
     openssl_path="$libs_dir/openssl_$openssl_version"
     liboqs_path="$libs_dir/liboqs"
     oqs_provider_path="$libs_dir/oqs_provider"
+    comp_energy_tester_path="$libs_dir/comp_energy_tester"
+    energy_collector_path="$libs_dir/energy_collector"
 
     # Declare the global source-code directory path variables
     liboqs_source="$tmp_dir/liboqs_source"
     oqs_provider_source="$tmp_dir/oqs_provider_source"
     openssl_source="$tmp_dir/openssl_$openssl_version"
+    energy_collector_source="$tools_dir/energy_collector_source"
+    comp_energy_tester_source="$tools_dir/comp_energy_tester"
+    energy_collector_source="$tools_dir/energy_collector_source"
 
     # Set the global flag variables
-    install_type=0  # 0=Computational only, 1=Computational+TLS, 2=TLS only
+    install_type=0  # 0=Computational only, 1=Computational+TLS, 2=TLS only, 3=energy collector only
     use_latest_version=0
     user_defined_speed_flag=0
     user_defined_speed_value=0
     special_cmake_handling=0
+    use_energy_tools=0
+    eng_openssl_download=0
     enable_liboqs_hqc=0 # temp flag for hqc bug fix
     enable_oqs_hqc=0 # temp flag for hqc bug fix
     warning_given=0 # temp flag to indicate if the user has accepted the warning about HQC KEM algorithms
@@ -64,9 +74,8 @@ function setup_base_env() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function get_user_yes_no() {
-    # Helper function to prompt the user for a yes or no response. The function loops until
-    # a valid response ('y' or 'n') is provided and sets the global variable `user_y_n_response`
-    # to 1 for 'yes' and 0 for 'no'.
+    # Helper function to prompt the user for a yes or no response. The function loops until a valid response ('y' or 'n') is 
+    # provided and sets the global variable 'user_y_n_response' to 1 for 'yes' and 0 for 'no'.
 
     # Set the local user prompt variable to what was passed to the function
     local user_prompt="$1"
@@ -84,6 +93,7 @@ function get_user_yes_no() {
                 user_y_n_response=1
                 break
                 ;;
+                
 
             [Nn]* )
                 user_y_n_response=0
@@ -118,19 +128,19 @@ function build_status_checker() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
-function output_help_message() {
-    # Helper function for outputting the help message to the user when the --help flag is present or
-    # when incorrect arguments are passed.
+function output_help() {
+    # Helper function for outputting the help message to the user when the --help flag is present or when incorrect arguments 
+    # are passed.
 
     # Output the supported options and their usage to the user
     echo "Usage: setup.sh [options]"
     echo "Options:"
-    echo "  --latest-dependency-versions     Use the latest available versions of the OQS libraries (may cause compatibility issues)."
-    echo "  --set-speed-new-value=[int]      Set a new value for MAX_KEM_NUM and MAX_SIG_NUM in OpenSSL's speed.c file."
-    echo "  --enable-liboqs-hqc-algs         Enable HQC KEM algorithms in liboqs (disabled by default due to spec non-conformance)."
-    echo "  --enable-oqs-hqc-algs            Enable HQC KEM algorithms in OQS-Provider (requires HQC to also be enabled in liboqs)."
-    echo "  --enable-all-hqc-algs            Enable all HQC KEM algorithms in both liboqs and OQS-Provider (overrides individual HQC flags)."
-    echo "  --help                           Display this help message."
+    echo "--latest-dependency-versions     Use the latest available versions of the OQS libraries (may cause compatibility issues)."
+    echo "--set-speed-new-value=[int]      Set a new value for MAX_KEM_NUM and MAX_SIG_NUM in OpenSSL's speed.c file."
+    echo "--enable-liboqs-hqc-algs         Enable HQC KEM algorithms in liboqs (disabled by default due to spec non-conformance)."
+    echo "--enable-oqs-hqc-algs            Enable HQC KEM algorithms in OQS-Provider (requires HQC to also be enabled in liboqs)."
+    echo "--enable-all-hqc-algs            Enable all HQC KEM algorithms in both liboqs and OQS-Provider (overrides individual HQC flags)."
+    echo "--help                           Display this help message."
     
 }
 
@@ -142,7 +152,7 @@ function confirm_enable_hqc_algs() {
     # prompts the user to decide whether to proceed with enabling HQC for benchmarking purposes. This function will be 
     # removed in the future when Liboqs version 0.16.0 is released and the HQC KEM algorithms are re-enabled by default.
 
-    # Displays a clear warning about HQC vulnerabilities and disclaims all responsibility for its use.
+    # Displays a clear warning about HQC vulnerabilities and disclaims all responsibility for its use
     echo -e "\nEnable HQC KEM Algorithms Flag Detected:\n"
 
     echo -e "[WARNING] - The current implementation of the HQC KEM algorithm in the OQS libraries (liboqs and oqs-provider)"
@@ -182,12 +192,12 @@ function confirm_enable_hqc_algs() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function parse_args() {
-    # Function for parsing command-line arguments and setting global flags based on detected options.
-    # Flags control various aspects of the setup process, such as library versions, speed values, and HQC algorithm settings.
+    # Function for parsing command-line arguments and setting global flags based on detected options. Flags control various 
+    # aspects of the setup process, such as library versions, speed values, and HQC algorithm settings.
 
     # Check for the --help flag and display the help message
     if [[ "$*" =~ --help ]]; then
-        output_help_message
+        output_help
         exit 0
     fi
 
@@ -238,7 +248,7 @@ function parse_args() {
                 # Validate the speed value (must be an integer)
                 if ! [[ "$user_defined_speed_value" =~ ^[0-9]+$ ]]; then
                     echo -e "[ERROR] - Speed value must be a valid integer. Verify and re-run the script.\n"
-                    output_help_message
+                    output_help
                     exit 1
                 fi
 
@@ -319,7 +329,7 @@ function parse_args() {
 
                 # Output an error message if an unknown option is passed
                 echo "[ERROR] - Unknown option: $1"
-                output_help_message
+                output_help
                 exit 1
                 ;;
 
@@ -366,11 +376,20 @@ function configure_dirs() {
     # Set the default value for the previous install flag
     previous_install=0
 
+    # Track whether a previous energy-tools build is present in the project lib directory
+    previous_energy_tools_install=0
+    if [ $install_type -ne 3 ] && ([ -d "$comp_energy_tester_path" ] || [ -d "$energy_collector_path" ]); then
+        previous_install=1
+    elif [ $install_type -eq 3 ] && [ -d "$energy_collector_path" ]; then
+        previous_install=1
+    fi
+
     # Check if the dependency libraries have already been installed based on the install type selected
     case $install_type in
-        0) [ -d "$liboqs_path" ] && previous_install=1 ;;
-        1) [ -d "$liboqs_path" ] || [ -d "$oqs_provider_path" ] && previous_install=1 ;;
+        0) [ -d "$liboqs_path" ] || [ "$previous_energy_tools_install" -eq 1 ] && previous_install=1 ;;
+        1) [ -d "$liboqs_path" ] || [ -d "$oqs_provider_path" ] || [ "$previous_energy_tools_install" -eq 1 ] && previous_install=1 ;;
         2) [ -d "$oqs_provider_path" ] && previous_install=1 ;;
+        3) [ "$previous_energy_tools_install" -eq 1 ] && previous_install=1 ;;
     esac
 
     # If a previous install is detected, get the user's choice for reinstalling the dependency libraries
@@ -441,39 +460,54 @@ function configure_oqs_provider_build() {
         oqs_enable_algs=0
     fi
 
-    # Determine if the user wishes to enable the KEM encoders option in the OQS-Provider build
-    get_user_yes_no "Would you like to enable the KEM encoders option in the OQS-Provider build?"
+    # Determine if energy measurement tools are set to be used, if so force enabling of the KEM encoders
+    if [ $use_energy_tools -eq 0 ]; then
 
-    # Set the OQS-Provider build flags based on the user response
-    if [ $user_y_n_response -eq 1 ]; then
-        encoder_flag="ON"
+        # If energy measurement tools are not set to be used, determine if the user wishes to enable the KEM encoders option in the OQS-Provider build
+        get_user_yes_no "Would you like to enable the KEM encoders option in the OQS-Provider build?"
+
+        # Set the encoder_flag build flag option based on the user's response
+        if [ $user_y_n_response -eq 1 ]; then
+            encoder_flag="ON"
+        else
+            encoder_flag="OFF"
+        fi
+
     else
-        encoder_flag="OFF"
+        # Force set the enable encoder flag
+        encoder_flag="ON"
+
     fi
 
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function download_libraries() {
-    # Function for downloading the required cryptographic libraries (OpenSSL, Liboqs, OQS-Provider). For the OQS libraries, it will
-    # default to using the last tested versions of the libraries, unless the --latest-dependency-versions command line argument has
-    # been passed to the setup script. The OpenSSL library version will always remain the same.
+    # Function for downloading the required cryptographic libraries (OpenSSL, Liboqs, OQS-Provider). For the OQS libraries, 
+    # it will default to using the last tested versions of the libraries, unless the --latest-dependency-versions command line 
+    # argument has been passed to the setup script. The OpenSSL library version will always remain the same.
 
     # Output the current task to the terminal
     echo -e "\n############################################"
     echo "Downloading Required Cryptographic Libraries"
     echo -e "############################################\n"
 
-    # Download OpenSSL 3.6.1 and extract it into the tmp directory
-    wget -O "$tmp_dir/openssl_$openssl_version.tar.gz" "$openssl_download_url"
-    tar -xf "$tmp_dir/openssl_$openssl_version.tar.gz" -C $tmp_dir
-    mv "$tmp_dir/openssl-$openssl_version" "$openssl_source"
-    rm "$tmp_dir/openssl_$openssl_version.tar.gz"
+    # Check if the install mode requires downloading the OpenSSL library
+    if [ $install_type -ne 3 ] || [ $eng_openssl_download -eq 1 ]; then
 
-    # Ensure that the OpenSSL source directory is present before continuing
-    if [ ! -d "$openssl_source" ]; then
-        echo -e "\n[ERROR] - The OpenSSL source directory could not be found after downloading, please verify the installation and rerun the setup script"
-        exit 1
+        # Download OpenSSL 3.6.1 and extract it into the tmp directory
+        wget -O "$tmp_dir/openssl_$openssl_version.tar.gz" "$openssl_download_url"
+        tar -xf "$tmp_dir/openssl_$openssl_version.tar.gz" -C $tmp_dir
+        mv "$tmp_dir/openssl-$openssl_version" "$openssl_source"
+        rm "$tmp_dir/openssl_$openssl_version.tar.gz"
+
+        # Ensure that the OpenSSL source directory is present before continuing
+        if [ ! -d "$openssl_source" ]; then
+            echo -e "\n[ERROR] - The OpenSSL source directory could not be found after downloading, please verify the installation and rerun the setup script"
+            exit 1
+        fi
+
+
     fi
 
     # Download the required version of the Liboqs library
@@ -544,9 +578,10 @@ function download_libraries() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function dependency_install() {
-    # Function for checking and installing the required system dependencies needed for the project's functionality. The function will
-    # check for missing system packages and Python pip packages and install them if they are not present. Finally, the function will
-    # call the download_libraries function used to get  the required dependency libraries (OpenSSL, Liboqs, OQS-Provider).
+    # Function for checking and installing the required system dependencies needed for the project's functionality. The function 
+    # will check for missing system packages and Python pip packages and install them if they are not present. Finally, the 
+    # function will call the download_libraries function used to get the required dependency libraries 
+    # (OpenSSL, Liboqs, OQS-Provider).
 
     # Output the current task to the terminal
     echo -e "\n############################"
@@ -556,7 +591,7 @@ function dependency_install() {
     # Check for missing system packages
     echo "Checking System Packages Dependencies..."
     packages=(
-        "git" "astyle" "cmake" "gcc" "ninja-build" "libssl-dev" "python3-pytest" "python3-pytest-xdist"
+        "git" "astyle" "cmake" "gcc" "ninja-build" "libssl-dev" "python3-pytest" "python3-pytest-xdist" "libserialport-dev"
         "unzip" "xsltproc" "doxygen" "graphviz" "python3"-yaml "valgrind" "libtool" "make" "net-tools" "python3-pip" "netcat-openbsd"
     )
     not_installed=()
@@ -573,22 +608,40 @@ function dependency_install() {
         sudo apt-get install -y "${not_installed[@]}"
     fi
 
-    # Check for missing Python pip packages
+    # Determine the location of the system's Python binary before checking Python dependencies
+    if [ -x "$(command -v python3)" ]; then
+        python_bin="python3"
+    else
+        python_bin="python"
+    fi
+
+    # Output the current task to the terminal for checking Python dependencies
     echo "Checking Python Dependencies..."
-    required_pip_packages=("pandas" "jinja2" "tabulate")
+
+    # Define the required pip packages and their corresponding import names
+    required_pip_packages=("pandas" "jinja2" "tabulate" "pyserial")
+    required_pip_imports=("pandas" "jinja2" "tabulate" "serial")
     missing_pip_packages=()
 
-    for package in "${required_pip_packages[@]}"; do
-        if ! python3 -c "import $package" 2>/dev/null; then
-            missing_pip_packages+=("$package")
+    # Loop through the required pip packages to check if any are missing
+    for package_index in "${!required_pip_packages[@]}"; do
+
+        # Get the package name and module name for the current index
+        package_name="${required_pip_packages[$package_index]}"
+        module_name="${required_pip_imports[$package_index]}"
+
+        # Check if the module can be imported using the Python binary, and if not, add it to the missing packages list
+        if ! "$python_bin" -c "import $module_name" 2>/dev/null; then
+            missing_pip_packages+=("$package_name")
         fi
+        
     done
 
     # Check if any pip packages are missing before checking pip install functionality
     if [[ ${#missing_pip_packages[@]} -ne 0 ]]; then
 
         # Capture the output of the pip install for error checking
-        pip_output=$(pip install 2>&1)
+        pip_output=$("$python_bin" -m pip install 2>&1)
         exit_status=$?
 
         # Check if pip is functioning correctly and if the --break-system-packages flag is needed
@@ -606,8 +659,8 @@ function dependency_install() {
 
                     # Output the options for proceeding to the user
                     echo "Please select one of the following options to handle missing pip packages:"
-                    echo "1. Use the --break-system-packages flag to install packages system-wide."
-                    echo "2. Exit the setup script and manually install the required packages before retrying."
+                    echo "1) Use the --break-system-packages flag to install packages system-wide."
+                    echo "2) Exit the setup script and manually install the required packages before retrying."
 
                     # Read in the user's response
                     read -p "Please select from the above options (1/2): " user_input
@@ -658,19 +711,12 @@ function dependency_install() {
 
         # Install the missing Python pip packages
         for package in "${missing_pip_packages[@]}"; do
-            pip install "$package"
+            "$python_bin" -m pip install "$package"
         done
 
     else
         echo "All required Python packages are installed and are accessible in the current environment"
 
-    fi
-
-    # Determine the location of the system's Python binary
-    if [ -x "$(command -v python3)" ]; then
-        python_bin="python3"
-    else
-        python_bin="python"
     fi
 
     # Get the version of CMake that is installed on the system
@@ -718,10 +764,31 @@ function dependency_install() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
+function energy_tools_checker() {
+    # Helper function for prompting to user on whether they would like to enable the usage of energy measurement tools 
+    # in the benchmarking process. A flag is then set on whether to use energy measurement tools or not based on the user's
+    # response.
+
+    # Prompt the user for their choice on whether to use energy measurement tools or not
+    get_user_yes_no "Would you like to enable the usage of energy measurement tools in the benchmarking process?"
+
+    # Determine the next steps based on the user's response
+    if [ $user_y_n_response -eq 1 ]; then
+        echo -e "\nEnergy measurement tools will be enabled in the benchmarking process."
+        use_energy_tools=1
+    else
+        echo -e "\nEnergy measurement tools will not be enabled in the benchmarking process."
+        use_energy_tools=0
+    fi
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
 function openssl_build() {
-    # Function for handling the build of the OpenSSL library (version 3.6.1). The function will check if the library is already built
-    # and if not, it will build the library using the specified configuration options. The function will call the modify_openssl_src function
-    # to modify the speed.c source code file if the OQS-Provider library is being built with the enable all disabled algorithms flag.
+    # Function for handling the build of the OpenSSL library (version 3.6.1). The function will check if the library is already
+    # built and if not, it will build the library using the specified configuration options. The function will call the 
+    # modify_openssl_src function to modify the speed.c source code file if the OQS-Provider library is being built with the 
+    # enable all disabled algorithms flag.
 
     # Output the current task to the terminal
     echo -e "\n######################"
@@ -814,8 +881,9 @@ function openssl_build() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function enable_arm_pmu() {
-    # Function for enabling the ARM PMU and allowing it to be used in user space. The function will also check if the system is a Raspberry Pi
-    # and install the Pi kernel headers if they are not already installed. The function will then enable the PMU and set the enabled_pmu flag.
+    # Function for enabling the ARM PMU and allowing it to be used in user space. The function will also check if the system is 
+    # a Raspberry Pi and install the Pi kernel headers if they are not already installed. The function will then enable the PMU 
+    # and set the enabled_pmu flag.
 
     # Checking if the system is a Raspberry Pi and install the Pi kernel headers
     if ! dpkg -s "raspberrypi-kernel-headers" >/dev/null 2>&1; then
@@ -964,9 +1032,9 @@ function liboqs_build() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function oqs_provider_build() {
-    # Function for building the OQS-Provider dependency library. Configures the build process, enables disabled signature algorithms 
-    # if requested, patches the generate.yml file, and runs the code generator. Ensures correct paths for OpenSSL and Liboqs, 
-    # applies the KEM encoder option, and handles errors for missing or malformed configuration files.
+    # Function for building the OQS-Provider dependency library. Configures the build process, enables disabled signature 
+    # algorithms if requested, patches the generate.yml file, and runs the code generator. Ensures correct paths for OpenSSL 
+    # and Liboqs, applies the KEM encoder option, and handles errors for missing or malformed configuration files.
 
     # Set the default value for the custom build flags
     build_flags=""
@@ -1033,15 +1101,96 @@ function oqs_provider_build() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
+function energy_tools_build() {
+    # Function for handling the build of the energy measurement tools used in the benchmarking process. The function will 
+    # check if the tools are already built, and if not, it will build the tools using the specified configuration options. 
+    
+    # Output the current task to the terminal
+    echo -e "\n#################################"
+    echo "Building Energy Measurement Tools"
+    echo -e "#################################\n"
+
+    # Ensure that the build filepath is clean before proceeding
+    if [ -d "$comp_energy_tester_path" ] || [ -d "$energy_collector_path" ]; then
+        sudo rm -r "$comp_energy_tester_path" "$energy_collector_path"
+    fi
+
+    # Determine which lib directories need made for the energy tools based on install type
+    if [ $install_type -eq 3 ]; then
+        mkdir -p $energy_collector_path
+    else
+        mkdir -p $comp_energy_tester_path $energy_collector_path
+    fi
+
+    # Set the number of CPU threads to use for the build process
+    threads=$(nproc)
+
+    # Prepare OpenSSL path for build (if available)
+    openssl_build_flag=""
+    if [ -d "$openssl_path" ]; then
+        openssl_build_flag="OPENSSL_PATH=$openssl_path"
+    fi
+
+    # Determine which type of energy tools install needs to be performed
+    if [ $install_type -ne 3 ]; then
+
+        # Ensure that Liboqs is present before building the energy measurement tools as comp_energy_collector depends on the library
+        if [ ! -d "$liboqs_path" ]; then
+            echo -e "\n[ERROR] - Liboqs library not found, the energy measurement tools cannot be built. Please verify and re-run the setup script"
+            exit 1
+        fi
+        
+        # Move into the tools directory and build the tools with custom OpenSSL path (if available)
+        cd "$tools_dir"
+        make -j $threads $openssl_build_flag
+        exit_status=$?
+        build_status_checker "$exit_status" "tools build"
+
+        # Copy over the compiled binaries and libs to the project lib directory
+        cp -r "$tools_dir/comp_energy_tester/build" "$comp_energy_tester_path/"
+        cp -r "$tools_dir/energy_collector/build" "$energy_collector_path/"
+
+        # Clean the tools directory to remove the build files
+        make clean
+
+    else 
+
+        # Move into the energy_collector directory
+        cd "$tools_dir/energy_collector"
+
+        # Build only the energy collector tools with custom OpenSSL path (if available)
+        make -j $threads $openssl_build_flag
+        exit_status=$?
+        build_status_checker "$exit_status" "energy_collector build"
+
+        # Copy over the the compiled energy collector binaries
+        cp -r "$tools_dir/energy_collector/build" "$energy_collector_path/"
+
+        # Clean the energy_collector directory to remove the build files
+        make clean
+    
+    fi
+
+    # Return to the project root directory and output the build completion message to the user
+    cd $root_dir
+    echo -e "Energy measurement tools build complete"
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
 function setup_controller() {
     # Function for controlling the setup process based on the user's selected install type. Provides options for computational 
     # performance testing, TLS PQC performance testing, or both. Handles environment configuration, dependency installation, 
-    # library builds, and cleanup tasks. Prompts the user for decisions and ensures the setup process is tailored to their selection.
+    # library builds, and cleanup tasks. Prompts the user for decisions and ensures the setup process is tailored to their 
+    # selection.
 
     # Output current task to the terminal
     echo "######################"
     echo "Install Type Selection"
     echo -e "######################\n"
+
+    # Set the default value of the py_exit_status variable
+    py_exit_status=0
 
     # Get the install type selection from the user
     while true; do
@@ -1051,10 +1200,11 @@ function setup_controller() {
         echo "1 - Computational Performance Testing Only"
         echo "2 - Both Computational and TLS PQC Performance Testing"
         echo "3 - TLS PQC Performance Testing Only (requires existing computational setup)"
-        echo "4 - Exit Setup"
+        echo "4 - Energy Collector Machine Setup (Only compile energy collector)"
+        echo "5 - Exit Setup"
 
         # Prompt the user for their selection
-        read -p "Enter your choice (1-4): " user_opt
+        read -p "Enter your choice (1-5): " user_opt
 
         # Determine the setup actions needed based on the user's response
         case "$user_opt" in
@@ -1065,6 +1215,9 @@ function setup_controller() {
                 echo "Computational Performance Only Install Selected"
                 echo -e "###############################################\n"
 
+                # Determine if user wishes to enable energy measurement tools in the benchmarking process
+                energy_tools_checker
+
                 # Configure the setup environment and install the required dependencies
                 install_type=0
                 configure_dirs
@@ -1073,6 +1226,13 @@ function setup_controller() {
                 # Build the required dependency libraries and clean up
                 openssl_build
                 liboqs_build
+
+                # Check if the energy tools need to be built and configured
+                if [ $use_energy_tools -eq 1 ]; then
+                    energy_tools_build
+                fi
+
+                # Clean up the tmp directory
                 # rm -rf $tmp_dir/* # original clean up
                 rm -rf $tmp_dir/liboqs_source $tmp_dir/openssl_$openssl_version # temp removal for hqc bug fix
 
@@ -1091,6 +1251,9 @@ function setup_controller() {
                 echo "Computational and TLS Performance Install Selected"
                 echo -e "###############################################\n"
 
+                # Determine if user wishes to enable energy measurement tools in the benchmarking process
+                energy_tools_checker
+
                 # Configure the setup environment and install the required dependencies
                 install_type=1
                 configure_dirs
@@ -1101,6 +1264,13 @@ function setup_controller() {
                 openssl_build
                 liboqs_build
                 oqs_provider_build
+
+                # Check if the energy tools need to be built and configured
+                if [ $use_energy_tools -eq 1 ]; then
+                    energy_tools_build
+                fi
+
+                # Clean up the tmp directory
                 #rm -rf $tmp_dir/* # original clean up
                 rm -rf $tmp_dir/liboqs_source $tmp_dir/openssl_$openssl_version $tmp_dir/oqs_provider_source # temp removal for hqc bug fix
                 #touch "$tmp_dir/test.flag"
@@ -1119,6 +1289,9 @@ function setup_controller() {
                 echo -e "\n#####################################"
                 echo "TLS Performance Only Install Selected"
                 echo -e "#####################################\n"
+
+                # Determine if user wishes to enable energy measurement tools in the benchmarking process
+                energy_tools_checker
 
                 # Configure the setup environment and install the required dependencies
                 install_type=2
@@ -1139,6 +1312,22 @@ function setup_controller() {
 
                 # Build the OQS-Provider library
                 oqs_provider_build
+
+                # Handle energy tools usage for TLS-only setup. Reuse existing tools when present, otherwise build the tools
+                if [ $use_energy_tools -eq 1 ]; then
+
+                    # Check if a previous computational install already provides both tools
+                    if [ -d "$comp_energy_tester_path" ] && [ -d "$energy_collector_path" ]; then
+                        echo -e "\n[NOTICE] - Existing energy measurement tools detected, skipping energy tools build."
+                    else
+                        echo -e "\n[NOTICE] - Energy tools requested but not found from a previous computational setup."
+                        echo -e "Attempting to build energy measurement tools now...\n"
+                        energy_tools_build
+                    fi
+
+                fi
+
+                # Clean up the tmp directory
                 #rm -rf $tmp_dir/* # original clean up
                 rm -rf $tmp_dir/liboqs_source $tmp_dir/openssl_$openssl_version $tmp_dir/oqs_provider_source # temp removal for hqc bug fix
 
@@ -1159,6 +1348,58 @@ function setup_controller() {
                 ;;
 
             4)
+                # Output the selection choice to the terminal
+                echo -e "\n#######################################"
+                echo "Energy Collector Machine Setup Selected"
+                echo -e "#######################################\n"
+
+                # Configure the setup environment and install the required dependencies
+                install_type=3
+                configure_dirs
+                dependency_install
+
+                # Check if a previous install of OpenSSL is available
+                if [ ! -d "$openssl_path" ]; then
+
+                    # Ask the user if they wish to build OpenSSL 3.6.1 or use the system install for the energy collector
+                    echo "[NOTICE] - The PQC-LEO install of OpenSSL 3.6.1 is not currently present."
+
+                    # Prompt the user for their selection until a valid choice is made
+                    while true; do
+
+                        # Output the options to the user
+                        echo "The following options are available:"
+                        echo "1) - Download and build OpenSSL 3.6.1 for the energy collector"
+                        echo "2) - Use the system OpenSSL install for the energy collector"
+                        read -p "Enter selected option (1/2): " eng_openssl_user_choice
+
+                        # Check and validate the selected option
+                        if [ "$eng_openssl_user_choice" -eq 1 ]; then
+                            eng_openssl_download=1
+                            echo -e "\nProceeding with OpenSSL 3.6.1 build for the energy collector..."
+                            download_libraries
+                            openssl_build
+                            break
+
+                        elif [ "$eng_openssl_user_choice" -eq 2 ]; then
+                            echo -e "\nProceeding with system OpenSSL install for the energy collector..."
+                            break
+
+                        else
+                            echo -e "\n[WARNING] - Invalid option selected, please select either option 1 or option 2\n"
+                        fi
+                    
+                    done
+
+                fi
+
+                # Build the energy measurement tools
+                energy_tools_build
+
+                break
+                ;;
+
+            5)
 
                 # Output the selection choice to the terminal
                 echo "Exiting Setup!"
@@ -1188,6 +1429,18 @@ function setup_controller() {
 
     fi
 
+    # Configure the flag file for the energy tools option in the benchmarking process for use by the testing scripts
+    if [ $use_energy_tools -eq 1 ]; then
+        touch "$tmp_dir/energy_tools_enabled.flag"
+    else
+    
+        # Remove the flag file if present in the tmp directory, as the energy measurement tools are not enabled
+        if [ -f "$tmp_dir/energy_tools_enabled.flag" ]; then
+            rm "$tmp_dir/energy_tools_enabled.flag"
+        fi
+
+    fi
+
     # Output that there was an issue with the Python utility script that creates the alg-list files
     if [ "$py_exit_status" -ne 0 ]; then
         echo -e "\n[ERROR] - creating algorithm list files failed, please verify both setup and python scripts and rerun setup!!!"
@@ -1201,8 +1454,8 @@ function setup_controller() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function main() {
-    # Entry point for the PQC-LEO setup script. Initialises the environment, parses command-line arguments,
-    # and delegates the setup process to the setup_controller function.
+    # Entry point for the PQC-LEO setup script. Initialises the environment, parses command-line arguments, and delegates the
+    # setup process to the setup_controller function.
 
     # Output the welcome message to the terminal
     echo "####################"

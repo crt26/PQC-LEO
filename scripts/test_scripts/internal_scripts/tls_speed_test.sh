@@ -37,7 +37,7 @@ function setup_test_env() {
 
         # If the system's root directory is reached and the file is not found, exit the script
         if [ "$current_dir" == "/" ]; then
-            echo -e "Root directory path file not present, please ensure the path is correct and try again."
+            echo -e "[ERROR] - Root directory path file not present, please ensure the path is correct and try again."
             exit 1
         fi
 
@@ -178,8 +178,8 @@ function tls_speed_test() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function tls_speed_test_entrypoint() {
-    # Main function for managing the execution of TLS speed performance tests. 
-    # It sets up the environment, runs the tests for various algorithm types, and handles OpenSSL configuration modifications.
+    # Main function for managing the execution of TLS speed performance tests. It sets up the environment, runs the tests for 
+    # various algorithm types, and handles OpenSSL configuration modifications.
 
     # Setup the base environment for the test suite
     setup_test_env

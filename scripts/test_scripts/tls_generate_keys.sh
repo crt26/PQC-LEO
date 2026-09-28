@@ -230,8 +230,8 @@ function classic_keygen() {
 #-------------------------------------------------------------------------------------------------------------------------------
 function pqc_keygen() {
     # Function for generating server certificates and private keys required for PQC TLS handshake benchmarking tests.
-    # This includes creating CA certificates, server certificate signing requests, and signed server certificates using PQC digital 
-    # signature algorithms supported both natively in OpenSSL and integrated into OpenSSL via the OQS-Provider.
+    # This includes creating CA certificates, server certificate signing requests, and signed server certificates using PQC 
+    # digital signature algorithms supported both natively in OpenSSL and integrated into OpenSSL via the OQS-Provider.
 
     # Loop through the PQC digital signature to generate the CA/server certs and private-key files
     for sig in "${sig_algs[@]}"; do

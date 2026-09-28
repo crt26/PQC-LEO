@@ -68,6 +68,7 @@ By default, the setup script will install the latest available versions of these
 - net-tools
 - python3-pip
 - netcat-openbsd
+- libserialport-dev
 
 ## Python PIP Dependencies
 The following Python packages are required for testing and result parsing. These are automatically checked and installed via pip during setup:
@@ -76,5 +77,6 @@ The following Python packages are required for testing and result parsing. These
 - numpy (installed with pandas)
 - jinja2
 - tabulate
+- pyserial
 
 If the system's Python environment is restricted (e.g., due to externally-managed-environment policies), the setup script will offer the option to install packages using the `--break-system-packages` flag. Manual installation is also supported if preferred.

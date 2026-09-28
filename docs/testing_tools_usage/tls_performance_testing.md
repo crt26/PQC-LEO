@@ -7,6 +7,8 @@ Tests can be conducted either on a single machine (localhost) or across two netw
 
 The relevant PQC TLS Performance testing scripts can be found in the `scripts/test_scripts` directory from the project's root.
 
+If you wish to perform TLS handshake and speed energy usage testing, please refer to the [PQC Energy Usage Testing Guide](./pqc_energy_usage_testing.md) for further details.
+
 >**Notice:** The versions of project dependencies used in PQC-LEO version 0.5.0 contains a known issue where certain signature/KEM combinations may produce values of `inf` for "Connections Per User Second" results in TLS handshake testing when using smaller testing windows. Please refer to the [Inf Result Value Occurrence Details](#inf-result-value-occurrence-details) section in this document for further information.
 
 ### Contents <!-- omit from toc -->
@@ -25,6 +27,7 @@ The relevant PQC TLS Performance testing scripts can be found in the `scripts/te
   - [Customising Testing Suite TCP Ports](#customising-testing-suite-tcp-ports)
   - [Adjusting Control Signalling](#adjusting-control-signalling)
 - [Disabling Automatic Result Parsing](#disabling-automatic-result-parsing)
+  - [Enabling Energy Usage Testing](#enabling-energy-usage-testing)
 - [Inf Result Value Occurrence Details](#inf-result-value-occurrence-details)
 - [Useful External Documentation](#useful-external-documentation)
 
@@ -60,7 +63,7 @@ Please make sure your firewall allows traffic on the following ports:
 If the default TCP ports are unsuitable for your environment, please see the [Advanced Testing Customisation](#advanced-testing-customisation) section for further instructions on configuring custom TCP ports.
 
 ### Generating Required Certificates and Private Keys
-To perform the TLS handshake performance tests, the server certificate and private-key files must first be generated. The generated keys and certificates will be saved to the `test_data/keys` directory in the project root. This can be done by executing the following command from within the `scripts/testing_scripts` directory:
+To perform the TLS handshake performance tests, the server certificate and private-key files must first be generated. The generated keys and certificates will be saved to the `test_data/keys` directory in the project root. This can be done by executing the following command from within the `scripts/test_scripts` directory:
 
 ```
 ./tls_generate_keys.sh
@@ -72,7 +75,7 @@ To perform the TLS handshake performance tests, the server certificate and priva
 Once the testing environment has been properly configured, it is now possible to begin the automated PQC TLS performance testing.
 
 ### Testing Tool Execution
-To start the automated testing tool, open a terminal in the `scripts/testing_scripts` directory and run the following command:
+To start the automated testing tool, open a terminal in the `scripts/test_scripts` directory and run the following command:
 
 ```
 ./pqc_tls_performance_test.sh
@@ -86,9 +89,10 @@ Upon executing the script, the testing tool will prompt you to enter the paramet
 The testing tool will prompt you to enter the parameters for the test. These parameters include:
 
 - Machine type (server or client)
-- Whether the results should have a custom Machine-ID assigned to them (if the machine is a client)
+- Whether TLS handshake performance results should be stored (if the machine is a client and energy usage testing is enabled)
+- Whether the results should have a custom Machine-ID assigned to them (if the machine is a client and performance results are being stored)
 - Duration of each TLS handshake tests (if the machine is a client) **†**
-- Duration of TLS speed tests (if the machine is a client) **††**
+- Duration of TLS speed tests (if the machine is a client and energy usage testing is not enabled) **††**
 - Number of test runs to be performed (must match on both machines)
 - IP address of the other machine (use 127.0.0.1 for single-machine testing)
 
@@ -145,7 +149,7 @@ When two machines are used for testing that are connected over a physical/virtua
 4. Begin testing and allow the script to complete
 
 ## Outputted Results
-After testing completes, raw performance results are saved to the following directory:
+After standard TLS performance testing completes, raw performance results are saved to the following directory:
 
 `test_data/up_results/tls_performance/machine_x`
 
@@ -158,6 +162,8 @@ These parsed results are saved in:
 `test_data/results/tls_performance/machine_x`
 
 > **Note:** When using multiple machines for testing, the results will only be stored on the client machine, not the server machine.
+
+When energy usage testing is enabled, these client-side performance results are not stored by default. The client configuration includes a prompt that allows the user to retain them if required. If retained, only TLS handshake results are stored and parsed because TLS speed testing is not performed in this mode. Energy usage results are stored and parsed separately on the collection machine.
 
 To skip automatic parsing and only output the raw test results, pass the `--disable-result-parsing` flag when launching the test script:
 
@@ -178,6 +184,7 @@ Supported customisation features include:
 - TCP port configuration 
 - Control Signal Behaviour
 - Disabling Automatic Result Parsing
+- Enabling Energy Usage Testing
 
 ### Customising Testing Suite TCP Ports
 If the default TCP ports are incompatible with the testing environment, custom ports can be specified at runtime using the following flags. Port values must fall within the range 1024–65535.
@@ -215,6 +222,16 @@ Disabling automatic parsing may be appropriate in scenarios such as:
 
 - Running tests in low-resource environments
 
+### Enabling Energy Usage Testing
+The TLS performance testing script can be configured to collect energy usage metrics during testing. This is done by passing the `--enable-energy-testing` flag when launching the script on the client machine. Please refer to the [PQC Energy Usage Testing Guide](./pqc_energy_usage_testing.md) for further details on performing TLS handshake energy usage testing.
+
+The TLS handshake energy usage testing functionality can be enabled by passing the following flag when launching the testing script on the client machine:
+
+```
+./pqc_tls_performance_test.sh --enable-energy-testing
+```
+
+During client configuration, the script asks whether the TLS handshake performance results should also be written to the client machine. Selecting no collects only the energy usage results on the collection machine. Selecting yes additionally stores and parses the handshake performance results on the client; TLS speed testing and parsing remain disabled. Writing the performance results to disk occurs inside the measured test windows and will therefore be reflected in the collected energy usage metrics.
 
 ## Inf Result Value Occurrence Details
 Certain signature/KEM combinations may produce `inf` values for the **"Connections Per User Second"** metric during TLS handshake testing when using shorter test durations (typically below 5 seconds).

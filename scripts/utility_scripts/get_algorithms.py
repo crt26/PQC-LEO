@@ -33,9 +33,9 @@ openssl_lib_dir = ""
 oqs_provider_src_dir = ""
 
 #------------------------------------------------------------------------------------------------------------------------------
-def output_help_message():
-    """ Helper function for outputting the help message to the user when the --help flag is present or
-        when incorrect arguments are passed. """
+def output_help():
+    """ Helper function for outputting the help message to the user when the --help flag is present or when incorrect arguments 
+        are passed. """
 
     # Output the supported options and their usage to the user
     print("get_algorithms.py [options]")
@@ -48,8 +48,8 @@ def output_help_message():
 
 #------------------------------------------------------------------------------------------------------------------------------
 def setup_base_env():
-    """ Function for setting up the global environment variables for the test suite. This includes determining the root directory 
-        by tracing the script's location and configuring paths for libraries, test data, and temporary files. """
+    """ Function for setting up the global environment variables for the test suite. This includes determining the root 
+        directory by tracing the script's location and configuring paths for libraries, test data, and temporary files. """
 
     global root_dir, liboqs_build_dir, openssl_path, openssl_lib_dir, oqs_provider_path, oqs_provider_src_dir
 
@@ -106,8 +106,8 @@ def setup_base_env():
 
 #------------------------------------------------------------------------------------------------------------------------------
 def write_to_file(alg_list, file_name):
-    """ Helper function to write the algorithms to a specified text file. The function 
-        takes the algorithm list and the filename as arguments. """
+    """ Helper function to write the algorithms to a specified text file. The function takes the algorithm list and the filename 
+        as arguments. """
 
     # Write the algorithms to the specified text file
     with open(file_name, "w") as f:
@@ -116,8 +116,8 @@ def write_to_file(alg_list, file_name):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def liboqs_extract_algs(output_str):
-    """ Helper function to extract the algorithms from the output string of the liboqs test binaries. 
-        The function parses the output string to identify and extract algorithm names. """
+    """ Helper function to extract the algorithms from the output string of the liboqs test binaries. The function parses the 
+        output string to identify and extract algorithm names. """
 
     # Initialise the extracted algorithms variable
     extracted_algs = None
@@ -151,8 +151,8 @@ def liboqs_extract_algs(output_str):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def get_liboqs_algs():
-    """ Function to get the algorithms supported by the Liboqs library. The function will run the test
-        binaries with no arguments to trigger the help output, which will contain the algorithms supported. """
+    """ Function to get the algorithms supported by the Liboqs library. The function will run the test binaries with no 
+        arguments to trigger the help output, which will contain the algorithms supported. """
     
     # Set the test_bins and output directory for algorithm lists
     test_bins = [f"{liboqs_build_dir}/test_kem", f"{liboqs_build_dir}/test_sig"]
@@ -196,8 +196,8 @@ def get_liboqs_algs():
 
 #------------------------------------------------------------------------------------------------------------------------------
 def extract_tls_algs(test_type, provider_type, output_str):
-    """ Helper function for extracting PQC and Hybrid-PQC algorithms supported by OpenSSL and OQS-Provider from the output string, 
-        filtering based on the test type (PQC or Hybrid-PQC) and the provider type (OpenSSL or OQS-Provider). """
+    """ Helper function for extracting PQC and Hybrid-PQC algorithms supported by OpenSSL and OQS-Provider from the output 
+        string, filtering based on the test type (PQC or Hybrid-PQC) and the provider type (OpenSSL or OQS-Provider). """
 
     # Set the algorithm lists used for the PQC and Hybrid-PQC algorithms
     algs = []
@@ -349,8 +349,8 @@ def get_tls_pqc_algs():
 
 #------------------------------------------------------------------------------------------------------------------------------
 def set_tls_classic_algs():
-    """ Function to set the classic algorithm lists for the TLS benchmarking. The classic algorithms are not subject 
-        to change, so they can be set in the script and then outputted to text files for the benchmarking and parsing scripts. """
+    """ Function to set the classic algorithm lists for the TLS benchmarking. The classic algorithms are not subject to change, 
+        so they can be set in the script and then outputted to text files for the benchmarking and parsing scripts. """
 
     # Set the classic algorithms for the TLS benchmarking
     classic_kems = ["prime256v1", "secp384r1", "secp521r1"]
@@ -367,10 +367,11 @@ def set_tls_classic_algs():
 
 #------------------------------------------------------------------------------------------------------------------------------
 def parse_oqs_provider_algorithms_md():
-    """ Function for parsing the ALGORITHMS.md file of the OQS-Provider library to extract the total number of algorithms supported
-        This is only called when all algorithms are selected to be enabled by the main setup.sh script, as the OpenSSL speed.c source
-        file needs to be altered so that a larger number of algorithms can be supported. This function will return the total number of algorithms
-        supported by the OQS-Provider library, and if parsing fails returns -1 to indicate that the hardcoded high value should be set in the speed.c file. """
+    """ Function for parsing the ALGORITHMS.md file of the OQS-Provider library to extract the total number of algorithms 
+        supported. This is only called when all algorithms are selected to be enabled by the main setup.sh script, as the 
+        OpenSSL speed.c source file needs to be altered so that a larger number of algorithms can be supported. This function 
+        will return the total number of algorithms supported by the OQS-Provider library, and if parsing fails returns -1 to 
+        indicate that the hardcoded high value should be set in the speed.c file. """
 
     # Set the filepaths for the ALGORITHMS.md file and declare the main_algs list
     algs_md_filepath = os.path.join(oqs_provider_src_dir, "ALGORITHMS.md")
@@ -430,12 +431,12 @@ def parse_oqs_provider_algorithms_md():
     
 #------------------------------------------------------------------------------------------------------------------------------
 def main():
-    """ Main function for controlling the utility script. The function will determine which algorithms 
-        are required based on the argument passed to the script. """
+    """ Main function for controlling the utility script. The function will determine which algorithms are required based on 
+        the argument passed to the script. """
     
     # Check if the help flag was passed before continuing
     if "--help" in sys.argv:
-        output_help_message()
+        output_help()
         sys.exit(0)
 
     # Ensure a valid argument was passed to the utility script
