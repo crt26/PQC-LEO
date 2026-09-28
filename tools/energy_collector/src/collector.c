@@ -433,6 +433,18 @@ int setup_env(TestController *test_controller, MeterDevice *meter_device, int pr
 
 }
 
+//------------------------------------------------------------------------------------------------------------------------------
+static void free_message_elements(char **message_elements, size_t element_count) {
+    /* Helper function to free memory allocated for GETREADY message array elements. */
+
+    // Loop through the message elements array and free each allocated element
+    for (size_t index = 0; index < element_count; index++) {
+        free(message_elements[index]);
+        message_elements[index] = NULL;
+    }
+
+}
+
 //-------------------------------------------------------------------------------------------------------------------------------
 int get_ready_parser(char *message) {
     /*  Function for handling the GETREADY message received from the control port. It will parse the message and prepare the 
@@ -442,9 +454,10 @@ int get_ready_parser(char *message) {
     // Declare the message elements array and its size
     char *message_elements[4];
     size_t array_size = sizeof(message_elements);
+    size_t element_count = sizeof(message_elements) / sizeof(message_elements[0]);
 
     // Initialise the message elements array with NULL pointers
-    for (size_t i = 0; i < sizeof(message_elements) / sizeof(message_elements[0]); i++) {
+    for (size_t i = 0; i < element_count; i++) {
         message_elements[i] = NULL;
     }
 
@@ -453,19 +466,45 @@ int get_ready_parser(char *message) {
         fprintf(stderr, "[ERROR] - Failed to parse the GETREADY message.\n");
         return -1;
     }
-        
-    // Create the filename based on the testing parameters received
-    char filename[256];
-    snprintf(filename, sizeof(filename), "%s_%s_%s.txt", message_elements[0], message_elements[1], message_elements[2]);
 
-    // Set the filepath to the results directory
-    char filepath[512];
-    snprintf(filepath, sizeof(filepath), "%s/%s", results_dir, filename);
+    // Ensure that every required GETREADY parameter was received
+    for (size_t i = 0; i < element_count; i++) {
+        if (message_elements[i] == NULL) {
+            fprintf(stderr, "[ERROR] - GETREADY message is missing required parameters.\n");
+            free_message_elements(message_elements, element_count);
+            return -1;
+        }
+    }
+
+    // Set the filename based on the received GETREADY message parameters then store its length
+    char filename[512];
+    int filename_length = snprintf(filename, sizeof(filename), "%s_%s_%s.txt", message_elements[0], message_elements[1], message_elements[2]);
+
+    // Ensure that the filename length is valid and does not exceed the buffer size
+    if (filename_length < 0 || (size_t)filename_length >= sizeof(filename)) {
+        fprintf(stderr, "[ERROR] - Energy result filename is too long.\n");
+        free_message_elements(message_elements, element_count);
+        return -1;
+    }
+
+    // Set the filepath based on the results directory and filename then store its length
+    char filepath[1024];
+    int filepath_length = snprintf(filepath, sizeof(filepath), "%s/%s", results_dir, filename);
+
+    // Ensure that the filepath length is valid and does not exceed the buffer size
+    if (filepath_length < 0 || (size_t)filepath_length >= sizeof(filepath)) {
+        fprintf(stderr, "[ERROR] - Energy result filepath is too long.\n");
+        free_message_elements(message_elements, element_count);
+        return -1;
+    }
 
     // Extract the polling rate from the message elements and store it in the global variable
     float captured_polling_rate = strtof(message_elements[3], NULL);
+
+    // Ensure that the captured polling rate is valid and not negative
     if (captured_polling_rate < 0.0f) {
         fprintf(stderr, "[ERROR] - Invalid polling rate received in GETREADY message: %s\n", message_elements[3]);
+        free_message_elements(message_elements, element_count);
         return -1;
     }
 
@@ -482,12 +521,8 @@ int get_ready_parser(char *message) {
         polling_rate = (useconds_t)(captured_polling_rate * 1000.0f);
     }
 
-    // Free the message elements
-    for (size_t i = 0; i < sizeof(message_elements) / sizeof(message_elements[0]); i++) {
-        if (message_elements[i] != NULL) {
-            free(message_elements[i]);
-        }
-    }
+    // Free the GETREADY message array elements
+    free_message_elements(message_elements, element_count);
 
     // Open the target results file for writing the energy metrics to
     metrics_file = fopen(filepath, "w");
@@ -517,7 +552,7 @@ void *control_listener_thread(void *arg) {
     while (1) {
 
         // Reset the message buffer
-        char msg_buffer[256];
+        char msg_buffer[512];
 
         // Wait for the command signal from the controller
         if (controller_receive(test_controller, msg_buffer, sizeof(msg_buffer)) != 0) {

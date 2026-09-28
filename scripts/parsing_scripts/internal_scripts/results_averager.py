@@ -2,12 +2,10 @@
 Copyright (c) 2023-2026 Callum Turino
 SPDX-License-Identifier: MIT
 
-TO-DO Figure out what approach will be taken for averaging energy results
-
-Result averaging module for PQC benchmarking tools. Defines classes for calculating average metrics 
-from multi-run benchmarking outputs produced by the computational and TLS performance test suites. This module is 
-used internally by the main parsing scripts and is not intended to be run standalone. It computes per-algorithm averages 
-for memory, CPU speed, and TLS handshake, and TLS speed results, and exports the aggregated values in structured CSV format.
+Result aggregation module for PQC-LEO benchmarking tools. Defines classes for calculating averages from multi-run
+computational and TLS performance results and for condensing energy readings. This module is used internally by the
+main parsing scripts and is not intended to be run standalone. It handles memory, computational speed, TLS handshake,
+TLS speed, and energy result data and exports the aggregated values in structured CSV format.
 """
 
 #------------------------------------------------------------------------------------------------------------------------------
@@ -234,8 +232,8 @@ class TLSAverager:
 
     #------------------------------------------------------------------------------
     def __init__(self, dir_paths, num_runs, algs_dict, pqc_type_vars, col_headers):
-        """ Class for generating average metrics from PQC TLS benchmarking results.
-            Supports PQC, PQC-Hybrid, and classic handshake results, as well as OpenSSL 
+        """ Class for generating average metrics from TLS benchmarking results.
+            Supports PQC, Hybrid-PQC, and classical handshake results, as well as OpenSSL
             speed tests. Computes per-algorithm averages across multiple runs and outputs 
             them to CSV format. Called by the TLS performance parsing script. """
         
@@ -365,55 +363,62 @@ class TLSAverager:
             the results paths"""
 
         # Declaring main average dataframe
-        classic_avg_df = pd.DataFrame(columns=self.col_headers['classic_headers'])
+        classic_avg_df = pd.DataFrame(columns=self.col_headers['classic_avg_headers'])
 
-        # Loop through all ciphersuites
-        for cipher in self.algs_dict['ciphers']:
+        # Loop through each classic signing algorithm to process the result files
+        for classic_sig in self.algs_dict["classic_sig_algs"]:
+    
+            # Loop through each key exchange group and ciphersuite combo for the current signing algorithm
+            for key_exchange_group in self.algs_dict["classic_key_exchange_groups"]:
+                for ciphersuite in self.algs_dict["ciphersuites"]:
 
-            # Loop through all ECC curves
-            for alg in self.algs_dict['classic_algs']:
+                    # Reset the combined dataframes for the current combination
+                    first_use_combined_df = pd.DataFrame(columns=self.col_headers['classic_headers'])
+                    reused_combined_df = pd.DataFrame(columns=self.col_headers['classic_headers'])
 
-                # Resetting the combined curve dataframe
-                curve_first_combined_df = pd.DataFrame(columns=self.col_headers['classic_headers'])
-                curve_reused_combined_df = pd.DataFrame(columns=self.col_headers['classic_headers'])
+                    # Loop through all runs
+                    for current_run in range(1, self.num_runs+1):
 
-                # Looping through all the runs
-                for current_run in range(1, self.num_runs+1):
+                        # Set the current run filepath
+                        current_run_filename = f"classic_results_run_{str(current_run)}.csv"
+                        current_run_filepath = os.path.join(self.dir_paths['classic_handshake_results'], current_run_filename)
 
-                    # Setting current run filepath
-                    current_run_filename = f"classic_results_run_{str(current_run)}.csv"
-                    current_run_filepath = os.path.join(self.dir_paths['classic_handshake_results'], current_run_filename)
+                        # Read the current run CSV and extract the current combination
+                        current_run_df = pd.read_csv(current_run_filepath)
+                        combination_df = current_run_df[
+                            (current_run_df["Signing Algorithm"] == classic_sig) & 
+                            (current_run_df["Key Exchange Group"] == key_exchange_group) &
+                            (current_run_df["Ciphersuite"] == ciphersuite)
+                        ]
 
-                    # Reading in the current run CSV to get metrics
-                    current_run_df = pd.read_csv(current_run_filepath)
+                        # Separate the first-use and reused-session rows
+                        if current_run == 1:
+                            first_use_combined_df = combination_df.iloc[0:1]
+                            reused_combined_df = combination_df.iloc[1:2]
+                            
+                        else:
+                            first_use_combined_df = pd.concat([first_use_combined_df, combination_df.iloc[0:1]])
+                            reused_combined_df = pd.concat([reused_combined_df, combination_df.iloc[1:2]])
 
-                    # Extracting the data for the current curve and ciphersuite
-                    cipher_df = current_run_df[current_run_df["Ciphersuite"].str.contains(cipher, regex=False)]
-                    curve_df = cipher_df[cipher_df["Classic Algorithm"].str.contains(alg, regex=False)]
+                    # Initialise the average rows for the current combination
+                    first_use_combined_row = [classic_sig, key_exchange_group, ciphersuite, ""]
+                    reused_combined_row = [classic_sig, key_exchange_group, ciphersuite, "*"]
 
-                    # Separating the data into combined dataframes
-                    if current_run == 1:
-                        curve_first_combined_df = curve_df.iloc[0:1]
-                        curve_reused_combined_df = curve_df.iloc[1:2]
-                    else:
-                        curve_first_combined_df = pd.concat([curve_first_combined_df, curve_df.iloc[0:1]])
-                        curve_reused_combined_df = pd.concat([curve_reused_combined_df, curve_df.iloc[1:2]])
+                    # Calculate the average for each metrics column
+                    for column in self.col_headers['classic_headers']:
+                        if column in self.col_headers['classic_headers'][:4]:
+                            continue
 
-                # Calculating Averages
-                curve_first_combined_row = [cipher, alg, ""]
-                curve_reused_combined_row = [cipher, alg, "*"]
+                        first_use_combined_row.append(float(first_use_combined_df[column].mean()))
+                        reused_combined_row.append(float(reused_combined_df[column].mean()))
 
-                # Get average value for each column and append to new row variable
-                for column in self.col_headers['classic_headers']:
-                    if column in self.col_headers['classic_headers'][:3]:
-                        continue
-                    else:
-                        curve_first_combined_row.append(float(curve_first_combined_df[column].mean()))
-                        curve_reused_combined_row.append(float(curve_reused_combined_df[column].mean()))
-                
-                # Append average rows onto the main average dataframe
-                classic_avg_df.loc[len(classic_avg_df)] = curve_first_combined_row
-                classic_avg_df.loc[len(classic_avg_df)] = curve_reused_combined_row
+                    # Add the total runs and runs used in average to the end of the average rows
+                    first_use_combined_row.extend([len(first_use_combined_df), self.num_runs])
+                    reused_combined_row.extend([len(reused_combined_df), self.num_runs])
+
+                    # Append the average rows to the main dataframe
+                    classic_avg_df.loc[len(classic_avg_df)] = first_use_combined_row
+                    classic_avg_df.loc[len(classic_avg_df)] = reused_combined_row
 
         # Output averages to csv file
         avg_out_filename = f"classic_results_avg.csv"
@@ -421,11 +426,11 @@ class TLSAverager:
         classic_avg_df.to_csv(avg_out_filepath, index=False)
 
     #------------------------------------------------------------------------------
-    def get_speed_algs(self, temp_filename, dir_list):
+    def get_speed_algs(self, temp_filename, result_dir):
         """ Method for getting the algorithms present in the speed results files """
 
         # Setting filepath for the current algorithm file
-        temp_alg_filepath = os.path.join(dir_list[1], temp_filename)
+        temp_alg_filepath = os.path.join(result_dir, temp_filename)
 
         # Getting algorithms present in the current speed file
         temp_alg_df = pd.read_csv(temp_alg_filepath)
@@ -434,71 +439,120 @@ class TLSAverager:
         return algs
 
     #------------------------------------------------------------------------------
-    def gen_speed_avgs(self, speed_headers):
+    def get_alg_speed_avgs(self, target_prefix, result_dir, alg, headers):
+        """ Method for calculating the average TLS speed metrics for a single algorithm across all test runs. """
+
+        # Create the combined dataframe for the current algorithm and set the average row variable
+        combined_df = pd.DataFrame(columns=headers)
+
+        # Loop through the runs to get averages for the alg type
+        for run_num in range(1, self.num_runs+1):
+
+            # Set the filename and path for the current type and run
+            current_filename = f"{target_prefix}_{run_num}.csv"
+            current_filepath = os.path.join(result_dir, current_filename)
+
+            # Pull in the algorithm values for the current run and alg
+            current_run_df = pd.read_csv(current_filepath)
+            current_run_df = current_run_df[current_run_df["Algorithm"] == alg]
+
+            # Add  algorithm values to the combined dataframe that will be used to get averages for the alg across runs
+            if run_num == 1:
+                combined_df = current_run_df
+            else:
+                combined_df = pd.concat([combined_df, current_run_df.iloc[0:1]])
+
+        # Get the average value for each column and append to new row var
+        speed_avg_row = []
+
+        for column in headers:
+            if column == headers[0]:
+                continue
+            else:
+                speed_avg_row.append(float(combined_df[column].mean()))
+
+        return speed_avg_row
+
+    #------------------------------------------------------------------------------
+    def gen_pqc_speed_avgs(self, speed_headers):
         """ Method for taking in the provided TLS speed results and generating an 
             average for all the runs for the machine-ID included in the results 
             paths """
         
-        # Define the alg_types list for average processing
+        # Define the alg and test types for the TLS speed averages
+        test_types = ["pqc", "hybrid"]
         alg_types = ["kem", "sig"]
 
-        # Loop through the test types and process averages for speed metrics
-        for test_type, dir_list in self.dir_paths["speed_types_dirs"].items():
-
-            # Set the file prefix depending on test type
-            pqc_fileprefix = "tls_speed" if test_type == "pqc" else "tls_speed_hybrid"
-
-            # Process both the KEM and Sig averages for the current test type
+        # Loop through the test types and alg types and process averages for speed metrics
+        for test_type in test_types:
             for alg_type in alg_types:
 
+                # Set the file prefix depending on test type
+                pqc_fileprefix = "tls_speed" if test_type == "pqc" else "tls_speed_hybrid"
+                target_prefix = f"{pqc_fileprefix}_{alg_type}"
+
+                # Define the directory list for the current test type
+                result_dir = self.dir_paths["speed_types_dirs"][test_type][1]
+
                 # Get the algorithms present for the current test/alg type being processed
-                temp_filename = f"{pqc_fileprefix}_{alg_type}_1.csv"
-                algs = self.get_speed_algs(temp_filename, dir_list)
+                temp_filename = f"{target_prefix}_1.csv"
+                algs = self.get_speed_algs(temp_filename, result_dir)
 
                 # Set the headers used in the CSV files based on alg_type and create a dataframe
-                headers = speed_headers[0] if alg_type == "kem" else speed_headers[1]
+                pqc_speed_headers = speed_headers["pqc_speed"]
+                headers = pqc_speed_headers[0] if alg_type == "kem" else pqc_speed_headers[1]
                 speed_avg_df = pd.DataFrame(columns=headers)
 
                 # Loop through the algs to get combined average dataframes
                 for alg in algs:
 
-                    # Set the clean combined alg speed dataframe
-                    combined_df = pd.DataFrame(columns=headers)
-
-                    # Loop through the runs to get averages for the alg type
-                    for run_num in range(1, self.num_runs+1):
-
-                        # Set the filename and path for the current type and run
-                        current_filename = f"{pqc_fileprefix}_{alg_type}_{run_num}.csv"
-                        current_filepath = os.path.join(dir_list[1], current_filename)
-                    
-                        # Pull in the algorithm values for the current run and alg
-                        current_run_df = pd.read_csv(current_filepath)
-                        current_run_df = current_run_df[current_run_df["Algorithm"].str.contains(alg, regex=False)]
-
-                        # Add  algorithm values to the combined dataframe that will be used to get averages for the alg across runs
-                        if run_num == 1:
-                            combined_df = current_run_df.loc[current_run_df['Algorithm'].str.contains(alg, regex=False)]
-                        else:
-                            combined_df = pd.concat([combined_df, current_run_df.iloc[0:1]])
-
-                    # Get the average value for each column and append to new row var
-                    speed_avg_row = []
-                    
-                    for column in headers:
-                        if column in headers[0]:
-                            continue
-                        else:
-                            speed_avg_row.append(float(combined_df[column].mean()))
-
-                    # Append the row to the main average dataframe
+                    # Get the average row for the current algorithm across all runs and append to the main average dataframe
+                    speed_avg_row = self.get_alg_speed_avgs(target_prefix, result_dir, alg, headers)
                     speed_avg_row.insert(0, alg)
                     speed_avg_df.loc[len(speed_avg_df)] = speed_avg_row
 
                 # Export the TLS speed averages to csv file
-                speed_avg_filename = f"{pqc_fileprefix}_{alg_type}_avg.csv"
-                speed_avg_filepath = os.path.join(dir_list[1], speed_avg_filename)
+                speed_avg_filename = f"{target_prefix}_avg.csv"
+                speed_avg_filepath = os.path.join(result_dir, speed_avg_filename)
                 speed_avg_df.to_csv(speed_avg_filepath, index=False)
+
+    #------------------------------------------------------------------------------
+    def gen_classic_speed_avgs(self, speed_headers):
+        """ Method for generating average TLS speed metrics for the classical signature and key exchange result types. """
+
+        # Define the alg_types and sub_alg types for classic speed averages
+        result_type = {
+            "sig": ["ec", "rsa"],
+            "key_exchange": ["ecdh", "xdh"]
+        }
+
+        # Loop through each of the alg types and sub-alg types to process the classic speed averages
+        for alg_type, sub_algs in result_type.items():
+            for sub_alg_type in sub_algs:
+
+                # Define the result directory and filename prefix for the current alg type and sub-alg type
+                result_dir = self.dir_paths["speed_types_dirs"]["classic"][1]
+                classic_fileprefix = f"tls_speed_classic_{alg_type}_{sub_alg_type}"
+
+                # Get the list of algorithms present in run 1 file for the current alg type and sub-alg type
+                temp_filename = f"{classic_fileprefix}_1.csv"
+                algs = self.get_speed_algs(temp_filename, result_dir)
+
+                # Set the headers used in the CSV files based on alg_type and create a dataframe
+                headers = speed_headers["classic_speed"][sub_alg_type]
+                speed_avg_df = pd.DataFrame(columns=headers)
+
+                # Loop through each of the algorithms and read in that algs results across the run files
+                for alg in algs:
+
+                    ## Get the average row for the current algorithm across all runs and append to the main average dataframe
+                    speed_avg_row = self.get_alg_speed_avgs(classic_fileprefix, result_dir, alg, headers)
+                    speed_avg_row.insert(0, alg)
+                    speed_avg_df.loc[len(speed_avg_df)] = speed_avg_row
+
+                # Export the classic TLS speed averages to csv file
+                speed_avg_filename = f"{classic_fileprefix}_avg.csv"
+                speed_avg_df.to_csv(f"{result_dir}/{speed_avg_filename}", index=False)
 
 #------------------------------------------------------------------------------------------------------------------------------
 class EnergyAverager:

@@ -8,7 +8,7 @@
 # validation, and result directory setup. The script also supports optional energy testing mode, including energy collector
 # control signalling configuration and custom system state options for client-side energy test execution. Based on the selected
 # machine role, the script calls the relevant client or server benchmarking script to perform handshake and speed tests across
-# post-quantum, classical, and hybrid-pqc algorithm modes, storing results in machine-specific directories for later analysis.
+# post-quantum, Hybrid-PQC, and classical algorithm modes, storing results in machine-specific directories for later analysis.
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function get_user_yes_no() {
@@ -540,10 +540,11 @@ function set_tls_paths() {
     export HYBRID_HANDSHAKE="$MACHINE_HANDSHAKE_RESULTS/hybrid"
     export PQC_SPEED="$MACHINE_SPEED_RESULTS/pqc"
     export HYBRID_SPEED="$MACHINE_SPEED_RESULTS/hybrid"
+    export CLASSIC_SPEED="$MACHINE_SPEED_RESULTS/classic"
 
     # Declare the results directory paths array based on if energy testing/store results is enabled or not
     if [ "$enable_energy_testing" -eq 0 ]; then
-        result_dir_paths=("$PQC_HANDSHAKE" "$CLASSIC_HANDSHAKE" "$HYBRID_HANDSHAKE" "$PQC_SPEED" "$HYBRID_SPEED")
+        result_dir_paths=("$PQC_HANDSHAKE" "$CLASSIC_HANDSHAKE" "$HYBRID_HANDSHAKE" "$PQC_SPEED" "$HYBRID_SPEED" "$CLASSIC_SPEED")
 
     elif [ "$enable_energy_testing" -eq 1 ] && [ "$STORE_TEST_RESULTS" -eq 1 ]; then
         result_dir_paths=("$PQC_HANDSHAKE" "$CLASSIC_HANDSHAKE" "$HYBRID_HANDSHAKE")
@@ -1575,7 +1576,7 @@ function main() {
     # Setup the base environment for the test suite
     setup_base_env
 
-    # Get the test options and perform the PQC TLS tests 
+    # Get the test options and perform the PQC, Hybrid-PQC, and classical TLS tests
     configure_test_options
     run_tests
 

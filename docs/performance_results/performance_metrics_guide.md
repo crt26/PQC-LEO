@@ -1,7 +1,7 @@
 # PQC Performance Metrics & Results Storage Breakdown <!-- omit from toc -->
 
 ## Overview <!-- omit from toc -->
-This document provides a comprehensive guide to the PQC computational and TLS performance metrics collected by the project's automated benchmarking tools. It describes the types of metrics gathered and how raw test data is structured, parsed, and analysed across different environments using the provided testing and parsing scripts.
+This document provides a comprehensive guide to the PQC computational performance, TLS performance, TLS handshake transmission cost, and energy usage metrics collected by the project's automated benchmarking tools. It describes the types of metrics gathered and how test data is structured, parsed where required, and analysed across different environments using the provided testing and parsing scripts.
 
 Specifically, it covers:
 
@@ -10,6 +10,8 @@ Specifically, it covers:
 - A breakdown of the computational performance metrics gathered via Liboqs benchmarking tools, including how these results are stored and organised
 
 - A description of TLS performance metrics obtained from testing OpenSSL’s native PQC support and OQS-Provider, along with their storage and processing structure
+
+- A description of the TLS handshake transmission cost metrics gathered for one-way and mutual authentication, along with their result structure
 
 - A description of the energy usage metrics collected during computational and TLS performance testing, including the specific metrics gathered and how this data is stored for analysis
 
@@ -23,6 +25,8 @@ Specifically, it covers:
   - [TLS Handshake Testing](#tls-handshake-testing)
   - [TLS Speed Testing](#tls-speed-testing)
 - [TLS Performance Result Data Storage Structure](#tls-performance-result-data-storage-structure)
+- [TLS Handshake Transmission Cost Metrics](#tls-handshake-transmission-cost-metrics)
+- [TLS Handshake Transmission Cost Result Data Storage Structure](#tls-handshake-transmission-cost-result-data-storage-structure)
 - [PQC Energy Usage Metrics](#pqc-energy-usage-metrics)
   - [Collected Energy Usage Metrics](#collected-energy-usage-metrics)
   - [PQC Computational Energy Usage](#pqc-computational-energy-usage)
@@ -98,18 +102,18 @@ The table below outlines where this data is stored and how it's organised in the
 Where `machine_x` is the Machine-ID number assigned to the results when executing the testing scripts. If no custom Machine-ID is assigned, the default ID of 1 will be set for the results.
 
 ## PQC TLS Performance Metrics
-The TLS performance testing suite benchmarks PQC, Hybrid-PQC, and classical algorithm configurations available through both OpenSSL's native support and the OQS-Provider. As of OpenSSL 3.5.0, PQC algorithms are supported through both sources, and the suite is designed to evaluate performance consistently across the full range of available implementations. It measures performance within the TLS 1.3 handshake protocol and the execution speed of cryptographic operations directly through OpenSSL. This provides insight into how PQC schemes perform in real-world security protocol scenarios. Classical digital signature algorithms and ciphersuites are also tested to establish a performance baseline for comparison with PQC and Hybrid-PQC configurations.
+The TLS performance testing suite benchmarks PQC, Hybrid-PQC, and classical algorithm configurations available through both OpenSSL's native support and the OQS-Provider. OpenSSL 4.0.1 provides native PQC implementations alongside those exposed by the OQS-Provider, and the suite is designed to evaluate performance consistently across the available implementations. It measures performance within the TLS 1.3 handshake protocol and the execution speed of cryptographic operations directly through OpenSSL. This provides insight into how PQC schemes perform in real-world security protocol scenarios. An expanded set of classical digital signature algorithms, key-exchange groups, and ciphersuites is also tested to establish performance baselines for comparison with PQC and Hybrid-PQC algorithms.
 
 As part of the automated TLS testing, two categories of evaluations are conducted:
 
 - **TLS Handshake Testing** - This simulates full TLS 1.3 handshakes using OpenSSL’s `s_server` and `s_time` tools, evaluating both standard and session-resumed connections.
 
-- **TLS Speed Testing** - This uses the OpenSSL `s_speed` tool to benchmark the algorithm's low-level operations, such as key generation, encapsulation, signing, and verification.
+- **TLS Speed Testing** - This uses the OpenSSL `speed` tool to benchmark low-level operations such as key generation, encapsulation, signing, verification, and key derivation.
 
 ### TLS Handshake Testing
 The TLS handshake performance tests measure how efficiently different PQC, Hybrid-PQC, and classical algorithm combinations perform during the TLS 1.3 handshake process. These tests are executed using OpenSSL's built-in benchmarking tools (`s_server` and `s_time`).
 
-Each test performs the TLS handshake for a given digital signature and KEM algorithm combination (digital signature) as many times as possible for a set time window, both with and without session ID reuse, to evaluate the impact of session resumption on performance.
+For PQC and Hybrid-PQC, each test uses a signing-algorithm and KEM pairing. Classical tests instead use a signing-algorithm, key-exchange-group, and ciphersuite combination. Every TLS handshake configuration is performed as many times as possible during the set testing time window, both with and without session ID reuse, to evaluate the overall performance.
 
 The table below describes the performance metrics gathered during this testing:
 
@@ -131,17 +135,19 @@ When averaged TLS handshake result files are generated, additional columns are i
 
 These columns are used to indicate how many test runs were included in each average calculation. This is necessary because, in some cases, a value of `inf` may be produced for the **"Connections per User Second"** metric when using shorter TLS handshake test durations.
 
-If an `inf` value occurs in a run, that run is excluded from the average calculation for the affected signature/KEM combination. The additional columns allow users to determine whether any runs were excluded and how many valid runs contributed to the final averaged result. This information on the number of runs used is only present for TLS Handshake results as all other types of testing are always able to use all test runs performed for average calculations.
+If an `inf` value occurs in a run, that run is excluded from the average calculation for the affected algorithm combination. The additional columns allow users to determine whether any runs were excluded and how many valid runs contributed to the final averaged result. This information on the number of runs used is only present for TLS handshake results, as all other types of testing are always able to use all test runs performed for average calculations.
 
 Further information on this behaviour and how it can be avoided is provided in the [TLS Handshake Inf Result Handling](./tls_handshake_inf_result_handling.md) documentation.
 
 ### TLS Speed Testing
-TLS speed testing benchmarks the raw cryptographic performance of PQC, Hybrid-PQC, and classical algorithms when integrated into OpenSSL for both natively supported algorithms and those provided by the OQS-Provider library. This is done using the OpenSSL `s_speed` tool, which measures the execution time and throughput of cryptographic operations for each algorithm.
+TLS speed testing benchmarks the raw cryptographic performance of PQC, Hybrid-PQC, and classical algorithms within OpenSSL. It uses both OpenSSL-native algorithms and PQC algorithms provided by the OQS-Provider. The test uses OpenSSL's `speed` tool to measure operation time and throughput for PQC/Hybrid-PQC KEM and signature algorithms, classical RSA/EC/Ed signature algorithms, and classical ECDH/XDH key-exchange algorithms.
+
+Classical RSA speed results are reported only by modulus size, such as `RSA_2048`, because `openssl speed` does not expose a separate RSA-PSS selector or result category. Its standard RSA selectors use the RSA/PKCS#1 v1.5 path. Consequently, standard TLS speed output does not contain `RSA-PSS_*` rows.
 
 The primary objective of this test is to gather the base system performance of the schemes when integrated into the OpenSSL library. The results provide insight into the algorithm's standalone efficiency when running within OpenSSL, which can produce additional overhead compared to the performance tests provided by the computational performance testing suite.
 
 #### Digital Signature Algorithm Metrics
-The following table describes the metrics collected for digital signature algorithms during TLS speed testing:
+The following table describes the metrics collected for PQC/Hybrid-PQC signatures and classical RSA signatures during TLS speed testing:
 
 | **Metric** | **Description**                                           |
 |------------|-----------------------------------------------------------|
@@ -153,7 +159,7 @@ The following table describes the metrics collected for digital signature algori
 | verifies/s | Number of verification operations completed per second.   |
 
 #### KEM Algorithm Metrics
-The following table describes the metrics collected for Key Encapsulation Mechanism (KEM) algorithms during TLS speed testing:
+The following table describes the metrics collected for PQC/Hybrid-PQC KEMs and classical XDH algorithms during TLS speed testing:
 
 | **Metric** | **Description**                                                |
 |------------|----------------------------------------------------------------|
@@ -164,19 +170,52 @@ The following table describes the metrics collected for Key Encapsulation Mechan
 | encaps/s   | Number of encapsulation operations completed per second.       |
 | decaps/s   | Number of decapsulation operations completed per second.       |
 
-## TLS Performance Result Data Storage Structure
-When running the TLS benchmarking script (`full_tls_test.sh`), all performance data is initially stored as unparsed output. This includes both handshake and speed test results. After testing, the parsing script processes this raw data into structured CSV files, including calculated averages across test runs.
+Classical ECDH result files instead report `op (s)` and `op/s`, representing the average time and throughput for shared-secret derivation.
 
-| **Data Type**   | **State**     | **Description**                                                                             | **Location** *(relative to `test_data/`)*                                              |
-|-----------------|---------------|---------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|
-| TLS Handshake   | Un-parsed     | Raw `.txt` outputs from OpenSSL s_time tests for PQC, Hybrid-PQC, and Classic combinations. | `up_results/tls_performance/machine_x/handshake_results/{pqc/hybrid/classic}`          |
-| TLS Handshake   | Parsed        | Per-run CSVs with extracted handshake metrics, by signature algorithm.                      | `results/tls_performance/machine_x/handshake_results/{pqc/hybrid/classic}/{signature}` |
-| TLS Handshake   | Parsed (Base) | Combined CSVs aggregating all signature/KEM combinations for each run.                      | `results/tls_performance/machine_x/handshake_results/{pqc/hybrid}/base_results`        |
-| TLS Speed       | Un-parsed     | Raw `.txt` outputs from OpenSSL speed tests for PQC and Hybrid-PQC algorithms.              | `up_results/tls_performance/machine_x/speed_results/{pqc/hybrid}`                      |
-| TLS Speed       | Parsed        | Cleaned CSVs with cryptographic operation timings and throughput.                           | `results/tls_performance/machine_x/speed_results/`                                     |
-| Parsed Averages | Parsed        | Averaged handshake and speed results across test runs.                                      | Stored alongside parsed result files in `results/tls_performance/machine_x/`           |
+## TLS Performance Result Data Storage Structure
+When running the TLS benchmarking script (`pqc_tls_performance_test.sh`), all performance data is initially stored as unparsed output. This includes both handshake and speed test results. After testing, the parsing script processes this raw data into structured CSV files, including calculated averages across test runs.
+
+| **Data Type**   | **State**     | **Description**                                                                                 | **Location** *(relative to `test_data/`)*                                         |
+|-----------------|---------------|-------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
+| TLS Handshake   | Un-parsed     | Raw `.txt` outputs from OpenSSL `s_time` tests for PQC, Hybrid-PQC, and classical combinations. | `up_results/tls_performance/machine_x/handshake_results/{pqc/hybrid/classic}`     |
+| TLS Handshake   | Parsed        | Per-run PQC and Hybrid-PQC CSVs organised by signing algorithm.                                 | `results/tls_performance/machine_x/handshake_results/{pqc/hybrid}/{signature}`    |
+| TLS Handshake   | Parsed        | Combined per-run and averaged CSVs for all classical signature/group/ciphersuite combinations.  | `results/tls_performance/machine_x/handshake_results/classic/`                    |
+| TLS Handshake   | Parsed (Base) | Combined CSVs aggregating all PQC/Hybrid-PQC signature/KEM combinations for each run.           | `results/tls_performance/machine_x/handshake_results/{pqc/hybrid}/base_results`   |
+| TLS Speed       | Un-parsed     | Raw `.txt` outputs from OpenSSL speed tests for PQC, Hybrid-PQC, and classical algorithms.      | `up_results/tls_performance/machine_x/speed_results/{pqc/hybrid/classic}`         |
+| TLS Speed       | Parsed        | Per-run CSVs and averages with cryptographic operation timings and throughput.                  | `results/tls_performance/machine_x/speed_results/{pqc/hybrid/classic}`            |
+| Parsed Averages | Parsed        | Averaged handshake and speed results across test runs.                                          | Stored alongside parsed result files in `results/tls_performance/machine_x/`      |
 
 Where `machine_x` is the Machine-ID number assigned to the results when executing the testing scripts. If no custom Machine-ID is assigned, the default ID of 1 will be set for the results.
+
+Raw classical handshake files use a different naming convention to PQC/Hybrid-PQC files:
+
+`tls_handshake_classic_(run-number)_(signing-alg)_(key-exchange-group)_(ciphersuite).txt`.
+
+Parsing combines these into `classic_results_run_(run-number).csv` and produces `classic_results_avg.csv`; both CSV formats retain separate `Signing Algorithm`, `Key Exchange Group`, and `Ciphersuite` columns.
+
+Raw classical speed files are named `tls_speed_classic_sig_(run-number).txt` and `tls_speed_classic_key_exchange_(run-number).txt`. Parsing separates their OpenSSL result tables into `sig_ec`, `sig_rsa`, `key_exchange_ecdh`, and `key_exchange_xdh` per-run CSVs, with a corresponding `_avg.csv` file for each category.
+
+## TLS Handshake Transmission Cost Metrics
+The TLS handshake transmission cost test measures the network data exchanged during TLS 1.3 handshakes for PQC, Hybrid-PQC, and classical configurations. PQC and Hybrid-PQC tests use signing-algorithm/KEM pairings, while classical tests use signing-algorithm/key-exchange-group/ciphersuite combinations. The tool performs one handshake with one-way authentication and one handshake with mutual authentication for every configuration. The measurements are extracted from the summary produced by OpenSSL `s_client` output.
+
+| **Metric**     | **Description**                                                |
+|----------------|----------------------------------------------------------------|
+| Bytes Sent     | Number of bytes written by the TLS client during the handshake |
+| Bytes Received | Number of bytes read by the TLS client during the handshake    |
+| Total Bytes    | Sum of the bytes sent and received during the handshake        |
+
+Each result row also identifies the signature algorithm and authentication type (`one_way_auth` or `mutual_auth`). PQC and Hybrid-PQC rows identify the KEM algorithm; classical rows instead identify both the key-exchange group and ciphersuite. Unlike the TLS performance suite, this test records a single handshake per configuration and does not calculate run averages.
+
+## TLS Handshake Transmission Cost Result Data Storage Structure
+The `get_pqc_tls_bytes.py` script writes structured CSV data directly, so there is no unparsed result directory or additional parsing stage.
+
+| **Data Type**                  | **Description**                                                                                     | **Location** *(relative to `test_data/`)*                                       |
+|--------------------------------|-----------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
+| PQC TLS Handshake Bytes        | Transmission-cost results for PQC signature and KEM combinations                                    | `results/tls_handshake_bytes/machine_x/pqc_tls_handshake_bytes_results.csv`     |
+| Hybrid-PQC TLS Handshake Bytes | Transmission-cost results for Hybrid-PQC signature and KEM combinations                             | `results/tls_handshake_bytes/machine_x/hybrid_tls_handshake_bytes_results.csv`  |
+| Classical TLS Handshake Bytes  | Transmission-cost results for classical signature, key-exchange-group, and ciphersuite combinations | `results/tls_handshake_bytes/machine_x/classic_tls_handshake_bytes_results.csv` |
+
+Where `machine_x` is the Machine-ID selected when the script is executed. If no custom Machine-ID is assigned, the default ID of 1 is used.
 
 ## PQC Energy Usage Metrics
 The energy usage metrics collected by the project’s automated testing tools provide insight into the power consumption of PQC algorithms during both computational performance tests and TLS performance tests. These metrics are gathered using energy meters connected to the system, which measure the total energy consumed during the execution of cryptographic operations and TLS handshakes.
@@ -232,9 +271,11 @@ The baseline energy usage file for this testing category will be named:
 ### TLS Handshake Energy Usage
 TLS handshake energy usage metrics measure the total energy consumed during the execution of TLS 1.3 handshakes using different PQC, Hybrid-PQC, and classical algorithm combinations. These measurements are obtained by executing the standard TLS handshake tests with energy monitoring enabled, allowing energy consumption data to be collected during the handshake operations. The resulting data provides insight into the power efficiency and practical implementation costs of different cryptographic algorithm combinations when deployed within real-world TLS 1.3 handshakes.
 
-TLS handshake energy usage testing follows the same pattern of testing as the standard TLS handshake performance testing, with the exception that by default no handshake performance data is recorded. The user can choose to store the performance results when configuring the client machine. Testing is performed for both first use of a session ID and session ID reuse scenarios for each signature/KEM combination. The energy usage data is collected during the execution of the handshakes for each scenario. For detailed information on the standard TLS handshake testing process, please refer to the [TLS Handshake Performance Metrics](./performance_metrics_guide.md#tls-handshake-testing) section of this document.
+TLS handshake energy usage testing follows the same pattern as standard TLS handshake performance testing, with the exception that by default no handshake performance data is recorded. The user can choose to store the performance results when configuring the client machine. Testing is performed for both first use of a session ID and session ID reuse for each PQC/Hybrid-PQC signing-algorithm/KEM pairing and each classical signing-algorithm/key-exchange-group/ciphersuite combination. Energy usage data is collected during the handshakes for each scenario. For detailed information on the standard TLS handshake testing process, please refer to the [TLS Handshake Performance Metrics](./performance_metrics_guide.md#tls-handshake-testing) section of this document.
 
-In addition to the standard energy usage metrics, the TLS handshake energy usage result files will also include the following metadata fields to provide context for the energy usage data:
+In addition to the standard energy usage metrics, the TLS handshake energy usage result files will also include the following metadata fields to provide context for the energy usage data.
+
+For PQC and Hybrid-PQC results, the following metadata fields are included:
 
 | **Metadata Field**   | **Description**                                                        |
 |----------------------|------------------------------------------------------------------------|
@@ -242,22 +283,31 @@ In addition to the standard energy usage metrics, the TLS handshake energy usage
 | KEM Algorithm        | The specific KEM algorithm used in the handshake.                      |
 | Session ID Reuse (*) | Indicates whether session ID reuse was enabled for the handshake test. |
 
-If classical algorithms are being evaluated, the `KEM Algorithm` field will be replaced with `Ciphersuite`, which will indicate the specific classical ciphersuite used in the handshake test.
+For classical results, the following metadata fields are included:
+
+| **Metadata Field**   | **Description**                                                        |
+|----------------------|------------------------------------------------------------------------|
+| Signing Algorithm    | The specific digital signature algorithm used in the handshake.        |
+| Key Exchange Group   | The classical key-exchange group used in the handshake.                |
+| Ciphersuite          | The TLS 1.3 ciphersuite used for the classical handshake test.         |
+| Session ID Reuse (*) | Indicates whether session ID reuse was enabled for the handshake test. |
 
 The baseline energy usage file for this testing category will be named:
 `tls_handshake_energy_usage_baseline.csv`
 
 ### TLS Speed Energy Usage
-TLS speed energy usage metrics evaluate the energy consumption of cryptographic operations for PQC and Hybrid-PQC algorithms when integrated in the OpenSSL library. This is done by performing the individual cryptographic operations using the OpenSSL command-line tools with energy monitoring enabled. The collected energy usage data for these operations provides insight into the power efficiency of different algorithms when running within OpenSSL, which can produce additional overhead compared to the performance tests provided by the computational performance testing suite. This information is valuable for understanding the practical energy costs of deploying PQC algorithms in real-world applications that rely on OpenSSL for cryptographic operations.
+TLS speed energy usage metrics evaluate the energy consumption of cryptographic operations for PQC, Hybrid-PQC, and classical algorithms within OpenSSL. The test performs individual operations using the OpenSSL command-line tools while energy monitoring is enabled. It measures key generation, encapsulation, and decapsulation for PQC/Hybrid-PQC KEMs; key generation, signing, and verification for PQC/Hybrid-PQC and classical signatures; and key generation and shared-secret derivation for classical key-exchange algorithms.
+
+Because this test invokes OpenSSL operations directly rather than relying on the predefined `openssl speed` result categories, it can explicitly request RSA-PSS signing and verification. For its RSA results, the `RSA_*` categories use generic RSA keys and the `RSA-PSS_*` categories use RSA-PSS-restricted keys; both categories use PSS padding for the measured signing and verification operations.
 
 Similar to computational energy usage testing, the TLS speed energy usage tests are performed by running the each algorithm's respective cryptographic operations for a user defined number of iterations while collecting energy usage data. The rate at which the energy meter is polled for data during this period is also user defined.
 
 In addition to the standard energy usage metrics, the TLS speed energy usage result files will also include the following metadata fields to provide context for the energy usage data:
 
-| **Metadata Field** | **Description**                              |
-|--------------------|----------------------------------------------|
-| Algorithm Name     | The specific PQC algorithm being tested.     |
-| Operation          | The cryptographic operation being performed. |
+| **Metadata Field** | **Description**                                                       |
+|--------------------|-----------------------------------------------------------------------|
+| Algorithm Name     | The specific PQC, Hybrid-PQC, or classical algorithm being tested.    |
+| Operation          | The cryptographic operation being performed.                          |
 
 The baseline energy usage file for this testing category will be named:
 `tls_speed_energy_usage_baseline.csv`
@@ -271,12 +321,14 @@ Both the un-parsed and parsed energy usage results data will be stored on the co
 |----------------------|-----------|-----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
 | Computational Energy | Un-parsed | Raw text files containing energy usage data for PQC cryptographic operations.                       | `up_results/energy_test_results/pqc_performance_energy_results/machine_x/`                     |
 | Computational Energy | Parsed    | Processed per-run CSV result files, plus condensed per-run CSV summaries.                           | `results/energy_test_results/pqc_performance_energy_results/machine_x/`                        |
-| TLS Handshake Energy | Un-parsed | Raw text files containing energy usage data for each SIG/KEM TLS handshake test.                    | `up_results/energy_test_results/tls_handshake_energy_results/machine_x/`                       |
+| TLS Handshake Energy | Un-parsed | Raw text files for each PQC/Hybrid SIG/KEM or classical signature/group/ciphersuite handshake test. | `up_results/energy_test_results/tls_handshake_energy_results/machine_x/`                       |
 | TLS Handshake Energy | Parsed    | Processed per-run CSV result files grouped into classic, pqc, and hybrid_pqc, plus condensed files. | `results/energy_test_results/tls_handshake_energy_results/machine_x/{classic/pqc/hybrid_pqc}/` |
 | TLS Speed Energy     | Un-parsed | Raw text files containing energy usage data for each algorithm and operation.                       | `up_results/energy_test_results/tls_speed_energy_results/machine_x/`                           |
-| TLS Speed Energy     | Parsed    | Processed per-run CSV result files by algorithm type and PQC/Hybrid split, plus condensed files.    | `results/energy_test_results/tls_speed_energy_results/machine_x/`                              |
+| TLS Speed Energy     | Parsed    | Per-run PQC, Hybrid-PQC, and classical CSVs by algorithm type, plus condensed files.                | `results/energy_test_results/tls_speed_energy_results/machine_x/{pqc/hybrid/classic}/`         |
 
 Where `machine_x` is the Machine-ID number assigned to the results when executing the testing scripts. If no custom Machine-ID is assigned, the default ID of 1 will be set for the results.
+
+TLS speed energy parsing produces `pqc` and `hybrid_pqc` KEM/signature result files and `classic` signature/key-exchange result files. These are stored in the `pqc`, `hybrid`, and `classic` sub-directories, respectively. The filename format is `tls_speed_(algorithm-group)_(algorithm-type)_(run-number).csv`, with a matching `_condensed.csv` summary for each file. The baseline CSV remains directly under the machine directory.
 
 ## Useful External Documentation
 - [Liboqs Webpage](https://openquantumsafe.org/liboqs/)

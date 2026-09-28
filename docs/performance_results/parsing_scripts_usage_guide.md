@@ -16,14 +16,16 @@ It also outlines the expected directory structure for test results, limitations 
 - [Current Parsing Limitations](#current-parsing-limitations)
 
 ## Parsing Overview
-The parsing system in PQC-LEO transforms raw test output into structured CSV files that are ready for analysis. Parsing can happen automatically at the end of each test run or be invoked manually later using the provided controller script. Parsed results are categorised by test type (computational performance or TLS performance) and Machine-ID, and are saved into separate result folders under the main `test_data` directory.
+The parsing system in PQC-LEO transforms raw computational performance, TLS performance, and energy usage output into structured CSV files that are ready for analysis. Parsing can happen automatically at the end of applicable test runs or be invoked manually later using the provided controller script. Parsed results are categorised by test type and Machine-ID and saved into separate result folders under the main `test_data` directory.
 
-The automated testing scripts provided by this project will automatically call the Python parsing scripts once testing is completed and supply the testing parameters used. However, the user may decide to disable this feature and call the parsing scripts manually.
+The computational performance, TLS performance, and energy usage testing scripts automatically call the Python parsing scripts once testing is completed and supply the testing parameters used. However, the user may decide to disable this feature and call the parsing scripts manually.
+
+The TLS transmission cost testing tool writes structured CSV files directly to `test_data/results/tls_handshake_bytes/machine_x`, so these results cannot and do not need to be processed by `parse_results.py`.
 
 The following sections describe how to use the available parsing methods and what to expect from each.
 
 ## Automatic Parsing
-When a testing script completes, the parsing process is triggered automatically. The script passes the assigned Machine-ID and number of test runs to the parsing tool, which then processes the raw result files and generates structured CSV files. This automatic process is designed to simplify result management and ensure consistency without requiring any additional user input.
+When a testing script that produces supported raw results completes, the parsing process is triggered automatically. The script passes the assigned Machine-ID and number of test runs to the parsing tool, which then processes the raw result files and generates structured CSV files. This automatic process is designed to simplify result management and ensure consistency without requiring any additional user input.
 
 To disable automatic parsing, pass the `--disable-result-parsing` flag to the test script. For example:
 
@@ -103,12 +105,18 @@ The automated energy usage result parsing scripts support processing for the fol
 - TLS speed energy usage
 
 For each of these testing types, the following filename structure is expected:
+
 - **Computational Energy Usage Result** - `comp_(alg-type)_(operation)_(alg-name)_(run-number).txt`
-- **TLS Handshake Energy Usage Result** - `tls_handshake_(session-id-type)_(signing-alg)@(kem-alg)_(run-number).txt`
+- **PQC/Hybrid-PQC TLS Handshake Energy Result** - `tls_handshake_(session-id-type)_(signing-alg)@(kem-alg)_(run-number).txt`
+- **Classical TLS Handshake Energy Result** - `tls_handshake_(session-id-type)_(signing-alg)@(key-exchange-group)@(ciphersuite)_(run-number).txt`
 - **TLS Speed Energy Usage Result** - `tls_speed_(alg-type)_(operation)_(alg-name)_(run-number).txt`
+
+For TLS speed energy results, `alg-type` is `kem`, `sig`, or `key-exchange`. The parser normalises `key-exchange` to `key_exchange`, classifies each algorithm as `pqc`, `hybrid_pqc`, or `classic`, and writes per-run detailed and condensed CSVs. PQC and Hybrid-PQC outputs are split into KEM and signature files; classical outputs are split into signature and key-exchange files. These CSVs are stored in `pqc`, `hybrid`, and `classic` sub-directories beneath the machine directory, while the baseline CSV remains in the machine directory itself.
 
 ## Parsed Results Output
 Once parsing is complete, the parsed results will be stored in the newly created `test_data/results` directory. This includes CSV files containing the detailed test results and automatically calculated averages for each test category. These files are ready for further analysis or can be imported into graphing tools for visualisation.
+
+The separate TLS handshake transmission cost CSVs are also stored under `test_data/results`, but they are generated directly by the testing tool and are not included in the directories produced by the parser below. See the [TLS Handshake Transmission Cost Testing Guide](../testing_tools_usage/tls_handshake_transmission_cost_testing.md) for their structure and location.
 
 The output is organised by test type and Machine-ID in the following directories:
 
@@ -137,4 +145,4 @@ The current implementation of the parsing system includes several known limitati
 
 - Energy usage parsing expects specific testing categories and filename formats. Any deviation from this structure may result in parsing failures or incorrect outputs and manual processing will be required.
 
-These limitations will be addressed in future updates to improve flexibility and cross-system compatibility
+These limitations will be addressed in future updates to improve flexibility and cross-system compatibility.

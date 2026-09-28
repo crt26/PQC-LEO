@@ -1,10 +1,10 @@
 CC := gcc
 AR := ar
 OPENSSL_PATH ?= /usr
-
+OPENSSL_CRYPTO := -lcrypto
 CFLAGS := -Wall -Wextra -std=c11 -Iinclude -I_meter_interfaces/include -I$(OPENSSL_PATH)/include
 LDFLAGS := -L$(OPENSSL_PATH)/lib
-LDLIBS := -lserialport -lcrypto -lpthread
+LDLIBS := -lserialport $(OPENSSL_CRYPTO) -lpthread
 
 BUILD_DIR := build
 OBJ_DIR := $(BUILD_DIR)/obj

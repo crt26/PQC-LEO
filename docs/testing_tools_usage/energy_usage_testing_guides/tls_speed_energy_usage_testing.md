@@ -12,9 +12,11 @@ Please ensure you have read through the information provided within the main [En
 - [Outputted Results](#outputted-results)
 
 ## Testing Tool Overview
-The automated testing script for evaluating the TLS operations energy usage is located in the `scripts/testing_scripts` directory. Please ensure that the basic environment setup and setup checks have been performed before launching the testing script. For details on environment setup and checks, please refer to the [Energy Usage Testing Guide](../pqc_energy_usage_testing.md).
+The automated testing script for evaluating TLS operation energy usage is located in the `scripts/test_scripts` directory. Please ensure that the basic environment setup and setup checks have been performed before launching the testing script. For details on environment setup and checks, please refer to the [Energy Usage Testing Guide](../pqc_energy_usage_testing.md).
 
-The provided Bash script uses the OpenSSL and OQS-Provider libraries to automate TLS speed testing by configuring the testing parameters, launching the OpenSSL command-line tool, and handling the resulting output data. The script uses the generated TLS speed algorithm lists stored in `test_data/alg_lists` to determine which KEM and digital signature algorithms should be tested. Each selected algorithm is tested for a user-configured number of iterations, covering each of the respective cryptographic operations for KEM and digital signature algorithms. This provides insight into the energy usage of PQC and Hybrid-PQC algorithms when used through OpenSSL, including the additional overhead introduced by the library.
+The provided Bash script uses OpenSSL and the OQS-Provider to automate cryptographic operation testing while an energy collector records the testing machine's energy usage. The generated algorithm lists in `test_data/alg_lists` determine which algorithms are tested. PQC and Hybrid-PQC KEMs are tested for key generation, encapsulation, and decapsulation; PQC, Hybrid-PQC, and classical digital signatures are tested for key generation, signing, and verification; and classical key-exchange algorithms are tested for key generation and shared-secret derivation. Each operation is repeated for a user-configured number of iterations.
+
+The classical signature coverage includes RSA, RSA-PSS, ECDSA, EdDSA, and Brainpool variants. Unlike the standard TLS speed test, this energy test performs the OpenSSL operations directly and can explicitly configure PSS padding. The `RSA_*` categories generate generic RSA keys, while the `RSA-PSS_*` categories generate RSA-PSS-restricted keys; both categories use PSS padding for signing and verification. Classical key-exchange coverage includes X25519, X448, NIST curves, and Brainpool TLS 1.3 groups. See the [Supported Algorithms](../../supported_algorithms.md) guide for the complete lists and the Hybrid-PQC KEM exclusions that apply to this test.
 
 As part of the testing process, the script will automatically handle configuring the system state for energy usage testing, which includes setting the CPU performance to maximum and selecting a specific target CPU core*. This ensures consistent testing conditions for energy usage evaluation, preventing spikes or dips in energy usage due to background processes or thermal throttling. Additionally, a **10 second** baseline energy usage reading is taken before the testing process begins, which serves as a reference point for evaluating the energy consumption of the cryptographic operations.
 
@@ -46,7 +48,7 @@ Once the environment is ready and the collection machine has been activated, the
 Additional command line arguments can be passed to the testing script which enable advanced customisation of the automated testing process. For details of all advanced testing options, please refer to the [Energy Usage Testing Guide](../pqc_energy_usage_testing.md#advanced-testing-options). Of these advanced options, the ones supported by the TLS speed energy usage script are:
 
 - `--use-custom-sys-state`
-- `--use-custom-eng-control-ports`
+- `--use-custom-net-control-ports`
 
 ## Configuring the Testing Parameters
 Before testing begins, the script will prompt the user to configure two categories of parameters, which include:
@@ -80,7 +82,16 @@ Where `machine_x` refers to the assigned Machine-ID. If no ID was specified, the
 
 By default, the automated collection script will trigger the parsing system upon completion of testing, which processes the raw output into structured CSV files. These parsed results are saved in:
 
-`test_data/results/energy_usage/tls_speed_energy_results/machine_x`
+`test_data/results/energy_test_results/tls_speed_energy_results/machine_x`
+
+The parser separates results into `pqc`, `hybrid`, and `classic` sub-directories. For every run it produces KEM and signature files for the PQC and Hybrid-PQC groups, and signature and key-exchange files for the classical group. Each detailed per-run CSV has a corresponding `_condensed.csv` summary. For example:
+
+- `pqc/tls_speed_pqc_kem_1.csv`
+- `hybrid/tls_speed_hybrid_pqc_sig_1.csv`
+- `classic/tls_speed_classic_sig_1.csv`
+- `classic/tls_speed_classic_key_exchange_1.csv`
+
+The baseline CSV, `tls_speed_energy_usage_baseline.csv`, remains directly under the machine directory.
 
 To skip automatic parsing and only output the raw test results, pass the `--disable-result-parsing` flag when launching the collection machine script:
 

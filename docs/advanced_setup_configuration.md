@@ -2,7 +2,7 @@
 This document outlines additional configuration options available when running the `setup.sh` script. The script supports the following advanced configurations:
 
 - Use the latest versions of the OQS dependency libraries
-- Manually adjusting OpenSSL's `s_speed` tool hardcoded limits
+- Manually adjusting OpenSSL's `speed` tool hardcoded limits
 - Enabling Liboqs algorithm memory optimisation for supported algorithms
 
 ## Using the Latest Versions of the OQS Libraries
@@ -19,7 +19,7 @@ For more information on the specific versions used by default, see the [Project 
 ## Adjusting OpenSSL Speed Tool Hardcoded Limits
 When using either the `full` or `TLS-only` install modes, an optional prompt will appear that allows enabling all algorithms in the OQS-Provider library supported by PQC-LEO that are disabled by default.
 
-By default, the main setup script will attempt to detect and patch these values automatically in the `s_speed` tool's source code to increase the hardcoded limits if needed. However, if you wish to manually set a custom value (or if auto-patching fails), you can use the following flag:
+By default, the main setup script will attempt to detect and patch these values automatically in the `speed` tool's source code to increase the hardcoded limits if needed. However, if you wish to manually set a custom value (or if auto-patching fails), you can use the following flag:
 
 ```
 ./setup.sh --set-speed-new-value=[integer]
