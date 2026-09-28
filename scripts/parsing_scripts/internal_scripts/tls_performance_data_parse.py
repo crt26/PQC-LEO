@@ -116,7 +116,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
 
             # Replace all old results and create a new empty directory to store the parsed results
             print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...\n")
-            shutil.rmtree(dir_paths["results_dir"], f"machine_{machine_id}")
+            shutil.rmtree(os.path.join(dir_paths["results_dir"], f"machine_{machine_id}"))
 
             # Create the new directories for parsed results
             os.makedirs(dir_paths["mach_handshake_dir"])
@@ -141,7 +141,7 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
 
                     # Replace all old results and create a new empty directory to store the parsed results
                     print(f"Removing old results directory for Machine-ID ({machine_id}) before continuing...\n")
-                    shutil.rmtree(dir_paths["results_dir"], f"machine_{machine_id}")
+                    shutil.rmtree(os.path.join(dir_paths["results_dir"], f"machine_{machine_id}"))
 
                     # Create the new directories for parsed results
                     os.makedirs(dir_paths["mach_handshake_dir"])
