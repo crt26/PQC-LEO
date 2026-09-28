@@ -92,6 +92,9 @@ function parse_args() {
                     parse_results=1
                 fi
 
+                # Output newline for formatting
+                echo -e "\n"
+
                 shift
                 ;;
 
@@ -712,6 +715,11 @@ function main() {
     parse_results=1
     replace_old_results=0
 
+    # Parse the command line arguments passed to the script, if any
+    if [[ $# -gt 0 ]]; then
+        parse_args "$@"
+    fi
+
     # Setup the base environment and testing suite setup
     setup_base_env
     setup_test_suite
@@ -727,4 +735,4 @@ function main() {
     handle_result_parsing
 
 }
-main
+main "$@"
