@@ -85,13 +85,14 @@ def handle_results_dir_creation(machine_id, dir_paths, replace_old_results):
             # Get the decision from the user on how to handle old results before parsing continues
             while True:
 
-                # Output the potential options and handle user choice
+                # Output the potential options available to the user for handling the old results and get their input
                 print(f"\nFrom the following options, choose how would you like to handle the old computational performance results:")
                 print("Option 1 - Replace old parsed results with new ones")
                 print("Option 2 - Exit parsing programme to move old results and rerun after (if you choose this option, please move the entire folder not just its contents)")
                 print("Option 3 - Make parsing script programme wait until you have move files before continuing")
                 user_choice = input("Enter option: ")
 
+                # Based on the user input, handle the old results accordingly and break out of the loop to continue parsing
                 if user_choice == "1":
 
                     # Replace all old results and create a new empty directory to store the parsed results
@@ -275,7 +276,7 @@ def speed_processing(dir_paths, num_runs, kem_algs, sig_algs):
         temp_df.to_csv(filename_kem, index=False)
         
         """ Formatting the Digital Signature Files """
-        # Load the kem file into a dataframe and strip the trailing spaces in column headers
+        # Load the signature file into a dataframe and strip the trailing spaces in column headers
         filename_sig_pre = sig_prefix + str(file_count) + ".csv"
         filename_sig_pre = os.path.join(dir_paths['up_speed_dir'], filename_sig_pre)
         temp_df = pd.read_csv(filename_sig_pre, delimiter="|", index_col=False)
@@ -317,7 +318,7 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
     peak_metrics = []
 
     # Define the header column names for the dataframe
-    fieldnames = ["Algorithm", "Operation", "intits", "peakBytes", "Heap", "extHeap", "Stack"]
+    fieldnames = ["Algorithm", "Operation", "instructions", "peakBytes", "Heap", "extHeap", "Stack"]
     
     # Loop through the number of test runs specified
     for run_count in range(1, num_runs+1):
@@ -344,7 +345,7 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
                     # Assign empty values for the algorithm/operation row if no memory metrics were gathered
                     if peak_metrics is None:
                         peak_metrics = []
-                        for _ in range(1, (len(fieldnames) - 2)):
+                        for _ in range(0, (len(fieldnames) - 2)):
                             peak_metrics.append("")
                     
                     # Fill in the row with algorithm/operation memory metrics before appending to the dataframe
@@ -416,7 +417,7 @@ def memory_processing(dir_paths, num_runs, kem_algs, sig_algs, alg_operations):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def process_tests(machine_id, num_runs, dir_paths, kem_algs, sig_algs, replace_old_results):
-    """ Function for parsing results for one or more machines, storing them as CSV files, and calculating averages once 
+    """ Function for parsing results for one machine, storing them as CSV files, and calculating averages once
         the up-results are processed. """
 
     # Declare the algorithm operations dictionary
@@ -433,7 +434,7 @@ def process_tests(machine_id, num_runs, dir_paths, kem_algs, sig_algs, replace_o
     dir_paths['raw_speed_dir'] = os.path.join(dir_paths['up_results'], f"machine_{str(machine_id)}", "raw_speed_results")
 
     # Ensure that the machine's up-results directory exists before continuing
-    if not os.path.exists(dir_paths['up_results']):
+    if not os.path.isdir(os.path.join(dir_paths['up_results'], f"machine_{machine_id}")):
         print(f"[ERROR] - Machine-ID ({machine_id}) up_results directory does not exist, please ensure the up-results directory is present before continuing")
         sys.exit(1)
 
@@ -453,12 +454,12 @@ def process_tests(machine_id, num_runs, dir_paths, kem_algs, sig_algs, replace_o
 def parse_comp_performance(test_opts, replace_old_results):
     """ Entrypoint for parsing computational benchmarking results. Calls the necessary functions to process the results. """
     
-    # Get the test options
+    # Get the test options from the passed dictionary
     machine_id = test_opts["machine_id"]
     num_runs = test_opts["total_runs"]
     root_dir = test_opts["root_dir"]
 
-    # Setup the script environment
+    # Setup the parsing environment
     print(f"\nPreparing to parse Computational Performance Results:\n")
     kem_algs, sig_algs, dir_paths = setup_parse_env(root_dir)
 

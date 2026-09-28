@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 #define TC66C_PACKET_SIZE 192   // AES-encrypted payload size
 #define TC66C_MAX_RECORDS 1440  // Max historical samples
 #define TC66C_NAME_LEN    5     // 4 chars + null terminator
-#define DEFAULT_COM_PORT ""
+#define DEFAULT_SERIAL_PORT ""
 
 /**
  * Stores the current reading values from the TC66C meter.
@@ -71,7 +71,7 @@ static const uint8_t TC66C_STATIC_KEY[32] = {
 /**
  * TC66C device instance which stores connection state and serial configuration.
  *
- * @param com_port Open libserialport device handle.
+ * @param serial_port Open libserialport device handle.
  * @param aes_ctx OpenSSL EVP decryption context used for poll_data packets.
  * @param baudrate Serial baud rate.
  * @param data_bits Serial data bits.
@@ -80,7 +80,7 @@ static const uint8_t TC66C_STATIC_KEY[32] = {
  * @param flow_control Serial flow control mode.
  */
 typedef struct {
-    struct sp_port* com_port;
+    struct sp_port* serial_port;
     EVP_CIPHER_CTX *aes_ctx;
     int baudrate;
     int data_bits;
@@ -95,10 +95,10 @@ typedef struct {
  * AES-256-ECB with the static TC66C key.
  *
  * @param tc66c_device Pointer to the TC66C device instance.
- * @param com_port_name Serial port name used to open the device.
+ * @param serial_port_name Serial port name used to open the device.
  * @return 0 on success, -1 on port open/configuration or AES context setup failure.
  */
-int tc66c_init(TC66C_Device *tc66c_device, const char *com_port_name);
+int tc66c_init(TC66C_Device *tc66c_device, const char *serial_port_name);
 
 /**
  * Sends a raw command string to the TC66C serial interface.

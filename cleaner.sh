@@ -54,7 +54,7 @@ function setup_base_env() {
     # Determine the directory that the script is being executed from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-    # Try and find the .dir_marker.tmp file to determine the project's root directory
+    # Try and find the .pqc_leo_dir_marker.tmp file to determine the project's root directory
     current_dir="$script_dir"
 
     # Continue moving up the directory tree until the .pqc_leo_dir_marker.tmp file is found
@@ -102,8 +102,8 @@ function setup_base_env() {
     test_data_keys="$test_data_dir/keys"
     test_data_alg_lists_dir="$test_data_dir/alg_lists"
 
-    # Declaring the __pycahce__ locations array
-    pycache_locations=("$test_scripts_dir/__pycache__""$parsing_scripts_dir/__pycache__" "$parsing_scripts_dir/internal_scripts/__pycache__")
+    # Declaring the __pycache__ locations array
+    pycache_locations=("$test_scripts_dir/__pycache__" "$parsing_scripts_dir/__pycache__" "$parsing_scripts_dir/internal_scripts/__pycache__")
 
 }
 
@@ -172,7 +172,7 @@ function select_uninstall_mode() {
 
             *)
                 # Output to the user that the input is invalid and prompt again
-                echo -e "\nInvalid option, please select a valid option value (1-4)\n"
+                echo -e "\nInvalid option, please select a valid option value (1-5)\n"
                 ;;
             
         esac
@@ -184,7 +184,7 @@ function select_uninstall_mode() {
     get_user_yes_no "Do you also want to remove __pycache__ directories generated from the parsing scripts?"
 
     # Determine the user's response and act accordingly
-     if [ "$user_y_n_response" -eq 1 ]; then
+    if [ "$user_y_n_response" -eq 1 ]; then
 
         # Output the current task to the terminal
         echo -e "Removing Parsing Scripts __pycache__ Directories..."
@@ -217,6 +217,7 @@ function remove_old_results() {
     # Verify the user definitely wants to remove all results and keys
     while true; do 
 
+        # Prompt the user for confirmation to remove all results and keys
         read -p "Are you sure you want to remove all stored results and generated keys? This cannot be reversed if you do not have backup copies! (y/n): " user_input
 
         # Check if the user wants to remove all results and keys
@@ -235,7 +236,6 @@ function remove_old_results() {
     rm -rf "$test_data_results"
     rm -rf "$test_data_up_results"
     rm -rf "$test_data_keys"
-    rm -rf "$tmp_dir/*"
     echo -e "\nAll results and generated keys cleared\n"
 
 }

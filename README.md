@@ -226,7 +226,7 @@ For detailed usage instructions, please refer to:
 
 [Automated TLS Performance Testing Instructions](docs/testing_tools_usage/tls_performance_testing.md)
 
->**Notice:** The versions of project dependencies used in PQC-LEO version 0.5.0 contains a known issue where certain signature/KEM combinations may produce values of `inf` for "Connections Per User Second" results in TLS handshake testing when using smaller testing windows. Please refer to the [TLS Handshake Inf Result Handling](./docs/performance_results/tls_handshake_inf_result_handling.md) documentation for further information.
+> **Notice:** Certain signature/KEM combinations may produce values of `inf` for "Connections Per User Second" results in TLS handshake testing when using smaller testing windows. Please refer to the [TLS Handshake Inf Result Handling](./docs/performance_results/tls_handshake_inf_result_handling.md) documentation for further information.
 
 ### TLS Handshake Transmission Cost Testing
 This tool measures the amount of data exchanged during TLS 1.3 handshakes using PQC, Hybrid-PQC, and classical algorithm configurations. It tests every supported signing algorithm and KEM pairing for PQC and Hybrid-PQC, and every supported signing algorithm, key exchange group, and ciphersuite combination for classical TLS. Each configuration is tested using both one-way and mutual authentication and the bytes sent, bytes received, and total bytes during the handshake are recorded from the client's perspective.
@@ -275,7 +275,7 @@ Parsed results will be stored in the following directories, depending on which t
 
 `machine_x` is the Machine-ID number assigned to the results when executing the testing scripts. If no custom Machine-ID is assigned, the default ID of 1 will be used.
 
-For energy usage testing results, `test_type` refers to one of the following testing categories based on the type of results that were parsed.
+For energy usage testing results, `test_type` is `pqc_performance_energy_results`, `tls_handshake_energy_results`, or `tls_operations_energy_results`, depending on the type of results parsed.
 
 If needed, automatic parsing can be disabled when calling the testing scripts by passing a flag to the testing script. This then facilitates the manual calling of the Python parsing scripts.
 

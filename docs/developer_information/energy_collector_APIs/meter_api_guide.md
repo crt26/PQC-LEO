@@ -25,7 +25,7 @@ The guide describes the data structures and functions included within the meter 
 ## API Description
 The meter API provides an abstraction layer for interacting with supported energy meters and coordinating the collection of energy usage metrics. It defines a set of unified functions for the energy meter backends used by the energy usage collector tool. These functions can be used to configure the meter, send commands, poll for energy usage metrics, and receive responses.
 
-Based on the parameters passed to the meter API functions, the API determines which energy meter backend to use and calls the appropriate backend functions to perform the requested operation. The list of supported backends is provided in the [Energy Meter Support](../../energy_meter_guides/energy_meter_support.md) document.. Information on integrating new meters into the PQC-LEO energy usage collector tool is provided in the [Integrating New Energy Meters](./integrating_new_energy_meters.md) document.
+Based on the parameters passed to the meter API functions, the API determines which energy meter backend to use and calls the appropriate backend functions to perform the requested operation. The list of supported backends is provided in the [Energy Meter Support](../../energy_meter_guides/energy_meter_support.md) document. Information on integrating new meters into the PQC-LEO energy usage collector tool is provided in the [Integrating New Energy Meters](./integrating_new_energy_meters.md) document.
 
 The following library file is produced when the energy collector tools are built, which contains the meter API functions:
 
@@ -125,16 +125,16 @@ The following meter API functions are provided in the `meter_api.h` header file.
 - meter_close()
 
 ### meter_init() Function
-Function for initialising a energy meter device. It configures the device based on its type and the provided COM port name. It will check the device type and initialise the appropriate device instance based on what is currently supported. New device instances can be added here as needed.
+Function for initialising an energy meter device. It configures the device based on its type and the provided serial port name. It will check the device type and initialise the appropriate device instance based on what is currently supported. New device instances can be added here as needed.
 
 ```c
-int meter_init(MeterDevice *device, MeterType type, const char *com_port_name);
+int meter_init(MeterDevice *device, MeterType type, const char *serial_port_name);
 ```
 
 Parameters:
 - `MeterDevice *device` - Pointer to the `MeterDevice` structure that will be populated with the initialised device instance and meter type.
 - `MeterType type` - The type of energy meter to initialise. This should be one of the values from the `MeterType` enumeration.
-- `const char *com_port_name` - The COM/serial port name that the energy meter is connected to. This should be a valid COM port name for the system.
+- `const char *serial_port_name` - The serial port name that the energy meter is connected to. This should be a valid serial port name for the system.
 
 Returns:
 - `0` on success
@@ -196,21 +196,21 @@ The first step is to configure and initialise the energy meter device. This is d
 // Create a MeterDevice structure
 MeterDevice device;
 
-// Define the COM port name for the energy meter and the type of energy meter being used
-const char *com_port_name = "/dev/ttyUSB0";
+// Define the serial port name for the energy meter and the type of energy meter being used
+const char *serial_port_name = "/dev/ttyUSB0";
 
 // Initialise the energy meter device
-int ret = meter_init(&device, METER_TYPE_TC66C, com_port_name);
+int ret = meter_init(&device, METER_TYPE_TC66C, serial_port_name);
 ```
 
 ### Sending a Command to the Energy Meter
-Once the energy meter is initialised, you can send commands to the energy meter using the `meter_send_cmd()` function. For example, to send a command to start collecting readings:
+Once the energy meter is initialised, you can send commands to the energy meter using the `meter_send_cmd()` function. For example, to switch the TC66C display to the next page:
 
 ```c
 #include "meter_api.h"
 
 // Define the command to be sent to the energy meter
-const char *command = "status";
+const char *command = "nextp";
 
 // Send the command to the energy meter
 int ret = meter_send_cmd(&device, command);

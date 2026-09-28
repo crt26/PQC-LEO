@@ -18,7 +18,7 @@ function setup_test_env() {
     # Determine the directory that the script is being executed from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-    # Try and find the .dir_marker.tmp file to determine the project's root directory
+    # Try and find the .pqc_leo_dir_marker.tmp file to determine the project's root directory
     current_dir="$script_dir"
 
     # Continue moving up the directory tree until the .pqc_leo_dir_marker.tmp file is found
@@ -61,6 +61,7 @@ function setup_test_env() {
     elif [ ! -d "$openssl_path" ]; then
         echo "[ERROR] - OpenSSL library not found in $libs_dir"
         exit 1
+
     fi
 
     # Check the OpenSSL library directory path
@@ -134,14 +135,12 @@ function setup_test_env() {
     fi
     mkdir -p $HYBRID_SPEED
 
-    
-
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function tls_speed_test() {
-    # Function for running TLS speed tests across PQC, Hybrid-PQC, and classical algorithm types using OpenSSL 4.0.2's
-    # `speed` command. It benchmarks signature, KEM, and key-exchange operations supported by OpenSSL and the OQS-Provider.
+    # Function for running TLS speed tests across PQC, Hybrid-PQC, and classical algorithm types using OpenSSL 4.0.2's `speed`
+    # command. It benchmarks signature, KEM, and key-exchange operations supported by OpenSSL and the OQS-Provider.
 
     # Set the test parameter arrays
     test_types=(
@@ -191,7 +190,7 @@ function tls_speed_test() {
 
             # Perform the OpenSSL speed test with the current test parameters
             "$openssl_path/bin/openssl" speed \
-                -seconds "$TIME_NUM" \
+                -seconds "$SPEED_TIME_NUM" \
                 -provider default \
                 -provider oqsprovider \
                 -provider-path "$provider_path" \
@@ -221,7 +220,7 @@ function tls_speed_test_entrypoint() {
     # Setup the base environment for the test suite
     setup_test_env
 
-    # Output the test start message
+    # Output the test start message to the terminal
     echo -e "\n##########################"
     echo "Performing TLS Speed Tests"
     echo -e "##########################"

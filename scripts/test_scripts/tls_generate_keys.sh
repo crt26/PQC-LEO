@@ -4,8 +4,8 @@
 # SPDX-License-Identifier: MIT
 
 # Script for generating CA, server, and client certificates and keys used by TLS handshake performance,
-# handshake energy, and transmission-cost testing. Generates classical, PQC, and Hybrid-PQC certificates using OpenSSL 4.0.2,
-# using PQC implementations natively available in OpenSSL and those integrated via OQS-Provider.
+# handshake energy, and transmission-cost testing. Generates classical, PQC, and Hybrid-PQC certificates using 
+# OpenSSL 4.0.2, using PQC implementations natively available in OpenSSL and those integrated via OQS-Provider.
 # The generated key material must be copied to the client machine unless both client and server run on the same system.
 
 #-------------------------------------------------------------------------------------------------------------------------------
@@ -17,7 +17,7 @@ function setup_base_env() {
     # Determine the directory that the script is being run from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-    # Try and find the .dir_marker.tmp file to determine the project's root directory
+    # Try and find the .pqc_leo_dir_marker.tmp file to determine the project's root directory
     current_dir="$script_dir"
 
     # Continue moving up the directory tree until the .pqc_leo_dir_marker.tmp file is found
@@ -106,8 +106,9 @@ function setup_base_env() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function set_openssl_conf() {
-    # Helper function for switching the OpenSSL configuration between key-generation and TLS testing modes. This function validates
-    # the passed configuration command, calls the OpenSSL configuration utility script, and updates the restoration tracker flag.
+    # Helper function for switching the OpenSSL configuration between key-generation and TLS testing modes. This function 
+    # validates the passed configuration command, calls the OpenSSL configuration utility script, and updates the restoration 
+    # tracker flag.
 
     # Store the passed configure command
     local configure_command="$1"
@@ -138,8 +139,9 @@ function set_openssl_conf() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function exit_handler() {
-    # Helper function for restoring the OpenSSL configuration when the script exits unexpectedly. This function checks whether the
-    # configuration still needs to be restored and preserves the script's original exit status after completing the restoration.
+    # Helper function for restoring the OpenSSL configuration when the script exits unexpectedly. This function checks whether 
+    # the configuration still needs to be restored and preserves the script's original exit status after completing the 
+    # restoration.
 
     # Capture the scripts exit status so that it can be used in the exit command
     local exit_status=$?
@@ -576,27 +578,30 @@ function main() {
         exit 1
     fi
 
-    # Generate the certs and keys for the PQC tests
+    # Output the current task to the terminal
     echo -e "\nGenerating certs and keys for PQC tests:"
 
+    # Generate the certs and keys for the PQC tests
     if ! pqc_keygen; then
         echo "[ERROR] - Could not complete PQC cert and key generation, restoring OpenSSL configuration"
         set_openssl_conf 2
         exit 1
     fi
 
-    # Generate the certs and keys for the Hybrid-PQC tests
+    # Output the current task to the terminal
     echo -e "\nGenerating certs and keys for Hybrid-PQC tests:"
 
+    # Generate the certs and keys for the Hybrid-PQC tests
     if ! hybrid_pqc_keygen; then
         echo "[ERROR] - Could not complete Hybrid-PQC cert and key generation, restoring OpenSSL configuration"
         set_openssl_conf 2
         exit 1
     fi
 
-    # Generate the certificates and keys for the classical TLS tests
+    # Output the current task to the terminal
     echo -e "\nGenerating certs and keys for classic ciphersuite tests:"
-
+ 
+    # Generate the certificates and keys for the classical TLS tests
     if ! classic_keygen; then
         echo "[ERROR] - Could not complete classic cert and key generation, restoring OpenSSL configuration"
         set_openssl_conf 2

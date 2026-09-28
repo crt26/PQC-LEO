@@ -11,6 +11,21 @@
 # energy-collection setup support for the energy collector, computational energy tester, and related workflow flags.
 
 #-------------------------------------------------------------------------------------------------------------------------------
+function output_help() {
+    # Helper function for outputting the help message to the user when the --help flag is present or when incorrect arguments 
+    # are passed.
+
+    # Output the supported options and their usage to the user
+    echo "Usage: setup.sh [options]"
+    echo "Options:"
+    echo "--latest-dependency-versions     Use the latest available versions of the OQS libraries (may cause compatibility issues)."
+    echo "--set-speed-new-value=[int]      Set a new value for MAX_KEM_NUM and MAX_SIG_NUM in OpenSSL's speed.c file."
+    echo "--liboqs-memory-optimisation     Enable liboqs algorithm memory optimisation feature for supported algorithms (disabled by default)."
+    echo "--help                           Display this help message."
+    
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
 function setup_base_env() {
     # Function for initialising global variables and directory paths required for the setup process. Sets paths for libraries, 
     # temporary files, test data, and utility scripts. Also defines default values for flags and configuration options, ensuring 
@@ -50,9 +65,6 @@ function setup_base_env() {
     liboqs_source="$tmp_dir/liboqs_source"
     oqs_provider_source="$tmp_dir/oqs_provider_source"
     openssl_source="$tmp_dir/openssl_$openssl_version"
-    energy_collector_source="$tools_dir/energy_collector_source"
-    comp_energy_tester_source="$tools_dir/comp_energy_tester"
-    energy_collector_source="$tools_dir/energy_collector_source"
 
     # Set the global flag variables
     install_type=0  # 0=Computational only, 1=Computational+TLS, 2=TLS only, 3=energy collector only
@@ -107,38 +119,6 @@ function get_user_yes_no() {
 
     done
 
-}
-
-#-------------------------------------------------------------------------------------------------------------------------------
-function build_status_checker() {
-    # Helper function for checking the exit status of build commands. The function takes the exit status and an string with 
-    # the build step name as arguments, and checks if the exit status is non-zero.
-
-    # Define local variables to store the passed function arguments
-    local return_status="$1"
-    local build_step="$2"
-    
-    # Check if the passed return status is failed exit code
-    if [ "$return_status" -ne 0 ]; then
-        echo -e "\n[ERROR] - $build_step failed, please verify the installation and rerun the setup script"
-        exit 1
-    fi
-
-}
-
-#-------------------------------------------------------------------------------------------------------------------------------
-function output_help() {
-    # Helper function for outputting the help message to the user when the --help flag is present or when incorrect arguments 
-    # are passed.
-
-    # Output the supported options and their usage to the user
-    echo "Usage: setup.sh [options]"
-    echo "Options:"
-    echo "--latest-dependency-versions     Use the latest available versions of the OQS libraries (may cause compatibility issues)."
-    echo "--set-speed-new-value=[int]      Set a new value for MAX_KEM_NUM and MAX_SIG_NUM in OpenSSL's speed.c file."
-    echo "--liboqs-memory-optimisation     Enable liboqs algorithm memory optimisation feature for supported algorithms (disabled by default)."
-    echo "--help                           Display this help message."
-    
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
@@ -215,6 +195,23 @@ function parse_args() {
         esac
 
     done
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
+function build_status_checker() {
+    # Helper function for checking the exit status of build commands. The function takes the exit status and a string with
+    # the build step name as arguments, and checks if the exit status is non-zero.
+
+    # Define local variables to store the passed function arguments
+    local return_status="$1"
+    local build_step="$2"
+    
+    # Check if the passed return status is failed exit code
+    if [ "$return_status" -ne 0 ]; then
+        echo -e "\n[ERROR] - $build_step failed, please verify the installation and rerun the setup script"
+        exit 1
+    fi
 
 }
 
@@ -423,8 +420,8 @@ function download_libraries() {
 
         else
 
-            # Output an error message as the use_tested_version flag variable is not set correctly
-            echo "[ERROR] - The use_tested_version flag variable is not set correctly, please verify the code in the setup.sh script"
+            # Output an error message as the use_latest_version flag variable is not set correctly
+            echo "[ERROR] - The use_latest_version flag variable is not set correctly, please verify the code in the setup.sh script"
             exit 1
 
         fi
@@ -455,7 +452,7 @@ function dependency_install() {
     echo "Checking System Packages Dependencies..."
     packages=(
         "git" "astyle" "cmake" "gcc" "ninja-build" "libssl-dev" "python3-pytest" "python3-pytest-xdist" "libserialport-dev"
-        "unzip" "xsltproc" "doxygen" "graphviz" "python3"-yaml "valgrind" "libtool" "make" "net-tools" "python3-pip" "netcat-openbsd"
+        "unzip" "xsltproc" "doxygen" "graphviz" "python3-yaml" "valgrind" "libtool" "make" "net-tools" "python3-pip" "netcat-openbsd"
     )
     not_installed=()
 
@@ -465,7 +462,7 @@ function dependency_install() {
         fi
     done
 
-    # Install missing packages
+    # Install any missing packages
     if [[ ${#not_installed[@]} -ne 0 ]]; then
         sudo apt-get update
         sudo apt-get install -y "${not_installed[@]}"
@@ -532,7 +529,6 @@ function dependency_install() {
                     case $user_input in
 
                         1 )
-
                             # Output the message to the user and set the PIP_BREAK_SYSTEM_PACKAGES flag
                             echo "Proceeding with system-wide installation using --break-system-packages..."
                             export PIP_BREAK_SYSTEM_PACKAGES=1
@@ -540,7 +536,6 @@ function dependency_install() {
                             ;;
 
                         2 )
-
                             # Output the message to the user and exit the setup script
                             echo -e "\nExiting setup script, please handle the install of the following pip packages manually:"
                             echo "${missing_pip_packages[@]}"
@@ -548,7 +543,6 @@ function dependency_install() {
                             ;;
 
                         * )
-
                             # Output a warning message if the user input is invalid
                             echo -e "Invalid selection. Please enter 1 or 2.\n"
                             ;;
@@ -559,7 +553,7 @@ function dependency_install() {
 
             elif echo "$pip_output" | grep -q 'ERROR: You must give at least one requirement to install (see "pip help install")'; then
                 # No need to do anything as pip is functioning correctly, as it supports installing to the local user installation
-                # This check just makes sure that this expected error from the pip install is ignored and does get caught by the else statement
+                # This check makes sure that this expected pip install error does not get caught by the else statement
                 :
 
             else
@@ -586,6 +580,7 @@ function dependency_install() {
     cmake_version=$(cmake --version | head -n 1 | awk '{print $3}')
     exit_status=$?
     
+    # Check if the CMake version was successfully determined and if it is in a valid format
     if [ "$exit_status" -ne 0 ] || [ -z "$cmake_version" ] || ! [[ "$cmake_version" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
 
         # Output the warning message to the user about the failure to determine the CMake version
@@ -671,7 +666,7 @@ function openssl_build() {
     # Check if a previous OpenSSL build is present and build if not
     if [ ! -d "$openssl_path" ]; then
 
-        # Modify the s_speed tool's source code if the OQS-Provider library is being built with the enable all disabled algorithms flag
+        # Modify the speed tool's source code if the OQS-Provider library is being built with the enable all disabled algorithms flag
         if [ $oqs_enable_algs -eq 1 ]; then
 
             # Call the source code modifier utility script and capture the exit status
@@ -721,9 +716,10 @@ function openssl_build() {
         # Exporting the OpenSSL library filepath for the install success check
         export LD_LIBRARY_PATH="$openssl_lib_path:$LD_LIBRARY_PATH"
 
-        # Testing if OpenSSL has been correctly installed
+        # Capture the output of the OpenSSL version command
         test_output=$("$openssl_path/bin/openssl" version)
 
+        # Check if the OpenSSL version command output matches the expected version string, and exit with an error if it does not
         if [[ "$test_output" != "OpenSSL 4.0.2 25 Aug 2026 (Library: OpenSSL 4.0.2 25 Aug 2026)" ]]; then
             echo -e "\n\n[ERROR] - Installing required OpenSSL version failed, please verify the installation process"
             exit 1
@@ -736,7 +732,7 @@ function openssl_build() {
         fi
 
     else
-        echo "openssl build present, skipping build"
+        echo "[NOTICE] - OpenSSL build present, skipping build"
 
     fi
 
@@ -814,7 +810,6 @@ function liboqs_build() {
         if [ "$(uname -m)" = "x86_64" ] && [ "$(uname -s)" = "Linux" ]; then
 
             # Setting x86 Liboqs build options
-            build_options="no-shared linux-x86_64"
             build_flags=""
 
         elif [[ "$(uname -m)" = arm* || "$(uname -m)" == aarch* ]]; then
@@ -825,6 +820,7 @@ function liboqs_build() {
             # Enable user space access to the ARM PMU if needed
             if lsmod | grep -q 'enable_ccr'; then
                 echo "The enable_ccr module is already enabled, skipping build."
+                enabled_pmu=1
             else
                 enable_arm_pmu
             fi
@@ -903,10 +899,6 @@ function oqs_provider_build() {
     echo -e "\n#######################"
     echo "Installing OQS-Provider"
     echo -e "#######################\n"
-
-    # Define paths for the generate.yml file
-    backup_generate_file="$root_dir/modded_lib_files/generate.yml"
-    oqs_provider_generate_file="$oqs_provider_source/oqs-template/generate.yml"
 
     # Enable disabled algorithms if the user has specified
     if [ $oqs_enable_algs -eq 1 ]; then
@@ -1036,9 +1028,6 @@ function determine_energy_tools_openssl_choice() {
     # Default to using the system OpenSSL development library for the energy tools
     use_pqc_leo_openssl=0
 
-    # Track whether the PQC-LEO OpenSSL build is required by an incompatible system installation
-    local forced_use_of_pqc_leo_openssl=0
-
     # Check if the system OpenSSL version meets the minimum requirement for the energy measurement tools
     check_sys_openssl_version "$min_sys_openssl_version"
 
@@ -1095,7 +1084,6 @@ function determine_energy_tools_openssl_choice() {
             # Output the message to the user and proceed with the OpenSSL build for the energy measurement tools
             echo -e "\n[NOTICE] - Proceeding with PQC-LEO OpenSSL 4.0.2 for the energy measurement tools..."
             use_pqc_leo_openssl=1
-            forced_use_of_pqc_leo_openssl=1
 
         else
 
@@ -1114,12 +1102,8 @@ function determine_energy_tools_openssl_choice() {
         echo -e "\n[NOTICE] - Manual runs require the PQC-LEO OpenSSL lib64 or lib directory in LD_LIBRARY_PATH."
         echo "The automated energy scripts configure this path; please refer to the tool usage guides for manual configuration."
 
-        # Require acknowledgement when the system installation cannot be used, otherwise just pause for a moment to allow the user to read the message
-        if [ $forced_use_of_pqc_leo_openssl -eq 1 ]; then
-            read -r -p "Press Enter to continue..." _
-        else
-            sleep 5
-        fi
+        # Require acknowledgement after warning message is displayed so the user is aware of the requirements
+        read -r -p "Press Enter to continue..." _
 
     fi
 
@@ -1175,7 +1159,7 @@ function energy_tools_build() {
     # Determine which type of energy tools install needs to be performed
     if [ $install_type -ne 3 ]; then
 
-        # Ensure that Liboqs is present before building the energy measurement tools as comp_energy_collector depends on the library
+        # Ensure that Liboqs is present before building the energy measurement tools as comp_energy_tester depends on the library
         if [ ! -d "$liboqs_path" ]; then
             echo -e "\n[ERROR] - Liboqs library not found, the energy measurement tools cannot be built. Please verify and re-run the setup script"
             exit 1
@@ -1184,7 +1168,7 @@ function energy_tools_build() {
         # Move into the tools directory to build the energy measurement tools
         cd "$tools_dir"
 
-        # Remove an potential stale build artifacts before building the energy tools
+        # Remove any potential stale build artifacts before building the energy tools
         make clean
         exit_status=$?
         build_status_checker "$exit_status" "tools cleanup"
@@ -1211,7 +1195,7 @@ function energy_tools_build() {
         # Move into the energy_collector directory to build the energy collector tools only
         cd "$tools_dir/energy_collector"
 
-        # Remove an potential stale build artifacts before building the collector tools
+        # Remove any potential stale build artifacts before building the collector tools
         make clean
         exit_status=$?
         build_status_checker "$exit_status" "energy_collector cleanup"
@@ -1221,7 +1205,7 @@ function energy_tools_build() {
         exit_status=$?
         build_status_checker "$exit_status" "energy_collector build"
 
-        # Copy over the the compiled energy collector binaries
+        # Copy over the compiled energy collector binaries
         cp -r "$tools_dir/energy_collector/build" "$energy_collector_path/"
         exit_status=$?
         build_status_checker "$exit_status" "energy_collector installation"
@@ -1438,7 +1422,7 @@ function setup_controller() {
 
             *)
                 # Output the invalid option message to the user
-                echo "Invalid option, please select a valid option value (1-4)"
+                echo "Invalid option, please select a valid option value (1-5)"
                 ;;
 
         esac
@@ -1515,7 +1499,7 @@ function main() {
     setup_controller
 
     # Output the setup complete message to the terminal
-    echo -e "\n\nSetup complete, completed builds can be found in the builds directory"
+    echo -e "\n\nSetup complete, completed builds can be found in the lib directory"
 
 }
 main "$@"

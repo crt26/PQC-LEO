@@ -38,7 +38,7 @@ def get_user_choice(serial_ports):
     """Helper function to prompt the user for a port selection and return the selected path."""
 
     # Output the available serial ports to the user
-    print("Available serial (com) ports on this system:", file=sys.stderr)
+    print("Available serial ports on this system:", file=sys.stderr)
     for index, port in enumerate(serial_ports, start=1):
         print(f"{index}) {port.device}", file=sys.stderr)
 
@@ -46,7 +46,7 @@ def get_user_choice(serial_ports):
     while True:
 
         # Prompt the user for a selection and store the input
-        print("Please enter com port to use: ", end="", file=sys.stderr)
+        print("Please select a serial port: ", end="", file=sys.stderr)
         user_input = input().strip()
 
         # Ensure input is numeric before converting to integer
@@ -69,6 +69,7 @@ def get_user_choice(serial_ports):
 
 #------------------------------------------------------------------------------------------------------------------------------
 def main():
+    """ Main function to execute the serial port selection utility script. """
 
     # Get the available serial ports on the system
     available_ports = get_serial_ports()

@@ -20,7 +20,7 @@ The automated testing tool is currently only supported on the following devices:
 - ARM Linux devices using a 64-bit Debian-based Operating System
 
 ## Supported Algorithms
-This tool supports PQC and Hybrid-PQC algorithms available through OpenSSL 4.0.2 and the OQS-Provider, with a small number excluded because of known incompatibilities and dependency limitations. It also supports various classical digital signature, key-exchange-group, and ciphersuite combinations which can be used a baseline to compare PQC/Hybrid-PQC results to.
+This tool supports PQC and Hybrid-PQC algorithms available through OpenSSL 4.0.2 and the OQS-Provider, with a small number excluded because of known incompatibilities and dependency limitations. It also supports various classical digital signature, key-exchange-group, and ciphersuite combinations which can be used as a baseline to compare PQC/Hybrid-PQC results to.
 
 The algorithms used within this category of testing are the same as those used for TLS handshake performance testing. The supported algorithms are listed in the following project documentation:
 

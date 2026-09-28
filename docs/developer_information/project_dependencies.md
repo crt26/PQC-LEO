@@ -40,8 +40,7 @@ This section lists the **last tested versions** of the project's core dependenci
 
 **Note:** The `--latest-dependency-versions` flag selects the latest OQS library versions. The PQC-LEO OpenSSL build remains fixed at 4.0.2; the energy tools can also use compatible system OpenSSL as described [below](#openssl-compatibility-for-energy-tools).
 
-**Note:** The + sign in the OQS-Provider version indicates that the latest commit from the main branch is used, which may include additional changes beyond the last tagged
-release. This is because to utilise Liboqs version 0.16.0, several changes made to OQS-Provider after the 0.11.0 release are required.
+**Note:** The + sign in the OQS-Provider version indicates that the pinned commit includes additional changes beyond the last tagged release. This is because to utilise Liboqs version 0.16.0, several changes made to OQS-Provider after the 0.11.0 release are required.
 
 For setup instructions and details on using the latest cryptographic dependency versions,  please see:
 

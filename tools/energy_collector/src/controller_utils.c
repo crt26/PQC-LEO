@@ -11,8 +11,8 @@ handler that sends and receives messages using the configured controller backend
 #include "controller_utils.h"
 
 //-------------------------------------------------------------------------------------------------------------------------------
-char* list_com_ports() {
-    /*  Helper function for listing the available COM ports that can be used for communication. The function will prompt the user 
+char* list_serial_ports() {
+    /*  Helper function for listing the available serial ports that can be used for communication. The function will prompt the user
         to select which port to use for communication. This will then return a char array containing the selected port name. */
 
     // Query the system for the list of available serial ports
@@ -90,6 +90,7 @@ char* list_com_ports() {
         } 
         else {
             printf("Invalid selection. Please enter a number between 1 and %d.\n", port_count);
+
         }
 
     }
@@ -98,8 +99,8 @@ char* list_com_ports() {
 
 //------------------------------------------------------------------------------------------------------------------------------ 
 void get_ip_address(char *ip_address, size_t ip_address_len) {
-    /*  Helper function for prompting the user for an IP address and validating it. Once the input is validated, it is
-        stored in the provided buffer. */
+    /*  Helper function for prompting the user for an IP address and validating it. Once the input is validated, it is stored
+        in the provided buffer. */
 
     // Prompt the user for the IP address until a valid value is provided
     while (1) {
@@ -191,6 +192,7 @@ int check_port_availability(int port_number, const char *protocol_name) {
             fprintf(stderr, "[ERROR] - Failed to bind test socket for port availability check on port %d: %s\n", port_number, strerror(error_code));
             return -1;
         }
+
     }
 
     // Port is available, close the socket and return success
@@ -278,6 +280,7 @@ int message_parser(char *message, char *command, char **message_elements, size_t
                 free(message_elements[i]);
             }
             return -1;
+
         }
 
         // Copy the token into the current message element
@@ -334,7 +337,6 @@ int control_handler(TestController *test_controller, TestParams *test_params) {
             }
 
             // Send the GETREADY message to the collector machine
-            //printf("[NOTICE] - Sending GETREADY message: %s", get_ready_message);
             if (controller_send(test_controller, get_ready_message) != 0) {
                 fprintf(stderr, "[ERROR] - Failed to send the GETREADY message.\n");
                 return -1;  
@@ -348,47 +350,50 @@ int control_handler(TestController *test_controller, TestParams *test_params) {
             }
 
             // Check if the received message is "READY"
-            //printf("[NOTICE] - Received message: %s\n", msg_buffer);
             if(strcmp(msg_buffer, "READY") == 0) {
 
                 // Send the start command and exit immediately to begin the test as quickly as possible
-                //printf("[NOTICE] - Sending START command\n");
                 if (controller_send(test_controller, "START\n") != 0) {
                     fprintf(stderr, "[ERROR] - Failed to send the start command.\n");
                     return -1;
                 }
                 return 0;
+
             }
             else {
                 fprintf(stderr, "[ERROR] - Unexpected message received: %s\n", msg_buffer);
                 return -1;
+
             }
+
             break;
 
         case 2:
 
             // Send the STOP command to the collector machine
-            //printf("[NOTICE] - Sending STOP command\n\n");
             if (controller_send(test_controller, "STOP\n") != 0) {
                 fprintf(stderr, "[ERROR] - Failed to send the stop command.\n");
                 return -1;
             }
+
             break;
 
         case 3:
 
             // Send the END command to the collector machine
-            //printf("[NOTICE] - Sending END command\n");
             if (controller_send(test_controller, "END\n") != 0) {
                 fprintf(stderr, "[ERROR] - Failed to send the end command.\n");
                 return -1;
             }
+
             break;
 
         default:
+
+            // Output an error message for an invalid control type and return failure
             fprintf(stderr, "[ERROR] - Invalid control type specified.\n");
             return -1;
-
+            
     }
 
     return 0;

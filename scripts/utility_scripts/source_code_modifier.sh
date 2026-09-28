@@ -95,6 +95,7 @@ function parse_openssl_modder_args() {
 
                 shift
                 ;;
+
             --user-defined-speed-value=*)
 
                 # Set the user-defined speed value based on the value passed
@@ -139,15 +140,13 @@ function parse_openssl_modder_args() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_base_env() {
-    # Function for setting up the foundational global variables required for the test suite. This includes determining the project's 
-    # root directory, establishing paths for libraries, scripts, and test data, and validating the presence of required libraries. 
-    # Additionally, it sets up environment variables for control ports and sleep timers, ensuring proper configuration for the test 
-    # suite's execution.
+    # Function for setting up the base environment for the utility script. It locates the project root directory, sets up
+    # the required OpenSSL installation, and configures the runtime library path for OpenSSL.
 
     # Determine the directory that the script is being executed from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-    # Try and find the .dir_marker.tmp file to determine the project's root directory
+    # Try and find the .pqc_leo_dir_marker.tmp file to determine the project's root directory
     current_dir="$script_dir"
 
     # Continue moving up the directory tree until the .pqc_leo_dir_marker.tmp file is found
@@ -196,11 +195,11 @@ function set_new_speed_values() {
     local passed_value="$2"
 
     # Update the MAX_KEM_NUM and MAX_SIG_NUM values in the speed.c file
-    sed -i "s/#define MAX_SIG_NUM [0-9]\+/#define MAX_SIG_NUM $new_value/g" "$passed_filepath"
-    sed -i "s/#define MAX_KEM_NUM [0-9]\+/#define MAX_KEM_NUM $new_value/g" "$passed_filepath"
+    sed -i "s/#define MAX_SIG_NUM [0-9]\+/#define MAX_SIG_NUM $passed_value/g" "$passed_filepath"
+    sed -i "s/#define MAX_KEM_NUM [0-9]\+/#define MAX_KEM_NUM $passed_value/g" "$passed_filepath"
 
     # Ensure that the MAX_KEM_NUM/MAX_SIG_NUM values were successfully modified before continuing
-    if ! grep -q "#define MAX_SIG_NUM $new_value" "$passed_filepath" || ! grep -q "#define MAX_KEM_NUM $new_value" "$passed_filepath"; then
+    if ! grep -q "#define MAX_SIG_NUM $passed_value" "$passed_filepath" || ! grep -q "#define MAX_KEM_NUM $passed_value" "$passed_filepath"; then
         echo -e "\n[ERROR] - Modifying the MAX_KEM_NUM/MAX_SIG_NUM values in the speed.c file failed, please verify the setup and run a clean install"
         exit 1
     fi
@@ -352,10 +351,11 @@ function modify_openssl_src() {
                 echo "[WARNING] - There was an issue with the Python script that extracts the number of algorithms from the OQS-Provider library."
                 echo "The script returned the following error message: $util_output"
 
-                # Present the options to the user and determine the next steps
+                # Present the options to the user and get their choice for continuing with the setup process
                 echo -e "It is possible to continue with the setup process using the fallback high values for the MAX_KEM_NUM and MAX_SIG_NUM values.\n"
                 get_user_yes_no "Would you like to continue with the setup process using the fallback values ($fallback_value algorithms)?"
 
+                # Determine which option the user has selected and continue with the setup process or exit
                 if [ $user_y_n_response -eq 1 ]; then
                     echo "Continuing setup process with fallback values..."
                     new_value=$fallback_value
@@ -403,7 +403,6 @@ function enable_oqs_algs() {
     # KEMs/signatures and runs generate.py to apply changes.
 
     # Define paths for the generate.yml file
-    backup_generate_file="$root_dir/modded_lib_files/generate.yml"
     oqs_provider_generate_file="$oqs_provider_source/oqs-template/generate.yml"
 
     # Ensure that the generate.yml file is present and determine action based on its presence
@@ -420,7 +419,6 @@ function enable_oqs_algs() {
         else
             echo "Continuing setup process..."
             return 0
-        
         fi
 
     fi

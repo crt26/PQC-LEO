@@ -12,15 +12,15 @@ Please ensure you have read through the information provided within the main [En
 - [Outputted Results](#outputted-results)
 
 ## Testing Tool Overview
-The automated testing script for evaluating the PQC computational energy usage is located in the `scripts/test_scripts` directory. Please ensure that the basic environment setup has been performed before proceeding with this category of testing. This information can found in the [Energy Usage Testing Guide](../../testing_tools_usage/pqc_energy_usage_testing.md).
+The automated testing script for evaluating the PQC computational energy usage is located in the `scripts/test_scripts` directory. Please ensure that the basic environment setup has been performed before proceeding with this category of testing. This information can be found in the [Energy Usage Testing Guide](../../testing_tools_usage/pqc_energy_usage_testing.md).
 
 This testing script provides an automation layer for the [comp_energy_tester](../../project_tools_guides/comp_energy_tester_usage_guide.md) tool, a C-based executable that performs post-quantum cryptographic operations while measuring energy consumption. The script allows users to configure the testing parameters and launch the executable, which utilises the PQC implementations available in the Liboqs library to execute the selected cryptographic operations for a user-specified number of iterations.
 
-As part of the testing process, the script will automatically handle configuring the system state for energy usage testing, which includes setting the CPU performance to maximum and selecting a specific target CPU core*. This ensures consistent testing conditions for energy usage evaluation, preventing spikes or dips in energy usage due to background processes or thermal throttling. Additionally, a **10 second** baseline energy usage reading is taken before the testing process begins, which serves as a reference point for evaluating the energy consumption of the cryptographic operations.
+As part of the testing process, the script will automatically handle configuring the system state for energy usage testing, which includes setting the CPU performance to maximum and selecting a specific target CPU core. This helps improve consistency for energy usage evaluation, although background processes and thermal throttling can still affect measurements. Additionally, a **10 second** baseline energy usage reading is taken before the testing process begins, which serves as a reference point for evaluating the energy consumption of the cryptographic operations.
 
 Energy usage metrics are stored on the collection machine, and will be automatically parsed into structured CSV files for analysis.
 
->***Notice:** Support for automated configuration of a system fan is not currently available in the provided testing scripts. This is due to the variety of system types and fan control methods available, making a universal solution challenging. Future versions aim to address this limitation. It is **highly recommended** to manually configure the system fan (if applicable) to a fixed speed before testing to prevent variances in the fan speed during testing impacting the systems power draw, skewing the energy usage results.
+> **Notice:** Support for automated configuration of a system fan is not currently available in the provided testing scripts. This is due to the variety of system types and fan control methods available, making a universal solution challenging. Future versions aim to address this limitation. It is **highly recommended** to manually configure the system fan (if applicable) to a fixed speed before testing to prevent variances in the fan speed during testing impacting the system's power draw, skewing the energy usage results.
 
 ## Running the Computational Energy Usage Testing
 There are two machines and scripts that must be configured and launched for the energy usage testing process, which include: the collection machine and the testing machine. Each machine has its own respective script that must be launched to ensure the testing process runs smoothly, with the testing machine script responsible for signalling the collection machine to poll the energy meter at the appropriate times during testing.
@@ -60,7 +60,7 @@ The first set of parameters to be configured is related to the control signaller
 1) Serial
 2) Network 
 
-If the user selects serial, the COM port to be used for serial communication must be specified. If the user selects network, the local IP of the testing machine and the remote IP of the collection machine must be specified. For details on setting up the required communication environment for control signalling, please refer to the [Energy Usage Testing Guide](../pqc_energy_usage_testing.md).
+If the user selects serial, the serial port to be used for serial communication must be specified. If the user selects network, the local IP of the testing machine and the remote IP of the collection machine must be specified. For details on setting up the required communication environment for control signalling, please refer to the [Energy Usage Testing Guide](../pqc_energy_usage_testing.md).
 
 #### Testing Parameter Configuration:
 The second set of parameters to be configured is related to the testing parameters, which include:
@@ -80,7 +80,7 @@ Where `machine_x` refers to the assigned Machine-ID. If no ID was specified, the
 
 By default, the automated collection script will trigger the parsing system upon completion of testing, which processes the raw output into structured CSV files. These parsed results are saved in:
 
-`test_data/results/energy_usage/pqc_performance_energy_results/machine_x`
+`test_data/results/energy_test_results/pqc_performance_energy_results/machine_x`
 
 To skip automatic parsing and only output the raw test results, pass the `--disable-result-parsing` flag when launching the collection machine script:
 

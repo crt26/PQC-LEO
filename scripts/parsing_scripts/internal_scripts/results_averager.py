@@ -41,7 +41,7 @@ class ComputationalAverager:
         sig_mem_file_prefix = os.path.join(self.dir_paths['type_mem_dir'], "sig_mem_metrics_")
 
         # Declare the dataframes and fieldnames
-        mem_fieldnames = ["Algorithm", "Operation", "intits", "peakBytes", "Heap", "extHeap", "Stack"]
+        mem_fieldnames = ["Algorithm", "Operation", "instructions", "peakBytes", "Heap", "extHeap", "Stack"]
         kem_mem_avg = pd.DataFrame(columns=mem_fieldnames)
         sig_mem_avg = pd.DataFrame(columns=mem_fieldnames)
 
@@ -61,9 +61,9 @@ class ComputationalAverager:
 
                 # Get the operations for the current algorithm across all files into one
                 if run_count == 1:
-                    combined_operations = temp_df.loc[temp_df["Algorithm"].str.contains(kem_alg, regex=False)]
+                    combined_operations = temp_df.loc[temp_df["Algorithm"] == kem_alg]
                 else:
-                    temp_df = temp_df.loc[temp_df["Algorithm"].str.contains(kem_alg, regex=False)]
+                    temp_df = temp_df.loc[temp_df["Algorithm"] == kem_alg]
                     combined_operations = pd.concat([temp_df, combined_operations], ignore_index=True, sort=False)
             
             # Get the averages for each KEM cryptographic operation
@@ -76,7 +76,7 @@ class ComputationalAverager:
                 # Calculate the averages for the KEM results
                 operation_average = (operation_average.mean(axis=0)).to_frame()
                             
-                # Create a new row and export to the main KEM speed average dataframe
+                # Create a new row and export to the main KEM memory average dataframe
                 row = operation_average.iloc[:, 0].to_list()
                 row.insert(0, kem_alg)
                 row.insert(1, operation)
@@ -98,9 +98,9 @@ class ComputationalAverager:
 
                 # Get the cryptographic operations for the current algorithm across all files into one
                 if run_count == 1:
-                    combined_operations = temp_df.loc[temp_df["Algorithm"].str.contains(sig_alg, regex=False)]
+                    combined_operations = temp_df.loc[temp_df["Algorithm"] == sig_alg]
                 else:
-                    temp_df = temp_df.loc[temp_df["Algorithm"].str.contains(sig_alg, regex=False)]
+                    temp_df = temp_df.loc[temp_df["Algorithm"] == sig_alg]
                     combined_operations = pd.concat([temp_df, combined_operations], ignore_index=True, sort=False)
 
             # Get the averages for each signature cryptographic operation
@@ -163,9 +163,9 @@ class ComputationalAverager:
 
                 # Get the algorithm cryptographic operations across all files into one
                 if run_count == 1:
-                    combined_operations = temp_df.loc[temp_df["Algorithm"].str.contains(kem_alg, regex=False)]
+                    combined_operations = temp_df.loc[temp_df["Algorithm"] == kem_alg]
                 else:
-                    temp_df = temp_df.loc[temp_df["Algorithm"].str.contains(kem_alg, regex=False)]
+                    temp_df = temp_df.loc[temp_df["Algorithm"] == kem_alg]
                     combined_operations = pd.concat([temp_df, combined_operations], ignore_index=True, sort=False)
 
             # Get the average for each cryptographic operation
@@ -200,9 +200,9 @@ class ComputationalAverager:
 
                 # Get the algorithm cryptographic operations across all files into one
                 if run_count == 1:
-                    combined_operations = temp_df.loc[temp_df["Algorithm"].str.contains(sig_alg, regex=False)]
+                    combined_operations = temp_df.loc[temp_df["Algorithm"] == sig_alg]
                 else:
-                    temp_df = temp_df.loc[temp_df["Algorithm"].str.contains(sig_alg, regex=False)]
+                    temp_df = temp_df.loc[temp_df["Algorithm"] == sig_alg]
                     combined_operations = pd.concat([temp_df, combined_operations], ignore_index=True, sort=False)
             
             # Get the average for each cryptographic operation
@@ -287,7 +287,7 @@ class TLSAverager:
                         current_run_df = pd.read_csv(current_run_filepath)
 
                         # Extract the data for the current KEM
-                        kem_df = current_run_df[current_run_df["KEM Algorithm"].str.contains(kem, regex=False)]
+                        kem_df = current_run_df[current_run_df["KEM Algorithm"] == kem]
 
                         # Separate the data into combined dataframes
                         if current_run == 1:
@@ -342,7 +342,6 @@ class TLSAverager:
                 # Append the current signing algorithm averages to the base average dataframe for the current test type
                 if base_avg_df.empty:
                     base_avg_df = sig_avg_df.copy()
-
                 else:
                     base_avg_df = pd.concat([base_avg_df, sig_avg_df], ignore_index=True, sort=False)
 
@@ -406,9 +405,12 @@ class TLSAverager:
 
                     # Calculate the average for each metrics column
                     for column in self.col_headers['classic_headers']:
+
+                        # Check if the current column is one that should be averaged
                         if column in self.col_headers['classic_headers'][:4]:
                             continue
 
+                        # If the current column is a metrics column, calculate the average and append to the average rows
                         first_use_combined_row.append(float(first_use_combined_df[column].mean()))
                         reused_combined_row.append(float(reused_combined_df[column].mean()))
 
@@ -420,7 +422,7 @@ class TLSAverager:
                     classic_avg_df.loc[len(classic_avg_df)] = first_use_combined_row
                     classic_avg_df.loc[len(classic_avg_df)] = reused_combined_row
 
-        # Output averages to csv file
+        # Output the calculated averages to a csv file
         avg_out_filename = f"classic_results_avg.csv"
         avg_out_filepath = os.path.join(self.dir_paths['classic_handshake_results'], avg_out_filename)
         classic_avg_df.to_csv(avg_out_filepath, index=False)
@@ -445,6 +447,9 @@ class TLSAverager:
         # Create the combined dataframe for the current algorithm and set the average row variable
         combined_df = pd.DataFrame(columns=headers)
 
+        # Define the average row variable for the current algorithm
+        speed_avg_row = []
+
         # Loop through the runs to get averages for the alg type
         for run_num in range(1, self.num_runs+1):
 
@@ -462,9 +467,7 @@ class TLSAverager:
             else:
                 combined_df = pd.concat([combined_df, current_run_df.iloc[0:1]])
 
-        # Get the average value for each column and append to new row var
-        speed_avg_row = []
-
+        # Loop through the headers to get the average for each column and append to the average row
         for column in headers:
             if column == headers[0]:
                 continue
@@ -545,7 +548,7 @@ class TLSAverager:
                 # Loop through each of the algorithms and read in that algs results across the run files
                 for alg in algs:
 
-                    ## Get the average row for the current algorithm across all runs and append to the main average dataframe
+                    # Get the average row for the current algorithm across all runs and append to the main average dataframe
                     speed_avg_row = self.get_alg_speed_avgs(classic_fileprefix, result_dir, alg, headers)
                     speed_avg_row.insert(0, alg)
                     speed_avg_df.loc[len(speed_avg_df)] = speed_avg_row
@@ -660,16 +663,14 @@ class EnergyAverager:
         condensed_df = pd.DataFrame(columns=col_headers)
 
         # Group alg and operations and perform metric calculations to create the condensed values
-        metric_aggregation_map = {
-            metric: ["min", "max", "mean", "std"] for metric in self.poll_metric_col_names
-        }
+        metric_aggregation_map = {metric: ["min", "max", "mean", "std"] for metric in self.poll_metric_col_names}
         metric_aggregation_map.update({metric: ["max"] for metric in self.total_metric_col_names})
         condensed_df = run_df.groupby(non_metric_columns, as_index=False).agg(metric_aggregation_map)
         
-        # Flatten the grouped dataframe back to the desired format 
+        # Flatten the grouped dataframe back to the desired format
         condensed_df.columns = [self.flatten_col_tuple(column) for column in condensed_df.columns]
 
-        # Check for any instance of NaN values for the std calculations as this occurs when there in only one record
+        # Check for any instance of NaN values for the std calculations as this occurs when there is only one record
         std_columns = [column for column in condensed_df.columns if column.endswith(" Std. Dev")]
         condensed_df[std_columns] = condensed_df[std_columns].fillna(0.0)
 
@@ -681,4 +682,3 @@ class EnergyAverager:
         condensed_df = condensed_df[col_headers]
 
         return condensed_df
-    

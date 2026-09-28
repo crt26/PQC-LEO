@@ -33,6 +33,7 @@ int test_kem(const char *method_name, TestController *test_controller, TestParam
 // Function for testing a specific digital signature algorithms energy usage by recording usage during keygen, sign, and verify operations
 int test_sig(const char *method_name, TestController *test_controller, TestParams *test_params);
 
+// Function for handling the overall testing process, including the setup, execution, and cleanup of the tests
 int test_handler(TestController *test_controller);
 
 #endif

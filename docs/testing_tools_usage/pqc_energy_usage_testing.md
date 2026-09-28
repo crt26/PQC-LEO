@@ -81,13 +81,13 @@ The PQC, Hybrid-PQC, and classical algorithms that are supported for standard pe
 
 Computational energy testing covers PQC algorithms from Liboqs. TLS handshake and TLS operations energy testing cover PQC, Hybrid-PQC, and classical algorithms. Classical TLS operations energy testing includes all configured classical digital signature and key-exchange algorithms. The following OpenSSL Hybrid-PQC KEMs are exceptions and are not supported by TLS operations energy testing because the required key encoders are unavailable:
 
-For RSA signature measurements, the TLS operations energy test explicitly selects PSS padding. This permits separate results for generic RSA keys (`RSA_*`) and RSA-PSS-restricted keys (`RSA-PSS_*`), which the standard `openssl speed` command cannot test as distinct categories.
-
 - X25519MLKEM768
 - X448MLKEM1024
 - SecP256r1MLKEM768
 - SecP384r1MLKEM1024
 - curveSM2MLKEM768
+
+For RSA signature measurements, the TLS operations energy test explicitly selects PSS padding. This permits separate results for generic RSA keys (`RSA_*`) and RSA-PSS-restricted keys (`RSA-PSS_*`), which the standard `openssl speed` command cannot test as distinct categories.
 
 For further details on supported algorithms, please refer to the following documentation:
 
@@ -96,7 +96,7 @@ For further details on supported algorithms, please refer to the following docum
 ## Automated Testing Process
 To understand the steps that should be taken to prepare the testing environment for energy usage testing, it is important to first understand the general process that is followed when using the automated testing scripts. The below image details the general steps taken during testing to signal and coordinate the testing and energy data collection process between the testing machine and the collection machine.
 
-<img src="../_doc_images/energy-automated-testing-process.png" alt="Automated energy testing process" width="800">
+<img src="../_doc_images/energy_automated_testing_process.png" alt="Automated energy testing process" width="800">
 
 The control signalling and coordination process between the testing machine and the collection machine is facilitated through the use of a communication channel between the two machines. The communication channel is used to indicate when testing is starting and stopping, which in turn signals when energy data collection should start and stop on the collection machine.
 
@@ -113,7 +113,7 @@ By default, the following ports are used for network-based control signalling wh
 | Collector Machine | 26000                |
 | Testing Machine   | 26001                |
 
-It is possible to alter the default ports used. Pass `--use-custom-eng-control-ports` to the computational or TLS handshake testing script, or `--use-custom-net-control-ports` to the TLS speed testing script, and provide the custom ports when prompted.
+It is possible to alter the default ports used. Pass `--use-custom-eng-control-ports` to the computational or TLS handshake testing script, or `--use-custom-net-control-ports` to the TLS operations energy testing script, and provide the custom ports when prompted.
 
 During operation, the user will be prompted to enter the following information to configure the network-based communication channel when calling the automated testing scripts:
 
@@ -139,7 +139,7 @@ This section provides the general steps to configure the environment for testing
 ### Standard Testing Environment Layout
 When using the automated testing scripts and collection tools provided by PQC-LEO, the testing environment will follow this general structure:
 
-<img src="../_doc_images/energy-env-setup.png" alt="Energy testing environment layout" width="800">
+<img src="../_doc_images/energy_env_setup.png" alt="Energy testing environment layout" width="800">
 
 How the energy meter is accessed and utilised will differ depending on the specific energy meter being used and the way in which it is set up. For details on how to set up and configure supported energy meters for use with the automated testing scripts, please refer to the [Supported Energy Meters](../energy_meter_guides/energy_meter_support.md) guide.
 
@@ -165,7 +165,7 @@ Once the script has been called, the user will then be prompted to enter in the 
 
 After these parameters have been entered, the script will prompt the user to configure the communication channel that will be used for control signalling between the testing machine and the collection machine. For details on how to set up the communication channel, please refer to [Enabling Support for Test Control Signalling](#enabling-support-for-test-control-signalling).
 
-Finally, after the communication channel has been configured, the script will prompt the user to select the which supported energy meter type will be used for data collection. After the meter type has been selected, the remaining device-specific communication setup prompts are shown (for example selecting the serial port used by the meter). This process may differ between devices, so please refer to the relevant energy meter documentation for details on configuration steps.
+Finally, after the communication channel has been configured, the script will prompt the user to select which supported energy meter type will be used for data collection. After the meter type has been selected, the remaining device-specific communication setup prompts are shown (for example selecting the serial port used by the meter). This process may differ between devices, so please refer to the relevant energy meter documentation for details on configuration steps.
 
 ## Performing the Automated Energy Usage Testing
 After the testing environment has been properly prepared and configured, the automated energy usage testing can be initiated. The process will differ depending on the specific type of energy usage testing being performed.
@@ -196,7 +196,7 @@ An example of using this flag when launching the testing script is as follows:
 ### Custom Control Signalling Ports
 By default, the automated testing scripts for energy usage evaluations use set UDP ports for network-based control signalling between the testing machine and the collection machine.
 
-However, it is possible to alter the default ports used for control signalling. Pass `--use-custom-eng-control-ports` to the computational or TLS handshake testing script, or `--use-custom-net-control-ports` to the TLS speed testing script, and provide the custom ports when prompted.
+However, it is possible to alter the default ports used for control signalling. Pass `--use-custom-eng-control-ports` to the computational or TLS handshake testing script, or `--use-custom-net-control-ports` to the TLS operations energy testing script, and provide the custom ports when prompted.
 
 An example of using this flag when launching the testing script is as follows:
 

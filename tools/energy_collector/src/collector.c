@@ -38,7 +38,7 @@ int custom_net_ports = 0;
 //------------------------------------------------------------------------------------------------------------------------------ 
 void output_help() {
     /*  Function for outputting the help message for the collector script. It will display the usage, options, and their 
-        descriptions. After this, it will exit the program. */
+        descriptions. */
 
     // Print the help message
     printf("Usage: collector [OPTIONS]\n");
@@ -48,13 +48,13 @@ void output_help() {
     printf("-c, --use-custom-net-control-ports      Use custom network control ports for energy testing control signalling\n");
     printf("-h, --help                              Display this help message and exit\n");
 
-    exit(0);
-
 }
 
 //------------------------------------------------------------------------------------------------------------------------------ 
 void parse_args(int argc, char *argv[], int *display_welcome, int *prompt_for_result_dir) {
-    /*  Function for parsing the command line arguments passed to the control sender script. */
+    /*  Function for parsing the command line arguments passed to the collector program. The function will parse the arguments
+        and set the appropriate flags and values. If an error is encountered, the function will display an error message and the
+        help message before exiting. */
     
     // Define the getopt_long struct and options
     struct option long_options[] = {
@@ -143,13 +143,13 @@ int configure_controller(TestController *test_controller) {
             .flow_control = SP_FLOWCONTROL_NONE,
         };
 
-        // Get the com port to be used for the serial controller
-        printf("Please select the com port for serial control signals:\n");
-        char *control_port_name =  list_com_ports();
+        // Get the serial port to be used for the serial controller
+        printf("Please select the serial port for serial control signals:\n");
+        char *control_port_name =  list_serial_ports();
 
         // Check if a control port name was returned
         if (control_port_name == NULL) {
-            fprintf(stderr, "[ERROR] - No com ports are available, please verify connectivity\n");
+            fprintf(stderr, "[ERROR] - No serial ports are available, please verify connectivity\n");
             free(control_port_name);
             exit(1);
         }
@@ -157,7 +157,7 @@ int configure_controller(TestController *test_controller) {
         // Store the control port name in the serial controller instance
         test_controller->serial_controller.control_port_name = control_port_name;
 
-        // Initialise the the serial controller
+        // Initialise the serial controller
         if (controller_init(test_controller) != 0) {
             fprintf(stderr, "[ERROR] - Failed to initialise the serial controller.\n");
             free(control_port_name);
@@ -173,7 +173,7 @@ int configure_controller(TestController *test_controller) {
     }
     else if (strcmp(test_controller->control_type, "network") == 0) {
 
-        /*Insert here future prompt to ask wether to use UDP or TCP when TCP is supported*/
+        /*Insert here future prompt to ask whether to use UDP or TCP when TCP is supported*/
 
         // Define the default local and remote port numbers to be used for the network controller
         int local_port = 26000;
@@ -262,7 +262,7 @@ static MeterType prompt_meter_type(void) {
     // Output the current task to the terminal
     printf("Energy Meter Device Selection:\n\n");
 
-    // Calculate the number of available meter type options based on the size of the meter_type_options array
+    // Calculate the number of available meter type options based on the size of the supported_meter_types array
     const size_t total_meter_types = sizeof(supported_meter_types) / sizeof(supported_meter_types[0]);
 
     // Ensure that at least one meter type is available for selection
@@ -281,7 +281,7 @@ static MeterType prompt_meter_type(void) {
         }
         printf("Enter meter type selection: ");
 
-        // Reading the user and convert to a integer
+        // Read in the user input and convert to a integer
         char input[16];
         fgets(input, sizeof(input), stdin);
         input[strcspn(input, "\n")] = '\0';
@@ -359,25 +359,25 @@ int setup_env(TestController *test_controller, MeterDevice *meter_device, int pr
     }
     printf("\n");
 
-    // Get the com port to be used for the energy meter device
-    printf("Please select the com port for communicating with the energy meter device:\n\n");
-    char *control_port_name = list_com_ports();
+    // Get the serial port to be used for the energy meter device
+    printf("Please select the serial port for communicating with the energy meter device:\n\n");
+    char *control_port_name = list_serial_ports();
 
     // Check if a control port name was returned
     if (control_port_name == NULL) {
-        fprintf(stderr, "[ERROR] - No com ports are available, please verify connectivity\n");
+        fprintf(stderr, "[ERROR] - No serial ports are available, please verify connectivity\n");
         free(control_port_name);
         exit(1);
     }
 
-    // Initialise the energy meter device with the selected com port
+    // Initialise the energy meter device with the selected serial port
     if (meter_init(meter_device, selected_meter_type, control_port_name) != 0) {
         fprintf(stderr, "[ERROR] - Failed to initialise the energy meter device.\n");
         free(control_port_name);
         return -1;
     }
 
-    // Free the meter com port name
+    // Free the meter serial port name
     free(control_port_name);
 
     // Check if the user needs to be prompted for the name of the target results directory
@@ -516,7 +516,7 @@ int get_ready_parser(char *message) {
         skip_poll_sleep = 0;
     }
 
-    // Convert the polling rate from miliseconds to microseconds and store it in the global variable
+    // Convert the polling rate from milliseconds to microseconds and store it in the global variable
     if (skip_poll_sleep == 0) {
         polling_rate = (useconds_t)(captured_polling_rate * 1000.0f);
     }
@@ -537,9 +537,9 @@ int get_ready_parser(char *message) {
 
 //------------------------------------------------------------------------------------------------------------------------------ 
 void *control_listener_thread(void *arg) {
-    /*  Function for handling the control listener thread that listens for control commands from the control port. 
-        It will detect GETREADY, START, STOP, and END commands and set the relevant shared thread flag values used by the
-        energy collection thread depending on the received command. */
+    /*  Function for handling the control listener thread that listens for control commands from the control port. It will 
+        detect GETREADY, START, STOP, and END commands and set the relevant shared thread flag values used by the energy 
+        collection thread depending on the received command. */
 
     // Cast the argument to TestController type
     TestController *test_controller = (TestController *)arg;
@@ -556,7 +556,7 @@ void *control_listener_thread(void *arg) {
 
         // Wait for the command signal from the controller
         if (controller_receive(test_controller, msg_buffer, sizeof(msg_buffer)) != 0) {
-            fprintf(stderr, "[ERROR] - Failure in the serial controller receiver.\n");
+            fprintf(stderr, "[ERROR] - Failure in the controller receiver.\n");
             pthread_exit(NULL);
         }
 
@@ -641,6 +641,7 @@ void *control_listener_thread(void *arg) {
 
     }
 
+    // Exit the thread to stop further processing
     pthread_exit(NULL);
 
 }
@@ -650,7 +651,7 @@ void *collect_energy_metrics_thread(void *arg) {
     /*  Function for handling the energy metrics collection thread that polls the energy meter device for usage metrics and 
         writes them to the metrics file. It will run until the end flag is set by the control listener thread. */
 
-    // Cast the argument to TestController type
+    // Cast the argument to MeterDevice type
     MeterDevice *meter_device = (MeterDevice *)arg;
 
     // Declare the meter reading data struct
@@ -669,7 +670,7 @@ void *collect_energy_metrics_thread(void *arg) {
         // Lock the control mutex to check the start and end flags
         pthread_mutex_lock(&control_lock);
 
-        // Wait until the start flag is set or the end flag is set, resseting the first reading flag
+        // Wait until the start flag is set or the end flag is set, resetting the first reading flag
         while (!start_flag && !end_flag) {
             first_reading = 1;
             pthread_cond_wait(&control_changed, &control_lock);
@@ -701,7 +702,7 @@ void *collect_energy_metrics_thread(void *arg) {
                 start_mWh = meter_reading.mWh;
                 clock_gettime(CLOCK_MONOTONIC, &start_time);
 
-                // Flip the first reading flag to indicate inital run values captured
+                // Flip the first reading flag to indicate initial run values captured
                 first_reading = 0;
 
             }
@@ -742,6 +743,7 @@ void *collect_energy_metrics_thread(void *arg) {
         
     }
 
+    // Exit the thread to stop further processing
     pthread_exit(NULL);
 
 }

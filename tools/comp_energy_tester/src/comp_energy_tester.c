@@ -23,7 +23,7 @@ int custom_net_ports = 0;
 
 //------------------------------------------------------------------------------------------------------------------------------ 
 void output_help() {
-    /*  Function for outputting the help message for the collector script. It will display the usage, options, and their 
+    /*  Function for outputting the help message for the comp_energy_tester program. It will display the usage, options, and their 
         descriptions. */
 
     // Print the help message
@@ -37,7 +37,9 @@ void output_help() {
 
 //------------------------------------------------------------------------------------------------------------------------------ 
 void parse_args(int argc, char *argv[], int *display_welcome) {
-    /*  Function for parsing the command line arguments passed to the comp_energy_tester script. */
+    /*  Function for parsing the command line arguments passed to the comp_energy_tester program. The function will parse the 
+        arguments and set the appropriate flags and values. If an error is encountered, the function will display an error
+        message and the help message before exiting. */
 
     // Define the getopt_long struct and options
     struct option long_options[] = {
@@ -76,6 +78,8 @@ void parse_args(int argc, char *argv[], int *display_welcome) {
                 exit(0);
 
             default:
+
+                // Output an error message for an unknown argument and present the help message before exiting
                 fprintf(stderr, "[ERROR] - Unknown command line argument: %s\n", argv[optind - 1]);
                 output_help();
                 exit(1);
@@ -135,7 +139,7 @@ int configure_controller(TestController *test_controller) {
     // Loop until a valid control method is selected by the user
     while (1) {
 
-        // Prompt the user for the control method to use
+        // Prompt the user for the control method to use and read the input from stdin
         printf("Available controller communication methods:\n1: Serial (UART)\n2: Network\n");
         printf("Enter method selection (1/2): ");
         char input[16];
@@ -171,28 +175,28 @@ int configure_controller(TestController *test_controller) {
             .flow_control = SP_FLOWCONTROL_NONE,
         };
 
-        // Get the com port to be used for the serial controller
-        printf("Please select the com port for serial control signals:\n");
-        char *control_port_name =  list_com_ports();
+        // Get the serial port to be used for the serial controller
+        printf("Please select the serial port for serial control signals:\n");
+        char *control_port_name =  list_serial_ports();
 
-        // Check if a com port name was returned
+        // Check if a serial port name was returned
         if (control_port_name == NULL) {
-            fprintf(stderr, "[ERROR] - No com ports are available, please verify connectivity\n");
+            fprintf(stderr, "[ERROR] - No serial ports are available, please verify connectivity\n");
             free(control_port_name);
             exit(1);
         }
 
-        // Store the com port name in the serial controller instance
+        // Store the serial port name in the serial controller instance
         test_controller->serial_controller.control_port_name = control_port_name;
 
-        // Initialise the the serial controller
+        // Initialise the serial controller
         if (controller_init(test_controller) != 0) {
             fprintf(stderr, "[ERROR] - Failed to initialise the serial controller\n");
             free(control_port_name);
             return -1;
         }
 
-        // Free the com port name
+        // Free the serial port name
         free(control_port_name);
         printf("\n");
 
@@ -201,7 +205,7 @@ int configure_controller(TestController *test_controller) {
     }
     else if (strcmp(test_controller->control_type, "network") == 0) {
 
-        /*Insert here future prompt to ask wether to use UDP or TCP when TCP is supported*/
+        /*Insert here future prompt to ask whether to use UDP or TCP when TCP is supported*/
 
         // Define the default local and remote port numbers to be used for the network controller
         int local_port = 26001;
@@ -242,7 +246,7 @@ int configure_controller(TestController *test_controller) {
             printf("\n");
 
             // Prompt the user for the remote port number until a valid port is provided
-            printf("Configure the remote device listenting port:\n");
+            printf("Configure the remote device listening port:\n");
             get_port_number(&remote_port);
             printf("\n");
 
@@ -275,7 +279,7 @@ int configure_controller(TestController *test_controller) {
 
         return 0;
 
-        }
+    }
 
     return 0;
 
@@ -305,7 +309,7 @@ void get_test_options(TestParams *test_params) {
         printf("Enter the number of iterations for each test (e.g., 1000): ");
         fgets(input, sizeof(input), stdin);
 
-        // Remove trailing newline character
+        // Remove the trailing newline character
         input[strcspn(input, "\n")] = '\0';
 
         // Check if input is a valid int
@@ -512,7 +516,7 @@ int test_kem(const char *method_name, TestController *test_controller, TestParam
     test_params->test_type = "comp_kem_keygen";
     control_handler(test_controller, test_params);
 
-    // Perform the keygen test for the specifed iterations
+    // Perform the keygen test for the specified iterations
     for (int i = 0; i < test_params->iterations; i++) {
         OQS_KEM_keypair(kem, public_key, secret_key);
     }
@@ -531,7 +535,7 @@ int test_kem(const char *method_name, TestController *test_controller, TestParam
     test_params->test_type = "comp_kem_encaps";
     control_handler(test_controller, test_params);
 
-    // Perform the encaps test for the specifed iterations
+    // Perform the encaps test for the specified iterations
     for (int i = 0; i < test_params->iterations; i++) {
         OQS_KEM_encaps(kem, ciphertext, shared_secret_e, public_key);
     }
@@ -550,7 +554,7 @@ int test_kem(const char *method_name, TestController *test_controller, TestParam
     test_params->test_type = "comp_kem_decaps";
     control_handler(test_controller, test_params);
 
-    // Perform the decaps test for the specifed iterations
+    // Perform the decaps test for the specified iterations
     for (int i = 0; i < test_params->iterations; i++) {
         OQS_KEM_decaps(kem, shared_secret_d, ciphertext, secret_key);
     }
@@ -637,7 +641,7 @@ int test_sig(const char *method_name, TestController *test_controller, TestParam
     test_params->test_type = "comp_sig_keygen";
     control_handler(test_controller, test_params);
 
-    // Perform the keygen test for the specifed iterations
+    // Perform the keygen test for the specified iterations
     for (int i = 0; i < test_params->iterations; i++) {
         OQS_SIG_keypair(sig, public_key, secret_key);
     }
@@ -656,7 +660,7 @@ int test_sig(const char *method_name, TestController *test_controller, TestParam
     test_params->test_type = "comp_sig_sign";
     control_handler(test_controller, test_params);
 
-    // Perform the sign test for the specifed iterations
+    // Perform the sign test for the specified iterations
     for (int i = 0; i < test_params->iterations; i++) {
         OQS_SIG_sign(sig, signature, &signature_len, message, message_len, secret_key);
     }
@@ -675,7 +679,7 @@ int test_sig(const char *method_name, TestController *test_controller, TestParam
     test_params->test_type = "comp_sig_verify";
     control_handler(test_controller, test_params);
 
-    // Perform the verify test for the specifed iterations
+    // Perform the verify test for the specified iterations
     for (int i = 0; i < test_params->iterations; i++) {
         OQS_SIG_verify(sig, message, message_len, signature, signature_len, public_key);
     }
@@ -715,7 +719,7 @@ int test_handler(TestController *test_controller) {
         .polling_rate = 0.0f,
     };
 
-    // Get the testing options
+    // Get the testing options from the user and populate the test_params struct
     get_test_options(&test_params);
 
     // Output the current task to the terminal
@@ -761,7 +765,7 @@ int test_handler(TestController *test_controller) {
 
     // Output testing complete message to the terminal
     printf("\nAll testing runs completed\n");
-    printf("Energy usage results will be stored in the test_data directory on the collector machine\n");
+    printf("Energy usage results will be stored in the selected results directory on the collector machine\n");
 
     // Send the test END signal to the collector
     test_params.control_type = 3;

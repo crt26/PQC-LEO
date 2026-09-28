@@ -11,7 +11,7 @@ If you wish to perform TLS handshake or TLS operations energy usage testing, ple
 
 To compare the size of the network data exchanged by one-way and mutually authenticated TLS 1.3 handshakes, refer to the separate [TLS Handshake Transmission Cost Testing Guide](./tls_handshake_transmission_cost_testing.md).
 
->**Notice:** The versions of project dependencies used in PQC-LEO version 0.5.0 contains a known issue where certain signature/KEM combinations may produce values of `inf` for "Connections Per User Second" results in TLS handshake testing when using smaller testing windows. Please refer to the [Inf Result Value Occurrence Details](#inf-result-value-occurrence-details) section in this document for further information.
+>**Notice:** Certain signature/KEM combinations may produce values of `inf` for "Connections Per User Second" results in TLS handshake testing when using smaller testing windows. Please refer to the [Inf Result Value Occurrence Details](#inf-result-value-occurrence-details) section in this document for further information.
 
 ### Contents <!-- omit from toc -->
 - [Supported Hardware](#supported-hardware)
@@ -28,7 +28,7 @@ To compare the size of the network data exchanged by one-way and mutually authen
 - [Advanced Testing Customisation](#advanced-testing-customisation)
   - [Customising Testing Suite TCP Ports](#customising-testing-suite-tcp-ports)
   - [Adjusting Control Signalling](#adjusting-control-signalling)
-- [Disabling Automatic Result Parsing](#disabling-automatic-result-parsing)
+  - [Disabling Automatic Result Parsing](#disabling-automatic-result-parsing)
   - [Enabling Energy Usage Testing](#enabling-energy-usage-testing)
 - [Inf Result Value Occurrence Details](#inf-result-value-occurrence-details)
 - [Useful External Documentation](#useful-external-documentation)
@@ -213,7 +213,7 @@ If the default delay is unsuitable for your environment, you can either set a cu
 
 **Please note** that the `--control-sleep-time` flag cannot be used with the `--disable-control-sleep` flag.
 
-## Disabling Automatic Result Parsing
+### Disabling Automatic Result Parsing
 The performance testing script triggers automatic result parsing upon test completion. This behaviour can be disabled by passing the following flag at runtime:
 
 ```

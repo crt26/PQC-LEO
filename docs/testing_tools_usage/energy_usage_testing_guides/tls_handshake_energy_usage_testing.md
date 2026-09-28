@@ -14,16 +14,16 @@ Please ensure you have read through the information provided within the main [En
 ## Testing Tool Overview
 The automated TLS handshake energy usage testing utilises the same automation scripts that are used for standard TLS handshake testing, with additional functionality for energy usage testing. The main script responsible for conducting the TLS handshake energy usage testing is the `pqc_tls_performance_test.sh` script located in the `scripts/test_scripts` directory. The automated energy usage testing functionality is integrated into the existing TLS handshake testing when the relevant command line argument `--enable-energy-testing` is passed to the script, which enables the energy usage testing features.
 
-This testing provides insight into the energy usage of using PQC, Hybrid-PQC, and classical algorithms within the context of a TLS handshake. As part of the testing process, the script will automatically handle configuring the system state for energy usage testing, which includes setting the CPU performance to maximum and selecting a specific target CPU core*. This ensures consistent testing conditions for energy usage evaluation, preventing spikes or dips in energy usage due to background processes or thermal throttling. Additionally, a **10 second** baseline energy usage reading is taken before the testing process begins, which serves as a reference point for evaluating the energy consumption of the cryptographic operations.
+This testing provides insight into the energy usage of using PQC, Hybrid-PQC, and classical algorithms within the context of a TLS handshake. As part of the testing process, the script will automatically handle configuring the system state for energy usage testing, which includes setting the CPU performance to maximum and selecting a specific target CPU core. This helps improve consistency for energy usage evaluation, although background processes and thermal throttling can still affect measurements. Additionally, a **10 second** baseline energy usage reading is taken before the testing process begins, which serves as a reference point for evaluating the energy consumption of the cryptographic operations.
 
 Energy usage metrics are stored on the collection machine, and will be automatically parsed into structured CSV files for analysis.
 
->***Notice:** Support for automated configuration of a system fan is not currently available in the provided testing scripts. This is due to the variety of system types and fan control methods available, making a universal solution challenging. Future versions aim to address this limitation. It is **highly recommended** to manually configure the system fan (if applicable) to a fixed speed before testing to prevent variances in the fan speed during testing impacting the systems power draw, skewing the energy usage results.
+> **Notice:** Support for automated configuration of a system fan is not currently available in the provided testing scripts. This is due to the variety of system types and fan control methods available, making a universal solution challenging. Future versions aim to address this limitation. It is **highly recommended** to manually configure the system fan (if applicable) to a fixed speed before testing to prevent variances in the fan speed during testing impacting the system's power draw, skewing the energy usage results.
 
 ## Differences from Standard TLS Handshake Testing
 Whilst the TLS handshake energy usage testing utilises the same testing scripts and general testing process as the standard TLS handshake testing, there are some differences to be aware of when using the TLS handshake energy usage testing compared to the standard TLS handshake testing. These differences include:
 
-- TLS speed testing is not performed on the client machine when energy usages testing is enabled
+- TLS speed testing is not performed on the client machine when energy usage testing is enabled
 
 - By default, the handshake performance results are not stored as they would be during standard TLS handshake testing. Only the energy usage metrics are collected and stored for parsing and analysis on the collection machine. The user can also store the handshake performance results by selecting yes when prompted during client machine configuration by the TLS testing automation script.
 
@@ -62,14 +62,14 @@ The following standard TLS performance testing parameters are handled differentl
 
 - TLS speed testing parameters are excluded because TLS speed testing is not performed in this mode.
 
-Once the applicable standard TLS handshake testing parameters have been configured, the control signaller parameters can be set. The control signaller is responsible for signalling the collection machine to poll the energy meter at the appropriate points during the testing process.
+The control signaller parameters are configured before the Machine-ID and test durations. The control signaller is responsible for signalling the collection machine to poll the energy meter at the appropriate points during the testing process.
 
 The user will be prompted to select one of the following control signalling methods:
 
 1. Serial
 2. Network
 
-If serial signalling is selected, the COM port used for serial communication must be specified. If network signalling is selected, both the local IP address of the testing machine and the remote IP address of the collection machine must be specified.
+If serial signalling is selected, the serial port used for serial communication must be specified. If network signalling is selected, both the local IP address of the testing machine and the remote IP address of the collection machine must be specified.
 
 For details on setting up the required communication environment for control signalling, refer to the [Energy Usage Testing Guide](../../testing_tools_usage/pqc_energy_usage_testing.md).
 

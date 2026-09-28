@@ -67,7 +67,7 @@ If the energy usage results parsing mode is selected, the script will also ask f
 
 Once all required parameters are provided, the script will then process the appropriate raw result files and generate structured CSV outputs.
 
-The interactive parsing method is ideal when manually parsing results or combining both result types in a single operation, which is not supported via the command-line interface.
+Each interactive invocation processes one parsing mode for one Machine-ID, as does the command-line interface.
 
 ### Command-Line Parsing
 Parsing parameters can also be supplied directly as command-line arguments. This is the method used by the test scripts to perform automatic parsing unless the `--disable-result-parsing` flag is specified.

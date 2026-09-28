@@ -30,7 +30,7 @@ For a full list of algorithms currently supported in this project’s performanc
 ## Performing PQC Computational Performance Testing
 
 ### Running the Testing Script
-The automated test script is located in the `scripts/testing_scripts` directory and can be launched using the following command:
+The automated test script is located in the `scripts/test_scripts` directory and can be launched using the following command:
 
 ```
 ./pqc_performance_test.sh

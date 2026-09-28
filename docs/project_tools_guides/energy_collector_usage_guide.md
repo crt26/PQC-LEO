@@ -26,7 +26,7 @@ This guide focuses on using the supplied programs. For developer information on 
   - [Control Sender Program Command Line Arguments](#control-sender-program-command-line-arguments)
 
 ## Tool Description
-The energy usage collector tools provides the necessary tools to perform energy usage testing for a variety of different testing scenarios. While the primary purpose of the tool is to perform energy usage testing for the various PQC algorithms supported by the PQC-LEO framework, it can be used to perform energy usage testing for any arbitrary testing scenario by utilising the controller and meter API functions included within the tool to coordinate the energy usage testing process and collect the results.
+The energy usage collector tools provide the necessary tools to perform energy usage testing for a variety of different testing scenarios. While the primary purpose of the tool is to perform energy usage testing for the various PQC algorithms supported by the PQC-LEO framework, it can be used to perform energy usage testing for any arbitrary testing scenario by utilising the controller and meter API functions included within the tool to coordinate the energy usage testing process and collect the results.
 
 The energy usage collector tools are currently **only supported on Linux systems**. Future development will include support for other operating systems.
 
@@ -38,7 +38,7 @@ The energy usage collector tools consist of the following components:
 - Test orchestration scripts
 
 #### Energy Meter API:
-The energy meter API provides an abstraction layer for interacting with the various supported energy meters within the PQC-LEO framework. It provides a common set of functions for interacting with the energy meters, regardless of the specific meter being used. This allows for a consistent interface for collecting energy usage data across different testing scenarios and different energy meters. It's source files fall under the `_meter_interfaces` directory which includes the main meter API sources files alongside the various source files for the specific meter implementations.
+The energy meter API provides an abstraction layer for interacting with the various supported energy meters within the PQC-LEO framework. It provides a common set of functions for interacting with the energy meters, regardless of the specific meter being used. This allows for a consistent interface for collecting energy usage data across different testing scenarios and different energy meters. Its source files fall under the `_meter_interfaces` directory which includes the main meter API source files alongside the various source files for the specific meter implementations.
 
 For detailed information on the energy meter API functions, please refer to the [Meter API Guide](../developer_information/energy_collector_APIs/meter_api_guide.md) for detailed information on the meter API functions and their usage.
 
@@ -62,7 +62,7 @@ The energy usage collector tools currently include the following test orchestrat
 ## Building the Energy Usage Collector Tools
 The energy usage collector tools are built by default when energy usage testing is enabled in the PQC-LEO setup script. However, if you wish to setup the tools independently of the setup script, you can build the tools manually from the `tools/energy_collector` directory.
 
-Unlike the computational energy usage testing tool, the energy usage collector tools do not rely on any other components of the PQC-LEO framework to be built, with the exception of a path to a OpenSSL installation.
+Unlike the computational energy usage testing tool, the energy usage collector tools do not rely on any other components of the PQC-LEO framework to be built, with the exception of a path to an OpenSSL installation.
 
 The energy usage collector tools rely on the following libraries:
 
@@ -102,7 +102,7 @@ Replace `/path/to/openssl` with the selected installation's absolute path. Use `
 ## Collector Program Usage
 
 ### Program Overview
-The `collector` program is a test orchestration script that utilises the meter API and controller API to perform energy usage testing for various different testing scenarios. This program is ran on the designated collector machine, which is responsible for collecting the energy usage data using the meter API and coordinating the testing process by receiving the necessary control messages from the testing machine using the controller API. This program can be ran in isolation, but a `energy_metric_collector.sh` script is included with PQC-LEO that provides a easy to use interface for automating energy usage testing using the `collector` program.
+The `collector` program is a test orchestration script that utilises the meter API and controller API to perform energy usage testing for various different testing scenarios. This program is run on the designated collector machine, which is responsible for collecting the energy usage data using the meter API and coordinating the testing process by receiving the necessary control messages from the testing machine using the controller API. This program can be run in isolation, but an `energy_metric_collector.sh` script is included with PQC-LEO that provides an easy to use interface for automating energy usage testing using the `collector` program.
 
 ### Running the Collector Program
 This program is primarily designed to work with the supported energy meters and the control_sender test orchestration program included within the energy usage collector tools. When running the script manually, first please refer to the specific documentation for the energy meter you are using to setup the energy meter and collection machine appropriately. This information can be found in the [Supported Energy Meters](../energy_meter_guides/energy_meter_support.md) document for detailed information on the supported energy meters and their respective functionality. Furthermore, if you wish to integrate a new energy meter into the PQC-LEO framework, please refer to the [Integrating New Energy Meters](../developer_information/energy_collector_APIs/integrating_new_energy_meters.md) document for detailed information on how to integrate a new energy meter into the PQC-LEO framework.
@@ -114,12 +114,12 @@ Once the collection environment is setup, you can run the `collector` program by
 ```
 
 ### Configuring the Collector Program
-Once started, the program will the prompt the user to configure the collection parameters, which include the following:
+Once started, the program will then prompt the user to configure the collection parameters, which include the following:
 
 - The control signalling method to be used (serial or network)
 - Configuration of the selected control signalling method
 - The energy meter type to use for collection
-- The COM port to be used for communicating with the energy meter
+- The serial port to be used for communicating with the energy meter
 - The directory to store the collected energy usage data
 
 The available energy meter options are generated from the collector's supported meter mapping and shown as numbered entries during setup. The selected option is then mapped to the corresponding internal meter backend type used by the Meter API.
@@ -152,7 +152,7 @@ Results from the testing process will be stored in the specified results directo
 ## Control Sender Program Usage
 
 ### Program Overview
-The `control_sender` program is a test orchestration script that utilises the controller API to send control messages to a target collector machine. This program is intended to provide a flexible tool for sending control messages to target collector machine, allowing for it be used in a variety of different testing scenarios outside of the provided energy usage testing scripts through the use of various command line arguments to specify the control message parameters and the target collector machine. The program can be used to send control messages to signal the start and stop of tests, which include the necessary metadata to identify the test parameters for the energy usage data being collected.
+The `control_sender` program is a test orchestration program that utilises the controller API to send control messages to a target collector machine. This program is intended to provide a flexible tool for sending control messages to target collector machine, allowing for it to be used in a variety of different testing scenarios outside of the provided energy usage testing scripts through the use of various command line arguments to specify the control message parameters and the target collector machine. The program can be used to send control messages to signal the start and stop of tests, which include the necessary metadata to identify the test parameters for the energy usage data being collected.
 
 ### Running the Control Sender Program
 This program is primarily designed to work with the `collector` test orchestration program included within the energy usage collector tools. The `control_sender` program works by passing all the relevant command line arguments when calling it, which specify the following:
@@ -163,9 +163,9 @@ This program is primarily designed to work with the `collector` test orchestrati
 - The test parameters to be included in the control messages being sent
 - Any additional configuration parameters
 
-Further details on this can be found the next section. 
+Further details on this can be found in the next section.
 
-An example of how the `control_sender` program can be called to send a GETREADY message to a collector machine is as follows:
+An example of how the `control_sender` program can be called to send a GETREADY message, wait for READY, and then send START to a collector machine is as follows:
 
 ```bash
 ./control_sender -s \
@@ -190,7 +190,7 @@ The `control_sender` program accepts the following command line arguments, which
 | `-R`                   | `--run-num `            | Specify the run number for the test (positive integer).                                |
 | `-P`                   | `--polling-rate `       | Specify the polling rate in milliseconds (a value of 0 means no delays between polls). |
 | `-Z`                   | `--controller-method `  | Specify the control signalling method to use (serial or network).                      |
-| `-C`                   | `--com-port `           | Specify the COM port to use for serial communication.                                  |
+| `-S`                   | `--serial-port `        | Specify the serial port to use for serial communication.                               |
 | `-L`                   | `--local-ip `           | Specify the local IP address for network communication.                                |
 | `-Q`                   | `--remote-ip `          | Specify the remote IP address for network communication.                               |
 | `-N`                   | `--custom-local-port `  | Specify a custom local port for network communication.                                 |

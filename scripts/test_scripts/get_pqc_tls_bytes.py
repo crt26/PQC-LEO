@@ -23,7 +23,7 @@ import pandas
 import shutil
 import socket
 
-# Set the root directory path variable
+# Set the OpenSSL executable path variable
 openssl_bin = ""
 
 # Define the global IP address and port numbers for the OpenSSL s_server and s_client processes
@@ -57,7 +57,7 @@ def setup_base_env():
 
         # If the system's root directory is reached and the file is not found, exit the script
         if current_dir == "/":
-            print("Root directory path file not present, please ensure the path is correct and try again.")
+            print("[ERROR] - Root directory path file not present, please ensure the path is correct and try again.")
             sys.exit(1)
 
     # Define the core filepaths based on the detected root_dir path
@@ -132,7 +132,7 @@ def setup_base_env():
             for line in alg_file:
                 alg_lists[alg_cat].append(line.strip())
 
-    # Return the created dir_paths dict
+    # Return the directory paths and algorithm lists
     return dir_paths, alg_lists
 
 #------------------------------------------------------------------------------------------------------------------------------
@@ -190,9 +190,9 @@ def handle_results_dir_creation(dir_paths, machine_id):
                 print("2 - Assign a different Machine-ID\n")
 
                 # Read in the users response and strip any whitespace
-                user_choice = input("Please select and option (1-2): ").strip()
+                user_choice = input("Please select an option (1-2): ").strip()
 
-                # Determine the uses choice and proceed accordingly
+                # Determine the user's choice and proceed accordingly
                 if user_choice == "1":
 
                     # Remove the existing results directory and create a new one
@@ -229,7 +229,7 @@ def configure_result_path(dir_paths):
         # Prompt the user and read in their response
         user_response = input("Would you like to assign a custom machine-ID to the results directory? (y/n): ").strip().lower()
 
-        # Determine the uses choice and proceed accordingly
+        # Determine the user's choice and proceed accordingly
         if user_response == "y":
             machine_id = get_machine_num()
             break
@@ -255,7 +255,7 @@ def define_openssl_cmds(dir_paths, test_type, cert_key_paths, alg_params, auth_t
     provider_args = [
         "-provider", "default",
         "-provider", "oqsprovider",
-        "-provider-path", os.path.join(dir_paths["oqs_provider_path"], "lib"),
+        "-provider-path", os.path.join(dir_paths["oqs_provider_path"], "lib")
     ]
 
     # Define the base OpenSSL s_server command and arguments
@@ -266,7 +266,7 @@ def define_openssl_cmds(dir_paths, test_type, cert_key_paths, alg_params, auth_t
         "-www",
         "-tls1_3",
         "-groups", alg_params[1],
-        "-accept", SERVER_ENDPOINT,
+        "-accept", SERVER_ENDPOINT
     ]
 
     # Define the base OpenSSL s_client command and arguments
@@ -278,7 +278,7 @@ def define_openssl_cmds(dir_paths, test_type, cert_key_paths, alg_params, auth_t
         "-tls1_3",
         "-groups", alg_params[1],
         "-CAfile", cert_key_paths["CA_cert"],
-        "-showcerts",
+        "-showcerts"
     ]
 
     # Adjust the base OpenSSL commands based on the test type
@@ -320,6 +320,8 @@ def check_port_availability():
 
     # Open a socket and check if the specified port is available for use
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+
+        # Set a timeout for the socket connection attempt to avoid hanging indefinitely
         sock.settimeout(0.25)
 
         # Check if the port is already in use by attempting to connect to it
@@ -347,7 +349,7 @@ def process_client_results_output(results_df, client_stdout, test_metadata):
 
     else:
 
-        # If no match is found, print an error message and exit the script
+        # If no match is found, raise an error for the caller to report
         raise RuntimeError("Could not find the TLS handshake byte-count line")
 
     # Determine the test type and then use the params held in the test_metadata dict to define the result row
@@ -593,9 +595,9 @@ def main():
         results directory path, runs tests for each algorithm category, and writes CSV outputs. """
 
     # Output the welcome message to the terminal
-    print("****************************************************")
+    print("####################################################")
     print("PQC-LEO - TLS Handshake Transmission Cost Test Suite")
-    print(f"****************************************************\n")
+    print(f"####################################################\n")
 
     # Setup the base environment and configure the result path for the test results
     dir_paths, alg_lists = setup_base_env()

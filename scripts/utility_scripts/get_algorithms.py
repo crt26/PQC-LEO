@@ -41,8 +41,8 @@ def output_help():
     print("get_algorithms.py [options]")
     print("\nOptions:")
     print("1        Get the algorithms supported by the Liboqs library")
-    print("2        Get the algorithms supported by the Liboqs library and the OQS-Provider library")
-    print("3        Get the algorithms supported by the OQS-Provider library")
+    print("2        Get the algorithms supported by Liboqs, OpenSSL, and OQS-Provider")
+    print("3        Get the algorithms supported by OpenSSL and OQS-Provider")
     print("4        Parse the ALGORITHMS.md file of the OQS-Provider library to get the total number of algorithms supported")
     print("--help   Output the help message to the user")
 
@@ -83,7 +83,6 @@ def setup_base_env():
     # Check the OpenSSL library directory path
     if os.path.isdir(os.path.join(openssl_path, "lib64")):
         openssl_lib_dir = os.path.join(openssl_path, "lib64")
-
     else:
         openssl_lib_dir= os.path.join(openssl_path, "lib")
 
@@ -233,14 +232,16 @@ def extract_tls_algs(test_type, provider_type, output_str, oqs_algs_enabled):
         # Clean up the algorithm string before checks
         alg = alg.strip()
 
-        # If braces present, get last alias (usually best readable name)
+        # Check if the algorithm string contains braces, which indicates multiple aliases for the same algorithm
         if alg.startswith("{"):
 
+            # If braces present, get last alias (usually best readable name)
             brace_content = alg.split("}")[0]  # get the content before closing brace
             items = brace_content.strip("{ ").split(",")
             alg = items[-1].strip()
 
         else:
+
             # If no braces, get the last part of the string
             alg = alg.strip()
             alg = alg.split(" @ ")[0]
@@ -442,8 +443,8 @@ def parse_oqs_provider_algorithms_md():
     """ Function for parsing the ALGORITHMS.md file of the OQS-Provider library to extract the total number of algorithms 
         supported. This is only called when all algorithms are selected to be enabled by the main setup.sh script, as the 
         OpenSSL speed.c source file needs to be altered so that a larger number of algorithms can be supported. This function 
-        will return the total number of algorithms supported by the OQS-Provider library, and if parsing fails returns -1 to 
-        indicate that the hardcoded high value should be set in the speed.c file. """
+        prints the total number of algorithms supported by the OQS-Provider library and exits with status 0 on success
+        or status 1 if parsing fails, allowing the caller to choose a fallback value. """
 
     # Set the filepaths for the ALGORITHMS.md file and declare the main_algs list
     algs_md_filepath = os.path.join(oqs_provider_src_dir, "ALGORITHMS.md")
@@ -579,7 +580,7 @@ def main():
 
             # Output an error message if an invalid argument was passed
             print(f"\nInvalid argument has been passed to this utility script, please check the code of the setup.sh script, or if you are running this script manually, ensure you are passing the correct argument")
-            print("Required arguments are: 1 (Liboqs only), 2 (liboqs and OQS-Provider), or 3(OQS-Provider only)")
+            print("Required arguments are: 1 (Liboqs only), 2 (Liboqs, OpenSSL, and OQS-Provider), 3 (OpenSSL and OQS-Provider), or 4 (count OQS-Provider algorithms)")
             print(f"\nArgument passed - ", sys.argv[1])
             sys.exit(1)
     

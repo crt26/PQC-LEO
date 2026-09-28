@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 // Struct for holding the controller interface configuration parameters
 typedef struct {
-    char *com_port_name;
+    char *serial_port_name;
     char *local_ip;
     char *remote_ip;
     int local_port;

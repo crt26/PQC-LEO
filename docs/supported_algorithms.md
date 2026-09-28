@@ -38,7 +38,7 @@ Different testing categories within this project rely on distinct combinations o
 
 Although the OQS-Provider depends on Liboqs for algorithm implementations, it exposes a different set of algorithms. As such, its supported algorithms are documented separately in this guide.
 
-The computational performance and TLS handshake testing categories also support corresponding energy usage evaluations. TLS operations energy testing separately measures individual cryptographic operations performed through OpenSSL and it's commands. TLS handshake transmission cost testing does not currently have a corresponding energy usage test. Some algorithms are excluded from energy usage testing, as discussed in the relevant sections.
+The computational performance and TLS handshake testing categories also support corresponding energy usage evaluations. TLS operations energy testing separately measures individual cryptographic operations performed through OpenSSL and its commands. TLS handshake transmission cost testing does not currently have a corresponding energy usage test. Some algorithms are excluded from energy usage testing, as discussed in the relevant sections.
 
 ## Liboqs Algorithms
 

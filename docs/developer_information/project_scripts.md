@@ -143,12 +143,12 @@ The utility script accepts the following arguments:
 | 3            | Extracts algorithms for **TLS performance, TLS operations energy, and TLS handshake transmission cost testing** (OpenSSL and OQS-Provider algorithms only).                    |
 | 4            | Parses `ALGORITHMS.md` from OQS-Provider to determine the total number of supported algorithms (used only by `setup.sh`).                                                      |
 
-While running option `4` manually will work, it is unnecessary. This function is used exclusively by the `source_code_modifier.sh` script to modify OpenSSL’s `speed.c` file when all OQS-Provider algorithms are enabled. Unlike the other arguments, it does not alter or create files in the repository; it only returns the algorithm count for use during setup.
+Option `4` is used by the `source_code_modifier.sh` script to obtain the algorithm count when modifying OpenSSL’s `speed.c` during setup. Do not run it manually on a configured installation: the utility script currently clears existing algorithm lists during initialisation, even in this counting mode.
 
 Example usage when running manually:
 
 ```
-cd scripts/utility-scripts
+cd scripts/utility_scripts
 python3 get_algorithms.py 1
 ```
 
@@ -166,7 +166,7 @@ The utility script must be called with one of the following arguments in order t
 The algorithms that are included within this script are based on the algorithms listed by OQS-Provider in their `ALGORITHMS.md` file (OQS-Provider version 0.11.0+). Currently, the script is hard-coded to include the algorithms mentioned in that file. This will be updated in the future to be more dynamic. The version of the `ALGORITHMS.md` file used to dictate the algorithms included in this script can be found [here](https://github.com/open-quantum-safe/oqs-provider/blob/1670a8a91bbca997d33e6b6851309d6241cc224c/ALGORITHMS.md).
 
 ### serial_port_selector.py
-This Python utility script is used for handling serial (com) port selection in the energy testing bash scripts when serial control signalling has been selected by the user. The script uses the `pyserial` package to detect available serial ports on the system, outputs a numbered list of available ports to the user, validates the selected option value, and returns the selected serial device path to the calling Bash script. This utility script is intended to be called by the automated testing scripts (for example, `tls_operations_energy_test.sh` and `pqc_tls_performance_test.sh`) and is **not intended to be run manually**. To support properly grabbing the selected serial port path from the utility script in bash, interactive menu output and warning messages are written to standard error, while only the selected serial device path is written to standard output.
+This Python utility script is used for handling serial port selection in the energy testing bash scripts when serial control signalling has been selected by the user. The script uses the `pyserial` package to detect available serial ports on the system, outputs a numbered list of available ports to the user, validates the selected option value, and returns the selected serial device path to the calling Bash script. This utility script is intended to be called by the automated testing scripts (for example, `tls_operations_energy_test.sh` and `pqc_tls_performance_test.sh`) and is **not intended to be run manually**. To support properly grabbing the selected serial port path from the utility script in bash, interactive menu output and warning messages are written to standard error, while only the selected serial device path is written to standard output.
 
 ### source_code_modifier.sh
 This internal utility script automates source code modifications for OpenSSL and OQS-Provider during the setup process. **It is not intended to be run manually from the terminal.** Depending on the setup configuration, the `setup.sh` script automatically invokes it to adjust hardcoded OpenSSL constants and enable algorithms that are disabled by default in OQS-Provider. It is located in the `scripts/utility_scripts/` directory.
@@ -182,7 +182,7 @@ When calling the utility script, the first argument must always be the modificat
 
 | **Flag**                           | **Description**                                                                                                                                                                                        |
 |------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `--user-defined-flag=[0\|1]`       | Set to `1` to use a manually specified value (via --user-defined-speed-value) instead of an automatically calculated value.                                                                             |
+| `--user-defined-flag=[0\|1]`       | Set to `1` to use a manually specified value (via --user-defined-speed-value) instead of an automatically calculated value.                                                                            |
 | `--user-defined-speed-value=[int]` | Specifies the new value to set for `MAX_KEM_NUM` and `MAX_SIG_NUM` in OpenSSL's `speed.c`. Must be a positive integer if `--user-defined-flag` is set to `1`. Use `0` if `--user-defined-flag` is `0`. |
 | `--help`                           | Displays the help message for this tool. Intended primarily for debugging from within another script.                                                                                                  |
 
@@ -197,17 +197,18 @@ source_code_modifier.sh "modify_openssl_src" "--user-defined-flag=1" "--user-def
 ```
 
 ### system_state_configurer.sh
-This utility script is used for configuring and restoring the system's performance state during energy usage evaluation testing. This ensures that results gathered during testing remain consistent and are not affected by variances in the systems operating conditions. It supports configuring the CPU governor setting and returning a target CPU core to be used by testing binaries*. It accepts one command line argument to set the default state, set custom state values, or restore the original configuration. Based on the detected command line argument, the script will either set the system state to a default configuration optimised for testing, or it will prompt the user to input custom values for the system state configuration. When using default settings, the system performance state is set to maximum values and a optimal target CPU core for testing binaries is returned.
+This utility script is used for configuring and restoring the system's performance state during energy usage evaluation testing. This helps improve measurement consistency, although background processes and thermal throttling can still affect results. It supports configuring the CPU governor setting and returning a target CPU core to be used by testing binaries*. It accepts one command line argument to set the default state, set custom state values, or restore the original configuration. Based on the detected command line argument, the script will either set the system state to a default configuration optimised for testing, or it will prompt the user to input custom values for the system state configuration. When using default settings, the CPU governor is set to performance and the second CPU core is selected when available (otherwise core 0).
 
 **Required Command Line Arguments (one required):**
 
-| **Argument** | **Functionality**                                                                    |
-|--------------|--------------------------------------------------------------------------------------|
-| `--custom`   | Set custom system state values. Prompts for CPU governor, CPU core, and fan settings |
-| `--default`  | Set the system state to the default configuration optimised for testing.             |
-| `--help`     | Display the help message                                                             |
+| **Argument**    | **Functionality**                                                                           |
+|-----------------|---------------------------------------------------------------------------------------------|
+| `--set-custom`  | Set custom CPU governor and CPU core values. Fan settings are prompted for but not applied. |
+| `--set-default` | Set the system state to the default configuration optimised for testing.                    |
+| `--restore`     | Restore the saved CPU governor setting.                                                     |
+| `--help`        | Display the help message                                                                    |
 
-* NOTE: Fan control is currently not supported in this version of PQC-LEO, but future development aims to include this functionality. In the meantime,**it is highly recommended** to set a manual fan speed to ensure consistent system thermal and power draw conditions during energy usage testing.
+* NOTE: Fan control is currently not supported in this version of PQC-LEO, but future development aims to include this functionality. In the meantime, **it is highly recommended** to set a manual fan speed to ensure consistent system thermal and power draw conditions during energy usage testing.
 
 ## Automated Computational Performance Testing Scripts
 The computational performance testing suite benchmarks standalone PQC cryptographic operations for CPU and peak memory usage. It currently uses the Liboqs library and its testing tools to evaluate all supported KEM and digital signature algorithms. It is provided through a singular automation script which handles CPU and memory performance testing for PQC schemes. It is designed to be run interactively, prompting the user for test parameters such as the machine-ID to be assigned to the results and the number of test iterations.
@@ -231,7 +232,7 @@ The script handles:
 The speed test functionality benchmarks the execution time of KEM and digital signature algorithms using the Liboqs `speed_kem` and `speed_sig` tools. Raw performance results are saved to the `test_data/up_results/computational_performance/machine_x/raw_speed_results` directory.
 
 #### Memory Testing Functionality <!-- omit from toc -->
-Memory usage is profiled using the Liboqs `test_kem_mem` and `test_sig_mem` tools in combination with Valgrind’s Massif profiler. This setup captures detailed memory statistics for each cryptographic operation, recording values at the point of peak total memory consumption.. Raw profiling data is initially stored in a temporary directory, then moved to `test_data/up_results/computational_performance/machine_x/mem_results`.
+Memory usage is profiled using the Liboqs `test_kem_mem` and `test_sig_mem` tools in combination with Valgrind’s Massif profiler. This setup captures detailed memory statistics for each cryptographic operation, recording values at the point of peak total memory consumption. Raw profiling data is initially stored in a temporary directory, then moved to `test_data/up_results/computational_performance/machine_x/mem_results`.
 
 All results are saved in the `test_data/up_results/computational_performance/machine_x` directory, where x corresponds to the assigned machine ID. By default, these raw performance results will be parsed using the Python parsing scripts included within this project.
 
@@ -320,11 +321,11 @@ If the setup process sets that the energy tools should use the PQC-LEO OpenSSL b
 
 **Accepted Script Arguments:**
 
-| **Flag**                         | **Description**                                                                                                                       |
-|----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
-| `--use-custom-sys-state`         | Used to indicate that custom system state values should be set for the test instead of the default values                             |
-| `--use-custom-eng-control-ports` | Enable the use of custom network control ports for energy testing control signalling (requires --enable-energy-testing to be enabled) |
-| `--help`                         | Display the help message                                                                                                              |
+| **Flag**                         | **Description**                                                                                           |
+|----------------------------------|-----------------------------------------------------------------------------------------------------------|
+| `--use-custom-sys-state`         | Used to indicate that custom system state values should be set for the test instead of the default values |
+| `--use-custom-eng-control-ports` | Enable the use of custom network control ports for energy testing control signalling                      |
+| `--help`                         | Display the help message                                                                                  |
 
 ### tls_operations_energy_test.sh
 This controller script provides automation for TLS operations energy usage benchmarking. It measures the energy usage of PQC, Hybrid-PQC, and classical cryptographic operations performed directly through OpenSSL commands. The script tests key generation, encapsulation, and decapsulation for supported PQC/Hybrid-PQC KEMs; key generation, signing, and verification for PQC/Hybrid-PQC and classical signatures; and key generation and shared-secret derivation for classical key-exchange algorithms. It communicates with the collector device around each operation window, configures the system performance state through `system_state_configurer.sh`, and uses `oid_handler.sh` for PQC algorithms that require custom OID environment mappings. The script accepts command-line flags for custom system-state configuration and custom network control ports, and restores the system state on completion or interruption.
@@ -364,7 +365,7 @@ This script acts as the main controller for the result-parsing processes. It sup
 
 - **Command-Line Mode:** Accepts the same parameters via flags. The automated test scripts use this mode and can also be called manually for scripting purposes.
 
-In both modes, the script identifies the relevant raw test results in the `test_data/up_results` directory and invokes the appropriate parsing routines to generate structured CSV output. The results are then saved to the `test-data/results` directory, organised by test type and Machine-ID.
+In both modes, the script identifies the relevant raw test results in the `test_data/up_results` directory and invokes the appropriate parsing routines to generate structured CSV output. The results are then saved to the `test_data/results` directory, organised by test type and Machine-ID.
 
 **Usage Examples:**
 

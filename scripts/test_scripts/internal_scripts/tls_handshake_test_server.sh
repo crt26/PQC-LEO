@@ -20,7 +20,7 @@ function setup_base_env() {
     # Determine the directory that the script is being run from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-    # Try and find the .dir_marker.tmp file to determine the project's root directory
+    # Try and find the .pqc_leo_dir_marker.tmp file to determine the project's root directory
     current_dir="$script_dir"
 
     # Continue moving up the directory tree until the .pqc_leo_dir_marker.tmp file is found
@@ -104,7 +104,7 @@ function set_test_env() {
     local test_type="$1"
     local configure_mode="$2"
 
-    # Clear the current_group array before setting the new group
+    # Clear the current_group string before setting the new group
     current_group=""
 
     # Determine the test parameters based on the test type passed to the function
@@ -122,7 +122,7 @@ function set_test_env() {
             sig_algs+=("$line")
         done < $sig_alg_file
 
-        # Populate the current group array with PQC algorithms
+        # Populate the current group string with PQC algorithms
         for kem_alg in "${kem_algs[@]}"; do
             current_group+=":$kem_alg"
         done
@@ -150,7 +150,7 @@ function set_test_env() {
             sig_algs+=("$line")
         done < $hybrid_sig_alg_file
 
-        # Populate the current group array with Hybrid-PQC algorithms
+        # Populate the current group string with Hybrid-PQC algorithms
         for hybr_kem_alg in "${kem_algs[@]}"; do
             current_group+=":$hybr_kem_alg"
         done
@@ -497,7 +497,7 @@ function classic_tests() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function tls_server_test_entrypoint() {
-    # Main entry point for the server-side TLS handshake testing script. Coordinates setup, connection to the server, and 
+    # Main entry point for the server-side TLS handshake testing script. Coordinates setup, connection to the client, and
     # execution of PQC, Hybrid-PQC, and Classic handshake tests over a specified number of runs. Ensures the test environment 
     # is configured and handles control signalling.
 
@@ -518,7 +518,7 @@ function tls_server_test_entrypoint() {
     control_signal "iteration_handshake"
     clear
 
-    # Output the test start message
+    # Output the test start message to the terminal
     echo -e "\n####################################"
     echo "Performing TLS Handshake Tests"
     echo "####################################"
