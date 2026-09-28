@@ -258,7 +258,7 @@ function parse_args {
     if [ "$custom_control_time_flag" == "True" ]; then
 
         # Check if the set sleep time value falls into the given special cases
-        if (( $(echo "$control_sleep_time > 0 && $control_sleep_time < 0.25" | bc -l) )); then
+        if awk -v sleep_time="$control_sleep_time" 'BEGIN { exit !(sleep_time > 0 && sleep_time < 0.25) }'; then
 
             # Output the warning to the user
             echo "[WARNING] - Control sleep time is below the lowest tested value of 0.25 seconds"
@@ -273,7 +273,7 @@ function parse_args {
                 exit 1
             fi
 
-        elif (( $(echo "$control_sleep_time == 0" | bc -l) )); then
+        elif awk -v sleep_time="$control_sleep_time" 'BEGIN { exit !(sleep_time == 0) }'; then
 
             # Output the option to disable the sleep timer to the user and get their response
             echo "[NOTICE] - You have set the control sleep time to 0 seconds"
