@@ -25,7 +25,7 @@ It also updates several core cryptographic dependencies, including Liboqs, OQS-P
 - Upgrade OpenSSL dependency to 4.0.2 by @crt26 in [PR 127](https://github.com/crt26/PQC-LEO/pull/127)
 - Fix OpenSSL compatibility check running before libssl-dev installation by @crt26 in [PR 130](https://github.com/crt26/PQC-LEO/pull/130)
 
-**Full Changelog (through PR 130)**: https://github.com/crt26/PQC-LEO/compare/v0.5.1...f023a0c8e3dfe75a3b8579f2c90b5f96f1961175
+**Full Changelog**: https://github.com/crt26/PQC-LEO/compare/v0.5.1...v0.6.0
 
 **New Contributors:**
 - @MarkAtwood made their first contribution in [PR 100](https://github.com/crt26/PQC-LEO/pull/100)
