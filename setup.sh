@@ -523,21 +523,19 @@ function dependency_install() {
     # Validate the system OpenSSL version now that libssl-dev should be installed (needed for building energy tools with sys OpenSSL)
     if [[ ( "$use_energy_tools" -eq 1 || "$install_type" -eq 3 ) && "$use_pqc_leo_openssl" -eq 0 ]]; then
 
-        # Check the system OpenSSL version against the minimum required version for PQC-LEO
+        # Check the system OpenSSL version against the minimum required version for the energy tools
         check_sys_openssl_version "$min_sys_openssl_version"
 
         # If the system OpenSSL version is not compatible, output an error message and exit the setup script
         if [ "$eng_sys_openssl_ok" -ne 1 ]; then
 
-            # Determine the cause of the incompatibility and output an appropriate error message to the user
+            # Determine the cause of the incompatibility and output an appropriate error message to the user and exit
             if [ "$sys_openssl_version" == "unavailable" ]; then
                 echo "[ERROR] - System OpenSSL was selected, but libssl-dev is not fully installed for the native architecture."
             else
                 echo "[ERROR] - System OpenSSL was selected, but libssl-dev $sys_openssl_version is older than the required version $min_sys_openssl_version."
             fi
             echo "Install libssl-dev $min_sys_openssl_version or newer, or rerun setup and select the PQC-LEO OpenSSL build."
-
-            # Exit the setup script with an error code
             exit 1
 
         fi
@@ -1057,10 +1055,10 @@ function determine_energy_tools_openssl_choice() {
     # Check if the system OpenSSL version meets the minimum requirement for the energy measurement tools
     check_sys_openssl_version "$min_sys_openssl_version"
 
-    # Keep the choice before installation even when the development package has not been installed yet.
+    # Based on the system OpenSSL version check, determine which OpenSSL selection prompts are needed for this install
     if [ "$eng_sys_openssl_ok" -eq 1 ] || [ "$sys_openssl_version" == "unavailable" ]; then
 
-        # If the cause of the incompatibility is a missing development package, output a notice to the user about the requirement for libssl-dev
+        # If libssl-dev is missing, notify the user that it will be installed during dependency installation
         if [ "$sys_openssl_version" == "unavailable" ]; then
             echo "[NOTICE] - The system OpenSSL development package (libssl-dev) is not currently installed."
             echo "System OpenSSL requires libssl-dev version $min_sys_openssl_version or newer for use with the energy measurement tools."
@@ -1096,7 +1094,7 @@ function determine_energy_tools_openssl_choice() {
 
     else
 
-        # An installed development package below the minimum version requires the project build.
+        # Output the warning that the installed development package is below the minimum version required for building the energy tools
         local sys_version_num="${sys_openssl_version%%[-+]*}"
         echo "[WARNING] - System OpenSSL development package (libssl-dev) $sys_version_num is older than the required version $min_sys_openssl_version for the energy measurement tools."
 
