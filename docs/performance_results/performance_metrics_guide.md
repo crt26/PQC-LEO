@@ -336,7 +336,7 @@ TLS operations energy parsing produces `pqc` and `hybrid_pqc` KEM/signature resu
 ## Useful External Documentation
 - [Liboqs Webpage](https://openquantumsafe.org/liboqs/)
 - [Liboqs GitHub Page](https://github.com/open-quantum-safe/liboqs)
-- [Valgrind Massif Tool](http://valgrind.org/docs/manual/ms-manual.html)
+- [Valgrind Massif Tool](https://valgrind.org/docs/manual/ms-manual.html)
 - [OQS-Provider Webpage](https://openquantumsafe.org/applications/tls.html#oqs-openssl-provider)
 - [OQS-Provider GitHub Page](https://github.com/open-quantum-safe/oqs-provider)
 - [OpenSSL(4.0.2) Release](https://github.com/openssl/openssl/releases/tag/openssl-4.0.2)

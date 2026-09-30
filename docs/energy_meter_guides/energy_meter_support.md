@@ -1,4 +1,4 @@
-# Supported Energy Meters <!-- omit from toc -->
+# Supported Energy Meter Guides <!-- omit from toc -->
 
 ## Overview <!-- omit from toc -->
 This document provides information related to the energy meters that are currently supported by PQC-LEO for energy usage testing. This document provides an overview of the currently supported energy meters and links to detailed documentation and usage guides for each of the supported energy meters. This document also provides a brief guide on how additional energy meters can be integrated into the PQC-LEO energy usage testing tooling and links to more detailed developer documentation for integrating support for additional energy meters.
@@ -11,7 +11,7 @@ This document provides information related to the energy meters that are current
 PQC-LEO currently supports energy data collection using the following energy meters:
 
 | **Energy Meter** | **Description**                                                                                                                                              | **Documentation**                                                        |
-|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
+|------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
 | TC66C            | The TC66C is a small USB-C multimeter device that can be used to measure various electrical metrics such as voltage, current, power, and energy consumption. | [TC66C Usage Guide](./supported_meters/TC66C/tc66c_meter_usage_guide.md) |
 
 ## Integrating Support for Additional Energy Meters

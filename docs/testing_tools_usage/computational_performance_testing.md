@@ -90,4 +90,4 @@ For complete details on parsing functionality and a breakdown of the collected c
 - [Liboqs Webpage](https://openquantumsafe.org/liboqs/)
 - [Liboqs GitHub Page](https://github.com/open-quantum-safe/liboqs)
 - [Latest liboqs Release Notes](https://github.com/open-quantum-safe/liboqs/blob/main/RELEASE.md)
-- [Valgrind Massif Tool](http://valgrind.org/docs/manual/ms-manual.html)
+- [Valgrind Massif Tool](https://valgrind.org/docs/manual/ms-manual.html)
