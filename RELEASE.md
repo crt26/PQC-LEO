@@ -23,6 +23,7 @@ It also updates several core cryptographic dependencies, including Liboqs, OQS-P
 - Rename TLS speed energy testing to TLS operations energy testing by @crt26 in [PR 125](https://github.com/crt26/PQC-LEO/pull/125)
 - Add shared OpenSSL selection and compatibility handling for energy tools by @crt26 in [PR 126](https://github.com/crt26/PQC-LEO/pull/126)
 - Upgrade OpenSSL dependency to 4.0.2 by @crt26 in [PR 127](https://github.com/crt26/PQC-LEO/pull/127)
+- Tidy repository files and fix consistency issues by @crt26 in [PR 128](https://github.com/crt26/PQC-LEO/pull/128)
 - Fix OpenSSL compatibility check running before libssl-dev installation by @crt26 in [PR 130](https://github.com/crt26/PQC-LEO/pull/130)
 
 **Full Changelog**: https://github.com/crt26/PQC-LEO/compare/v0.5.1...v0.6.0
