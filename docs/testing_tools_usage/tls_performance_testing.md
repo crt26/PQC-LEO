@@ -1,17 +1,21 @@
 # Automated PQC TLS Performance Benchmarking Tool - Usage Guide <!-- omit from toc -->
 
 ## Overview <!-- omit from toc -->
-This tool provides automated benchmarking for PQC-enabled TLS 1.3 handshakes and cryptographic operations within OpenSSL 3.6.1. It supports testing of both OpenSSL-native PQC algorithms and those integrated into OpenSSL via the OQS-Provider library. The benchmarking process evaluates TLS handshakes using Post-Quantum Cryptography (PQC) and Hybrid-PQC ciphersuites, as well as traditional cryptographic algorithms for a baseline comparison.
+This tool provides automated benchmarking for PQC-enabled TLS 1.3 handshakes and cryptographic operations within OpenSSL 4.0.2. It supports OpenSSL-native algorithms and PQC algorithms integrated into OpenSSL through the OQS-Provider library. The handshake tests evaluate PQC and Hybrid-PQC signing-algorithm/KEM pairings alongside classical signing-algorithm, key-exchange-group, and ciphersuite combinations. The OpenSSL speed tests benchmark PQC/Hybrid-PQC KEM and signature operations together with classical signature and key-exchange operations.
 
 Tests can be conducted either on a single machine (localhost) or across two networked machines, using a physical or virtual connection. The tool records detailed performance and timing metrics for each algorithm pairing evaluated during testing.
 
 The relevant PQC TLS Performance testing scripts can be found in the `scripts/test_scripts` directory from the project's root.
 
->**Notice:** The versions of project dependencies used in PQC-LEO version 0.5.0 contains a known issue where certain signature/KEM combinations may produce values of `inf` for "Connections Per User Second" results in TLS handshake testing when using smaller testing windows. Please refer to the [Inf Result Value Occurrence Details](#inf-result-value-occurrence-details) section in this document for further information.
+If you wish to perform TLS handshake or TLS operations energy usage testing, please refer to the [PQC Energy Usage Testing Guide](./pqc_energy_usage_testing.md) for further details.
+
+To compare the size of the network data exchanged by one-way and mutually authenticated TLS 1.3 handshakes, refer to the separate [TLS Handshake Transmission Cost Testing Guide](./tls_handshake_transmission_cost_testing.md).
+
+>**Notice:** Certain signature/KEM combinations may produce values of `inf` for "Connections Per User Second" results in TLS handshake testing when using smaller testing windows. Please refer to the [Inf Result Value Occurrence Details](#inf-result-value-occurrence-details) section in this document for further information.
 
 ### Contents <!-- omit from toc -->
 - [Supported Hardware](#supported-hardware)
-- [Supported PQC Algorithms](#supported-pqc-algorithms)
+- [Supported Algorithms](#supported-algorithms)
 - [Preparing the Testing Environment](#preparing-the-testing-environment)
   - [Control Ports and Firewall Setup for Testing](#control-ports-and-firewall-setup-for-testing)
   - [Generating Required Certificates and Private Keys](#generating-required-certificates-and-private-keys)
@@ -24,7 +28,8 @@ The relevant PQC TLS Performance testing scripts can be found in the `scripts/te
 - [Advanced Testing Customisation](#advanced-testing-customisation)
   - [Customising Testing Suite TCP Ports](#customising-testing-suite-tcp-ports)
   - [Adjusting Control Signalling](#adjusting-control-signalling)
-- [Disabling Automatic Result Parsing](#disabling-automatic-result-parsing)
+  - [Disabling Automatic Result Parsing](#disabling-automatic-result-parsing)
+  - [Enabling Energy Usage Testing](#enabling-energy-usage-testing)
 - [Inf Result Value Occurrence Details](#inf-result-value-occurrence-details)
 - [Useful External Documentation](#useful-external-documentation)
 
@@ -34,14 +39,14 @@ The automated testing tool is currently only supported on the following devices:
 - x86 Linux Machines using a Debian-based operating system
 - ARM Linux devices using a 64-bit Debian-based Operating System
 
-## Supported PQC Algorithms
-This tool supports all PQC and Hybrid-PQC algorithms available through OpenSSL 3.6.1 and the OQS-Provider. However, due to known incompatibilities and dependency limitations, a small number of algorithms are excluded from testing.
+## Supported Algorithms
+This tool supports PQC and Hybrid-PQC algorithms available through OpenSSL 4.0.2 and the OQS-Provider, with a small number excluded because of known incompatibilities and dependency limitations. TLS handshake testing also covers a set of classical digital signature algorithms, TLS key-exchange groups, and TLS 1.3 ciphersuites. Every supported classical signing algorithm is tested with every supported key-exchange-group and ciphersuite combination. TLS speed testing covers supported PQC/Hybrid-PQC KEMs and signatures, classical RSA/EC/Ed signature algorithms, and classical ECDH/XDH key-exchange groups.
 
-Additional information on the excluded algorithms can be found in the OpenSSL and OQS-Provider subsections in the following project documentation:
+RSA-PSS is included in classical TLS handshake testing, but standard TLS speed testing does not produce separate RSA-PSS results. The underlying `openssl speed` command provides size-based RSA selectors only and uses its standard RSA/PKCS#1 v1.5 benchmark path; it does not provide an RSA-PSS selector that the test could invoke or parse as a distinct result.
+
+The complete algorithm lists and information about exclusions are provided in the following project documentation:
 
 [Supported Algorithms](../supported_algorithms.md)
-
-**Notice:** The HQC KEM algorithms are disabled by default in recent versions of both Liboqs and the OQS-Provider, due to their current implementations not conforming to the latest specification, which includes important security fixes. For benchmarking purposes, the setup process includes an optional flag to enable HQC in these libraries, accompanied by a user confirmation prompt and warning. Enabling HQC is done at the user's own discretion, and this project assumes no responsibility for its use. For instructions on enabling HQC, see the [Advanced Setup Configuration Guide](../advanced_setup_configuration.md), and refer to the [Disclaimer Document](../../DISCLAIMER.md) for more information on this issue.
 
 ## Preparing the Testing Environment
 Before running any tests, ensure your environment is correctly configured for either single-machine or two-machine testing. This includes opening required TCP ports in your firewall and generating the necessary TLS certificates and private keys.
@@ -60,7 +65,7 @@ Please make sure your firewall allows traffic on the following ports:
 If the default TCP ports are unsuitable for your environment, please see the [Advanced Testing Customisation](#advanced-testing-customisation) section for further instructions on configuring custom TCP ports.
 
 ### Generating Required Certificates and Private Keys
-To perform the TLS handshake performance tests, the server certificate and private-key files must first be generated. The generated keys and certificates will be saved to the `test_data/keys` directory in the project root. This can be done by executing the following command from within the `scripts/testing_scripts` directory:
+To perform the TLS handshake performance tests, the server certificate and private-key files must first be generated. The generated keys and certificates will be saved to the `test_data/keys` directory in the project root. This can be done by executing the following command from within the `scripts/test_scripts` directory:
 
 ```
 ./tls_generate_keys.sh
@@ -72,7 +77,7 @@ To perform the TLS handshake performance tests, the server certificate and priva
 Once the testing environment has been properly configured, it is now possible to begin the automated PQC TLS performance testing.
 
 ### Testing Tool Execution
-To start the automated testing tool, open a terminal in the `scripts/testing_scripts` directory and run the following command:
+To start the automated testing tool, open a terminal in the `scripts/test_scripts` directory and run the following command:
 
 ```
 ./pqc_tls_performance_test.sh
@@ -86,9 +91,10 @@ Upon executing the script, the testing tool will prompt you to enter the paramet
 The testing tool will prompt you to enter the parameters for the test. These parameters include:
 
 - Machine type (server or client)
-- Whether the results should have a custom Machine-ID assigned to them (if the machine is a client)
+- Whether TLS handshake performance results should be stored (if the machine is a client and energy usage testing is enabled)
+- Whether the results should have a custom Machine-ID assigned to them (if the machine is a client and performance results are being stored)
 - Duration of each TLS handshake tests (if the machine is a client) **†**
-- Duration of TLS speed tests (if the machine is a client) **††**
+- Duration of TLS speed tests (if the machine is a client and energy usage testing is not enabled) **††**
 - Number of test runs to be performed (must match on both machines)
 - IP address of the other machine (use 127.0.0.1 for single-machine testing)
 
@@ -96,7 +102,7 @@ The testing tool will prompt you to enter the parameters for the test. These par
 
 **Note:** Using durations below 5 seconds may produce `inf` result values for some algorithm combinations. It is recommended to use higher test durations for more consistent results. See the [Inf Result Value Occurrence Details](#inf-result-value-occurrence-details) section for more information.
 
-**††** Defines the duration (in seconds) for benchmarking individual cryptographic operations (e.g., signing or key encapsulation) using the OpenSSL `s_speed` tool.
+**††** Defines the duration (in seconds) for benchmarking individual cryptographic operations (for example, signing, key encapsulation, or key derivation) using the OpenSSL `speed` tool.
 
 ### Single Machine Testing
 If running the full test locally (single-machine), perform the following steps after generating the required certificates:
@@ -145,7 +151,7 @@ When two machines are used for testing that are connected over a physical/virtua
 4. Begin testing and allow the script to complete
 
 ## Outputted Results
-After testing completes, raw performance results are saved to the following directory:
+After standard TLS performance testing completes, raw performance results are saved to the following directory:
 
 `test_data/up_results/tls_performance/machine_x`
 
@@ -157,7 +163,11 @@ These parsed results are saved in:
 
 `test_data/results/tls_performance/machine_x`
 
+TLS speed results are separated into `pqc`, `hybrid`, and `classic` subdirectories under each machine's `speed_results` directory. Classical signature results are further separated into RSA and EC/Ed CSV files, while classical key-exchange results are separated into ECDH and XDH CSV files. Per-run CSVs and averages across all configured runs are generated for each category.
+
 > **Note:** When using multiple machines for testing, the results will only be stored on the client machine, not the server machine.
+
+When energy usage testing is enabled, these client-side performance results are not stored by default. The client configuration includes a prompt that allows the user to retain them if required. If retained, only TLS handshake results are stored and parsed because TLS speed testing is not performed in this mode. Energy usage results are stored and parsed separately on the collection machine.
 
 To skip automatic parsing and only output the raw test results, pass the `--disable-result-parsing` flag when launching the test script:
 
@@ -178,6 +188,7 @@ Supported customisation features include:
 - TCP port configuration 
 - Control Signal Behaviour
 - Disabling Automatic Result Parsing
+- Enabling Energy Usage Testing
 
 ### Customising Testing Suite TCP Ports
 If the default TCP ports are incompatible with the testing environment, custom ports can be specified at runtime using the following flags. Port values must fall within the range 1024–65535.
@@ -202,7 +213,7 @@ If the default delay is unsuitable for your environment, you can either set a cu
 
 **Please note** that the `--control-sleep-time` flag cannot be used with the `--disable-control-sleep` flag.
 
-## Disabling Automatic Result Parsing
+### Disabling Automatic Result Parsing
 The performance testing script triggers automatic result parsing upon test completion. This behaviour can be disabled by passing the following flag at runtime:
 
 ```
@@ -215,6 +226,16 @@ Disabling automatic parsing may be appropriate in scenarios such as:
 
 - Running tests in low-resource environments
 
+### Enabling Energy Usage Testing
+The TLS performance testing script can be configured to collect energy usage metrics during testing. This is done by passing the `--enable-energy-testing` flag when launching the script on the client machine. Please refer to the [PQC Energy Usage Testing Guide](./pqc_energy_usage_testing.md) for further details on performing TLS handshake energy usage testing.
+
+The TLS handshake energy usage testing functionality can be enabled by passing the following flag when launching the testing script on the client machine:
+
+```
+./pqc_tls_performance_test.sh --enable-energy-testing
+```
+
+During client configuration, the script asks whether the TLS handshake performance results should also be written to the client machine. Selecting no collects only the energy usage results on the collection machine. Selecting yes additionally stores and parses the handshake performance results on the client; TLS speed testing and parsing remain disabled. Writing the performance results to disk occurs inside the measured test windows and will therefore be reflected in the collected energy usage metrics.
 
 ## Inf Result Value Occurrence Details
 Certain signature/KEM combinations may produce `inf` values for the **"Connections Per User Second"** metric during TLS handshake testing when using shorter test durations (typically below 5 seconds).
@@ -229,10 +250,9 @@ For a detailed explanation of this behaviour and how it is handled, please refer
 
 - [Inf Result Value Occurrence Details](../performance_results/tls_handshake_inf_result_handling.md)
 
-
 ## Useful External Documentation
-- [OpenSSL(3.6.1) Release](https://github.com/openssl/openssl/releases/tag/openssl-3.6.1)
-- [OpenSSL(3.6.1) Documentation](https://docs.openssl.org/3.6/)
+- [OpenSSL(4.0.2) Release](https://github.com/openssl/openssl/releases/tag/openssl-4.0.2)
+- [OpenSSL(4.0.2) Documentation](https://docs.openssl.org/4.0/)
 - [OQS-Provider Webpage](https://openquantumsafe.org/applications/tls.html#oqs-openssl-provider)
 - [OQS-Provider GitHub Page](https://github.com/open-quantum-safe/oqs-provider)
 - [Latest OQS-Provider Release Notes](https://github.com/open-quantum-safe/oqs-provider/blob/main/RELEASE.md)

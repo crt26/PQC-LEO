@@ -3,13 +3,11 @@
 # Copyright (c) 2023-2026 Callum Turino
 # SPDX-License-Identifier: MIT
 
-# Client-side script for benchmarking the performance of cryptographic algorithms used in TLS, including 
-# Post-Quantum Cryptography (PQC), and Hybrid-PQC signature and Key Encapsulation Mechanism (KEM) algorithms.
-# This benchmarking is performed using OpenSSL 3.6.1's s_speed utility, which measures the execution time of 
-# cryptographic operations for each algorithm. The script evaluates both native PQC implementations available in 
-# OpenSSL and those integrated via OQS-Provider. The results are stored in machine-specific directories according 
-# to the selected test type (PQC, Hybrid-PQC, or Classic). Test parameters are passed from the main OQS-Provider 
-# benchmarking control script, which coordinates the execution and ensures synchronisation of the tests.
+# Client-side script for benchmarking cryptographic operations used in TLS. It uses OpenSSL 4.0.2's `speed`
+# command to test PQC and Hybrid-PQC signatures and KEMs, classical RSA/EC/Ed signatures, and classical
+# ECDH/XDH key exchange. PQC implementations may be native to OpenSSL or provided by the OQS-Provider.
+# Results are stored in machine-specific PQC, Hybrid-PQC, and classical directories. The main TLS benchmarking
+# controller passes the test parameters and coordinates execution.
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function setup_test_env() {
@@ -20,7 +18,7 @@ function setup_test_env() {
     # Determine the directory that the script is being executed from
     script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-    # Try and find the .dir_marker.tmp file to determine the project's root directory
+    # Try and find the .pqc_leo_dir_marker.tmp file to determine the project's root directory
     current_dir="$script_dir"
 
     # Continue moving up the directory tree until the .pqc_leo_dir_marker.tmp file is found
@@ -37,7 +35,7 @@ function setup_test_env() {
 
         # If the system's root directory is reached and the file is not found, exit the script
         if [ "$current_dir" == "/" ]; then
-            echo -e "Root directory path file not present, please ensure the path is correct and try again."
+            echo -e "[ERROR] - Root directory path file not present, please ensure the path is correct and try again."
             exit 1
         fi
 
@@ -51,7 +49,7 @@ function setup_test_env() {
     util_scripts="$root_dir/scripts/utility_scripts"
 
     # Declare the global library directory path variables
-    openssl_path="$libs_dir/openssl_3.6.1"
+    openssl_path="$libs_dir/openssl_4.0.2"
     oqs_provider_path="$libs_dir/oqs_provider"
     provider_path="$oqs_provider_path/lib"
 
@@ -63,6 +61,7 @@ function setup_test_env() {
     elif [ ! -d "$openssl_path" ]; then
         echo "[ERROR] - OpenSSL library not found in $libs_dir"
         exit 1
+
     fi
 
     # Check the OpenSSL library directory path
@@ -80,6 +79,8 @@ function setup_test_env() {
     sig_alg_file="$test_data_dir/alg_lists/tls_speed_sig_algs.txt"
     hybrid_kem_alg_file="$test_data_dir/alg_lists/tls_speed_hybr_kem_algs.txt"
     hybrid_sig_alg_file="$test_data_dir/alg_lists/tls_speed_hybr_sig_algs.txt"
+    classic_sig_alg_file="$test_data_dir/alg_lists/tls_speed_classic_sig_algs.txt"
+    classic_key_exchange_group_file="$test_data_dir/alg_lists/tls_speed_classic_key_exchange_groups.txt"
 
     # Create the PQC KEM and digital signature algorithm list arrays
     kem_algs=()
@@ -103,11 +104,31 @@ function setup_test_env() {
         hybrid_sig_algs+=("$line")
     done < $hybrid_sig_alg_file
 
+    # Create the classical digital signature and key exchange algorithm list arrays
+    classic_sig_algs=()
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        if [[ -n "$line" ]]; then
+            classic_sig_algs+=("$line")
+        fi
+    done < "$classic_sig_alg_file"
+
+    classic_key_exchange_groups=()
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        if [[ -n "$line" ]]; then
+            classic_key_exchange_groups+=("$line")
+        fi
+    done < "$classic_key_exchange_group_file"
+
     # Create the result output directories and remove old ones if needed
     if [ -d $PQC_SPEED ]; then
         rm -rf $PQC_SPEED
     fi
     mkdir -p $PQC_SPEED
+
+    if [ -d $CLASSIC_SPEED ]; then
+        rm -rf $CLASSIC_SPEED
+    fi
+    mkdir -p $CLASSIC_SPEED
 
     if [ -d $HYBRID_SPEED ]; then
         rm -rf $HYBRID_SPEED
@@ -118,18 +139,33 @@ function setup_test_env() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function tls_speed_test() {
-    # Function for running TLS speed tests on various algorithm types, measuring cryptographic performance using OpenSSL 
-    # 3.6.1's `s_speed` utility. The utility benchmarks signature and key exchange algorithms, supporting both native 
-    # PQC algorithms and those provided via the OQS-Provider.
+    # Function for running TLS speed tests across PQC, Hybrid-PQC, and classical algorithm types using OpenSSL 4.0.2's `speed`
+    # command. It benchmarks signature, KEM, and key-exchange operations supported by OpenSSL and the OQS-Provider.
 
     # Set the test parameter arrays
-    test_types=("PQC-KEMs" "PQC-Digital Signatures" "Hybrid-PQC KEMs" "Hybrid-PQC-Digital-Signatures")
-    alg_lists=("${kem_algs[*]}" "${sig_algs[*]}" "${hybrid_kem_algs[*]}" "${hybrid_sig_algs[*]}")
+    test_types=(
+        "PQC-KEMs"
+        "PQC-Digital-Signatures"
+        "Hybrid-PQC-KEMs"
+        "Hybrid-PQC-Digital-Signatures"
+        "Classic-Digital-Signatures"
+        "Classic-Key-Exchange-Groups"
+    )
+    alg_lists=(
+        "${kem_algs[*]}"
+        "${sig_algs[*]}"
+        "${hybrid_kem_algs[*]}" 
+        "${hybrid_sig_algs[*]}"
+        "${classic_sig_algs[*]}"
+        "${classic_key_exchange_groups[*]}"
+    )
     output_files=(
-        "$PQC_SPEED/tls_speed_kem" 
-        "$PQC_SPEED/tls_speed_sig" 
+        "$PQC_SPEED/tls_speed_kem"
+        "$PQC_SPEED/tls_speed_sig"
         "$HYBRID_SPEED/tls_speed_hybrid_kem"
         "$HYBRID_SPEED/tls_speed_hybrid_sig"
+        "$CLASSIC_SPEED/tls_speed_classic_sig"
+        "$CLASSIC_SPEED/tls_speed_classic_key_exchange"
     )
 
     # Perform the TLS speed tests for the specified number of runs
@@ -154,7 +190,7 @@ function tls_speed_test() {
 
             # Perform the OpenSSL speed test with the current test parameters
             "$openssl_path/bin/openssl" speed \
-                -seconds "$TIME_NUM" \
+                -seconds "$SPEED_TIME_NUM" \
                 -provider default \
                 -provider oqsprovider \
                 -provider-path "$provider_path" \
@@ -178,13 +214,13 @@ function tls_speed_test() {
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function tls_speed_test_entrypoint() {
-    # Main function for managing the execution of TLS speed performance tests. 
-    # It sets up the environment, runs the tests for various algorithm types, and handles OpenSSL configuration modifications.
+    # Main function for managing the execution of TLS speed performance tests. It sets up the environment, runs the tests for 
+    # various algorithm types, and handles OpenSSL configuration modifications.
 
     # Setup the base environment for the test suite
     setup_test_env
 
-    # Output the test start message
+    # Output the test start message to the terminal
     echo -e "\n##########################"
     echo "Performing TLS Speed Tests"
     echo -e "##########################"

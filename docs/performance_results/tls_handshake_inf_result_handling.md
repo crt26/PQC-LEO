@@ -2,7 +2,7 @@
 This document describes the occurrence of `inf` values in the TLS handshake benchmarking within PQC-LEO, explains why they occur, and outlines how they are handled in the framework.
 
 ## Cause and Occurrence
-During development of the v0.5.0 release of PQC-LEO, it was identified that certain signature and KEM algorithm combinations may produce `inf` values for the **"Connections Per User Second"** metric during TLS handshake benchmarking when using shorter test durations. This behaviour is due to how this metric is calculated within the OpenSSL `speed` tool, where if no change in user CPU time is registered during testing, the resulting value is `inf`.
+During development of the v0.5.0 release of PQC-LEO, it was identified that certain signature and KEM algorithm combinations may produce `inf` values for the **"Connections Per User Second"** metric during TLS handshake benchmarking when using shorter test durations. This behaviour is due to how this metric is calculated within the OpenSSL `s_time` tool, where if no change in user CPU time is registered during testing, the resulting value is `inf`.
 
 This behaviour is more likely to occur when the TLS handshake test duration is below 5 seconds. It is not tied to a specific signature/KEM combination and does not occur consistently across runs. However, it has only been observed in variants of `SPHINCS`, though not reliably for every variant or execution.
 
@@ -11,7 +11,7 @@ Further technical details, including the root cause within the dependency source
 - [PR #82 Discussion Comment](https://github.com/crt26/PQC-LEO/pull/82#issuecomment-4040631744)
 
 ## Recommendation
-To ensure consistent and complete average calculations, it is recommended to use TLS handshake test durations of **5 seconds or greater**. This reduces the likelihood of `inf` values occurring and ensures that all test runs can be included in average calculations. Please also review how performance metrics are structured to accommodate this behaviour, as described in the [Impact on Output Data](#impact-on-output-data) section.
+To improve consistency of average calculations, it is recommended to use TLS handshake test durations of **5 seconds or greater**. This reduces the likelihood of `inf` values occurring but does not guarantee that all test runs can be included in average calculations. Please also review how performance metrics are structured to accommodate this behaviour, as described in the [Impact on Output Data](#impact-on-output-data) section.
 
 ## Mitigation in PQC-LEO
 To handle this issue while maintaining flexibility within PQC-LEO, the following functionality was introduced in v0.5.0:
@@ -32,9 +32,9 @@ After the warning is displayed, the following actions can be taken:
 If the user opts to enter a new duration after the warning, the script will enforce a minimum TLS handshake test length of 5 seconds for the remainder of the configuration process.
 
 ### Handling During Result Parsing
-When calculating average TLS handshake results, the Python parsing scripts will check for the presence of `inf` values in the data collected across all runs for each signature/KEM combination.
+When calculating average PQC and Hybrid-PQC TLS handshake results, the Python parsing scripts check for the presence of `inf` values in the data collected across all runs for each signature/KEM combination. Classical handshake averages currently do not apply this filter.
 
-If a run contains an `inf` value in any metric, that entire run is excluded from the average calculation. Only runs with valid numerical results are used when computing the final averages.
+If a row contains an `inf` value in any metric, that row is excluded from the average calculation. First-use and reused-session rows are filtered independently. If no rows remain for an average, its metric fields are written as `N/A`.
 
 To maintain transparency, the number of runs used in the average is recorded alongside the results. This allows users to clearly identify when fewer runs were included due to invalid data.
 

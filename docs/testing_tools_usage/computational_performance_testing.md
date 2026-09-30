@@ -3,6 +3,8 @@
 ## Overview <!-- omit from toc -->
 This guide provides detailed instructions for using the automated Post-Quantum Cryptographic (PQC) computational performance testing tool. It allows users to gather benchmarking data for PQC algorithms using the Open Quantum Safe (OQS) Liboqs library. It automatically collects raw performance data in CSV and text formats, which can then be parsed into structured, analysis-ready results using the included Python scripts.
 
+If you wish to perform PQC computational energy usage testing, please refer to the [PQC Energy Usage Testing Guide](./pqc_energy_usage_testing.md) for further details.
+
 ### Contents <!-- omit from toc -->
 - [Supported Hardware](#supported-hardware)
 - [Supported PQC Algorithms](#supported-pqc-algorithms)
@@ -25,12 +27,10 @@ For a full list of algorithms currently supported in this project’s performanc
 
 [Supported Algorithms](../supported_algorithms.md)
 
-**Notice:** The HQC KEM algorithms are disabled by default in recent versions of both Liboqs and the OQS-Provider, due to their current implementations not conforming to the latest specification, which includes important security fixes. For benchmarking purposes, the setup process includes an optional flag to enable HQC in these libraries, accompanied by a user confirmation prompt and warning. Enabling HQC is done at the user's own discretion, and this project assumes no responsibility for its use. For instructions on enabling HQC, see the [Advanced Setup Configuration Guide](../advanced_setup_configuration.md), and refer to the [Disclaimer Document](../../DISCLAIMER.md) for more information on this issue.
-
 ## Performing PQC Computational Performance Testing
 
 ### Running the Testing Script
-The automated test script is located in the `scripts/testing_scripts` directory and can be launched using the following command:
+The automated test script is located in the `scripts/test_scripts` directory and can be launched using the following command:
 
 ```
 ./pqc_performance_test.sh
@@ -90,4 +90,4 @@ For complete details on parsing functionality and a breakdown of the collected c
 - [Liboqs Webpage](https://openquantumsafe.org/liboqs/)
 - [Liboqs GitHub Page](https://github.com/open-quantum-safe/liboqs)
 - [Latest liboqs Release Notes](https://github.com/open-quantum-safe/liboqs/blob/main/RELEASE.md)
-- [Valgrind Massif Tool](http://valgrind.org/docs/manual/ms-manual.html)
+- [Valgrind Massif Tool](https://valgrind.org/docs/manual/ms-manual.html)
