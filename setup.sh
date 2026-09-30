@@ -343,6 +343,57 @@ function configure_oqs_provider_build() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
+function check_sys_openssl_version() {
+    # Helper function for checking whether the native system OpenSSL development package meets the minimum version required by
+    # the energy tools. The function takes the minimum version as its first argument, stores the detected version in the global
+    # sys_openssl_version variable, and stores the compatibility result in the global eng_sys_openssl_ok flag.
+
+    # Define the default flag value for the system OpenSSL version check
+    eng_sys_openssl_ok=0
+
+    # Define the local variables for the minimum version, native architecture, package status, and version
+    local minimum_version="$1"
+    local native_arch
+    local openssl_package_status
+    local openssl_package_version
+    local installed_version
+
+    # Ensure that the minimum version was provided to the function before proceeding
+    if [[ -z "$minimum_version" ]]; then
+        echo "[ERROR] - The minimum system OpenSSL version was not provided."
+        exit 1
+    fi
+
+    # Query the OpenSSL development package for the native architecture to avoid returning multiple package records
+    native_arch=$(dpkg --print-architecture)
+    openssl_package_status=$(dpkg-query -W -f='${db:Status-Eflag} ${db:Status-Status}' "libssl-dev:$native_arch" 2>/dev/null)
+    openssl_package_version=$(dpkg-query -W -f='${Version}' "libssl-dev:$native_arch" 2>/dev/null)
+
+    # Check that the package is fully installed and error-free without rejecting packages held against upgrades
+    if [[ "$openssl_package_status" != "ok installed" ]] || [[ -z "$openssl_package_version" ]]; then
+
+        # Set the sys_openssl_version variable to "unavailable" if the package version cannot be determined
+        sys_openssl_version="unavailable"
+        return 0
+
+    fi
+
+    # Remove any Debian epoch so that it does not override the upstream minimum version during comparison
+    installed_version="${openssl_package_version#*:}"
+
+    # Store the detected version so that it can be reported by the calling function
+    sys_openssl_version="$installed_version"
+
+    # Compare the versions using Debian version semantics to determine if the installed version meets or exceeds the minimum required version
+    if dpkg --compare-versions "$installed_version" ge "$minimum_version"; then
+        eng_sys_openssl_ok=1
+    else
+        eng_sys_openssl_ok=0
+    fi
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
 function download_libraries() {
     # Function for downloading the required cryptographic libraries (OpenSSL, Liboqs, OQS-Provider). For the OQS libraries, 
     # it will default to using the last tested versions of the libraries, unless the --latest-dependency-versions command line 
@@ -466,6 +517,29 @@ function dependency_install() {
     if [[ ${#not_installed[@]} -ne 0 ]]; then
         sudo apt-get update
         sudo apt-get install -y "${not_installed[@]}"
+    fi
+
+
+    # Validate the system OpenSSL version now that libssl-dev should be installed (needed for building energy tools with sys OpenSSL)
+    if [[ ( "$use_energy_tools" -eq 1 || "$install_type" -eq 3 ) && "$use_pqc_leo_openssl" -eq 0 ]]; then
+
+        # Check the system OpenSSL version against the minimum required version for the energy tools
+        check_sys_openssl_version "$min_sys_openssl_version"
+
+        # If the system OpenSSL version is not compatible, output an error message and exit the setup script
+        if [ "$eng_sys_openssl_ok" -ne 1 ]; then
+
+            # Determine the cause of the incompatibility and output an appropriate error message to the user and exit
+            if [ "$sys_openssl_version" == "unavailable" ]; then
+                echo "[ERROR] - System OpenSSL was selected, but libssl-dev is not fully installed for the native architecture."
+            else
+                echo "[ERROR] - System OpenSSL was selected, but libssl-dev $sys_openssl_version is older than the required version $min_sys_openssl_version."
+            fi
+            echo "Install libssl-dev $min_sys_openssl_version or newer, or rerun setup and select the PQC-LEO OpenSSL build."
+            exit 1
+
+        fi
+
     fi
 
     # Determine the location of the system's Python binary before checking Python dependencies
@@ -959,63 +1033,13 @@ function oqs_provider_build() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
-function check_sys_openssl_version() {
-    # Helper function for checking whether the native system OpenSSL development package meets the minimum version required by
-    # the energy tools. The function takes the minimum version as its first argument, stores the detected version in the global
-    # sys_openssl_version variable, and stores the compatibility result in the global eng_sys_openssl_ok flag.
-
-    # Define the default flag value for the system OpenSSL version check
-    eng_sys_openssl_ok=0
-
-    # Define the local variables for the minimum version, native architecture, package status, and version
-    local minimum_version="$1"
-    local native_arch
-    local openssl_package_status
-    local openssl_package_version
-    local installed_version
-
-    # Ensure that the minimum version was provided to the function before proceeding
-    if [[ -z "$minimum_version" ]]; then
-        echo "[ERROR] - The minimum system OpenSSL version was not provided."
-        exit 1
-    fi
-
-    # Query the OpenSSL development package for the native architecture to avoid returning multiple package records
-    native_arch=$(dpkg --print-architecture)
-    openssl_package_status=$(dpkg-query -W -f='${db:Status-Eflag} ${db:Status-Status}' "libssl-dev:$native_arch" 2>/dev/null)
-    openssl_package_version=$(dpkg-query -W -f='${Version}' "libssl-dev:$native_arch" 2>/dev/null)
-
-    # Check that the package is fully installed and error-free without rejecting packages held against upgrades
-    if [[ "$openssl_package_status" != "ok installed" ]] || [[ -z "$openssl_package_version" ]]; then
-
-        # Set the sys_openssl_version variable to "unavailable" if the package version cannot be determined
-        sys_openssl_version="unavailable"
-        return 0
-
-    fi
-
-    # Remove any Debian epoch so that it does not override the upstream minimum version during comparison
-    installed_version="${openssl_package_version#*:}"
-
-    # Store the detected version so that it can be reported by the calling function
-    sys_openssl_version="$installed_version"
-
-    # Compare the versions using Debian version semantics to determine if the installed version meets or exceeds the minimum required version
-    if dpkg --compare-versions "$installed_version" ge "$minimum_version"; then
-        eng_sys_openssl_ok=1
-    else
-        eng_sys_openssl_ok=0
-    fi
-
-}
-
-#-------------------------------------------------------------------------------------------------------------------------------
 function determine_energy_tools_openssl_choice() {
     # Function for determining which OpenSSL installation to use for the energy measurement tools. The function checks the system
     # OpenSSL version and provides options for the user to select the appropriate installation. Based on the user's selection, 
     # the function sets the use_pqc_leo_openssl flag to indicate which OpenSSL installation to use. If the system OpenSSL version 
     # is incompatible, the function will prompt the user to proceed with the PQC-LEO OpenSSL build, setting the use_pqc_leo_openssl
-    # flag accordingly, or exit the setup script if the user chooses not to proceed.
+    # flag accordingly, or exit the setup script if the user chooses not to proceed. A missing development package allows a
+    # provisional system choice, which dependency_install validates after installing system packages.
 
     # Output the current task to the terminal
     echo -e "\n##############################################"
@@ -1032,7 +1056,14 @@ function determine_energy_tools_openssl_choice() {
     check_sys_openssl_version "$min_sys_openssl_version"
 
     # Based on the system OpenSSL version check, determine which OpenSSL selection prompts are needed for this install
-    if [ "$eng_sys_openssl_ok" -eq 1 ]; then
+    if [ "$eng_sys_openssl_ok" -eq 1 ] || [ "$sys_openssl_version" == "unavailable" ]; then
+
+        # If libssl-dev is missing, notify the user that it will be installed during dependency installation
+        if [ "$sys_openssl_version" == "unavailable" ]; then
+            echo "[NOTICE] - The system OpenSSL development package (libssl-dev) is not currently installed."
+            echo "System OpenSSL requires libssl-dev version $min_sys_openssl_version or newer for use with the energy measurement tools."
+            echo -e "The setup script will install the missing package during the dependency installation stage and verify the installed version before proceeding.\n"
+        fi
 
         # Prompt the user with the OpenSSL install options until a valid choice is provided
         while true; do 
@@ -1063,13 +1094,9 @@ function determine_energy_tools_openssl_choice() {
 
     else
 
-        # Determine which initial warning message needs to be outputted to the user based on if a version was detected or not
-        if [ "$sys_openssl_version" == "unavailable" ]; then
-            echo "[WARNING] - A compatible system OpenSSL development library version could not be found for the energy measurement tools."
-        else
-            local sys_version_num="${sys_openssl_version%%[-+]*}"
-            echo "[WARNING] - System OpenSSL $sys_version_num is older than the required version $min_sys_openssl_version for the energy measurement tools."
-        fi
+        # Output the warning that the installed development package is below the minimum version required for building the energy tools
+        local sys_version_num="${sys_openssl_version%%[-+]*}"
+        echo "[WARNING] - System OpenSSL development package (libssl-dev) $sys_version_num is older than the required version $min_sys_openssl_version for the energy measurement tools."
 
         # Warn that the system library cannot support the energy tools and explain the fallback build
         echo "The energy measurement tools must be built with the PQC-LEO OpenSSL build to ensure correct functionality."

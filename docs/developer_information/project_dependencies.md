@@ -74,7 +74,7 @@ By default, the setup script will install the latest available versions of these
 - libserialport-dev
 
 ## OpenSSL Compatibility for Energy Tools
-When installing the energy tools, all installation modes use the same OpenSSL selection process. The tools require OpenSSL **3.3.0 or newer** for compatibility with the energy measurement libraries. The setup script checks for a compatible system `libssl-dev` installation and, if found, allows users to choose between the system OpenSSL and the PQC-LEO **OpenSSL 4.0.2** build. Installation modes 1–3 still require the PQC-LEO project OpenSSL independently for the OQS libraries.
+When installing the energy tools, all installation modes use the same OpenSSL selection process. The tools can use either the system OpenSSL installation or the PQC-LEO **OpenSSL 4.0.2** build. The system option requires `libssl-dev` version **3.3.0 or newer**. If this package is missing during the configuration prompts, the system option remains available because the setup script installs and validates it during the dependency installation stage. If `libssl-dev` is unavailable or still does not meet the minimum version requirement after this stage, the PQC-LEO OpenSSL build must be used. Installation modes 1–3 still require the PQC-LEO project OpenSSL independently for the OQS libraries.
 
 If the PQC-LEO OpenSSL build is selected for the energy tools, the build process reuses `lib/openssl_4.0.2` when available, or downloads and builds it as needed. Binaries linked against this version require the corresponding `libssl.so` and `libcrypto.so` libraries to be available at runtime.
 
