@@ -519,7 +519,8 @@ function dependency_install() {
         sudo apt-get install -y "${not_installed[@]}"
     fi
 
-    # Validate the early system OpenSSL selection now that libssl-dev should be installed, before further downloads or builds
+
+    # Validate the system OpenSSL version now that libssl-dev should be installed (needed for building energy tools with sys OpenSSL)
     if [[ ( "$use_energy_tools" -eq 1 || "$install_type" -eq 3 ) && "$use_pqc_leo_openssl" -eq 0 ]]; then
 
         # Check the system OpenSSL version against the minimum required version for PQC-LEO
