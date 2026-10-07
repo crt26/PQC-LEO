@@ -35,10 +35,10 @@ This section lists the **last tested versions** of the project's core dependenci
 |----------------|------------------------|--------------------------------------------|------------------------------------------------|
 | Liboqs         | 0.16.0                 | `5a1a854b0dc9f2141bdc771c555ee60c37950183` |                                                |
 | OQS-Provider   | 0.11.0+                | `1670a8a91bbca997d33e6b6851309d6241cc224c` |                                                |
-| OpenSSL        | Official release 4.0.2 | N/A                                        | Downloaded as a fixed release tarball          |
+| OpenSSL        | Official release 4.0.3 | N/A                                        | Downloaded as a fixed release tarball          |
 | pqax           | Always latest          | N/A                                        | Pulled from latest main branch at install time |
 
-**Note:** The `--latest-dependency-versions` flag selects the latest OQS library versions. The PQC-LEO OpenSSL build remains fixed at 4.0.2; the energy tools can also use compatible system OpenSSL as described [below](#openssl-compatibility-for-energy-tools).
+**Note:** The `--latest-dependency-versions` flag selects the latest OQS library versions. The PQC-LEO OpenSSL build remains fixed at 4.0.3; the energy tools can also use compatible system OpenSSL as described [below](#openssl-compatibility-for-energy-tools).
 
 **Note:** The + sign in the OQS-Provider version indicates that the pinned commit includes additional changes beyond the last tagged release. This is because to utilise Liboqs version 0.16.0, several changes made to OQS-Provider after the 0.11.0 release are required.
 
@@ -74,9 +74,9 @@ By default, the setup script will install the latest available versions of these
 - libserialport-dev
 
 ## OpenSSL Compatibility for Energy Tools
-When installing the energy tools, all installation modes use the same OpenSSL selection process. The tools can use either the system OpenSSL installation or the PQC-LEO **OpenSSL 4.0.2** build. The system option requires `libssl-dev` version **3.3.0 or newer**. If this package is missing during the configuration prompts, the system option remains available because the setup script installs and validates it during the dependency installation stage. If `libssl-dev` is unavailable or still does not meet the minimum version requirement after this stage, the PQC-LEO OpenSSL build must be used. Installation modes 1–3 still require the PQC-LEO project OpenSSL independently for the OQS libraries.
+When installing the energy tools, all installation modes use the same OpenSSL selection process. The tools can use either the system OpenSSL installation or the PQC-LEO **OpenSSL 4.0.3** build. The system option requires `libssl-dev` version **3.3.0 or newer**. If this package is missing during the configuration prompts, the system option remains available because the setup script installs and validates it during the dependency installation stage. If `libssl-dev` is unavailable or still does not meet the minimum version requirement after this stage, the PQC-LEO OpenSSL build must be used. Installation modes 1–3 still require the PQC-LEO project OpenSSL independently for the OQS libraries.
 
-If the PQC-LEO OpenSSL build is selected for the energy tools, the build process reuses `lib/openssl_4.0.2` when available, or downloads and builds it as needed. Binaries linked against this version require the corresponding `libssl.so` and `libcrypto.so` libraries to be available at runtime.
+If the PQC-LEO OpenSSL build is selected for the energy tools, the build process reuses `lib/openssl_4.0.3` when available, or downloads and builds it as needed. Binaries linked against this version require the corresponding `libssl.so` and `libcrypto.so` libraries to be available at runtime.
 
 The provided `energy_metric_collector.sh` and `pqc_performance_energy_test.sh` scripts handle this automatically when the PQC-LEO OpenSSL build is used. They add the project OpenSSL library directory to `LD_LIBRARY_PATH` while preserving any existing paths. When running the energy tools manually with the project's OpenSSL build or another custom OpenSSL installation, users must ensure that the appropriate library directory is included in `LD_LIBRARY_PATH`, or the equivalent environment variable for the target platform.
 

@@ -44,7 +44,7 @@ cd tools
 make
 ```
 
-To use a custom OpenSSL installation, replace `make` with `make OPENSSL_PATH=/path/to/openssl`, using an absolute path (for the PQC-LEO build, the project's `lib/openssl_4.0.2` directory). This setting applies to both tools. See [OpenSSL Compatibility for Energy Tools](../developer_information/project_dependencies.md#openssl-compatibility-for-energy-tools) for the requirements.
+To use a custom OpenSSL installation, replace `make` with `make OPENSSL_PATH=/path/to/openssl`, using an absolute path (for the PQC-LEO build, the project's `lib/openssl_4.0.3` directory). This setting applies to both tools. See [OpenSSL Compatibility for Energy Tools](../developer_information/project_dependencies.md#openssl-compatibility-for-energy-tools) for the requirements.
 
 The compiled binaries will then be located in the `tools/comp_energy_tester/build/bin` directory.
 

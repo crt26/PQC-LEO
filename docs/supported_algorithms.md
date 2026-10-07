@@ -32,9 +32,9 @@ Different testing categories within this project rely on distinct combinations o
 | **Testing Category**                    | **Dependencies Used**       |
 |-----------------------------------------|-----------------------------|
 | Computational Performance Testing       | Liboqs                      |
-| TLS Handshake Testing                   | OpenSSL 4.0.2, OQS-Provider |
-| TLS Handshake Transmission Cost Testing | OpenSSL 4.0.2, OQS-Provider |
-| OpenSSL Speed Benchmarking              | OpenSSL 4.0.2, OQS-Provider |
+| TLS Handshake Testing                   | OpenSSL 4.0.3, OQS-Provider |
+| TLS Handshake Transmission Cost Testing | OpenSSL 4.0.3, OQS-Provider |
+| OpenSSL Speed Benchmarking              | OpenSSL 4.0.3, OQS-Provider |
 
 Although the OQS-Provider depends on Liboqs for algorithm implementations, it exposes a different set of algorithms. As such, its supported algorithms are documented separately in this guide.
 
@@ -333,7 +333,7 @@ For further context and guidance:
 ## OpenSSL Algorithms
 
 ### Algorithm Support Summary
-OpenSSL 4.0.2 includes native support for the NIST-standardised PQC algorithms **ML-KEM**, **ML-DSA**, and **SLH-DSA**. This project integrates these algorithms for TLS benchmarking where possible. However, some limitations affect their usage in performance testing and handshake scenarios.
+OpenSSL 4.0.3 includes native support for the NIST-standardised PQC algorithms **ML-KEM**, **ML-DSA**, and **SLH-DSA**. This project integrates these algorithms for TLS benchmarking where possible. However, some limitations affect their usage in performance testing and handshake scenarios.
 
 The TLS handshake transmission cost test uses the same algorithm lists as standard TLS handshake testing. Consequently, an algorithm marked as supporting TLS handshake testing also supports the bytes test, while handshake exclusions apply to both categories.
 
@@ -446,8 +446,8 @@ Whilst a significant number of these scheme variations cannot be used in TLS han
 | UOV        | OV_Ip_pkc, p256_OV_Ip_pkc, OV_Ip_pkc_skc, p256_OV_Ip_pkc_skc                                                                                   |
 | SNOVA      | snova2454, p256_snova2454, snova2454esk, p256_snova2454esk, snova37172, p256_snova37172, snova2455, p384_snova2455, snova2965, p521_snova2965  |
 
-#### OpenSSL 4.0.2 Compatibility
-With native support of various PQC algorithms in OpenSSL 4.0.2, the OQS-Provider library automatically disables its implementations of overlapping algorithms (e.g., ML-KEM, ML-DSA, SLH-DSA) to prevent provider conflicts during initialisation. For more information, see the relevant OQS-Provider documentation below.
+#### OpenSSL 4.0.3 Compatibility
+With native support of various PQC algorithms in OpenSSL 4.0.3, the OQS-Provider library automatically disables its implementations of overlapping algorithms (e.g., ML-KEM, ML-DSA, SLH-DSA) to prevent provider conflicts during initialisation. For more information, see the relevant OQS-Provider documentation below.
 
 #### Supported Algorithms for Energy Usage Testing
 All algorithms supported for TLS handshake testing are also supported for the corresponding TLS handshake energy test. Algorithms covered by TLS speed testing are also evaluated by the separate TLS operations energy test, subject to the encoder-related exceptions listed above.
@@ -640,5 +640,5 @@ For further details on algorithm support, compatibility, or enabling OQS-Provide
 For additional reference, the upstream dependency documentation corresponding to the pinned versions used by PQC-LEO can be found below:
 
 - [Liboqs v0.16.0 – Supported Algorithms](https://github.com/open-quantum-safe/liboqs/blob/5a1a854b0dc9f2141bdc771c555ee60c37950183/ALGORITHMS.md)
-- [OpenSSL 4.0.2 – PQC Listed in Documentation Overviews](https://docs.openssl.org/4.0/man7/)
+- [OpenSSL 4.0.3 – PQC Listed in Documentation Overviews](https://docs.openssl.org/4.0/man7/)
 - [OQS-Provider v0.11.0+ – Supported Algorithms](https://github.com/open-quantum-safe/oqs-provider/blob/1670a8a91bbca997d33e6b6851309d6241cc224c/ALGORITHMS.md)
