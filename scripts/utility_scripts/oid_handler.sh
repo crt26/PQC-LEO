@@ -189,14 +189,10 @@ function define_oid_var_arrays() {
         "OQS_OID_P384_OV_III"
         "OQS_OID_OV_V"
         "OQS_OID_P521_OV_V"
-        "OQS_OID_OV_IS_PKC"
-        "OQS_OID_P256_OV_IS_PKC"
         "OQS_OID_OV_III_PKC"
         "OQS_OID_P384_OV_III_PKC"
         "OQS_OID_OV_V_PKC"
         "OQS_OID_P521_OV_V_PKC"
-        "OQS_OID_OV_IS_PKC_SKC"
-        "OQS_OID_P256_OV_IS_PKC_SKC"
         "OQS_OID_OV_III_PKC_SKC"
         "OQS_OID_P384_OV_III_PKC_SKC"
         "OQS_OID_OV_V_PKC_SKC"
@@ -413,7 +409,7 @@ function define_oid_var_arrays() {
 
         # ML-KEM KEM OID vars
         "OQS_OID_MLKEM512"
-        "OQS_OID_P256_MLKEM512"
+        "OQS_OID_SECP256R1MLKEM512"
         "OQS_OID_X25519_MLKEM512"
         "OQS_OID_BP256_MLKEM512"
         "OQS_OID_MLKEM768"
