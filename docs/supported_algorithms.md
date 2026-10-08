@@ -338,9 +338,7 @@ OpenSSL 4.0.3 includes native support for the NIST-standardised PQC algorithms *
 The TLS handshake transmission cost test uses the same algorithm lists as standard TLS handshake testing. Consequently, an algorithm marked as supporting TLS handshake testing also supports the bytes test, while handshake exclusions apply to both categories.
 
 #### Known Limitations
-- **SLH-DSA** is currently not supported by the OpenSSL `speed` utility, making it unavailable for cryptographic performance benchmarking.
-
-- **SLH-DSA** while supported at the provider level (e.g., for certificate generation), has not yet been integrated into OpenSSL's TLS stack (`s_client`, `s_server`, `speed`). Its inclusion in TLS 1.3 is under consideration via this [IETF draft](https://datatracker.ietf.org/doc/html/draft-reddy-tls-slhdsa-01). Until then, SPHINCS+ from the OQS-Provider will be used as a placeholder for stateless hash-based signatures in TLS tests.
+- **SLH-DSA** is supported for certificate generation, but not for TLS handshakes or the `speed` utility in OpenSSL 4.0.3. OQS-Provider also disables its SLH-DSA implementations when used with OpenSSL 3.5 or later, while legacy SPHINCS+ support has been removed upstream. As such, neither scheme is available for TLS benchmarking with the current dependencies. Support for SLH-DSA in TLS handshakes is planned for a future OpenSSL release and will be integrated into this project once available. For further details, see the [OQS-Provider compatibility documentation](https://github.com/open-quantum-safe/oqs-provider#using-with-openssl--35) and [SPHINCS+ removal](https://github.com/open-quantum-safe/oqs-provider/pull/740).
   
 - The **X448MLKEM1024** Hybrid-PQC KEM is implemented and supported by OpenSSL's `speed` tool, but not registered as a TLS group. It is excluded from TLS handshake and transmission cost testing, though it remains available for TLS speed testing within this project.
 
