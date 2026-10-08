@@ -52,7 +52,7 @@ function setup_base_env() {
     
     # Declare the global last tested version SHA variables
     liboqs_tested_sha="5a1a854b0dc9f2141bdc771c555ee60c37950183"
-    oqs_provider_tested_sha="1670a8a91bbca997d33e6b6851309d6241cc224c"
+    oqs_provider_tested_sha="7e9d095aff7967fab9a8ce693e3da5357dc59d58"
 
     # Declare the global library directory path variables
     openssl_path="$libs_dir/openssl_$openssl_version"
