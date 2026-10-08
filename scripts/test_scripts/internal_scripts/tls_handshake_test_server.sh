@@ -5,7 +5,7 @@
 
 # Server-side script for executing TLS handshake performance tests in coordination with a remote client.
 # It evaluates PQC and Hybrid-PQC signature/KEM pairs and every configured classical
-# signature/key-exchange-group/ciphersuite combination using OpenSSL 4.0.2, with support for both native PQC
+# signature/key-exchange-group/ciphersuite combination using OpenSSL 4.0.3, with support for both native PQC
 # implementations and those integrated via the OQS-Provider. The script performs three main test suites:
 # PQC, Hybrid-PQC, and classical handshake tests. It is called by the TLS benchmarking controller script
 # and uses globally defined test parameters, certificate and key files, and control signalling for 
@@ -51,7 +51,7 @@ function setup_base_env() {
     util_scripts="$root_dir/scripts/utility_scripts"
 
     # Declare the global library directory path variables
-    openssl_path="$libs_dir/openssl_4.0.2"
+    openssl_path="$libs_dir/openssl_4.0.3"
     provider_path="$libs_dir/oqs_provider/lib"
 
     # Declare global key storage directory paths

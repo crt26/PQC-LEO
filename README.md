@@ -3,7 +3,7 @@
 ## Project Description <!-- omit from toc -->
 PQC-LEO (PQC-Library Evaluation Operator) provides an automated and comprehensive evaluation framework for benchmarking Post-Quantum Cryptography (PQC) algorithms. It is designed for researchers and developers looking to evaluate the feasibility of integrating PQC into their environments. The framework streamlines the setup and testing of PQC implementations, enabling the collection of computational and networking performance metrics across x86 and ARM systems through a suite of dedicated automation scripts. Furthermore, the framework supports energy usage testing of PQC algorithms using supported energy meters, providing insights into the energy efficiency of these algorithms in real-world scenarios.
 
-PQC implementations are sourced from multiple libraries, including algorithms natively supported in OpenSSL 4.0.2 and those available from the [Open Quantum Safe (OQS)](https://openquantumsafe.org/) project's `Liboqs` and `OQS-Provider` libraries. PQC-LEO supports automated TLS handshake testing over loopback or physical networks, TLS handshake transmission cost testing, and energy measurement tools that capture power usage during both computational and TLS benchmarks. Performance and energy results are output as raw CSV and text files and automatically parsed into structured metrics and averages, while transmission cost tests produce structured CSV files directly.
+PQC implementations are sourced from multiple libraries, including algorithms natively supported in OpenSSL 4.0.3 and those available from the [Open Quantum Safe (OQS)](https://openquantumsafe.org/) project's `Liboqs` and `OQS-Provider` libraries. PQC-LEO supports automated TLS handshake testing over loopback or physical networks, TLS handshake transmission cost testing, and energy measurement tools that capture power usage during both computational and TLS benchmarks. Performance and energy results are output as raw CSV and text files and automatically parsed into structured metrics and averages, while transmission cost tests produce structured CSV files directly.
 
 Future versions of the project aim to support additional PQC libraries, further expanding the scope of supported benchmarking.
 
@@ -16,7 +16,7 @@ The project provides automation for:
 
 - Collecting PQC computational performance data, including CPU and peak memory usage metrics, using the Liboqs library.
 
-- Gathering networking performance data for PQC schemes integrated into the TLS 1.3 protocol using the PQC support available natively in OpenSSL 4.0.2 and via the OQS-Provider.
+- Gathering networking performance data for PQC schemes integrated into the TLS 1.3 protocol using the PQC support available natively in OpenSSL 4.0.3 and via the OQS-Provider.
 
 - Measuring the transmission cost of one-way and mutually authenticated TLS 1.3 handshakes across PQC, Hybrid-PQC, and classical configurations.
 
@@ -82,9 +82,9 @@ This version of the repository has been fully tested with the following library 
 
 - OQS-Provider Version 0.11.0+
 
-- OpenSSL Version 4.0.2
+- OpenSSL Version 4.0.3
 
-By default, this repository is configured to use the **last tested versions** of the OQS libraries. This helps ensure that all automation scripts operate reliably with known working versions. The listed OpenSSL version remains fixed at 4.0.2 to maintain compatibility with the OQS-Provider library and the project's performance testing tools.
+By default, this repository is configured to use the **last tested versions** of the OQS libraries. This helps ensure that all automation scripts operate reliably with known working versions. The listed OpenSSL version remains fixed at 4.0.3 to maintain compatibility with the OQS-Provider library and the project's performance testing tools.
 
 While this setup maximises reliability, users who need access to more recent updates may configure the setup process accordingly. However, please note that the OQS libraries are still in active development, and upstream changes may occasionally break compatibility with this project’s automation scripts. This is detailed further in the [Installation Instructions](#installation-instructions) section.
 
@@ -144,7 +144,7 @@ When executing the setup script, you will be prompted to select one of the follo
 
 4. **Energy Collector Machine Setup** - Installs only the energy collector tools and its dependencies for use on the energy usage collection device. This device is used to poll the energy meter and collect energy usage data during testing and is separate from the main testing machines.
 
-Installation options 1–3 also require the PQC-LEO [OpenSSL 4.0.2](https://github.com/openssl/openssl/releases/tag/openssl-4.0.2) build in the repository’s `lib` directory to support the OQS libraries. This is built automatically during setup and managed separately from the system OpenSSL installation. The OpenSSL installation used for the energy measurement tools is selected independently.
+Installation options 1–3 also require the PQC-LEO [OpenSSL 4.0.3](https://github.com/openssl/openssl/releases/tag/openssl-4.0.3) build in the repository’s `lib` directory to support the OQS libraries. This is built automatically during setup and managed separately from the system OpenSSL installation. The OpenSSL installation used for the energy measurement tools is selected independently.
 
 For installation options 1–3, the setup script prompts you to choose whether to install **energy measurement tools**; option 4 always installs the collector tools. The energy tools can use either a compatible system OpenSSL installation or the PQC-LEO build. The system OpenSSL option requires `libssl-dev` version 3.3.0 or newer, which is installed and validated during setup if it is not already present. See [OpenSSL Compatibility for Energy Tools](docs/developer_information/project_dependencies.md#openssl-compatibility-for-energy-tools) for further details and manual runtime configuration requirements.
 
@@ -212,7 +212,7 @@ For detailed usage instructions, please refer to:
 > **Notice:** Memory profiling for Falcon algorithm variants is currently non-functional on **ARM** systems due to issues with the scheme and the Valgrind Massif tool. Please see the [bug report](https://github.com/open-quantum-safe/liboqs/issues/1761) for details. Testing and parsing remain fully functional for all other algorithms.
 
 ### TLS Performance Testing
-This tool benchmarks the performance of PQC, Hybrid-PQC, and classical algorithms when used in the TLS 1.3 protocol. It utilises the PQC implementations natively available in OpenSSL 4.0.2 and those added via the OQS-Provider.
+This tool benchmarks the performance of PQC, Hybrid-PQC, and classical algorithms when used in the TLS 1.3 protocol. It utilises the PQC implementations natively available in OpenSSL 4.0.3 and those added via the OQS-Provider.
 
 It conducts two types of testing:
 
@@ -311,7 +311,7 @@ The information provided in the internal documentation is also available through
 - [OQS-Provider GitHub Page](https://github.com/open-quantum-safe/oqs-provider)
 - [Latest Liboqs Release Notes](https://github.com/open-quantum-safe/liboqs/blob/main/RELEASE.md)
 - [Latest OQS-Provider Release Notes](https://github.com/open-quantum-safe/oqs-provider/blob/main/RELEASE.md)
-- [OpenSSL(4.0.2) Documentation](https://docs.openssl.org/4.0/)
+- [OpenSSL(4.0.3) Documentation](https://docs.openssl.org/4.0/)
 - [TLS 1.3 RFC 8446](https://www.rfc-editor.org/rfc/rfc8446)
 
 ## Licence

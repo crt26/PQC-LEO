@@ -5,7 +5,7 @@
 
 # Script for generating CA, server, and client certificates and keys used by TLS handshake performance,
 # handshake energy, and transmission-cost testing. Generates classical, PQC, and Hybrid-PQC certificates using 
-# OpenSSL 4.0.2, using PQC implementations natively available in OpenSSL and those integrated via OQS-Provider.
+# OpenSSL 4.0.3, using PQC implementations natively available in OpenSSL and those integrated via OQS-Provider.
 # The generated key material must be copied to the client machine unless both client and server run on the same system.
 
 #-------------------------------------------------------------------------------------------------------------------------------
@@ -47,7 +47,7 @@ function setup_base_env() {
     util_scripts="$root_dir/scripts/utility_scripts"
 
     # Declare the global library directory path variables
-    openssl_path="$libs_dir/openssl_4.0.2"
+    openssl_path="$libs_dir/openssl_4.0.3"
     oqs_provider_path="$libs_dir/oqs_provider"
     provider_path="$oqs_provider_path/lib"
 
@@ -549,7 +549,7 @@ function main() {
     # Output the welcome message to the terminal
     echo "#########################################################"
     echo "PQC-LEO - TLS Certificate & Key Generator"
-    echo "PQC | Hybrid-PQC | Classic (OpenSSL 4.0.2 + OQS-Provider)"
+    echo "PQC | Hybrid-PQC | Classic (OpenSSL 4.0.3 + OQS-Provider)"
     echo -e "#########################################################\n"
 
     # Setup the base environment for the script

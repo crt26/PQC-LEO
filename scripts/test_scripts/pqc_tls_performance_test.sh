@@ -3,7 +3,7 @@
 # Copyright (c) 2023-2026 Callum Turino
 # SPDX-License-Identifier: MIT
 
-# Script for controlling the TLS benchmarking suite using OpenSSL 4.0.2. Supports both OpenSSL native PQC algorithms and those
+# Script for controlling the TLS benchmarking suite using OpenSSL 4.0.3. Supports both OpenSSL native PQC algorithms and those
 # provided via OQS-Provider. It handles the configuration of test parameters, machine role assignment, port and environment
 # validation, and result directory setup. The script also supports optional energy testing mode, including energy collector
 # control signalling configuration and custom system state options for client-side energy test execution. Based on the selected
@@ -430,7 +430,7 @@ function setup_base_env() {
     result_parser_script="$parsing_scripts/parse_results.py"
 
     # Declare the global library directory path variables
-    openssl_path="$libs_dir/openssl_4.0.2"
+    openssl_path="$libs_dir/openssl_4.0.3"
     oqs_provider_path="$libs_dir/oqs_provider"
 
     # Ensure that the OQS-Provider and OpenSSL libraries are present before proceeding
