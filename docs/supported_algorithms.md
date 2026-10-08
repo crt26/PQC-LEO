@@ -453,7 +453,7 @@ All algorithms supported for TLS handshake testing are also supported for the co
 #### Additional Information
 For further details on algorithm support, compatibility, or enabling OQS-Provider algorithms supported by PQC-LEO that are disabled by default, see:
 
-- [OQS-Provider Notice](https://github.com/open-quantum-safe/oqs-provider/tree/1670a8a91bbca997d33e6b6851309d6241cc224c#35-and-greater)
+- [OQS-Provider Notice](https://github.com/open-quantum-safe/oqs-provider/tree/7e9d095aff7967fab9a8ce693e3da5357dc59d58#35-and-greater)
 - [Advanced Setup Configuration Guide](./advanced_setup_configuration.md)
 - [README - Choosing Installation Mode](../README.md#choosing-installation-mode)
 - [Disclaimer Document](../DISCLAIMER.md)
@@ -639,4 +639,4 @@ For additional reference, the upstream dependency documentation corresponding to
 
 - [Liboqs v0.16.0 – Supported Algorithms](https://github.com/open-quantum-safe/liboqs/blob/5a1a854b0dc9f2141bdc771c555ee60c37950183/ALGORITHMS.md)
 - [OpenSSL 4.0.3 – PQC Listed in Documentation Overviews](https://docs.openssl.org/4.0/man7/)
-- [OQS-Provider v0.11.0+ – Supported Algorithms](https://github.com/open-quantum-safe/oqs-provider/blob/1670a8a91bbca997d33e6b6851309d6241cc224c/ALGORITHMS.md)
+- [OQS-Provider v0.12.0 – Supported Algorithms](https://github.com/open-quantum-safe/oqs-provider/blob/7e9d095aff7967fab9a8ce693e3da5357dc59d58/ALGORITHMS.md)
