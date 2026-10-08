@@ -1,0 +1,4 @@
+**Algorithm Name**,**Hybrid Algorithm (*)**,**TLS Handshake Test Support (*)**,**OpenSSL Speed Test Support (*)**,**TLS Handshake Bytes Test Support (*)**
+MLDSA44,,*,*,*
+MLDSA65,,*,*,*
+MLDSA87,,*,*,*
