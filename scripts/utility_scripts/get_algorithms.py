@@ -299,7 +299,7 @@ def get_tls_pqc_algs():
     alg_cats = ["kem", "signature"]
     provider_flags = {
         "default": ["-provider", "default"], 
-        "oqsprovider": ["-provider", "oqsprovider", "-provider-path", oqs_provider_path]
+        "oqsprovider": ["-provider-path", os.path.join(oqs_provider_path, "lib"), "-provider", "oqsprovider"]
     }
 
     # Check if the OQS-Provider algs enabled flag is present in the temp directory

@@ -253,9 +253,9 @@ def define_openssl_cmds(dir_paths, test_type, cert_key_paths, alg_params, auth_t
 
     # Define the universal provider arguments for the OpenSSL commands
     provider_args = [
+        "-provider-path", os.path.join(dir_paths["oqs_provider_path"], "lib"),
         "-provider", "default",
-        "-provider", "oqsprovider",
-        "-provider-path", os.path.join(dir_paths["oqs_provider_path"], "lib")
+        "-provider", "oqsprovider"
     ]
 
     # Define the base OpenSSL s_server command and arguments
