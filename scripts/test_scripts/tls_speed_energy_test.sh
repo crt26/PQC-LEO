@@ -221,7 +221,7 @@ function setup_env() {
     util_scripts="$root_dir/scripts/utility_scripts"
 
     # Declare the global library directory path variables
-    openssl_path="$libs_dir/openssl_4.0.1"
+    openssl_path="$libs_dir/openssl_4.0.3"
     provider_path="$libs_dir/oqs_provider/lib"
     provider_flags="-provider-path $provider_path -provider default -provider oqsprovider"
 
