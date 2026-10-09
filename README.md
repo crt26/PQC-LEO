@@ -226,7 +226,7 @@ For detailed usage instructions, please refer to:
 
 [Automated TLS Performance Testing Instructions](docs/testing_tools_usage/tls_performance_testing.md)
 
-> **Notice:** Certain PQC, Hybrid-PQC, and classical algorithm combinations may produce values of `inf` for "Connections Per User Second" results in TLS handshake testing when using smaller testing windows. Please refer to the [TLS Handshake Inf Result Handling](./docs/performance_results/tls_handshake_inf_result_handling.md)documentation for further information.
+> **Notice:** Certain PQC, Hybrid-PQC, and classical algorithm combinations may produce values of `inf` for "Connections Per User Second" results in TLS handshake testing when using smaller testing windows. Please refer to the [TLS Handshake Inf Result Handling](./docs/performance_results/tls_handshake_inf_result_handling.md) documentation for further information.
 
 ### TLS Handshake Transmission Cost Testing
 This tool measures the amount of data exchanged during TLS 1.3 handshakes using PQC, Hybrid-PQC, and classical algorithm configurations. It tests every supported signing algorithm and KEM pairing for PQC and Hybrid-PQC, and every supported signing algorithm, key exchange group, and ciphersuite combination for classical TLS. Each configuration is tested using both one-way and mutual authentication and the bytes sent, bytes received, and total bytes during the handshake are recorded from the client's perspective.
