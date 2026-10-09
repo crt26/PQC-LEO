@@ -11,7 +11,7 @@ If you wish to perform TLS handshake or TLS operations energy usage testing, ple
 
 To compare the size of the network data exchanged by one-way and mutually authenticated TLS 1.3 handshakes, refer to the separate [TLS Handshake Transmission Cost Testing Guide](./tls_handshake_transmission_cost_testing.md).
 
->**Notice:** Certain signature/KEM combinations may produce values of `inf` for "Connections Per User Second" results in TLS handshake testing when using smaller testing windows. Please refer to the [Inf Result Value Occurrence Details](#inf-result-value-occurrence-details) section in this document for further information.
+>**Notice:** Certain PQC, Hybrid-PQC, and classical algorithm combinations may produce values of `inf` for "Connections Per User Second" results in TLS handshake testing when using smaller testing windows. Please refer to the [Inf Result Value Occurrence Details](#inf-result-value-occurrence-details) section in this document for further information.
 
 ### Contents <!-- omit from toc -->
 - [Supported Hardware](#supported-hardware)
@@ -238,13 +238,16 @@ The TLS handshake energy usage testing functionality can be enabled by passing t
 During client configuration, the script asks whether the TLS handshake performance results should also be written to the client machine. Selecting no collects only the energy usage results on the collection machine. Selecting yes additionally stores and parses the handshake performance results on the client; TLS speed testing and parsing remain disabled. Writing the performance results to disk occurs inside the measured test windows and will therefore be reflected in the collected energy usage metrics.
 
 ## Inf Result Value Occurrence Details
-Certain signature/KEM combinations may produce `inf` values for the **"Connections Per User Second"** metric during TLS handshake testing when using shorter test durations (typically below 5 seconds).
+Certain PQC, Hybrid-PQC, and classical algorithm combinations may produce `inf` values for the **"Connections Per User Second"** metric during TLS handshake testing when using shorter test durations (typically below 5 seconds).
 
 PQC-LEO includes safeguards to:
-- warn users when a selected test duration may produce `inf` values
-- exclude affected runs from average calculations while tracking the number of valid runs used
 
-It is recommended to use TLS handshake test durations of **5 seconds or greater** to ensure all runs can be used in average calculations.
+- warn users when a selected test duration may produce `inf` values
+- exclude rows containing `inf` from average calculations while tracking the number of valid runs used
+
+For each algorithm combination, session ID first-use and reuse results are handled independently. If no valid runs remain, `N/A` is used for the averaged metrics and the number of runs used is recorded as 0.
+
+It is recommended to use TLS handshake test durations of **5 seconds or greater** to minimise the likelihood of `inf` values occurring. However, this does not guarantee that all runs can be used in average calculations.
 
 For a detailed explanation of this behaviour and how it is handled, please refer to:
 
