@@ -357,9 +357,9 @@ function pqc_tests() {
                 "$openssl_path/bin/openssl" s_server \
                     -cert  "$cert_file" \
                     -key   "$key_file"  \
+                    -provider-path "$provider_path" \
                     -provider default \
                     -provider oqsprovider \
-                    -provider-path "$provider_path" \
                     -www \
                     -tls1_3 \
                     -groups "$kem" \

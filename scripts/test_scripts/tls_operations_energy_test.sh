@@ -223,7 +223,7 @@ function setup_env() {
     # Declare the global library directory path variables
     openssl_path="$libs_dir/openssl_4.0.3"
     provider_path="$libs_dir/oqs_provider/lib"
-    provider_flags="-provider default -provider oqsprovider -provider-path $provider_path"
+    provider_flags="-provider-path $provider_path -provider default -provider oqsprovider"
 
     # Define the temp cert/key storage directory path
     temp_test_storage="$tmp_dir/energy_test_certs"

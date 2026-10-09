@@ -483,9 +483,9 @@ function pqc_tests() {
                                 -CAfile  "$cert_file" \
                                 -time    "$TIME_NUM" \
                                 -verify  1 \
+                                -provider-path "$provider_path" \
                                 -provider default \
                                 -provider oqsprovider \
-                                -provider-path "$provider_path" \
                                 > "$output_path" 2>"$s_time_error_file"
                             attempt_exit_code=$?
 
@@ -522,9 +522,9 @@ function pqc_tests() {
                                     -CAfile  "$cert_file" \
                                     -time    "$TIME_NUM" \
                                     -verify  1 \
+                                    -provider-path "$provider_path" \
                                     -provider default \
                                     -provider oqsprovider \
-                                    -provider-path "$provider_path" \
                                     "-${session_id}" \
                                     >> "$output_path" 2>"$s_time_error_file"
                                 session_exit_code=$?

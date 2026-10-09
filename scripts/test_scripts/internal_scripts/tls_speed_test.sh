@@ -191,9 +191,9 @@ function tls_speed_test() {
             # Perform the OpenSSL speed test with the current test parameters
             "$openssl_path/bin/openssl" speed \
                 -seconds "$SPEED_TIME_NUM" \
+                -provider-path "$provider_path" \
                 -provider default \
                 -provider oqsprovider \
-                -provider-path "$provider_path" \
                 $algs_string > "$output_file" 2> "$error_log_file"
             exit_status=$?
 

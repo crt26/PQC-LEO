@@ -15,10 +15,10 @@
 # `--clear-env-oids` to clear those environment variables after testing is complete. 
 #
 # The algorithms that are included within this script are based on the algorithms listed by OQS-Provider
-# in their ALGORITHMS.md file (OQS-Provider version 0.11.0+). Currently, the script is hard-coded to include 
+# in their ALGORITHMS.md file (OQS-Provider version 0.12.0). Currently, the script is hard-coded to include
 # the algorithms mentioned in that file. This will be updated in the future to be more dynamic.
 # The version of the ALGORITHMS.md file used to dictate the algorithms included in this script can be found here:
-# https://github.com/open-quantum-safe/oqs-provider/blob/1670a8a91bbca997d33e6b6851309d6241cc224c/ALGORITHMS.md
+# https://github.com/open-quantum-safe/oqs-provider/blob/7e9d095aff7967fab9a8ce693e3da5357dc59d58/ALGORITHMS.md
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function get_root_dir() {
@@ -189,14 +189,10 @@ function define_oid_var_arrays() {
         "OQS_OID_P384_OV_III"
         "OQS_OID_OV_V"
         "OQS_OID_P521_OV_V"
-        "OQS_OID_OV_IS_PKC"
-        "OQS_OID_P256_OV_IS_PKC"
         "OQS_OID_OV_III_PKC"
         "OQS_OID_P384_OV_III_PKC"
         "OQS_OID_OV_V_PKC"
         "OQS_OID_P521_OV_V_PKC"
-        "OQS_OID_OV_IS_PKC_SKC"
-        "OQS_OID_P256_OV_IS_PKC_SKC"
         "OQS_OID_OV_III_PKC_SKC"
         "OQS_OID_P384_OV_III_PKC_SKC"
         "OQS_OID_OV_V_PKC_SKC"
@@ -413,7 +409,7 @@ function define_oid_var_arrays() {
 
         # ML-KEM KEM OID vars
         "OQS_OID_MLKEM512"
-        "OQS_OID_P256_MLKEM512"
+        "OQS_OID_SECP256R1MLKEM512"
         "OQS_OID_X25519_MLKEM512"
         "OQS_OID_BP256_MLKEM512"
         "OQS_OID_MLKEM768"

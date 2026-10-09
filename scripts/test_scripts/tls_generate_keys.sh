@@ -182,9 +182,9 @@ function pqc_keygen() {
             -subj "/CN=oqstest $sig CA" \
             -days 365 \
             -config "$openssl_path/openssl.cnf" \
+            -provider-path "$provider_path" \
             -provider default \
-            -provider oqsprovider \
-            -provider-path "$provider_path"
+            -provider oqsprovider
         exit_status=$?
 
         # Ensure that the PQC CA certificate and private key were generated successfully
@@ -205,9 +205,9 @@ function pqc_keygen() {
                 -nodes \
                 -subj "/CN=oqstest $sig $cert_type" \
                 -config "$openssl_path/openssl.cnf" \
+                -provider-path "$provider_path" \
                 -provider default \
-                -provider oqsprovider \
-                -provider-path "$provider_path"
+                -provider oqsprovider
             exit_status=$?
 
             # Ensure that the PQC certificate signing request and private key were generated successfully
@@ -225,9 +225,9 @@ function pqc_keygen() {
                 -CAkey "$pqc_cert_dir/${sig}_CA.key" \
                 -CAcreateserial \
                 -days 365 \
+                -provider-path "$provider_path" \
                 -provider default \
-                -provider oqsprovider \
-                -provider-path "$provider_path"
+                -provider oqsprovider
             exit_status=$?
 
             # Ensure that the PQC certificate was generated successfully
@@ -268,9 +268,9 @@ function hybrid_pqc_keygen() {
             -subj "/CN=oqstest $sig CA" \
             -days 365 \
             -config "$openssl_path/openssl.cnf" \
+            -provider-path "$provider_path" \
             -provider default \
-            -provider oqsprovider \
-            -provider-path "$provider_path"
+            -provider oqsprovider
         exit_status=$?
 
         # Ensure that the Hybrid-PQC CA certificate and private key were generated successfully
@@ -291,9 +291,9 @@ function hybrid_pqc_keygen() {
                 -nodes \
                 -subj "/CN=oqstest $sig $cert_type" \
                 -config "$openssl_path/openssl.cnf" \
+                -provider-path "$provider_path" \
                 -provider default \
-                -provider oqsprovider \
-                -provider-path "$provider_path"
+                -provider oqsprovider
             exit_status=$?
 
             # Ensure that the Hybrid-PQC certificate signing request and private key were generated successfully
@@ -311,9 +311,9 @@ function hybrid_pqc_keygen() {
                 -CAkey "$hybrid_cert_dir/${sig}_CA.key" \
                 -CAcreateserial \
                 -days 365 \
+                -provider-path "$provider_path" \
                 -provider default \
-                -provider oqsprovider \
-                -provider-path "$provider_path"
+                -provider oqsprovider
             exit_status=$?
 
             # Ensure that the Hybrid-PQC certificate was generated successfully
@@ -469,9 +469,9 @@ function classic_keygen() {
             -subj "/CN=oqstest CA" \
             -days 365 \
             -config "$openssl_path/openssl.cnf" \
+            -provider-path "$provider_path" \
             -provider default \
-            -provider oqsprovider \
-            -provider-path "$provider_path"
+            -provider oqsprovider
         exit_status=$?
 
         # Ensure that the CA certificate was generated successfully
@@ -501,9 +501,9 @@ function classic_keygen() {
                 -nodes \
                 -subj "/CN=oqstest ${cert_type}" \
                 -config "$openssl_path/openssl.cnf" \
+                -provider-path "$provider_path" \
                 -provider default \
-                -provider oqsprovider \
-                -provider-path "$provider_path"
+                -provider oqsprovider
             exit_status=$?
 
             # Ensure that the certificate signing request was generated successfully
@@ -521,9 +521,9 @@ function classic_keygen() {
                 -CAkey "$ca_key_file" \
                 -CAcreateserial \
                 -days 365 \
+                -provider-path "$provider_path" \
                 -provider default \
-                -provider oqsprovider \
-                -provider-path "$provider_path"
+                -provider oqsprovider
             exit_status=$?
 
             # Ensure that the certificate file was generated successfully

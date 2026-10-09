@@ -1,0 +1,5 @@
+**Ciphersuite**,**TLS Handshake Test Support (*)**,**OpenSSL Speed Test Support (*)**,**TLS Operations Energy Test Support (*)**,**TLS Handshake Bytes Test Support (*)**
+TLS_AES_128_GCM_SHA256,*,,,*
+TLS_AES_256_GCM_SHA384,*,,,*
+TLS_CHACHA20_POLY1305_SHA256,*,,,*
+TLS_AES_128_CCM_SHA256,*,,,*

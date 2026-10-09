@@ -107,7 +107,7 @@ For further context and guidance:
 ### Supported Digital Signature Algorithms
 
 | **Algorithm Name**                      | **Claimed NIST Level** | **Public key size (bytes)** | **Secret key size (bytes)** | **Signature size (bytes)** |
-|-----------------------------------------|------------------------|-----------------------------|-----------------------------|----------------------------|
+|-----------------------------------------|:----------------------:|----------------------------:|----------------------------:|---------------------------:|
 | cross-rsdp-128-balanced                 |            1           |                          77 |                          32 |                      13152 |
 | cross-rsdp-128-fast                     |            1           |                          77 |                          32 |                      18432 |
 | cross-rsdp-128-small                    |            1           |                          77 |                          32 |                      12432 |
@@ -383,7 +383,7 @@ Algorithms provided by OpenSSL that are used within standard TLS handshake and T
 ### Supported Classical Digital Signature Algorithms
 
 | **Algorithm Name** | **TLS Handshake Test Support (*)** | **OpenSSL Speed Test Support (*)** | **TLS Operations Energy Test Support (*)** | **TLS Handshake Bytes Test Support (*)** |
-|--------------------|:----------------------------------:|:----------------------------------:|:------------------------------------------:|:----------------------------------------:|
+|--------------------|------------------------------------|------------------------------------|--------------------------------------------|------------------------------------------|
 | RSA_2048           |                  *                 |                  *                 |                      *                     |                     *                    |
 | RSA_3072           |                  *                 |                  *                 |                      *                     |                     *                    |
 | RSA_4096           |                  *                 |                  *                 |                      *                     |                     *                    |
@@ -404,7 +404,7 @@ The blank OpenSSL speed-test cells for `RSA-PSS_*` indicate that `openssl speed`
 ### Supported Classical Key Exchange Algorithms
 
 | **Key Exchange Group** | **TLS Handshake Test Support (*)** | **OpenSSL Speed Test Support (*)** | **TLS Operations Energy Test Support (*)** | **TLS Handshake Bytes Test Support (*)** |
-|------------------------|:----------------------------------:|:----------------------------------:|:------------------------------------------:|:----------------------------------------:|
+|------------------------|------------------------------------|------------------------------------|--------------------------------------------|------------------------------------------|
 | x25519                 |                  *                 |                  *                 |                      *                     |                     *                    |
 | x448                   |                  *                 |                  *                 |                      *                     |                     *                    |
 | secp256r1              |                  *                 |                  *                 |                      *                     |                     *                    |
@@ -453,7 +453,7 @@ All algorithms supported for TLS handshake testing are also supported for the co
 #### Additional Information
 For further details on algorithm support, compatibility, or enabling OQS-Provider algorithms supported by PQC-LEO that are disabled by default, see:
 
-- [OQS-Provider Notice](https://github.com/open-quantum-safe/oqs-provider/tree/1670a8a91bbca997d33e6b6851309d6241cc224c#35-and-greater)
+- [OQS-Provider Notice](https://github.com/open-quantum-safe/oqs-provider/tree/7e9d095aff7967fab9a8ce693e3da5357dc59d58#35-and-greater)
 - [Advanced Setup Configuration Guide](./advanced_setup_configuration.md)
 - [README - Choosing Installation Mode](../README.md#choosing-installation-mode)
 - [Disclaimer Document](../DISCLAIMER.md)
@@ -510,7 +510,7 @@ For further details on algorithm support, compatibility, or enabling OQS-Provide
 | p384_hqc3             |             *            |                  *                 |                  *                 |                     *                    |                           |
 | x448_hqc3             |             *            |                  *                 |                  *                 |                     *                    |                           |
 | p521_hqc5             |             *            |                  *                 |                  *                 |                     *                    |                           |
-| p256_mlkem512         |             *            |                  *                 |                  *                 |                     *                    |                           |
+| SecP256r1MLKEM512     |             *            |                  *                 |                  *                 |                     *                    |                           |
 | x25519_mlkem512       |             *            |                  *                 |                  *                 |                     *                    |                           |
 | bp256_mlkem512        |             *            |                  *                 |                  *                 |                     *                    |                           |
 | p384_mlkem768         |             *            |                  *                 |                  *                 |                     *                    |                           |
@@ -565,11 +565,11 @@ For further details on algorithm support, compatibility, or enabling OQS-Provide
 | OV_Ip                     |                          |                                    |                  *                 |                                          |             *             |
 | OV_III                    |                          |                                    |                  *                 |                                          |             *             |
 | OV_V                      |                          |                                    |                  *                 |                                          |             *             |
-| OV_Is_pkc                 |                          |                                    |                  *                 |                                          |             *             |
+| OV_Is_pkc                 |                          |                                    |                  *                 |                                          |                           |
 | OV_Ip_pkc                 |                          |                  *                 |                  *                 |                     *                    |                           |
 | OV_III_pkc                |                          |                                    |                  *                 |                                          |             *             |
 | OV_V_pkc                  |                          |                                    |                  *                 |                                          |             *             |
-| OV_Is_pkc_skc             |                          |                                    |                  *                 |                                          |             *             |
+| OV_Is_pkc_skc             |                          |                                    |                  *                 |                                          |                           |
 | OV_Ip_pkc_skc             |                          |                  *                 |                  *                 |                     *                    |                           |
 | OV_III_pkc_skc            |                          |                                    |                  *                 |                                          |             *             |
 | OV_V_pkc_skc              |                          |                                    |                  *                 |                                          |             *             |
@@ -577,11 +577,11 @@ For further details on algorithm support, compatibility, or enabling OQS-Provide
 | p256_OV_Ip                |             *            |                                    |                  *                 |                                          |             *             |
 | p384_OV_III               |             *            |                                    |                  *                 |                                          |             *             |
 | p521_OV_V                 |             *            |                                    |                  *                 |                                          |             *             |
-| p256_OV_Is_pkc            |             *            |                                    |                  *                 |                                          |             *             |
+| p256_OV_Is_pkc            |             *            |                                    |                  *                 |                                          |                           |
 | p256_OV_Ip_pkc            |             *            |                  *                 |                  *                 |                     *                    |                           |
 | p384_OV_III_pkc           |             *            |                                    |                  *                 |                                          |             *             |
 | p521_OV_V_pkc             |             *            |                                    |                  *                 |                                          |             *             |
-| p256_OV_Is_pkc_skc        |             *            |                                    |                  *                 |                                          |             *             |
+| p256_OV_Is_pkc_skc        |             *            |                                    |                  *                 |                                          |                           |
 | p256_OV_Ip_pkc_skc        |             *            |                  *                 |                  *                 |                     *                    |                           |
 | p384_OV_III_pkc_skc       |             *            |                                    |                  *                 |                                          |             *             |
 | p521_OV_V_pkc_skc         |             *            |                                    |                  *                 |                                          |             *             |
@@ -639,4 +639,4 @@ For additional reference, the upstream dependency documentation corresponding to
 
 - [Liboqs v0.16.0 – Supported Algorithms](https://github.com/open-quantum-safe/liboqs/blob/5a1a854b0dc9f2141bdc771c555ee60c37950183/ALGORITHMS.md)
 - [OpenSSL 4.0.3 – PQC Listed in Documentation Overviews](https://docs.openssl.org/4.0/man7/)
-- [OQS-Provider v0.11.0+ – Supported Algorithms](https://github.com/open-quantum-safe/oqs-provider/blob/1670a8a91bbca997d33e6b6851309d6241cc224c/ALGORITHMS.md)
+- [OQS-Provider v0.12.0 – Supported Algorithms](https://github.com/open-quantum-safe/oqs-provider/blob/7e9d095aff7967fab9a8ce693e3da5357dc59d58/ALGORITHMS.md)
