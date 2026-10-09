@@ -135,7 +135,7 @@ When averaged TLS handshake result files are generated, additional columns are i
 
 These columns are used to indicate how many test runs were included in each average calculation. This is necessary because, in some cases, a value of `inf` may be produced for the **"Connections per User Second"** metric when using shorter TLS handshake test durations.
 
-For PQC and Hybrid-PQC results, if an `inf` value occurs in a row, that row is excluded from the average calculation for the affected algorithm combination and session-reuse mode. Classical handshake averages currently do not apply this filter. The additional columns record how many rows contributed to each average and are only present for TLS handshake results.
+For PQC, Hybrid-PQC, and classical results, if an `inf` value occurs in any metric, the entire row is excluded from the average calculation for the affected algorithm combination and session-reuse mode. Where no valid rows remain, the averaged metrics are written as `N/A` and **Runs used for Average** is set to 0. **Total Runs** continues to record the total number of test runs performed. The additional columns record how many rows contributed to each average and are only present for TLS handshake results.
 
 Further information on this behaviour and how it can be avoided is provided in the [TLS Handshake Inf Result Handling](./tls_handshake_inf_result_handling.md) documentation.
 
