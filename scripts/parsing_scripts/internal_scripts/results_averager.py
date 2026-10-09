@@ -403,6 +403,14 @@ class TLSAverager:
                     first_use_combined_row = [classic_sig, key_exchange_group, ciphersuite, ""]
                     reused_combined_row = [classic_sig, key_exchange_group, ciphersuite, "*"]
 
+                    # Remove any runs that contain an inf value for the current signature/group/ciphersuite combination
+                    valid_first_use_combined_df = first_use_combined_df[~first_use_combined_df.isin([np.inf, -np.inf]).any(axis=1)]
+                    valid_reused_combined_df = reused_combined_df[~reused_combined_df.isin([np.inf, -np.inf]).any(axis=1)]
+
+                    # Calculate the number of runs used in the average for the current combination
+                    first_runs_used = len(valid_first_use_combined_df)
+                    reused_runs_used = len(valid_reused_combined_df)
+
                     # Calculate the average for each metrics column
                     for column in self.col_headers['classic_headers']:
 
@@ -410,13 +418,22 @@ class TLSAverager:
                         if column in self.col_headers['classic_headers'][:4]:
                             continue
 
-                        # If the current column is a metrics column, calculate the average and append to the average rows
-                        first_use_combined_row.append(float(first_use_combined_df[column].mean()))
-                        reused_combined_row.append(float(reused_combined_df[column].mean()))
+                        # Handle instances where there are no valid runs for the current combination
+                        if valid_first_use_combined_df.empty:
+                            first_use_combined_row.append("N/A")
+                        else:
+                            first_use_combined_row.append(float(valid_first_use_combined_df[column].mean()))
+
+                        if valid_reused_combined_df.empty:
+                            reused_combined_row.append("N/A")
+                        else:
+                            reused_combined_row.append(float(valid_reused_combined_df[column].mean()))
 
                     # Add the total runs and runs used in average to the end of the average rows
-                    first_use_combined_row.extend([len(first_use_combined_df), self.num_runs])
-                    reused_combined_row.extend([len(reused_combined_df), self.num_runs])
+                    first_use_combined_row.append(first_runs_used)
+                    first_use_combined_row.append(self.num_runs)
+                    reused_combined_row.append(reused_runs_used)
+                    reused_combined_row.append(self.num_runs)
 
                     # Append the average rows to the main dataframe
                     classic_avg_df.loc[len(classic_avg_df)] = first_use_combined_row
