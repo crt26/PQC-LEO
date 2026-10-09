@@ -69,7 +69,7 @@ def setup_base_env():
         "classic_keys_dir": os.path.join(root_dir, "test_data", "keys", "classic"),
         "pqc_keys_dir": os.path.join(root_dir, "test_data", "keys", "pqc"),
         "hybrid_keys_dir": os.path.join(root_dir, "test_data", "keys", "hybrid"),
-        "openssl_path": os.path.join(root_dir, "lib", "openssl_4.0.2"),
+        "openssl_path": os.path.join(root_dir, "lib", "openssl_4.0.3"),
         "oqs_provider_path": os.path.join(root_dir, "lib", "oqs_provider")
     }
 
@@ -253,9 +253,9 @@ def define_openssl_cmds(dir_paths, test_type, cert_key_paths, alg_params, auth_t
 
     # Define the universal provider arguments for the OpenSSL commands
     provider_args = [
+        "-provider-path", os.path.join(dir_paths["oqs_provider_path"], "lib"),
         "-provider", "default",
-        "-provider", "oqsprovider",
-        "-provider-path", os.path.join(dir_paths["oqs_provider_path"], "lib")
+        "-provider", "oqsprovider"
     ]
 
     # Define the base OpenSSL s_server command and arguments

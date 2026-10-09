@@ -66,7 +66,7 @@ Key tasks performed include:
 
 - Installing all required system and Python dependencies (e.g., OpenSSL dev packages, CMake, Valgrind)
 
-- Downloading and compiling OpenSSL 4.0.2 when required for the selected setup
+- Downloading and compiling OpenSSL 4.0.3 when required for the selected setup
 
 - Cloning and building the last-tested or latest versions of Liboqs and OQS-Provider
 
@@ -99,7 +99,7 @@ For further information on the main setup script's usage, please refer to the ma
 This utility script is used for cleaning up files generated during the compiling and benchmarking processes. It provides options for uninstalling libraries (which includes deleting generated `__pycache__` directories), clearing old benchmarking results, and removing generated TLS keys. Users can choose to perform individual cleanup actions or both, based on their needs.
 
 ### configure_openssl_cnf.sh
-This utility script manages the modification of the OpenSSL 4.0.2 openssl.cnf configuration file to support different stages of the PQC testing pipeline. It adjusts cryptographic provider settings and default group directives as required for:
+This utility script manages the modification of the OpenSSL 4.0.3 openssl.cnf configuration file to support different stages of the PQC testing pipeline. It adjusts cryptographic provider settings and default group directives as required for:
 
 - Initial setup
 
@@ -163,7 +163,7 @@ The utility script must be called with one of the following arguments in order t
 | --clear-env-oids | Clear OID environment variables for quantum-safe algorithms |
 | --help           | Display the help message                                    |
 
-The algorithms that are included within this script are based on the algorithms listed by OQS-Provider in their `ALGORITHMS.md` file (OQS-Provider version 0.11.0+). Currently, the script is hard-coded to include the algorithms mentioned in that file. This will be updated in the future to be more dynamic. The version of the `ALGORITHMS.md` file used to dictate the algorithms included in this script can be found [here](https://github.com/open-quantum-safe/oqs-provider/blob/1670a8a91bbca997d33e6b6851309d6241cc224c/ALGORITHMS.md).
+The algorithms that are included within this script are based on the algorithms listed by OQS-Provider in their `ALGORITHMS.md` file (OQS-Provider version 0.12.0). Currently, the script is hard-coded to include the algorithms mentioned in that file. This will be updated in the future to be more dynamic. The version of the `ALGORITHMS.md` file used to dictate the algorithms included in this script can be found [here](https://github.com/open-quantum-safe/oqs-provider/blob/7e9d095aff7967fab9a8ce693e3da5357dc59d58/ALGORITHMS.md).
 
 ### serial_port_selector.py
 This Python utility script is used for handling serial port selection in the energy testing bash scripts when serial control signalling has been selected by the user. The script uses the `pyserial` package to detect available serial ports on the system, outputs a numbered list of available ports to the user, validates the selected option value, and returns the selected serial device path to the calling Bash script. This utility script is intended to be called by the automated testing scripts (for example, `tls_operations_energy_test.sh` and `pqc_tls_performance_test.sh`) and is **not intended to be run manually**. To support properly grabbing the selected serial port path from the utility script in bash, interactive menu output and warning messages are written to standard error, while only the selected serial device path is written to standard output.
@@ -248,7 +248,7 @@ The PQC TLS performance testing suite relies on several scripts to carry out TLS
 Testing scripts are stored in the `scripts/test_scripts` directory, whilst internal scripts are stored in the `scripts/test_scripts/internal_scripts` directory. Internal scripts are intended to be called by the main testing scripts and do not support being called in isolation.
 
 ### pqc_tls_performance_test.sh
-This is the main controller script for executing the full TLS performance benchmarking suite. It performs TLS handshake testing for PQC, Hybrid-PQC, and classical configurations, together with cryptographic speed testing for PQC, Hybrid-PQC, and classical algorithms supported by OpenSSL 4.0.2 and the OQS-Provider. The script coordinates all required test operations by invoking subordinate scripts (`tls_handshake_test_server.sh`, `tls_handshake_test_client.sh`, and `tls_speed_test.sh`) and ensures that results are stored correctly under the appropriate machine directory based on the assigned Machine ID. Designed to run on both client and server machines, the script prompts the user for necessary parameters such as machine role, IP addresses, test duration, and number of runs. When run on the client, it configures both the handshake and speed benchmarking parameters accordingly.
+This is the main controller script for executing the full TLS performance benchmarking suite. It performs TLS handshake testing for PQC, Hybrid-PQC, and classical configurations, together with cryptographic speed testing for PQC, Hybrid-PQC, and classical algorithms supported by OpenSSL 4.0.3 and the OQS-Provider. The script coordinates all required test operations by invoking subordinate scripts (`tls_handshake_test_server.sh`, `tls_handshake_test_client.sh`, and `tls_speed_test.sh`) and ensures that results are stored correctly under the appropriate machine directory based on the assigned Machine ID. Designed to run on both client and server machines, the script prompts the user for necessary parameters such as machine role, IP addresses, test duration, and number of runs. When run on the client, it configures both the handshake and speed benchmarking parameters accordingly.
 
 It is important to note that when conducting testing, the `pqc_tls_performance_test.sh` script will prompt the user for parameters regarding the handling of storing and managing test results if the machine or current shell has been designated as the client (depending on whether single machine or separate machine testing is being performed).
 

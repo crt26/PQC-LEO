@@ -5,7 +5,7 @@
 
 # Script for generating CA, server, and client certificates and keys used by TLS handshake performance,
 # handshake energy, and transmission-cost testing. Generates classical, PQC, and Hybrid-PQC certificates using 
-# OpenSSL 4.0.2, using PQC implementations natively available in OpenSSL and those integrated via OQS-Provider.
+# OpenSSL 4.0.3, using PQC implementations natively available in OpenSSL and those integrated via OQS-Provider.
 # The generated key material must be copied to the client machine unless both client and server run on the same system.
 
 #-------------------------------------------------------------------------------------------------------------------------------
@@ -47,7 +47,7 @@ function setup_base_env() {
     util_scripts="$root_dir/scripts/utility_scripts"
 
     # Declare the global library directory path variables
-    openssl_path="$libs_dir/openssl_4.0.2"
+    openssl_path="$libs_dir/openssl_4.0.3"
     oqs_provider_path="$libs_dir/oqs_provider"
     provider_path="$oqs_provider_path/lib"
 
@@ -182,9 +182,9 @@ function pqc_keygen() {
             -subj "/CN=oqstest $sig CA" \
             -days 365 \
             -config "$openssl_path/openssl.cnf" \
+            -provider-path "$provider_path" \
             -provider default \
-            -provider oqsprovider \
-            -provider-path "$provider_path"
+            -provider oqsprovider
         exit_status=$?
 
         # Ensure that the PQC CA certificate and private key were generated successfully
@@ -205,9 +205,9 @@ function pqc_keygen() {
                 -nodes \
                 -subj "/CN=oqstest $sig $cert_type" \
                 -config "$openssl_path/openssl.cnf" \
+                -provider-path "$provider_path" \
                 -provider default \
-                -provider oqsprovider \
-                -provider-path "$provider_path"
+                -provider oqsprovider
             exit_status=$?
 
             # Ensure that the PQC certificate signing request and private key were generated successfully
@@ -225,9 +225,9 @@ function pqc_keygen() {
                 -CAkey "$pqc_cert_dir/${sig}_CA.key" \
                 -CAcreateserial \
                 -days 365 \
+                -provider-path "$provider_path" \
                 -provider default \
-                -provider oqsprovider \
-                -provider-path "$provider_path"
+                -provider oqsprovider
             exit_status=$?
 
             # Ensure that the PQC certificate was generated successfully
@@ -268,9 +268,9 @@ function hybrid_pqc_keygen() {
             -subj "/CN=oqstest $sig CA" \
             -days 365 \
             -config "$openssl_path/openssl.cnf" \
+            -provider-path "$provider_path" \
             -provider default \
-            -provider oqsprovider \
-            -provider-path "$provider_path"
+            -provider oqsprovider
         exit_status=$?
 
         # Ensure that the Hybrid-PQC CA certificate and private key were generated successfully
@@ -291,9 +291,9 @@ function hybrid_pqc_keygen() {
                 -nodes \
                 -subj "/CN=oqstest $sig $cert_type" \
                 -config "$openssl_path/openssl.cnf" \
+                -provider-path "$provider_path" \
                 -provider default \
-                -provider oqsprovider \
-                -provider-path "$provider_path"
+                -provider oqsprovider
             exit_status=$?
 
             # Ensure that the Hybrid-PQC certificate signing request and private key were generated successfully
@@ -311,9 +311,9 @@ function hybrid_pqc_keygen() {
                 -CAkey "$hybrid_cert_dir/${sig}_CA.key" \
                 -CAcreateserial \
                 -days 365 \
+                -provider-path "$provider_path" \
                 -provider default \
-                -provider oqsprovider \
-                -provider-path "$provider_path"
+                -provider oqsprovider
             exit_status=$?
 
             # Ensure that the Hybrid-PQC certificate was generated successfully
@@ -469,9 +469,9 @@ function classic_keygen() {
             -subj "/CN=oqstest CA" \
             -days 365 \
             -config "$openssl_path/openssl.cnf" \
+            -provider-path "$provider_path" \
             -provider default \
-            -provider oqsprovider \
-            -provider-path "$provider_path"
+            -provider oqsprovider
         exit_status=$?
 
         # Ensure that the CA certificate was generated successfully
@@ -501,9 +501,9 @@ function classic_keygen() {
                 -nodes \
                 -subj "/CN=oqstest ${cert_type}" \
                 -config "$openssl_path/openssl.cnf" \
+                -provider-path "$provider_path" \
                 -provider default \
-                -provider oqsprovider \
-                -provider-path "$provider_path"
+                -provider oqsprovider
             exit_status=$?
 
             # Ensure that the certificate signing request was generated successfully
@@ -521,9 +521,9 @@ function classic_keygen() {
                 -CAkey "$ca_key_file" \
                 -CAcreateserial \
                 -days 365 \
+                -provider-path "$provider_path" \
                 -provider default \
-                -provider oqsprovider \
-                -provider-path "$provider_path"
+                -provider oqsprovider
             exit_status=$?
 
             # Ensure that the certificate file was generated successfully
@@ -549,7 +549,7 @@ function main() {
     # Output the welcome message to the terminal
     echo "#########################################################"
     echo "PQC-LEO - TLS Certificate & Key Generator"
-    echo "PQC | Hybrid-PQC | Classic (OpenSSL 4.0.2 + OQS-Provider)"
+    echo "PQC | Hybrid-PQC | Classic (OpenSSL 4.0.3 + OQS-Provider)"
     echo -e "#########################################################\n"
 
     # Setup the base environment for the script

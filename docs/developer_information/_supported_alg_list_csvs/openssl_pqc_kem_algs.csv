@@ -1,0 +1,9 @@
+**Algorithm Name**,**Hybrid Algorithm (*)**,**TLS Handshake Test Support (*)**,**OpenSSL Speed Test Support (*)**,**TLS Handshake Bytes Test Support (*)**
+MLKEM512,,*,*,*
+MLKEM768,,*,*,*
+MLKEM1024,,*,*,*
+X25519MLKEM768,*,*,*,*
+X448MLKEM1024,*,,*,
+SecP256r1MLKEM768,*,*,*,*
+SecP384r1MLKEM1024,*,*,*,*
+curveSM2MLKEM768,*,*,*,*

@@ -151,9 +151,9 @@ function setup_base_env() {
     parsing_scripts="$root_dir/scripts/parsing_scripts"
 
     # Declare the global library directory path variables
-    openssl_path="$libs_dir/openssl_4.0.2"
+    openssl_path="$libs_dir/openssl_4.0.3"
     provider_path="$libs_dir/oqs_provider/lib"
-    provider_flags="-provider default -provider oqsprovider -provider-path $provider_path"
+    provider_flags="-provider-path $provider_path -provider default -provider oqsprovider"
 
     # If the use PQC-LEO OpenSSL build with energy testing flag is present, set the OpenSSL path to the PQC-LEO OpenSSL build
     if [ -f "$tmp_dir/energy_tools_pqc_leo_openssl.flag" ]; then

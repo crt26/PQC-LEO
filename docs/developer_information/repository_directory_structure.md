@@ -14,6 +14,7 @@ PQC-LEO/
 ├── docs/
 │   ├── _doc_images/
 │   ├── developer_information/
+│   │   ├── _supported_alg_list_csvs/
 │   │   └── energy_collector_APIs/
 │   ├── energy_meter_guides/
 │   │   └── supported_meters/
@@ -49,10 +50,11 @@ PQC-LEO/
 ### Directory Descriptions
 
 | **Name**                      | **Subdirectory (*)**      | **Auto-Generated (*)** | **Description**                                                                                                                               |
-|-------------------------------|---------------------------|------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+|-------------------------------|---------------------------|:----------------------:|-----------------------------------------------------------------------------------------------------------------------------------------------|
 | `docs`                        |                           |                        | Contains documentation files related to the project.                                                                                          |
 | `_doc_images`                 | * (docs)                  |                        | Stores image assets used by project documentation.                                                                                            |
 | `developer_information`       | * (docs)                  |                        | Developer guides and references for the project.                                                                                              |
+| `_supported_alg_list_csvs`    | * (developer_information) |                        | CSV versions of the algorithm tables in the [Supported Algorithms](../supported_algorithms.md) guide.                                         |
 | `energy_collector_APIs`       | * (developer_information) |                        | API documentation and references for the energy collector components.                                                                         |
 | `energy_meter_guides`         | * (docs)                  |                        | Guides and documentation for supported and tested energy meters.                                                                              |
 | `supported_meters`            | * (energy_meter_guides)   |                        | Meter-specific support notes and setup guidance.                                                                                              |

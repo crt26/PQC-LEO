@@ -1,7 +1,7 @@
 # Automated PQC TLS Performance Benchmarking Tool - Usage Guide <!-- omit from toc -->
 
 ## Overview <!-- omit from toc -->
-This tool provides automated benchmarking for PQC-enabled TLS 1.3 handshakes and cryptographic operations within OpenSSL 4.0.2. It supports OpenSSL-native algorithms and PQC algorithms integrated into OpenSSL through the OQS-Provider library. The handshake tests evaluate PQC and Hybrid-PQC signing-algorithm/KEM pairings alongside classical signing-algorithm, key-exchange-group, and ciphersuite combinations. The OpenSSL speed tests benchmark PQC/Hybrid-PQC KEM and signature operations together with classical signature and key-exchange operations.
+This tool provides automated benchmarking for PQC-enabled TLS 1.3 handshakes and cryptographic operations within OpenSSL 4.0.3. It supports OpenSSL-native algorithms and PQC algorithms integrated into OpenSSL through the OQS-Provider library. The handshake tests evaluate PQC and Hybrid-PQC signing-algorithm/KEM pairings alongside classical signing-algorithm, key-exchange-group, and ciphersuite combinations. The OpenSSL speed tests benchmark PQC/Hybrid-PQC KEM and signature operations together with classical signature and key-exchange operations.
 
 Tests can be conducted either on a single machine (localhost) or across two networked machines, using a physical or virtual connection. The tool records detailed performance and timing metrics for each algorithm pairing evaluated during testing.
 
@@ -11,7 +11,7 @@ If you wish to perform TLS handshake or TLS operations energy usage testing, ple
 
 To compare the size of the network data exchanged by one-way and mutually authenticated TLS 1.3 handshakes, refer to the separate [TLS Handshake Transmission Cost Testing Guide](./tls_handshake_transmission_cost_testing.md).
 
->**Notice:** Certain signature/KEM combinations may produce values of `inf` for "Connections Per User Second" results in TLS handshake testing when using smaller testing windows. Please refer to the [Inf Result Value Occurrence Details](#inf-result-value-occurrence-details) section in this document for further information.
+>**Notice:** Certain PQC, Hybrid-PQC, and classical algorithm combinations may produce values of `inf` for "Connections Per User Second" results in TLS handshake testing when using smaller testing windows. Please refer to the [Inf Result Value Occurrence Details](#inf-result-value-occurrence-details) section in this document for further information.
 
 ### Contents <!-- omit from toc -->
 - [Supported Hardware](#supported-hardware)
@@ -40,7 +40,7 @@ The automated testing tool is currently only supported on the following devices:
 - ARM Linux devices using a 64-bit Debian-based Operating System
 
 ## Supported Algorithms
-This tool supports PQC and Hybrid-PQC algorithms available through OpenSSL 4.0.2 and the OQS-Provider, with a small number excluded because of known incompatibilities and dependency limitations. TLS handshake testing also covers a set of classical digital signature algorithms, TLS key-exchange groups, and TLS 1.3 ciphersuites. Every supported classical signing algorithm is tested with every supported key-exchange-group and ciphersuite combination. TLS speed testing covers supported PQC/Hybrid-PQC KEMs and signatures, classical RSA/EC/Ed signature algorithms, and classical ECDH/XDH key-exchange groups.
+This tool supports PQC and Hybrid-PQC algorithms available through OpenSSL 4.0.3 and the OQS-Provider, with a small number excluded because of known incompatibilities and dependency limitations. TLS handshake testing also covers a set of classical digital signature algorithms, TLS key-exchange groups, and TLS 1.3 ciphersuites. Every supported classical signing algorithm is tested with every supported key-exchange-group and ciphersuite combination. TLS speed testing covers supported PQC/Hybrid-PQC KEMs and signatures, classical RSA/EC/Ed signature algorithms, and classical ECDH/XDH key-exchange groups.
 
 RSA-PSS is included in classical TLS handshake testing, but standard TLS speed testing does not produce separate RSA-PSS results. The underlying `openssl speed` command provides size-based RSA selectors only and uses its standard RSA/PKCS#1 v1.5 benchmark path; it does not provide an RSA-PSS selector that the test could invoke or parse as a distinct result.
 
@@ -238,21 +238,24 @@ The TLS handshake energy usage testing functionality can be enabled by passing t
 During client configuration, the script asks whether the TLS handshake performance results should also be written to the client machine. Selecting no collects only the energy usage results on the collection machine. Selecting yes additionally stores and parses the handshake performance results on the client; TLS speed testing and parsing remain disabled. Writing the performance results to disk occurs inside the measured test windows and will therefore be reflected in the collected energy usage metrics.
 
 ## Inf Result Value Occurrence Details
-Certain signature/KEM combinations may produce `inf` values for the **"Connections Per User Second"** metric during TLS handshake testing when using shorter test durations (typically below 5 seconds).
+Certain PQC, Hybrid-PQC, and classical algorithm combinations may produce `inf` values for the **"Connections Per User Second"** metric during TLS handshake testing when using shorter test durations (typically below 5 seconds).
 
 PQC-LEO includes safeguards to:
-- warn users when a selected test duration may produce `inf` values
-- exclude affected runs from average calculations while tracking the number of valid runs used
 
-It is recommended to use TLS handshake test durations of **5 seconds or greater** to ensure all runs can be used in average calculations.
+- warn users when a selected test duration may produce `inf` values
+- exclude rows containing `inf` from average calculations while tracking the number of valid runs used
+
+For each algorithm combination, session ID first-use and reuse results are handled independently. If no valid runs remain, `N/A` is used for the averaged metrics and the number of runs used is recorded as 0.
+
+It is recommended to use TLS handshake test durations of **5 seconds or greater** to minimise the likelihood of `inf` values occurring. However, this does not guarantee that all runs can be used in average calculations.
 
 For a detailed explanation of this behaviour and how it is handled, please refer to:
 
 - [Inf Result Value Occurrence Details](../performance_results/tls_handshake_inf_result_handling.md)
 
 ## Useful External Documentation
-- [OpenSSL(4.0.2) Release](https://github.com/openssl/openssl/releases/tag/openssl-4.0.2)
-- [OpenSSL(4.0.2) Documentation](https://docs.openssl.org/4.0/)
+- [OpenSSL(4.0.3) Release](https://github.com/openssl/openssl/releases/tag/openssl-4.0.3)
+- [OpenSSL(4.0.3) Documentation](https://docs.openssl.org/4.0/)
 - [OQS-Provider Webpage](https://openquantumsafe.org/applications/tls.html#oqs-openssl-provider)
 - [OQS-Provider GitHub Page](https://github.com/open-quantum-safe/oqs-provider)
 - [Latest OQS-Provider Release Notes](https://github.com/open-quantum-safe/oqs-provider/blob/main/RELEASE.md)

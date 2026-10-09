@@ -76,7 +76,7 @@ def setup_base_env():
 
     # Declare the global library directory path variables
     liboqs_build_dir = os.path.join(root_dir, "lib", "liboqs", "build", "tests")
-    openssl_path = os.path.join(root_dir, "lib", "openssl_4.0.2")
+    openssl_path = os.path.join(root_dir, "lib", "openssl_4.0.3")
     oqs_provider_path = os.path.join(root_dir, "lib", "oqs_provider")
     openssl_lib_dir = ""
 
@@ -299,7 +299,7 @@ def get_tls_pqc_algs():
     alg_cats = ["kem", "signature"]
     provider_flags = {
         "default": ["-provider", "default"], 
-        "oqsprovider": ["-provider", "oqsprovider", "-provider-path", oqs_provider_path]
+        "oqsprovider": ["-provider-path", os.path.join(oqs_provider_path, "lib"), "-provider", "oqsprovider"]
     }
 
     # Check if the OQS-Provider algs enabled flag is present in the temp directory

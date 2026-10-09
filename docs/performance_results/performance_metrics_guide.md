@@ -102,7 +102,7 @@ The table below outlines where this data is stored and how it's organised in the
 Where `machine_x` is the Machine-ID number assigned to the results when executing the testing scripts. If no custom Machine-ID is assigned, the default ID of 1 will be set for the results.
 
 ## PQC TLS Performance Metrics
-The TLS performance testing suite benchmarks PQC, Hybrid-PQC, and classical algorithm configurations available through both OpenSSL's native support and the OQS-Provider. OpenSSL 4.0.2 provides native PQC implementations alongside those exposed by the OQS-Provider, and the suite is designed to evaluate performance consistently across the available implementations. It measures performance within the TLS 1.3 handshake protocol and the execution speed of cryptographic operations directly through OpenSSL. This provides insight into how PQC schemes perform in real-world security protocol scenarios. An expanded set of classical digital signature algorithms, key-exchange groups, and ciphersuites is also tested to establish performance baselines for comparison with PQC and Hybrid-PQC algorithms.
+The TLS performance testing suite benchmarks PQC, Hybrid-PQC, and classical algorithm configurations available through both OpenSSL's native support and the OQS-Provider. OpenSSL 4.0.3 provides native PQC implementations alongside those exposed by the OQS-Provider, and the suite is designed to evaluate performance consistently across the available implementations. It measures performance within the TLS 1.3 handshake protocol and the execution speed of cryptographic operations directly through OpenSSL. This provides insight into how PQC schemes perform in real-world security protocol scenarios. An expanded set of classical digital signature algorithms, key-exchange groups, and ciphersuites is also tested to establish performance baselines for comparison with PQC and Hybrid-PQC algorithms.
 
 As part of the automated TLS testing, two categories of evaluations are conducted:
 
@@ -135,7 +135,7 @@ When averaged TLS handshake result files are generated, additional columns are i
 
 These columns are used to indicate how many test runs were included in each average calculation. This is necessary because, in some cases, a value of `inf` may be produced for the **"Connections per User Second"** metric when using shorter TLS handshake test durations.
 
-For PQC and Hybrid-PQC results, if an `inf` value occurs in a row, that row is excluded from the average calculation for the affected algorithm combination and session-reuse mode. Classical handshake averages currently do not apply this filter. The additional columns record how many rows contributed to each average and are only present for TLS handshake results.
+For PQC, Hybrid-PQC, and classical results, if an `inf` value occurs in any metric, the entire row is excluded from the average calculation for the affected algorithm combination and session-reuse mode. Where no valid rows remain, the averaged metrics are written as `N/A` and **Runs used for Average** is set to 0. **Total Runs** continues to record the total number of test runs performed. The additional columns record how many rows contributed to each average and are only present for TLS handshake results.
 
 Further information on this behaviour and how it can be avoided is provided in the [TLS Handshake Inf Result Handling](./tls_handshake_inf_result_handling.md) documentation.
 
@@ -339,5 +339,5 @@ TLS operations energy parsing produces `pqc` and `hybrid_pqc` KEM/signature resu
 - [Valgrind Massif Tool](https://valgrind.org/docs/manual/ms-manual.html)
 - [OQS-Provider Webpage](https://openquantumsafe.org/applications/tls.html#oqs-openssl-provider)
 - [OQS-Provider GitHub Page](https://github.com/open-quantum-safe/oqs-provider)
-- [OpenSSL(4.0.2) Release](https://github.com/openssl/openssl/releases/tag/openssl-4.0.2)
-- [OpenSSL(4.0.2) Documentation](https://docs.openssl.org/4.0/)
+- [OpenSSL(4.0.3) Release](https://github.com/openssl/openssl/releases/tag/openssl-4.0.3)
+- [OpenSSL(4.0.3) Documentation](https://docs.openssl.org/4.0/)

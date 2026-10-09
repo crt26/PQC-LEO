@@ -1,0 +1,9 @@
+**Key Exchange Group**,**TLS Handshake Test Support (*)**,**OpenSSL Speed Test Support (*)**,**TLS Operations Energy Test Support (*)**,**TLS Handshake Bytes Test Support (*)**
+x25519,*,*,*,*
+x448,*,*,*,*
+secp256r1,*,*,*,*
+secp384r1,*,*,*,*
+secp521r1,*,*,*,*
+brainpoolP256r1tls13,*,*,*,*
+brainpoolP384r1tls13,*,*,*,*
+brainpoolP512r1tls13,*,*,*,*
