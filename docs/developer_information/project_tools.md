@@ -52,12 +52,12 @@ This program implements the PQC-LEO computational energy usage benchmarking tool
 
 The program accepts the following command line arguments:
 
-| **Argument Shorthand** | **Argument Longhand**             | **Functionality**                                                                            |
-|------------------------|-----------------------------------|----------------------------------------------------------------------------------------------|
-| `-c`                   | `--use-custom-net-control-ports`  | Use custom network control ports for energy testing control signalling                       |
-| `-b TIME`              | `--energy-baseline-duration=TIME` | Set the energy baseline measurement duration in positive whole seconds (default: 60 seconds) |
-| `-s`                   | `--skip-welcome-message`          | Skip the welcome message on startup (useful for automated calling of the script)             |
-| `-h`                   | `--help`                          | Display the help message                                                                     |
+| **Argument Shorthand** | **Argument Longhand**               | **Functionality**                                                                            |
+|------------------------|-------------------------------------|----------------------------------------------------------------------------------------------|
+| `-c`                   | `--use-custom-net-control-ports`    | Use custom network control ports for energy testing control signalling                       |
+| `-b <TIME>`            | `--energy-baseline-duration=<TIME>` | Set the energy baseline measurement duration in positive whole seconds (default: 60 seconds) |
+| `-s`                   | `--skip-welcome-message`            | Skip the welcome message on startup (useful for automated calling of the script)             |
+| `-h`                   | `--help`                            | Display the help message                                                                     |
 
 ## Energy Usage Collector Tool
 The energy usage collector tools provide the necessary tools to perform energy usage testing for a variety of different testing scenarios. While the primary purpose of the tool is to perform energy usage testing for the various PQC algorithms supported by the PQC-LEO framework, it can be used to perform energy usage testing for any arbitrary testing scenario by utilising the controller and meter API functions included within the tool to coordinate the energy usage testing process and collect the results.
