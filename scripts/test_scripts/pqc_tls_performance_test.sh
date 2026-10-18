@@ -262,6 +262,11 @@ function parse_args {
         exit 1
     fi
 
+    # If the energy baseline duration flag was passed, output a notice with the new duration value
+    if [ "$energy_baseline_duration_arg_used" == "True" ]; then
+        echo -e "[NOTICE] - Energy baseline duration set to $energy_baseline_duration seconds"
+    fi
+
     # Ensure that if the --use-custom-sys-state flag is used, energy testing is also enabled
     if [ "$custom_sys_state_arg_used" == "True" ] && [ "$enable_energy_testing" == 0 ]; then
         echo "[ERROR] - The --use-custom-sys-state flag requires energy testing to be enabled"
