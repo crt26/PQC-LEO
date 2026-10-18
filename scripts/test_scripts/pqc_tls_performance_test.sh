@@ -221,7 +221,7 @@ function parse_args {
                 # Output the energy testing enabled message to the user and set the energy testing flag to true
                 echo -e "\n[NOTICE] - Energy testing enabled, ensure the power measurement device is connected and configured correctly\n"
                 enable_energy_testing=1
-                
+
                 shift
                 ;;
             
@@ -263,7 +263,7 @@ function parse_args {
 
     # If the energy baseline duration flag was passed, output a notice with the new duration value
     if [ "$energy_baseline_duration_arg_used" == "True" ]; then
-        echo -e "[NOTICE] - Energy baseline duration set to $energy_baseline_duration seconds"
+        echo -e "[NOTICE] - Energy baseline duration set to $energy_baseline_duration seconds\n"
     fi
 
     # Ensure that if the --use-custom-sys-state flag is used, energy testing is also enabled
