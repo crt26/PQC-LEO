@@ -16,7 +16,7 @@ The automated TLS handshake energy usage testing utilises the same automation sc
 
 This testing provides insight into the energy usage of using PQC, Hybrid-PQC, and classical algorithms within the context of a TLS handshake. As part of the testing process, the script will automatically handle configuring the system state for energy usage testing, which includes setting the CPU performance to maximum and selecting a specific target CPU core. This helps improve consistency for energy usage evaluation, although background processes and thermal throttling can still affect measurements. Additionally, a **60 second** baseline energy usage reading is taken by default before the testing process begins, which serves as a reference point for evaluating the energy consumption of the cryptographic operations.
 
-The baseline measurement duration can be configured by passing `--energy-baseline-duration=<TIME>` when calling the testing machine script. The specified duration must be a positive whole number of seconds.
+The baseline measurement duration can be configured by passing `--energy-baseline-duration=<TIME>` alongside `--enable-energy-testing` when calling the client machine script. The specified duration must be a positive whole number of seconds. The script will report an error if the baseline duration flag is passed without energy usage testing being enabled.
 
 Energy usage metrics are stored on the collection machine, and will be automatically parsed into structured CSV files for analysis.
 

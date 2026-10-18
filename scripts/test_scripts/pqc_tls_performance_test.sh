@@ -25,7 +25,7 @@ function output_help() {
     echo "--disable-control-sleep            Disable the control signal sleep time"
     echo "--disable-result-parsing           Disable the result parsing for the test suite."
     echo "--enable-energy-testing            Enable energy testing, ensure the power measurement device is connected and configured correctly"
-    echo "--energy-baseline-duration=<TIME>  Energy baseline measurement duration in positive whole seconds (default: 60)"
+    echo "--energy-baseline-duration=<TIME>  Energy baseline measurement duration in positive whole seconds (default: 60; requires --enable-energy-testing)"
     echo "--use-custom-eng-control-ports     Enable the use of custom network control ports for energy testing control signalling (requires --enable-energy-testing to be enabled)"
     echo "--use-custom-sys-state             If performing energy testing, use custom system state values for the test instead of the default values."
     echo "--help                             Display the help message"
@@ -111,6 +111,9 @@ function parse_args {
                     echo "[ERROR] - Baseline duration must be a positive integer in seconds." >&2
                     exit 1
                 fi
+
+                # Set the flag to indicate that a custom energy baseline duration has been provided
+                energy_baseline_duration_arg_used="True"
 
                 shift
                 ;;
@@ -251,6 +254,13 @@ function parse_args {
         esac
 
     done
+
+    # Ensure that if the --energy-baseline-duration flag is used, energy testing is also enabled
+    if [ "$energy_baseline_duration_arg_used" == "True" ] && [ "$enable_energy_testing" -eq 0 ]; then
+        echo "[ERROR] - The --energy-baseline-duration flag requires energy testing to be enabled"
+        output_help
+        exit 1
+    fi
 
     # Ensure that if the --use-custom-sys-state flag is used, energy testing is also enabled
     if [ "$custom_sys_state_arg_used" == "True" ] && [ "$enable_energy_testing" == 0 ]; then
@@ -1578,6 +1588,7 @@ function main() {
     replace_old_results=0
     enable_energy_testing=0
     energy_baseline_duration=60
+    energy_baseline_duration_arg_used="False"
     use_custom_eng_control_ports=0
     sys_state_configure_flag="--set-default"
     custom_sys_state_arg_used="False"

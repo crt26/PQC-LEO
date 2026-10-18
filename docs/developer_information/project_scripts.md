@@ -269,7 +269,7 @@ The script accepts the passing of various command-line arguments when called, wh
 | `--enable-energy-testing`           | Enable energy testing, ensure the power measurement device is connected and configured correctly                                                         |
 | `--use-custom-eng-control-ports`    | Enable the use of custom network control ports for energy testing control signalling (requires --enable-energy-testing to be enabled)                    |
 | `--use-custom-sys-state`            | If performing energy testing, use custom system state values for the test instead of the default values.                                                 |
-| `--energy-baseline-duration=<TIME>` | Set the energy baseline measurement duration in positive whole seconds (default: 60 seconds). This is used when energy testing is enabled on the client. |
+| `--energy-baseline-duration=<TIME>` | Set the energy baseline measurement duration in positive whole seconds (default: 60 seconds). Requires --enable-energy-testing to be enabled.            |
 | `--help`                            | Display the help message                                                                                                                                 |
 
 ### tls_handshake_test_server.sh

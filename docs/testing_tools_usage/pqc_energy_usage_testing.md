@@ -197,7 +197,7 @@ Examples of using this flag to gather a baseline measurement for 120 seconds in 
 ./tls_operations_energy_test.sh --energy-baseline-duration=120
 ```
 
-When configuring the baseline duration for TLS handshake energy usage testing, the `--energy-baseline-duration` flag should be passed alongside `--enable-energy-testing` when calling the client machine script. The handshake test duration and energy meter polling interval are configured separately.
+When configuring the baseline duration for TLS handshake energy usage testing, the `--energy-baseline-duration` flag must be passed alongside `--enable-energy-testing` when calling the client machine script. The script will report an error if energy usage testing has not been enabled. The handshake test duration and energy meter polling interval are configured separately.
 
 The baseline measurement duration can also be configured when using the standalone `comp_energy_tester` tool. Please refer to the [Computational Energy Tester Tool Usage Guide](../project_tools_guides/comp_energy_tester_usage_guide.md#configuring-the-baseline-duration) for further information on using this functionality.
 
