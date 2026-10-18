@@ -91,7 +91,7 @@ function parse_args() {
 
                 # Ensure that the energy baseline duration is a positive integer
                 if [[ ! "$energy_baseline_duration" =~ ^[1-9][0-9]*$ ]]; then
-                    echo "[ERROR] - Baseline duration must be a positive integer in seconds." >&2
+                    echo -e "\n[ERROR] - Baseline duration must be a positive integer in seconds." >&2
                     exit 1
                 fi
 
