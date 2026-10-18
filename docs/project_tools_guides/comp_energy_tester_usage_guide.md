@@ -97,7 +97,7 @@ The tool allows for the following advanced settings:
 - Skipping the display of the welcome message
 
 ### Configuring the Baseline Duration
-By default, the computational energy usage testing tool will gather a baseline measurement for **60 seconds** before beginning the cryptographic tests. This duration can be configured by passing `-b SECONDS` or `--energy-baseline-duration=SECONDS` when calling the tool. The specified duration must be a positive whole number of seconds.
+By default, the computational energy usage testing tool will gather a baseline measurement for **60 seconds** before beginning the cryptographic tests. This duration can be configured by passing `-b <TIME>` or `--energy-baseline-duration=<TIME>` when calling the tool. The specified duration must be a positive whole number of seconds.
 
 An example of using this flag to gather a baseline measurement for 120 seconds is as follows:
 
