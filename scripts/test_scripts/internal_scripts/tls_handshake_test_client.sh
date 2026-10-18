@@ -122,8 +122,8 @@ function get_baseline() {
         -P "$ENERGY_POLL_RATE" \
         "${communication_flags[@]}"
 
-    # Sleep for 10 seconds to allow baseline measurement to be taken
-    sleep 10
+    # Allow baseline measurement for the configured duration (default: 60 seconds)
+    sleep "${ENERGY_BASELINE_DURATION:-60}"
 
     # Send test stop message to the collector machine
     "$control_sender" -t "${communication_flags[@]}"
@@ -801,7 +801,7 @@ function tls_client_test_entrypoint() {
 
     # Perform the baseline measurement if energy testing is enabled
     if [ "$ENABLE_ENERGY_TESTING" -eq 1 ]; then
-        echo -e "Gathering baseline energy measurement...\n"
+        echo -e "Gathering baseline energy measurement (${ENERGY_BASELINE_DURATION:-60} seconds)...\n"
         get_baseline
         echo -e "Baseline energy measurement complete\n"
     fi

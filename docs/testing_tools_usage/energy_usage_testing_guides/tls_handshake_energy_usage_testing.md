@@ -14,7 +14,9 @@ Please ensure you have read through the information provided within the main [En
 ## Testing Tool Overview
 The automated TLS handshake energy usage testing utilises the same automation scripts that are used for standard TLS handshake testing, with additional functionality for energy usage testing. The main script responsible for conducting the TLS handshake energy usage testing is the `pqc_tls_performance_test.sh` script located in the `scripts/test_scripts` directory. The automated energy usage testing functionality is integrated into the existing TLS handshake testing when the relevant command line argument `--enable-energy-testing` is passed to the script, which enables the energy usage testing features.
 
-This testing provides insight into the energy usage of using PQC, Hybrid-PQC, and classical algorithms within the context of a TLS handshake. As part of the testing process, the script will automatically handle configuring the system state for energy usage testing, which includes setting the CPU performance to maximum and selecting a specific target CPU core. This helps improve consistency for energy usage evaluation, although background processes and thermal throttling can still affect measurements. Additionally, a **10 second** baseline energy usage reading is taken before the testing process begins, which serves as a reference point for evaluating the energy consumption of the cryptographic operations.
+This testing provides insight into the energy usage of using PQC, Hybrid-PQC, and classical algorithms within the context of a TLS handshake. As part of the testing process, the script will automatically handle configuring the system state for energy usage testing, which includes setting the CPU performance to maximum and selecting a specific target CPU core. This helps improve consistency for energy usage evaluation, although background processes and thermal throttling can still affect measurements. Additionally, a **60 second** baseline energy usage reading is taken by default before the testing process begins, which serves as a reference point for evaluating the energy consumption of the cryptographic operations.
+
+The baseline measurement duration can be configured by passing `--energy-baseline-duration=<TIME>` when calling the testing machine script. The specified duration must be a positive whole number of seconds.
 
 Energy usage metrics are stored on the collection machine, and will be automatically parsed into structured CSV files for analysis.
 
@@ -49,6 +51,12 @@ Example command on the client machine:
 
 ```bash
 ./pqc_tls_performance_test.sh --enable-energy-testing
+```
+
+An example of using this flag to gather a baseline measurement for 120 seconds is as follows:
+
+```bash
+./pqc_tls_performance_test.sh --enable-energy-testing --energy-baseline-duration=120
 ```
 
 ## Configuring the Testing Parameters
