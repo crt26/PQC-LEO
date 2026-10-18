@@ -221,8 +221,7 @@ function parse_args {
                 # Output the energy testing enabled message to the user and set the energy testing flag to true
                 echo -e "\n[NOTICE] - Energy testing enabled, ensure the power measurement device is connected and configured correctly\n"
                 enable_energy_testing=1
-                sleep 2
-
+                
                 shift
                 ;;
             
