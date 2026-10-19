@@ -281,9 +281,6 @@ function setup_env() {
     # Export the OpenSSL library filepath
     export LD_LIBRARY_PATH="$openssl_lib_path:$LD_LIBRARY_PATH"
 
-    # Declare the current group var that will be passed to DEFAULT_GROUP env var when changing the test type
-    current_group=""
-
     # Declare the OpenSSL binary path
     openssl_bin="$openssl_path/bin/openssl"
 

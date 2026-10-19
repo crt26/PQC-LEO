@@ -22,7 +22,7 @@ As part of the testing process, the script will automatically handle configuring
 
 The baseline measurement duration can be configured by passing `--energy-baseline-duration=<TIME>` when calling the testing machine script. The specified duration must be a positive whole number of seconds.
 
-Energy usage metrics are stored on the collection machine, and will be automatically parsed into structured CSV files for analysis.
+Energy usage metrics are stored on the collection machine and, by default, parsed there into structured CSV files after the collection session completes.
 
 > **Notice:** Support for automated configuration of a system fan is not currently available in the provided testing scripts. This is due to the variety of system types and fan control methods available, making a universal solution challenging. Future versions aim to address this limitation. It is **highly recommended** to manually configure the system fan (if applicable) to a fixed speed before testing to prevent variances in the fan speed during testing impacting the system's power draw, skewing the energy usage results.
 
@@ -73,11 +73,11 @@ The second set of parameters to be configured is related to the testing paramete
 | **Prompt**                                                                          | **What the option sets**                                                                              |
 |-------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
 | Enter the number of iterations each operation should be run per test (e.g., 1000)   | Number of iterations to be performed for each algorithm's respective cryptographic operations.        |
-| Enter the number of test runs required                                              | Number of separate test runs to execute for averaging.                                                |
+| Enter the number of test runs required                                              | Number of separate test runs to execute.                                                              |
 | Enter the energy meter polling rate in milliseconds (0 for no delays between polls) | Polling interval in milliseconds for the energy meter; set `0` for continuous/no delay between polls. |
 
 ## Outputted Results
-After testing completes, the raw output from the TLS operations energy usage testing is stored in:
+After testing completes, the raw output from the TLS operations energy usage testing is stored on the collection machine in:
 
 `test_data/up_results/energy_test_results/tls_operations_energy_results/machine_x`
 

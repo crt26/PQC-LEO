@@ -78,7 +78,7 @@ For details on how to add support for new energy meters, please refer to the fol
 [Integrating New Energy Meters](../developer_information/energy_collector_APIs/integrating_new_energy_meters.md)
 
 ## Supported Algorithms
-The PQC, Hybrid-PQC, and classical algorithms that are supported for standard performance testing are also supported for energy usage testing.
+The algorithms supported for energy usage testing depend on the testing category, as detailed below.
 
 Computational energy testing covers PQC algorithms from Liboqs. TLS handshake and TLS operations energy testing cover PQC, Hybrid-PQC, and classical algorithms. Classical TLS operations energy testing includes all configured classical digital signature and key-exchange algorithms. The following OpenSSL Hybrid-PQC KEMs are exceptions and are not supported by TLS operations energy testing because the required key encoders are unavailable:
 
