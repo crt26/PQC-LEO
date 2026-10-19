@@ -235,6 +235,14 @@ The TLS handshake energy usage testing functionality can be enabled by passing t
 ./pqc_tls_performance_test.sh --enable-energy-testing
 ```
 
+When energy usage testing is enabled, the client machine will gather a baseline measurement for **60 seconds** before beginning the TLS handshake tests. This duration can be configured by passing `--energy-baseline-duration=<TIME>` alongside `--enable-energy-testing` when calling the client machine script. The specified duration must be a positive whole number of seconds. The script will report an error if the baseline duration flag is passed without energy usage testing being enabled.
+
+An example of using this flag to gather a baseline measurement for 120 seconds is as follows:
+
+```bash
+./pqc_tls_performance_test.sh --enable-energy-testing --energy-baseline-duration=120
+```
+
 During client configuration, the script asks whether the TLS handshake performance results should also be written to the client machine. Selecting no collects only the energy usage results on the collection machine. Selecting yes additionally stores and parses the handshake performance results on the client; TLS speed testing and parsing remain disabled. Writing the performance results to disk occurs inside the measured test windows and will therefore be reflected in the collected energy usage metrics.
 
 ## Inf Result Value Occurrence Details

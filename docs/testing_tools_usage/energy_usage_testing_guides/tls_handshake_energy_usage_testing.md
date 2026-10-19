@@ -14,9 +14,11 @@ Please ensure you have read through the information provided within the main [En
 ## Testing Tool Overview
 The automated TLS handshake energy usage testing utilises the same automation scripts that are used for standard TLS handshake testing, with additional functionality for energy usage testing. The main script responsible for conducting the TLS handshake energy usage testing is the `pqc_tls_performance_test.sh` script located in the `scripts/test_scripts` directory. The automated energy usage testing functionality is integrated into the existing TLS handshake testing when the relevant command line argument `--enable-energy-testing` is passed to the script, which enables the energy usage testing features.
 
-This testing provides insight into the energy usage of using PQC, Hybrid-PQC, and classical algorithms within the context of a TLS handshake. As part of the testing process, the script will automatically handle configuring the system state for energy usage testing, which includes setting the CPU performance to maximum and selecting a specific target CPU core. This helps improve consistency for energy usage evaluation, although background processes and thermal throttling can still affect measurements. Additionally, a **10 second** baseline energy usage reading is taken before the testing process begins, which serves as a reference point for evaluating the energy consumption of the cryptographic operations.
+This testing provides insight into the energy usage of using PQC, Hybrid-PQC, and classical algorithms within the context of a TLS handshake. As part of the testing process, the script will automatically handle configuring the system state for energy usage testing, which includes setting the CPU performance to maximum and selecting a specific target CPU core. This helps improve consistency for energy usage evaluation, although background processes and thermal throttling can still affect measurements. Additionally, a **60 second** baseline energy usage reading is taken by default before the testing process begins, which serves as a reference point for evaluating the energy consumption of the cryptographic operations.
 
-Energy usage metrics are stored on the collection machine, and will be automatically parsed into structured CSV files for analysis.
+The baseline measurement duration can be configured by passing `--energy-baseline-duration=<TIME>` alongside `--enable-energy-testing` when calling the client machine script. The specified duration must be a positive whole number of seconds. The script will report an error if the baseline duration flag is passed without energy usage testing being enabled.
+
+Energy usage metrics are stored on the collection machine and, by default, parsed there into structured CSV files after the collection session completes.
 
 > **Notice:** Support for automated configuration of a system fan is not currently available in the provided testing scripts. This is due to the variety of system types and fan control methods available, making a universal solution challenging. Future versions aim to address this limitation. It is **highly recommended** to manually configure the system fan (if applicable) to a fixed speed before testing to prevent variances in the fan speed during testing impacting the system's power draw, skewing the energy usage results.
 
@@ -49,6 +51,12 @@ Example command on the client machine:
 
 ```bash
 ./pqc_tls_performance_test.sh --enable-energy-testing
+```
+
+An example of using this flag to gather a baseline measurement for 120 seconds is as follows:
+
+```bash
+./pqc_tls_performance_test.sh --enable-energy-testing --energy-baseline-duration=120
 ```
 
 ## Configuring the Testing Parameters
@@ -90,11 +98,11 @@ If the user chooses to retain the TLS handshake performance results during clien
 
 `test_data/up_results/tls_performance/machine_x`
 
-The PQC TLS testing script automatically parses these handshake results while skipping TLS speed parsing. The parsed performance results are stored in:
+By default, the PQC TLS testing script parses these handshake results on the client after the suite completes, while skipping TLS speed parsing. The parsed performance results are stored in:
 
 `test_data/results/tls_performance/machine_x`
 
-The energy usage results on the collection machine and the optional handshake performance results on the client machine are parsed independently.
+The energy usage results on the collection machine and the optional handshake performance results on the client machine are parsed independently. To disable parsing of the optional client results, pass `--disable-result-parsing` to `pqc_tls_performance_test.sh` on the client. The collection script's flag below controls only energy result parsing.
 
 To skip automatic parsing and only output the raw test results, pass the `--disable-result-parsing` flag when launching the collection machine script:
 

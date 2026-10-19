@@ -241,7 +241,7 @@ def check_skip_tls_speed():
         needed if the script has been called in interactive mode and the parsing mode is set to TLS performance results. """
 
     # Output the informational message to the user on why they may need to skip TLS speed results
-    print("If processing TLS performance results as part of energy usage testing, TLS speed results are not generated, so must be skipped.")
+    print("If processing TLS performance results as part of TLS handshake energy usage testing, TLS speed results are not generated, so must be skipped.")
 
     # Prompt the user on their preference for skipping TLS speed results until a valid input is provided
     while True:

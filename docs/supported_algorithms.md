@@ -45,7 +45,7 @@ The computational performance and TLS handshake testing categories also support 
 ### Algorithm Support Summary
 The PQC-LEO project supports all key encapsulation mechanisms (KEMs) and digital signature algorithms provided by Liboqs, with two notable exceptions:
 
-- **Falcon** digital signature variants are not compatible with **memory profiling on ARM systems** due to issues between the scheme’s structure and the Valgrind Massif tool. This does not affect general functional testing or result parsing, which remain fully supported across all platforms.
+- **Falcon** digital signature variants are not compatible with **memory profiling on ARM systems** due to issues between the scheme’s structure and the Valgrind Massif tool. This limitation does not affect general functional testing or parsing of results collected on supported configurations. Automated result parsing is currently supported on Linux only.
 
 - **Stateful signature schemes (XMSS and LMS)** are currently excluded from this project. Although Liboqs supports them, they are disabled by default and require hazardous experimental build flags to enable key generation and signing. These schemes are not part of the NIST standardisation process, and Liboqs explicitly warns that support may be removed in future releases if misused. Their inclusion within this project may be reconsidered in a future release if justified.
 
@@ -350,7 +350,7 @@ RSA-PSS is supported for TLS handshake, transmission-cost, and TLS operations en
 These configurations help assess the overhead and feasibility of PQC adoption in real-world contexts by providing a comprehensive comparison of performance metrics.
 
 #### Supported Algorithms for Energy Usage Evaluations
-Algorithms provided by OpenSSL that are used within standard TLS handshake and TLS speed testing are also supported for energy usage evaluation testing. However, there are the following exceptions for Hybrid-PQC TLS operations energy usage testing. This is due to the current version of OpenSSL not providing encoding paths for the Hybrid-PQC KEM algorithms, preventing key export and file-based cryptographic operations required by the benchmarking process. This will continue to be reviewed in future releases of PQC-LEO to provide support for these algorithms in energy usage testing where possible.
+Algorithms provided by OpenSSL that are used within standard TLS handshake testing are also supported for TLS handshake energy usage testing. For TLS operations energy usage testing, the `tls_operations_energy_test.sh` script uses OpenSSL commands to evaluate PQC and Hybrid-PQC KEMs and digital signatures, alongside classical digital signatures and key-exchange algorithms. However, the following Hybrid-PQC KEM algorithms are not supported for TLS operations energy usage testing. This is due to the current version of OpenSSL not providing the required encoding paths, preventing key export and file-based cryptographic operations required by the benchmarking process.
 
 **Unsupported Algorithms for TLS Operations Energy Usage Testing:**
 - X25519MLKEM768

@@ -6,7 +6,7 @@
 # This utility script manages custom OID environment variable mappings used only during TLS operations energy testing in
 # the PQC-LEO benchmarking suite. It is an internal helper invoked by the TLS operations energy test workflow and is not
 # intended to be called manually. It supports setting or clearing OID mappings so OpenSSL and OQS-Provider can
-# reference consistent private enterprise OIDs during controlled interoperability and performance test runs.
+# reference consistent private enterprise OIDs during TLS operations energy usage testing.
 #
 # The script accepts one command line argument which is used to indicate whether the OID environment variables 
 # should be set or cleared. This flag is mandatory for the script to function correctly. 

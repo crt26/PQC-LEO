@@ -12,6 +12,7 @@ If you prefer to make use of the automated energy usage testing provided by PQC-
   - [Running the Energy Usage Testing](#running-the-energy-usage-testing)
   - [Configuring the Testing Parameters](#configuring-the-testing-parameters)
 - [Advanced Options](#advanced-options)
+  - [Configuring the Baseline Duration](#configuring-the-baseline-duration)
   - [Configuring Network Controller Ports](#configuring-network-controller-ports)
   - [Skipping the Welcome Message](#skipping-the-welcome-message)
 
@@ -85,14 +86,26 @@ The second set of parameters to be configured is related to the testing paramete
 | **Prompt**                                                                          | **What the option sets**                                                                              |
 |-------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
 | Enter the number of iterations for each test (e.g., 1000)                           | Number of iterations to be performed for each algorithm's respective cryptographic operations.        |
-| Enter the number of test runs to perform                                            | Number of separate test runs to execute for averaging.                                                |
+| Enter the number of test runs to perform                                            | Number of separate test runs to execute.                                                              |
 | Enter the energy meter polling rate in milliseconds (0 for no delays between polls) | Polling interval in milliseconds for the energy meter; set `0` for continuous/no delay between polls. |
+
+When the collection script parses these results, it creates detailed and condensed CSV files for each run. The condensed summaries aggregate samples within a run; the parser does not calculate energy averages across runs.
 
 ## Advanced Options
 The tool allows for the following advanced settings:
 
+- Setting the baseline measurement duration
 - Setting custom network controller listening ports
 - Skipping the display of the welcome message
+
+### Configuring the Baseline Duration
+By default, the computational energy usage testing tool will gather a baseline measurement for **60 seconds** before beginning the cryptographic tests. This duration can be configured by passing `-b <TIME>` or `--energy-baseline-duration=<TIME>` when calling the tool. The specified duration must be a positive whole number of seconds.
+
+An example of using this flag to gather a baseline measurement for 120 seconds is as follows:
+
+```bash
+./comp_energy_tester --energy-baseline-duration=120
+```
 
 ### Configuring Network Controller Ports
 The computational energy usage testing tool also provides the ability to configure the network ports used for the control signalling functionality. This can be done by passing the following command line arguments to the tool:

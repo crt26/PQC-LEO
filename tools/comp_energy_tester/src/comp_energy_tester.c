@@ -16,10 +16,12 @@ test phase and manages liboqs initialisation and shutdown.
 #include <unistd.h>
 #include <ctype.h>
 #include <getopt.h>
+#include <limits.h>
 #include "comp_energy_tester.h"
 
 // Define the global flag variables
 int custom_net_ports = 0;
+static unsigned int energy_baseline_duration = 60;
 
 //------------------------------------------------------------------------------------------------------------------------------ 
 void output_help() {
@@ -29,9 +31,10 @@ void output_help() {
     // Print the help message
     printf("Usage: comp_energy_tester [OPTIONS]\n\n");
     printf("Options:\n");
-    printf("-c, --use-custom-net-control-ports   Use custom network control ports for energy testing control signalling\n");
-    printf("-s, --skip-welcome-message           Skip the welcome message on startup (useful for automated calling of the script)\n");
-    printf("-h, --help                           Display the help message and exit\n");
+    printf("-c, --use-custom-net-control-ports          Use custom network control ports for energy testing control signalling\n");
+    printf("-s, --skip-welcome-message                  Skip the welcome message on startup (useful for automated calling of the script)\n");
+    printf("-b, --energy-baseline-duration=SECONDS      Baseline measurement duration in positive whole seconds (default: 60)\n");
+    printf("-h, --help                                  Display the help message and exit\n");
 
 }
 
@@ -45,6 +48,7 @@ void parse_args(int argc, char *argv[], int *display_welcome) {
     struct option long_options[] = {
         {"use-custom-net-control-ports", no_argument, 0, 'c'},
         {"skip-welcome-message", no_argument, 0, 's'},
+        {"energy-baseline-duration", required_argument, 0, 'b'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
@@ -54,7 +58,7 @@ void parse_args(int argc, char *argv[], int *display_welcome) {
     int option_index = 0;
 
     // Parse the command line arguments
-    while((option = getopt_long(argc, argv, "chs", long_options, &option_index)) != -1) {
+    while((option = getopt_long(argc, argv, "chsb:", long_options, &option_index)) != -1) {
 
         // Determine which option is being processed
         switch (option) {
@@ -70,6 +74,26 @@ void parse_args(int argc, char *argv[], int *display_welcome) {
                 // Set the display welcome flag to false
                 *display_welcome = 0;
                 break;
+
+            case 'b': {
+
+                // Declare a pointer to track where conversion of the supplied duration stops
+                char *baseline_duration_end_ptr = NULL;
+
+                // Convert the command line argument to an integer using base 10 and record where conversion stops
+                long long captured_baseline_duration = strtoll(optarg, &baseline_duration_end_ptr, 10);
+
+                // Ensure the duration is above 0 and fits the unsigned integer type required
+                if (captured_baseline_duration < 1 || captured_baseline_duration > UINT_MAX || *baseline_duration_end_ptr != '\0') {
+                    fprintf(stderr, "[ERROR] - Baseline duration must be a positive integer in seconds (maximum %u).\n", UINT_MAX);
+                    exit(1);
+                }
+
+                // Store the validated duration as an unsigned integer for use during the baseline measurement
+                energy_baseline_duration = (unsigned int)captured_baseline_duration;
+                break;
+
+            }
 
             case 'h':
 
@@ -417,7 +441,7 @@ void get_baseline(TestController *test_controller, TestParams *test_params) {
         begin. */
 
     // Output the current task to the terminal
-    printf("Gathering Baseline Energy Measurements...\n");
+    printf("Gathering Baseline Energy Measurements (%u seconds)...\n", energy_baseline_duration);
 
     // Allocate memory for the baseline_params struct
     TestParams *baseline_params = malloc(sizeof(TestParams));
@@ -441,7 +465,7 @@ void get_baseline(TestController *test_controller, TestParams *test_params) {
     }
 
     // Sleep to allow baseline measurement to be taken
-    sleep(10);
+    sleep(energy_baseline_duration);
 
     // Send the stop command to end the baseline measurement
     baseline_params->control_type = 2;

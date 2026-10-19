@@ -16,9 +16,11 @@ The automated testing script for evaluating the PQC computational energy usage i
 
 This testing script provides an automation layer for the [comp_energy_tester](../../project_tools_guides/comp_energy_tester_usage_guide.md) tool, a C-based executable that performs post-quantum cryptographic operations while measuring energy consumption. The script allows users to configure the testing parameters and launch the executable, which utilises the PQC implementations available in the Liboqs library to execute the selected cryptographic operations for a user-specified number of iterations.
 
-As part of the testing process, the script will automatically handle configuring the system state for energy usage testing, which includes setting the CPU performance to maximum and selecting a specific target CPU core. This helps improve consistency for energy usage evaluation, although background processes and thermal throttling can still affect measurements. Additionally, a **10 second** baseline energy usage reading is taken before the testing process begins, which serves as a reference point for evaluating the energy consumption of the cryptographic operations.
+As part of the testing process, the script will automatically handle configuring the system state for energy usage testing, which includes setting the CPU performance to maximum and selecting a specific target CPU core. This helps improve consistency for energy usage evaluation, although background processes and thermal throttling can still affect measurements. Additionally, a **60 second** baseline energy usage reading is taken by default before the testing process begins, which serves as a reference point for evaluating the energy consumption of the cryptographic operations.
 
-Energy usage metrics are stored on the collection machine, and will be automatically parsed into structured CSV files for analysis.
+The baseline measurement duration can be configured by passing `--energy-baseline-duration=<TIME>` when calling the testing machine script. The specified duration must be a positive whole number of seconds.
+
+Energy usage metrics are stored on the collection machine and, by default, parsed there into structured CSV files after the collection session completes.
 
 > **Notice:** Support for automated configuration of a system fan is not currently available in the provided testing scripts. This is due to the variety of system types and fan control methods available, making a universal solution challenging. Future versions aim to address this limitation. It is **highly recommended** to manually configure the system fan (if applicable) to a fixed speed before testing to prevent variances in the fan speed during testing impacting the system's power draw, skewing the energy usage results.
 
@@ -45,6 +47,7 @@ Once the environment is ready and the collection machine has been activated, the
 
 Additional command line arguments can be passed to the testing script which enable advanced customisation of the automated testing process. For details of all advanced testing options, please refer to the [Energy Usage Testing Guide](../pqc_energy_usage_testing.md#advanced-testing-options). Of these advanced options, the ones supported by the PQC computational energy usage script are:
 
+- `--energy-baseline-duration=<TIME>`
 - `--use-custom-sys-state`
 - `--use-custom-eng-control-ports`
 
@@ -68,7 +71,7 @@ The second set of parameters to be configured is related to the testing paramete
 | **Prompt**                                                                          | **What the option sets**                                                                              |
 |-------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
 | Enter the number of iterations for each test (e.g., 1000)                           | Number of iterations to be performed for each algorithm's respective cryptographic operations.        |
-| Enter the number of test runs to perform                                            | Number of separate test runs to execute for averaging.                                                |
+| Enter the number of test runs to perform                                            | Number of separate test runs to execute.                                                              |
 | Enter the energy meter polling rate in milliseconds (0 for no delays between polls) | Polling interval in milliseconds for the energy meter; set `0` for continuous/no delay between polls. |
 
 ## Outputted Results
