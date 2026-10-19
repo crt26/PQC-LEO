@@ -45,7 +45,7 @@ The computational performance and TLS handshake testing categories also support 
 ### Algorithm Support Summary
 The PQC-LEO project supports all key encapsulation mechanisms (KEMs) and digital signature algorithms provided by Liboqs, with two notable exceptions:
 
-- **Falcon** digital signature variants are not compatible with **memory profiling on ARM systems** due to issues between the scheme’s structure and the Valgrind Massif tool. This does not affect general functional testing or result parsing, which remain fully supported across all platforms.
+- **Falcon** digital signature variants are not compatible with **memory profiling on ARM systems** due to issues between the scheme’s structure and the Valgrind Massif tool. This limitation does not affect general functional testing or parsing of results collected on supported configurations. Automated result parsing is currently supported on Linux only.
 
 - **Stateful signature schemes (XMSS and LMS)** are currently excluded from this project. Although Liboqs supports them, they are disabled by default and require hazardous experimental build flags to enable key generation and signing. These schemes are not part of the NIST standardisation process, and Liboqs explicitly warns that support may be removed in future releases if misused. Their inclusion within this project may be reconsidered in a future release if justified.
 

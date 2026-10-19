@@ -141,11 +141,11 @@ The utility script accepts the following arguments:
 | 1            | Extracts algorithms for **computational performance testing** (Liboqs algorithms only).                                                                                        |
 | 2            | Extracts algorithms for **computational, TLS performance, TLS operations energy, and TLS handshake transmission cost testing** (Liboqs, OpenSSL, and OQS-Provider algorithms). |
 | 3            | Extracts algorithms for **TLS performance, TLS operations energy, and TLS handshake transmission cost testing** (OpenSSL and OQS-Provider algorithms only).                    |
-| 4            | Parses `ALGORITHMS.md` from OQS-Provider to determine the total number of supported algorithms (used only by `setup.sh`).                                                      |
+| 4            | Parses `ALGORITHMS.md` from OQS-Provider to count supported algorithms (called by `source_code_modifier.sh` during setup).                                                     |
 
 Option `4` is used by the `source_code_modifier.sh` script to obtain the algorithm count when modifying OpenSSL’s `speed.c` during setup. Do not run it manually on a configured installation: the utility script currently clears existing algorithm lists during initialisation, even in this counting mode.
 
-When regenerating lists manually, choose option `1` for computational-only lists, option `2` for both computational and TLS lists, or option `3` for TLS lists only. The script clears all existing algorithm lists before generating the selected set, so select the option that covers every testing category needed in the environment.
+When regenerating lists manually, choose option `1` for computational-only lists, option `2` for both computational and TLS lists, or option `3` for TLS lists only. The script clears all existing files in `test_data/alg_lists` during initialisation, before validating the selected option and checking its dependencies. This also happens for option `4` and for an invalid single argument; `--help` exits before initialisation. Back up any customised lists and choose the option that covers every testing category needed in the environment.
 
 Example usage for a computational-only environment:
 
@@ -357,7 +357,7 @@ The project includes several Python scripts that handle automatic parsing of ben
 
 These scripts support automated invocation (triggered by the automated test scripts) and manual execution via terminal input or command-line flags. Parsing is currently **supported only on Linux systems**. Windows environments are not supported due to the inability to create the environment needed to parse the raw performance results.
 
-By default, parsing is triggered automatically after a supported test suite completes. Computational and TLS performance results are parsed on the testing machine, while energy usage results are parsed on the collection machine. The applicable automation scripts directly pass the necessary parameters (Machine-ID, number of runs, and test type) to the parsing system. TLS handshake transmission cost testing is excluded because its script writes structured CSV files directly. When TLS handshake performance results are stored during energy usage testing, the TLS controller also instructs the parser to skip TLS speed results because those tests are not performed in this mode.
+By default, parsing is triggered automatically after a supported test suite completes. Computational performance results are parsed on the testing machine, TLS performance results on the client machine, and energy usage results on the collection machine. The applicable automation scripts directly pass the necessary parameters (Machine-ID, number of runs, and test type) to the parsing system. TLS handshake transmission cost testing is excluded because its script writes structured CSV files directly. When TLS handshake performance results are stored during energy usage testing, the TLS controller also instructs the parser to skip TLS speed results because those tests are not performed in this mode.
 
 While several scripts are utilised for the result parsing process, only the `parse_results.py` is intended to be run directly. The main parsing script calls the remaining scripts depending on which parameters the user supplies to the script when prompted. The main parsing script is stored in the `scripts/parsing_scripts` directory, whilst internal scripts are stored in the `scripts/parsing_scripts/internal_scripts` directory.
 

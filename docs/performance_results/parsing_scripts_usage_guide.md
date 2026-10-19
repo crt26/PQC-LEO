@@ -25,13 +25,15 @@ The TLS transmission cost testing tool writes structured CSV files directly to `
 The following sections describe how to use the available parsing methods and what to expect from each.
 
 ## Automatic Parsing
-When a testing script that produces supported raw results completes, the parsing process is triggered automatically. The script passes the assigned Machine-ID and number of test runs to the parsing tool, which then processes the raw result files and generates structured CSV files. This automatic process is designed to simplify result management and ensure consistency without requiring any additional user input.
+By default, parsing starts after a supported test suite completes. Computational performance results are parsed on the testing machine, TLS performance results on the client machine, and energy usage results on the collection machine after the collector exits successfully. The automation script passes the Machine-ID, run count, and result type to the parser. Automatic parsing is skipped if disabled or if the user chooses to keep existing parsed results.
 
 To disable automatic parsing, pass the `--disable-result-parsing` flag to the test script. For example:
 
 ```
 ./pqc_performance_test.sh --disable-result-parsing
 ```
+
+For energy usage results, pass `--disable-result-parsing` to `energy_metric_collector.sh` on the collection machine. Optional TLS handshake performance results are parsed independently on the client; pass the flag to `pqc_tls_performance_test.sh` there to disable that parsing as well.
 
 This defers parsing so it can be triggered interactively or via command-line flags later.
 
@@ -42,7 +44,7 @@ While automatic parsing is recommended in most cases, manual parsing is fully su
 
 - **Command-line arguments** — Parsing parameters are passed directly as script flags.
 
-**Note:** If performing manual parsing in a separate environment from where the tests were run, the script requires access to the same algorithm list files used during testing. Please make sure these files are present in the expected directories before proceeding.
+**Note:** When parsing computational or TLS performance results in a separate environment, provide the same algorithm list files used during testing. Energy usage parsing extracts metadata from filenames and does not require those lists. Run the manual parsing commands below from `scripts/parsing_scripts`.
 
 ### Interactive Parsing
 To use the interactive parsing method, call the parsing script using the following command:
@@ -114,7 +116,7 @@ For each of these testing types, the following filename structure is expected:
 For TLS operations energy results, `alg-type` is `kem`, `sig`, or `key-exchange`. The parser normalises `key-exchange` to `key_exchange`, classifies each algorithm as `pqc`, `hybrid_pqc`, or `classic`, and writes per-run detailed and condensed CSVs. PQC and Hybrid-PQC outputs are split into KEM and signature files; classical outputs are split into signature and key-exchange files. These CSVs are stored in `pqc`, `hybrid`, and `classic` sub-directories beneath the machine directory, while the baseline CSV remains in the machine directory itself.
 
 ## Parsed Results Output
-Once parsing is complete, the parsed results are stored under `test_data/results`. This includes detailed per-run CSV files and averages across runs for computational and TLS performance results, plus detailed and condensed per-run CSV files for energy usage results. These files are ready for further analysis or can be imported into graphing tools for visualisation.
+Once parsing is complete, the parsed results are stored under `test_data/results`. This includes detailed per-run CSV files and averages across runs for computational and TLS performance results, plus detailed and condensed per-run CSV files for energy usage results. Energy summaries aggregate samples within each run; the parser does not calculate energy averages across runs. These files are ready for further analysis or can be imported into graphing tools for visualisation.
 
 The TLS handshake transmission cost CSVs are also stored under `test_data/results`, but they are generated directly by the testing tool rather than by the parser. See the [TLS Handshake Transmission Cost Testing Guide](../testing_tools_usage/tls_handshake_transmission_cost_testing.md) for their structure and location.
 
@@ -122,6 +124,7 @@ The output is organised by test type and Machine-ID in the following directories
 
 - `test_data/results/computational_performance/machine_x`
 - `test_data/results/tls_performance/machine_x`
+- `test_data/results/tls_handshake_bytes/machine_x` (generated directly by the transmission cost tool)
 - `test_data/results/energy_test_results/[test_type]/machine_x`
 
 `machine_x` is the Machine-ID number assigned to the results when executing the testing scripts. If no custom Machine-ID is assigned, the default ID of 1 will be used.

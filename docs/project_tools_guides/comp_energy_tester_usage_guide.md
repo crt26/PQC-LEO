@@ -86,8 +86,10 @@ The second set of parameters to be configured is related to the testing paramete
 | **Prompt**                                                                          | **What the option sets**                                                                              |
 |-------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
 | Enter the number of iterations for each test (e.g., 1000)                           | Number of iterations to be performed for each algorithm's respective cryptographic operations.        |
-| Enter the number of test runs to perform                                            | Number of separate test runs to execute for averaging.                                                |
+| Enter the number of test runs to perform                                            | Number of separate test runs to execute.                                                              |
 | Enter the energy meter polling rate in milliseconds (0 for no delays between polls) | Polling interval in milliseconds for the energy meter; set `0` for continuous/no delay between polls. |
+
+When the collection script parses these results, it creates detailed and condensed CSV files for each run. The condensed summaries aggregate samples within a run; the parser does not calculate energy averages across runs.
 
 ## Advanced Options
 The tool allows for the following advanced settings:

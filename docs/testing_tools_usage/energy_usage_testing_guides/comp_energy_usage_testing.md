@@ -20,7 +20,7 @@ As part of the testing process, the script will automatically handle configuring
 
 The baseline measurement duration can be configured by passing `--energy-baseline-duration=<TIME>` when calling the testing machine script. The specified duration must be a positive whole number of seconds.
 
-Energy usage metrics are stored on the collection machine, and will be automatically parsed into structured CSV files for analysis.
+Energy usage metrics are stored on the collection machine and, by default, parsed there into structured CSV files after the collection session completes.
 
 > **Notice:** Support for automated configuration of a system fan is not currently available in the provided testing scripts. This is due to the variety of system types and fan control methods available, making a universal solution challenging. Future versions aim to address this limitation. It is **highly recommended** to manually configure the system fan (if applicable) to a fixed speed before testing to prevent variances in the fan speed during testing impacting the system's power draw, skewing the energy usage results.
 
@@ -28,6 +28,8 @@ Energy usage metrics are stored on the collection machine, and will be automatic
 There are two machines and scripts that must be configured and launched for the energy usage testing process, which include: the collection machine and the testing machine. Each machine has its own respective script that must be launched to ensure the testing process runs smoothly, with the testing machine script responsible for signalling the collection machine to poll the energy meter at the appropriate times during testing.
 
 Please ensure you have thoroughly read the general instructions and environment setup for the collection machine in the [Energy Usage Testing Guide](../../testing_tools_usage/pqc_energy_usage_testing.md) before proceeding with testing, as it contains important details on setting up the collection machine and energy meter for testing.
+
+Run the commands below from `scripts/test_scripts` on the corresponding machine.
 
 ### Launching the Collection Machine Script
 Once the environment for the collection machine is properly set up, the collection machine script can be launched using the following command:
