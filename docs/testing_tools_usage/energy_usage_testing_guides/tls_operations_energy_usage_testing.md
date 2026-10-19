@@ -73,7 +73,7 @@ The second set of parameters to be configured is related to the testing paramete
 | **Prompt**                                                                          | **What the option sets**                                                                              |
 |-------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
 | Enter the number of iterations each operation should be run per test (e.g., 1000)   | Number of iterations to be performed for each algorithm's respective cryptographic operations.        |
-| Enter the number of test runs required                                              | Number of separate test runs to execute for averaging.                                                |
+| Enter the number of test runs required                                              | Number of separate test runs to execute.                                                              |
 | Enter the energy meter polling rate in milliseconds (0 for no delays between polls) | Polling interval in milliseconds for the energy meter; set `0` for continuous/no delay between polls. |
 
 ## Outputted Results

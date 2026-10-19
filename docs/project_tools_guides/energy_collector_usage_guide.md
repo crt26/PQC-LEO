@@ -174,7 +174,7 @@ An example of how the `control_sender` program can be called to send a GETREADY 
   -R "1" \
   -P "100" \
   -Z "serial" \
-  -C "/dev/ttyUSB0"
+  -S "/dev/ttyUSB0"
 ```
 
 ### Control Sender Program Command Line Arguments

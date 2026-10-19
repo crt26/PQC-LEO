@@ -114,9 +114,9 @@ For each of these testing types, the following filename structure is expected:
 For TLS operations energy results, `alg-type` is `kem`, `sig`, or `key-exchange`. The parser normalises `key-exchange` to `key_exchange`, classifies each algorithm as `pqc`, `hybrid_pqc`, or `classic`, and writes per-run detailed and condensed CSVs. PQC and Hybrid-PQC outputs are split into KEM and signature files; classical outputs are split into signature and key-exchange files. These CSVs are stored in `pqc`, `hybrid`, and `classic` sub-directories beneath the machine directory, while the baseline CSV remains in the machine directory itself.
 
 ## Parsed Results Output
-Once parsing is complete, the parsed results will be stored in the newly created `test_data/results` directory. This includes CSV files containing the detailed test results and automatically calculated averages for each test category. These files are ready for further analysis or can be imported into graphing tools for visualisation.
+Once parsing is complete, the parsed results are stored under `test_data/results`. This includes detailed per-run CSV files and averages across runs for computational and TLS performance results, plus detailed and condensed per-run CSV files for energy usage results. These files are ready for further analysis or can be imported into graphing tools for visualisation.
 
-The separate TLS handshake transmission cost CSVs are also stored under `test_data/results`, but they are generated directly by the testing tool and are not included in the directories produced by the parser below. See the [TLS Handshake Transmission Cost Testing Guide](../testing_tools_usage/tls_handshake_transmission_cost_testing.md) for their structure and location.
+The TLS handshake transmission cost CSVs are also stored under `test_data/results`, but they are generated directly by the testing tool rather than by the parser. See the [TLS Handshake Transmission Cost Testing Guide](../testing_tools_usage/tls_handshake_transmission_cost_testing.md) for their structure and location.
 
 The output is organised by test type and Machine-ID in the following directories:
 
