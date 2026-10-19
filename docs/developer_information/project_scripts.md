@@ -153,7 +153,7 @@ python3 get_algorithms.py 1
 ```
 
 ### oid_handler.sh
-This utility script manages custom OID environment variable mappings used only during TLS operations energy usage testing. It is an internal helper invoked by the TLS operations energy test script and is **not intended to be called manually**. It supports setting or clearing OID mappings so OpenSSL and OQS-Provider can reference private enterprise OIDs during performance test runs. This is required due to various algorithms included within OQS-Provider not having standardised OID values, which is required for the algorithm to be recognised as valid when being used in manual OpenSSL operations.
+This utility script manages custom OID environment variable mappings used only during TLS operations energy usage testing. It is an internal helper invoked by the TLS operations energy test script and is **not intended to be called manually**. It supports setting or clearing OID mappings so OpenSSL and OQS-Provider can reference private enterprise OIDs during TLS operations energy usage testing. This is required due to various algorithms included within OQS-Provider not having standardised OID values, which is required for the algorithm to be recognised as valid when being used in manual OpenSSL operations.
 
 The utility script must be called with one of the following arguments in order to determine which OID handling operation must be performed:
 

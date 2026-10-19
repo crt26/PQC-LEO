@@ -5,10 +5,11 @@
 
 # Script for controlling the TLS benchmarking suite using OpenSSL 4.0.3. Supports both OpenSSL native PQC algorithms and those
 # provided via OQS-Provider. It handles the configuration of test parameters, machine role assignment, port and environment
-# validation, and result directory setup. The script also supports optional energy testing mode, including energy collector
-# control signalling configuration and custom system state options for client-side energy test execution. Based on the selected
-# machine role, the script calls the relevant client or server benchmarking script to perform handshake and speed tests across
-# post-quantum, Hybrid-PQC, and classical algorithm modes, storing results in machine-specific directories for later analysis.
+# validation, and result directory setup. The script also supports optional TLS handshake energy testing mode, including energy 
+# collector control signalling configuration and custom system state options for client-side energy test execution. Based on the 
+# selected machine role, the script calls the relevant client or server benchmarking script to perform handshake and speed tests 
+# across post-quantum, Hybrid-PQC, and classical algorithm modes, storing results in machine-specific directories for later analysis.
+# TLS speed testing is skipped in energy testing mode, and storing handshake performance results is optional.
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function output_help() {

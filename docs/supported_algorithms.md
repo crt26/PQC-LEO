@@ -350,7 +350,7 @@ RSA-PSS is supported for TLS handshake, transmission-cost, and TLS operations en
 These configurations help assess the overhead and feasibility of PQC adoption in real-world contexts by providing a comprehensive comparison of performance metrics.
 
 #### Supported Algorithms for Energy Usage Evaluations
-Algorithms provided by OpenSSL that are used within standard TLS handshake and TLS speed testing are also supported for energy usage evaluation testing. However, there are the following exceptions for Hybrid-PQC TLS operations energy usage testing. This is due to the current version of OpenSSL not providing encoding paths for the Hybrid-PQC KEM algorithms, preventing key export and file-based cryptographic operations required by the benchmarking process. This will continue to be reviewed in future releases of PQC-LEO to provide support for these algorithms in energy usage testing where possible.
+Algorithms provided by OpenSSL that are used within standard TLS handshake testing are also supported for TLS handshake energy usage testing. For TLS operations energy usage testing, the `tls_operations_energy_test.sh` script uses OpenSSL commands to evaluate PQC and Hybrid-PQC KEMs and digital signatures, alongside classical digital signatures and key-exchange algorithms. However, the following Hybrid-PQC KEM algorithms are not supported for TLS operations energy usage testing. This is due to the current version of OpenSSL not providing the required encoding paths, preventing key export and file-based cryptographic operations required by the benchmarking process.
 
 **Unsupported Algorithms for TLS Operations Energy Usage Testing:**
 - X25519MLKEM768
