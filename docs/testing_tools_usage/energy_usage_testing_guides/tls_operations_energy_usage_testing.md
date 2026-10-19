@@ -18,7 +18,9 @@ The provided Bash script uses OpenSSL and the OQS-Provider to automate cryptogra
 
 The classical signature coverage includes RSA, RSA-PSS, ECDSA, EdDSA, and Brainpool variants. Unlike the standard TLS speed test, this energy test performs the OpenSSL operations directly and can explicitly configure PSS padding. The `RSA_*` categories generate generic RSA keys, while the `RSA-PSS_*` categories generate RSA-PSS-restricted keys; both categories use PSS padding for signing and verification. Classical key-exchange coverage includes X25519, X448, NIST curves, and Brainpool TLS 1.3 groups. See the [Supported Algorithms](../../supported_algorithms.md) guide for the complete lists and the Hybrid-PQC KEM exclusions that apply to this test.
 
-As part of the testing process, the script will automatically handle configuring the system state for energy usage testing, which includes setting the CPU performance to maximum and selecting a specific target CPU core. This helps improve consistency for energy usage evaluation, although background processes and thermal throttling can still affect measurements. Additionally, a **10 second** baseline energy usage reading is taken before the testing process begins, which serves as a reference point for evaluating the energy consumption of the cryptographic operations.
+As part of the testing process, the script will automatically handle configuring the system state for energy usage testing, which includes setting the CPU performance to maximum and selecting a specific target CPU core. This helps improve consistency for energy usage evaluation, although background processes and thermal throttling can still affect measurements. Additionally, a **60 second** baseline energy usage reading is taken by default before the testing process begins, which serves as a reference point for evaluating the energy consumption of the cryptographic operations.
+
+The baseline measurement duration can be configured by passing `--energy-baseline-duration=<TIME>` when calling the testing machine script. The specified duration must be a positive whole number of seconds.
 
 Energy usage metrics are stored on the collection machine, and will be automatically parsed into structured CSV files for analysis.
 
@@ -47,6 +49,7 @@ Once the environment is ready and the collection machine has been activated, the
 
 Additional command line arguments can be passed to the testing script which enable advanced customisation of the automated testing process. For details of all advanced testing options, please refer to the [Energy Usage Testing Guide](../pqc_energy_usage_testing.md#advanced-testing-options). Of these advanced options, the ones supported by the TLS operations energy usage script are:
 
+- `--energy-baseline-duration=<TIME>`
 - `--use-custom-sys-state`
 - `--use-custom-net-control-ports`
 
@@ -69,8 +72,8 @@ The second set of parameters to be configured is related to the testing paramete
 
 | **Prompt**                                                                          | **What the option sets**                                                                              |
 |-------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
-| Enter the number of iterations for each test (e.g., 1000)                           | Number of iterations to be performed for each algorithm's respective cryptographic operations.        |
-| Enter the number of test runs to perform                                            | Number of separate test runs to execute for averaging.                                                |
+| Enter the number of iterations each operation should be run per test (e.g., 1000)   | Number of iterations to be performed for each algorithm's respective cryptographic operations.        |
+| Enter the number of test runs required                                              | Number of separate test runs to execute for averaging.                                                |
 | Enter the energy meter polling rate in milliseconds (0 for no delays between polls) | Polling interval in milliseconds for the energy meter; set `0` for continuous/no delay between polls. |
 
 ## Outputted Results

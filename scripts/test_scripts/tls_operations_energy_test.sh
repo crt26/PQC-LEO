@@ -17,6 +17,7 @@ sys_state_configure_flag="--set-default" # options (--set-default (default metho
 use_custom_control_ports=0 # flag for whether to use custom network control ports for energy collector communication (0 = no, 1 = yes)
 sys_state_set_ok=0
 trap_cleanup_done=0
+energy_baseline_duration=60
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function output_help() {
@@ -26,9 +27,10 @@ function output_help() {
     # Output the supported options and their usage to the user
     echo "Usage: tls_operations_energy_test.sh [options]"
     echo "Options:"
-    echo "--use-custom-sys-state            Used to indicate that custom system state values should be set for the test instead of the default values"
-    echo "--use-custom-net-control-ports    Use custom network control ports for energy collector communication"
-    echo "--help                            Display the help message"
+    echo "--use-custom-sys-state               Used to indicate that custom system state values should be set for the test instead of the default values"
+    echo "--use-custom-net-control-ports       Use custom network control ports for energy collector communication"
+    echo "--energy-baseline-duration=<TIME>    Baseline measurement duration in positive whole seconds (default: 60)"
+    echo "--help                               Display the help message"
     
 }
 
@@ -49,23 +51,45 @@ function parse_args() {
         # Check if the argument is a valid option, then shift to the next argument
         case "$1" in
 
+            --energy-baseline-duration=*)
+
+                # Extract the value after the '=' sign in the command line argument
+                energy_baseline_duration="${1#*=}"
+
+                # Ensure that the energy baseline duration is a positive integer
+                if [[ ! "$energy_baseline_duration" =~ ^[1-9][0-9]*$ ]]; then
+                    echo "[ERROR] - Baseline duration must be a positive integer in seconds." >&2
+                    exit 1
+                fi
+
+                shift
+                ;;
+
             --use-custom-sys-state)
+
+                # Set the system state configuration flag to indicate that custom system state values should be set for the test
                 sys_state_configure_flag="--set-custom"
                 shift
                 ;;
 
             --use-custom-net-control-ports)
+
+                # Set the flag to indicate that custom network control ports should be used for energy testing control signalling
                 use_custom_control_ports=1
                 shift
                 ;;
 
             --help)
+
+                # Output the help message and exit the script
                 output_help
                 exit 0
                 ;;
 
             *)
-                echo -e "Invalid argument: $1\n"
+
+                # Output an error message for invalid arguments and exit the script
+                echo -e "[ERROR] - Invalid argument: $1\n"
                 output_help
                 exit 1
                 ;;
@@ -636,7 +660,7 @@ function get_test_options() {
 #-------------------------------------------------------------------------------------------------------------------------------
 function get_baseline() {
     # Function for getting the baseline energy consumption for the testing machine. The function communicates with the
-    # energy collector to signal the start and end of the baseline measurement, and includes a 10 second sleep period to allow for
+    # energy collector to signal the start and end of the baseline measurement, and includes a configurable sleep period to allow for
     # the measurement to be taken.
 
     # Send the GETREADY message to the collector for baseline measurement
@@ -647,8 +671,8 @@ function get_baseline() {
         -P "$energy_poll_rate" \
         "${communication_flags[@]}"
 
-    # Sleep for 10 seconds to allow baseline measurement
-    sleep 10
+    # Sleep for the specified baseline duration to measure the system's idle power consumption (default - 60 secs)
+    sleep "$energy_baseline_duration"
 
     # Send test stop message to the collector
     "$control_sender" -t "${communication_flags[@]}"
@@ -1493,7 +1517,7 @@ function main() {
     echo -e "-------------------------\n"
 
     # Gather the baseline energy measurement
-    echo -e "Gathering baseline energy measurement...\n"
+    echo -e "Gathering baseline energy measurement ($energy_baseline_duration seconds)...\n"
     get_baseline
     echo -e "Baseline energy measurement complete\n"
 

@@ -13,6 +13,7 @@
 sys_state_configure_flag="--set-default" # options (--set-default (default method) | --set-custom)
 sys_state_set_ok=0
 trap_cleanup_done=0
+energy_baseline_duration=60
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function output_help() {
@@ -22,9 +23,10 @@ function output_help() {
     # Output the supported options and their usage to the user
     echo "Usage: pqc_performance_energy_test.sh [options]"
     echo "Options:"
-    echo "--use-custom-sys-state            Used to indicate that custom system state values should be set for the test instead of the default values"
-    echo "--use-custom-eng-control-ports    Enable the use of custom network control ports for energy testing control signalling"
-    echo "--help                            Display the help message"
+    echo "--use-custom-sys-state               Used to indicate that custom system state values should be set for the test instead of the default values"
+    echo "--use-custom-eng-control-ports       Enable the use of custom network control ports for energy testing control signalling"
+    echo "--energy-baseline-duration=<TIME>    Baseline measurement duration in positive whole seconds (default: 60)"
+    echo "--help                               Display the help message"
     
 }
 
@@ -82,23 +84,45 @@ function parse_args() {
         # Check if the argument is a valid option, then shift to the next argument
         case "$1" in
 
+            --energy-baseline-duration=*)
+
+                # Extract the value after the '=' sign in the command line argument
+                energy_baseline_duration="${1#*=}"
+
+                # Ensure that the energy baseline duration is a positive integer
+                if [[ ! "$energy_baseline_duration" =~ ^[1-9][0-9]*$ ]]; then
+                    echo -e "\n[ERROR] - Baseline duration must be a positive integer in seconds." >&2
+                    exit 1
+                fi
+
+                shift
+                ;;
+
             --use-custom-sys-state)
+
+                # Set the system state configuration flag to indicate that custom system state values should be set for the test
                 sys_state_configure_flag="--set-custom"
                 shift
                 ;;
 
             --use-custom-eng-control-ports)
+
+                # Set the flag to indicate that custom network control ports should be used for energy testing control signalling
                 use_custom_eng_control_ports=1
                 shift
                 ;;
 
             --help)
+
+                # Output the help message and exit the script
                 output_help
                 exit 0
                 ;;
 
             *)
-                echo -e "Invalid argument: $1\n"
+
+                # Output an error message for invalid arguments and exit the script
+                echo -e "[ERROR] - Invalid argument: $1\n"
                 output_help
                 exit 1
                 ;;
@@ -372,9 +396,9 @@ function main() {
 
     # Run the computational performance energy testing binary based on whether the user has chosen to use custom control ports or not
     if [ "$use_custom_eng_control_ports" -eq 0 ]; then
-        taskset -c "$TARGET_CPU_CORE" "$comp_tester_bin" -s
+        taskset -c "$TARGET_CPU_CORE" "$comp_tester_bin" -s "--energy-baseline-duration=$energy_baseline_duration"
     else
-        taskset -c "$TARGET_CPU_CORE" "$comp_tester_bin" -c -s
+        taskset -c "$TARGET_CPU_CORE" "$comp_tester_bin" -c -s "--energy-baseline-duration=$energy_baseline_duration"
     fi
     
 }

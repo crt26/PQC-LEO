@@ -16,7 +16,9 @@ The automated testing script for evaluating the PQC computational energy usage i
 
 This testing script provides an automation layer for the [comp_energy_tester](../../project_tools_guides/comp_energy_tester_usage_guide.md) tool, a C-based executable that performs post-quantum cryptographic operations while measuring energy consumption. The script allows users to configure the testing parameters and launch the executable, which utilises the PQC implementations available in the Liboqs library to execute the selected cryptographic operations for a user-specified number of iterations.
 
-As part of the testing process, the script will automatically handle configuring the system state for energy usage testing, which includes setting the CPU performance to maximum and selecting a specific target CPU core. This helps improve consistency for energy usage evaluation, although background processes and thermal throttling can still affect measurements. Additionally, a **10 second** baseline energy usage reading is taken before the testing process begins, which serves as a reference point for evaluating the energy consumption of the cryptographic operations.
+As part of the testing process, the script will automatically handle configuring the system state for energy usage testing, which includes setting the CPU performance to maximum and selecting a specific target CPU core. This helps improve consistency for energy usage evaluation, although background processes and thermal throttling can still affect measurements. Additionally, a **60 second** baseline energy usage reading is taken by default before the testing process begins, which serves as a reference point for evaluating the energy consumption of the cryptographic operations.
+
+The baseline measurement duration can be configured by passing `--energy-baseline-duration=<TIME>` when calling the testing machine script. The specified duration must be a positive whole number of seconds.
 
 Energy usage metrics are stored on the collection machine, and will be automatically parsed into structured CSV files for analysis.
 
@@ -45,6 +47,7 @@ Once the environment is ready and the collection machine has been activated, the
 
 Additional command line arguments can be passed to the testing script which enable advanced customisation of the automated testing process. For details of all advanced testing options, please refer to the [Energy Usage Testing Guide](../pqc_energy_usage_testing.md#advanced-testing-options). Of these advanced options, the ones supported by the PQC computational energy usage script are:
 
+- `--energy-baseline-duration=<TIME>`
 - `--use-custom-sys-state`
 - `--use-custom-eng-control-ports`
 

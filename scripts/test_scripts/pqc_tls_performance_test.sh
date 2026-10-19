@@ -25,6 +25,7 @@ function output_help() {
     echo "--disable-control-sleep            Disable the control signal sleep time"
     echo "--disable-result-parsing           Disable the result parsing for the test suite."
     echo "--enable-energy-testing            Enable energy testing, ensure the power measurement device is connected and configured correctly"
+    echo "--energy-baseline-duration=<TIME>  Energy baseline measurement duration in positive whole seconds (default: 60; requires --enable-energy-testing)"
     echo "--use-custom-eng-control-ports     Enable the use of custom network control ports for energy testing control signalling (requires --enable-energy-testing to be enabled)"
     echo "--use-custom-sys-state             If performing energy testing, use custom system state values for the test instead of the default values."
     echo "--help                             Display the help message"
@@ -99,6 +100,23 @@ function parse_args {
 
         # Check if the argument is a valid option, then shift to the next argument
         case "$1" in
+
+            --energy-baseline-duration=*)
+
+                # Extract the value after the '=' sign in the command line argument
+                energy_baseline_duration="${1#*=}"
+
+                # Ensure that the energy baseline duration is a positive integer
+                if [[ ! "$energy_baseline_duration" =~ ^[1-9][0-9]*$ ]]; then
+                    echo "[ERROR] - Baseline duration must be a positive integer in seconds." >&2
+                    exit 1
+                fi
+
+                # Set the flag to indicate that a custom energy baseline duration has been provided
+                energy_baseline_duration_arg_used="True"
+
+                shift
+                ;;
 
             --server-control-port=*)
 
@@ -203,7 +221,6 @@ function parse_args {
                 # Output the energy testing enabled message to the user and set the energy testing flag to true
                 echo -e "\n[NOTICE] - Energy testing enabled, ensure the power measurement device is connected and configured correctly\n"
                 enable_energy_testing=1
-                sleep 2
 
                 shift
                 ;;
@@ -236,6 +253,18 @@ function parse_args {
         esac
 
     done
+
+    # Ensure that if the --energy-baseline-duration flag is used, energy testing is also enabled
+    if [ "$energy_baseline_duration_arg_used" == "True" ] && [ "$enable_energy_testing" -eq 0 ]; then
+        echo "[ERROR] - The --energy-baseline-duration flag requires energy testing to be enabled"
+        output_help
+        exit 1
+    fi
+
+    # If the energy baseline duration flag was passed, output a notice with the new duration value
+    if [ "$energy_baseline_duration_arg_used" == "True" ]; then
+        echo -e "[NOTICE] - Energy baseline duration set to $energy_baseline_duration seconds\n"
+    fi
 
     # Ensure that if the --use-custom-sys-state flag is used, energy testing is also enabled
     if [ "$custom_sys_state_arg_used" == "True" ] && [ "$enable_energy_testing" == 0 ]; then
@@ -464,6 +493,7 @@ function setup_base_env() {
 
     # Export the energy testing flag variable
     export ENABLE_ENERGY_TESTING="$enable_energy_testing"
+    export ENERGY_BASELINE_DURATION="$energy_baseline_duration"
 
     # Determine what control signal parameters to export
     if [ "$disable_control_sleep" == "False" ] && [ "$custom_control_time_flag" == "False" ]; then
@@ -575,6 +605,7 @@ function clean_environment() {
     unset S_SERVER_PORT
     unset CONTROL_SLEEP_TIME
     unset ENABLE_ENERGY_TESTING
+    unset ENERGY_BASELINE_DURATION
     unset STORE_TEST_RESULTS
 
     # Clear the TLS speed test env var if energy testing was not enabled as var was set
@@ -1560,6 +1591,8 @@ function main() {
     parse_results=1
     replace_old_results=0
     enable_energy_testing=0
+    energy_baseline_duration=60
+    energy_baseline_duration_arg_used="False"
     use_custom_eng_control_ports=0
     sys_state_configure_flag="--set-default"
     custom_sys_state_arg_used="False"
