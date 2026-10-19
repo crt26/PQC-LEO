@@ -31,8 +31,6 @@ There are two machines and scripts that must be configured and launched for the 
 
 Please ensure you have thoroughly read the general instructions and environment setup for the collection machine in the [Energy Usage Testing Guide](../../testing_tools_usage/pqc_energy_usage_testing.md) before proceeding with testing, as it contains important details on setting up the collection machine and energy meter for testing.
 
-Run the commands below from `scripts/test_scripts` on the corresponding machine.
-
 ### Launching the Collection Machine Script
 Once the environment for the collection machine is properly set up, the collection machine script can be launched using the following command:
 

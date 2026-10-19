@@ -47,7 +47,7 @@ Once the collection machine is configured and the server machine is ready for TL
 
 This flag enables the energy usage testing functionality within the script. It allows the client-side test script to signal the collection machine to poll the energy meter at the appropriate points during testing, while also ensuring that the system state is configured correctly for energy usage measurements.
 
-Run the following commands from `scripts/test_scripts` on the client machine:
+Example command on the client machine:
 
 ```bash
 ./pqc_tls_performance_test.sh --enable-energy-testing

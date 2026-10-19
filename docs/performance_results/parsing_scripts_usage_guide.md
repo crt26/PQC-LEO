@@ -44,7 +44,7 @@ While automatic parsing is recommended in most cases, manual parsing is fully su
 
 - **Command-line arguments** — Parsing parameters are passed directly as script flags.
 
-**Note:** When parsing computational or TLS performance results in a separate environment, provide the same algorithm list files used during testing. Energy usage parsing extracts metadata from filenames and does not require those lists. Run the manual parsing commands below from `scripts/parsing_scripts`.
+**Note:** When parsing computational or TLS performance results in a separate environment, provide the same algorithm list files used during testing. Energy usage parsing extracts metadata from filenames and does not require those lists.
 
 ### Interactive Parsing
 To use the interactive parsing method, call the parsing script using the following command:
