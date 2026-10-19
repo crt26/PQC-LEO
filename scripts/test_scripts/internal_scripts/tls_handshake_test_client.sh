@@ -122,7 +122,7 @@ function get_baseline() {
         -P "$ENERGY_POLL_RATE" \
         "${communication_flags[@]}"
 
-    # Allow baseline measurement for the configured duration (default: 60 seconds)
+    # Sleep for the specified baseline duration to measure the system's idle power consumption (default - 60 secs)
     sleep "${ENERGY_BASELINE_DURATION:-60}"
 
     # Send test stop message to the collector machine
