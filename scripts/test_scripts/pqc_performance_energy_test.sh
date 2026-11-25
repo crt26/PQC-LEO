@@ -13,7 +13,7 @@
 sys_state_configure_flag="--set-default" # options (--set-default (default method) | --set-custom)
 sys_state_set_ok=0
 trap_cleanup_done=0
-energy_baseline_duration=60
+custom_flags=()
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function output_help() {
@@ -23,10 +23,11 @@ function output_help() {
     # Output the supported options and their usage to the user
     echo "Usage: pqc_performance_energy_test.sh [options]"
     echo "Options:"
-    echo "--use-custom-sys-state               Used to indicate that custom system state values should be set for the test instead of the default values"
-    echo "--use-custom-eng-control-ports       Enable the use of custom network control ports for energy testing control signalling"
-    echo "--energy-baseline-duration=<TIME>    Baseline measurement duration in positive whole seconds (default: 60)"
-    echo "--help                               Display the help message"
+    echo "--use-custom-sys-state                 Used to indicate that custom system state values should be set for the test instead of the default values"
+    echo "--use-custom-eng-control-ports         Enable the use of custom network control ports for energy testing control signalling"
+    echo "--energy-baseline-duration=<TIME>      Baseline measurement duration in positive whole seconds (default: 60)"
+    echo "--set-signing-message-length=<BYTES>   Set the length of the signing message in bytes (default: 50)"
+    echo "--help                                 Display the help message"
     
 }
 
@@ -70,13 +71,15 @@ function get_user_yes_no() {
 #-------------------------------------------------------------------------------------------------------------------------------
 function parse_args() {
     # Function for parsing the command line arguments passed to the script. Based on the detected arguments, the function will 
-    # set the relevant global flags that are used throughout the setup process.
+    # configure the setup process and collect the flags to pass to the tester.
 
     # Check if the help flag is passed at any position in the command line arguments
-    if [[ "$*" =~ --help ]]; then
-        output_help
-        exit 0
-    fi
+    for arg in "$@"; do
+        if [[ "$arg" == --help ]]; then
+            output_help
+            exit 0
+        fi
+    done
 
     # Loop through the passed command line arguments and check for the supported options
     while [[ $# -gt 0 ]]; do
@@ -95,6 +98,9 @@ function parse_args() {
                     exit 1
                 fi
 
+                # Append the argument to the custom_flags array to pass to the tester
+                custom_flags+=("$1")
+
                 shift
                 ;;
 
@@ -107,16 +113,28 @@ function parse_args() {
 
             --use-custom-eng-control-ports)
 
-                # Set the flag to indicate that custom network control ports should be used for energy testing control signalling
-                use_custom_eng_control_ports=1
+                # Append the argument to the custom_flags array to pass to the tester
+                custom_flags+=("--use-custom-net-control-ports")
                 shift
                 ;;
 
-            --help)
+            --set-signing-message-length=*)
 
-                # Output the help message and exit the script
-                output_help
-                exit 0
+                # Extract the value after the '=' sign in the command line argument
+                signing_message_length="${1#*=}"
+
+                # Ensure that the signing message length is a positive integer
+                if [[ ! "$signing_message_length" =~ ^[1-9][0-9]*$ ]]; then
+                    echo -e "\n[ERROR] - Signing message length must be a positive integer in bytes." >&2
+                    exit 1
+                fi
+
+                # Append the argument to the custom_flags array to pass to the tester
+                custom_flags+=("$1")
+
+                # Output notice on the use of the custom signing message length
+                echo -e "\n[NOTICE] - Custom signing message length set to $signing_message_length bytes. This may affect the energy testing results.\n"
+                shift
                 ;;
 
             *)
@@ -370,9 +388,6 @@ function main() {
     echo "PQC Computational Energy Tester"
     echo -e "###############################"
 
-    # Define the global variables for the script with their default values
-    use_custom_eng_control_ports=0
-
     # Check if any arguments have been passed to the script and parse them if so
     if [[ "$#" -gt 0 ]]; then
         parse_args "$@"
@@ -394,12 +409,8 @@ function main() {
         exit 1
     fi
 
-    # Run the computational performance energy testing binary based on whether the user has chosen to use custom control ports or not
-    if [ "$use_custom_eng_control_ports" -eq 0 ]; then
-        taskset -c "$TARGET_CPU_CORE" "$comp_tester_bin" -s "--energy-baseline-duration=$energy_baseline_duration"
-    else
-        taskset -c "$TARGET_CPU_CORE" "$comp_tester_bin" -c -s "--energy-baseline-duration=$energy_baseline_duration"
-    fi
+    # Pass the requested overrides and skip the tester's duplicate welcome banner.
+    taskset -c "$TARGET_CPU_CORE" "$comp_tester_bin" -s "${custom_flags[@]}"
     
 }
 main "$@"

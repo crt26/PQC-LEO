@@ -25,6 +25,7 @@ The relevant automated energy usage testing scripts can be found in the `scripts
 - [Performing the Automated Energy Usage Testing](#performing-the-automated-energy-usage-testing)
 - [Advanced Testing Options](#advanced-testing-options)
   - [Baseline Measurement Duration](#baseline-measurement-duration)
+  - [Signing Message Length](#signing-message-length)
   - [Custom System Performance State Configuration](#custom-system-performance-state-configuration)
   - [Custom Control Signalling Ports](#custom-control-signalling-ports)
 - [Additional Documentation](#additional-documentation)
@@ -183,6 +184,7 @@ Once testing has been completed, the collected energy usage metrics will be avai
 The following advanced testing options can be enabled by passing the relevant command line arguments to the automated testing scripts:
 
 - Baseline Measurement Duration
+- Signing Message Length
 - Custom System Performance State Configuration
 - Custom Control Signalling Ports
 
@@ -200,6 +202,14 @@ Examples of using this flag to gather a baseline measurement for 120 seconds in 
 When configuring the baseline duration for TLS handshake energy usage testing, the `--energy-baseline-duration` flag must be passed alongside `--enable-energy-testing` when calling the client machine script. The script will report an error if energy usage testing has not been enabled. The handshake test duration and energy meter polling interval are configured separately.
 
 The baseline measurement duration can also be configured when using the standalone `comp_energy_tester` tool. Please refer to the [Computational Energy Tester Tool Usage Guide](../project_tools_guides/comp_energy_tester_usage_guide.md#configuring-the-baseline-duration) for further information on using this functionality.
+
+### Signing Message Length
+By default, the computational and TLS operations energy usage tests use a **50-byte** message for signing and verification. This length can be configured by passing `--set-signing-message-length=<BYTES>` when calling the testing machine script. The specified length must be a positive whole number of bytes.
+
+```bash
+./pqc_performance_energy_test.sh --set-signing-message-length=128
+./tls_operations_energy_test.sh --set-signing-message-length=128
+```
 
 ### Custom System Performance State Configuration
 By default, the testing scripts will automatically configure the system performance state for energy usage testing, which includes setting the CPU performance to maximum and selecting a specific target CPU core for testing processes. However, it is possible to manually configure the system performance state settings by passing the `--use-custom-sys-state` flag to the testing script and configuring the desired settings when prompted. This allows for more granular control over the system performance state settings during energy usage testing, which can be useful for testing under different system performance conditions.

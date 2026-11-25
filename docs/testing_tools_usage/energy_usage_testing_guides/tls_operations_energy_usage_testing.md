@@ -50,6 +50,7 @@ Once the environment is ready and the collection machine has been activated, the
 Additional command line arguments can be passed to the testing script which enable advanced customisation of the automated testing process. For details of all advanced testing options, please refer to the [Energy Usage Testing Guide](../pqc_energy_usage_testing.md#advanced-testing-options). Of these advanced options, the ones supported by the TLS operations energy usage script are:
 
 - `--energy-baseline-duration=<TIME>`
+- `--set-signing-message-length=<BYTES>`
 - `--use-custom-sys-state`
 - `--use-custom-net-control-ports`
 

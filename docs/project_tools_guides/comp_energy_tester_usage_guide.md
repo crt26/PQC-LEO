@@ -13,6 +13,7 @@ If you prefer to make use of the automated energy usage testing provided by PQC-
   - [Configuring the Testing Parameters](#configuring-the-testing-parameters)
 - [Advanced Options](#advanced-options)
   - [Configuring the Baseline Duration](#configuring-the-baseline-duration)
+  - [Configuring the Signing Message Length](#configuring-the-signing-message-length)
   - [Configuring Network Controller Ports](#configuring-network-controller-ports)
   - [Skipping the Welcome Message](#skipping-the-welcome-message)
 
@@ -95,6 +96,7 @@ When the collection script parses these results, it creates detailed and condens
 The tool allows for the following advanced settings:
 
 - Setting the baseline measurement duration
+- Setting the signing message length
 - Setting custom network controller listening ports
 - Skipping the display of the welcome message
 
@@ -105,6 +107,13 @@ An example of using this flag to gather a baseline measurement for 120 seconds i
 
 ```bash
 ./comp_energy_tester --energy-baseline-duration=120
+```
+
+### Configuring the Signing Message Length
+By default, the computational energy usage testing tool uses a **50-byte** message for signing and verification. This length can be configured by passing `-m <BYTES>` or `--set-signing-message-length=<BYTES>` when calling the tool. The specified length must be a positive whole number of bytes.
+
+```bash
+./comp_energy_tester --set-signing-message-length=128
 ```
 
 ### Configuring Network Controller Ports
