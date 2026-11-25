@@ -15,13 +15,16 @@ test phase and manages liboqs initialisation and shutdown.
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <errno.h>
 #include <getopt.h>
+#include <inttypes.h>
 #include <limits.h>
 #include "comp_energy_tester.h"
 
-// Define the global flag variables
+// Define the global flag and default value variables
 int custom_net_ports = 0;
 static unsigned int energy_baseline_duration = 60;
+static size_t signing_message_length = 50;
 
 //------------------------------------------------------------------------------------------------------------------------------ 
 void output_help() {
@@ -34,6 +37,7 @@ void output_help() {
     printf("-c, --use-custom-net-control-ports          Use custom network control ports for energy testing control signalling\n");
     printf("-s, --skip-welcome-message                  Skip the welcome message on startup (useful for automated calling of the script)\n");
     printf("-b, --energy-baseline-duration=SECONDS      Baseline measurement duration in positive whole seconds (default: 60)\n");
+    printf("-m, --set-signing-message-length=BYTES      Set the length of the signing message in bytes (default: 50)\n");
     printf("-h, --help                                  Display the help message and exit\n");
 
 }
@@ -48,6 +52,7 @@ void parse_args(int argc, char *argv[], int *display_welcome) {
     struct option long_options[] = {
         {"use-custom-net-control-ports", no_argument, 0, 'c'},
         {"skip-welcome-message", no_argument, 0, 's'},
+        {"set-signing-message-length", required_argument, 0, 'm'},
         {"energy-baseline-duration", required_argument, 0, 'b'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
@@ -58,7 +63,7 @@ void parse_args(int argc, char *argv[], int *display_welcome) {
     int option_index = 0;
 
     // Parse the command line arguments
-    while((option = getopt_long(argc, argv, "chsb:", long_options, &option_index)) != -1) {
+    while((option = getopt_long(argc, argv, "chsb:m:", long_options, &option_index)) != -1) {
 
         // Determine which option is being processed
         switch (option) {
@@ -91,6 +96,28 @@ void parse_args(int argc, char *argv[], int *display_welcome) {
 
                 // Store the validated duration as an unsigned integer for use during the baseline measurement
                 energy_baseline_duration = (unsigned int)captured_baseline_duration;
+                break;
+
+            }
+
+            case 'm': {
+
+                // Declare a pointer to track where conversion of the supplied message length stops
+                char *signing_message_length_end_ptr = NULL;
+
+                // Convert the command line argument to an integer using base 10 and record where conversion stops
+                errno = 0;
+                uintmax_t captured_signing_message_length = strtoumax(optarg, &signing_message_length_end_ptr, 10);
+
+                // Ensure the message length is above 0 and fits the size_t type required
+                if (!isdigit((unsigned char)optarg[0]) || *signing_message_length_end_ptr != '\0' ||
+                    errno == ERANGE || captured_signing_message_length == 0 || captured_signing_message_length > SIZE_MAX) {
+                    fprintf(stderr, "[ERROR] - Signing message length must be a positive integer in bytes (maximum %zu).\n", SIZE_MAX);
+                    exit(1);
+                }
+
+                // Store the validated message length as a size_t for use during signing tests
+                signing_message_length = (size_t)captured_signing_message_length;
                 break;
 
             }
@@ -612,8 +639,9 @@ int test_sig(const char *method_name, TestController *test_controller, TestParam
 	uint8_t *secret_key = NULL;
 	uint8_t *message = NULL;
 	uint8_t *signature = NULL;
-	size_t message_len = 50;
+	size_t message_len = signing_message_length;
 	size_t signature_len = 0;
+    int ret = 0;
 
     // Initialise the signature
 	sig = OQS_SIG_new(method_name);
@@ -686,7 +714,11 @@ int test_sig(const char *method_name, TestController *test_controller, TestParam
 
     // Perform the sign test for the specified iterations
     for (int i = 0; i < test_params->iterations; i++) {
-        OQS_SIG_sign(sig, signature, &signature_len, message, message_len, secret_key);
+        if (OQS_SIG_sign(sig, signature, &signature_len, message, message_len, secret_key) != OQS_SUCCESS) {
+            fprintf(stderr, "ERROR: OQS_SIG_sign failed during measurement\n");
+            ret = -1;
+            goto stop_measurement;
+        }
     }
 
     // Send stop command after sign
@@ -705,10 +737,15 @@ int test_sig(const char *method_name, TestController *test_controller, TestParam
 
     // Perform the verify test for the specified iterations
     for (int i = 0; i < test_params->iterations; i++) {
-        OQS_SIG_verify(sig, message, message_len, signature, signature_len, public_key);
+        if (OQS_SIG_verify(sig, message, message_len, signature, signature_len, public_key) != OQS_SUCCESS) {
+            fprintf(stderr, "ERROR: OQS_SIG_verify failed during measurement\n");
+            ret = -1;
+            break;
+        }
     }
 
-    // Send the stop command after verify
+stop_measurement:
+    // Send the stop command for the active measurement
     test_params->control_type = 2;
     control_handler(test_controller, test_params);
 
@@ -721,7 +758,7 @@ int test_sig(const char *method_name, TestController *test_controller, TestParam
 	OQS_MEM_insecure_free(message);
 	OQS_SIG_free(sig);
 
-	return 0;
+	return ret;
 
 }
 
@@ -771,20 +808,30 @@ int test_handler(TestController *test_controller) {
 
         // Iterate through the available KEM algorithms and perform tests
         for (size_t i = 0; i < OQS_KEM_algs_length; i++) {
+
+            // Perform the KEM tests for the current algorithm
             ret = test_kem(OQS_KEM_alg_identifier(i), test_controller, &test_params);
+
+            // Check if the test failed and output an error message if so
             if (ret != 0) {
-                ret = EXIT_FAILURE;
+                printf("[ERROR] - Testing failed for KEM algorithm: %s\n", OQS_KEM_alg_identifier(i));
+                goto failure;
             }
         }
 
         // Iterate through the available SIG algorithms and perform tests
         for (size_t i = 0; i < OQS_SIG_algs_length; i++) {
-            ret = test_sig(OQS_SIG_alg_identifier(i), test_controller, &test_params);
-            if (ret != 0) {
-                ret = EXIT_FAILURE;
-            }
-        }
 
+            // Perform the SIG tests for the current algorithm
+            ret = test_sig(OQS_SIG_alg_identifier(i), test_controller, &test_params);
+
+            // Check if the test failed and output an error message if so
+            if (ret != 0) {
+                printf("[ERROR] - Testing failed for SIG algorithm: %s\n", OQS_SIG_alg_identifier(i));
+                goto failure;
+            }
+
+        }
     }
 
     // Output testing complete message to the terminal
@@ -796,6 +843,18 @@ int test_handler(TestController *test_controller) {
     control_handler(test_controller, &test_params);
 
     return 0;
+
+failure:
+    // Output an error message for the failed test and close Liboqs
+    printf("[ERROR] - Test run %d failed, skipping remaining tests for this run\n", test_params.run_num);
+    OQS_destroy();
+
+    // Send the test END signal to the collector
+    test_params.control_type = 3;
+    control_handler(test_controller, &test_params);
+
+    // Exit the program with an error code
+    exit(1);
 
 }
 

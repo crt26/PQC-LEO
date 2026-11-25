@@ -18,6 +18,7 @@ use_custom_control_ports=0 # flag for whether to use custom network control port
 sys_state_set_ok=0
 trap_cleanup_done=0
 energy_baseline_duration=60
+signing_message_length=50
 
 #-------------------------------------------------------------------------------------------------------------------------------
 function output_help() {
@@ -27,10 +28,11 @@ function output_help() {
     # Output the supported options and their usage to the user
     echo "Usage: tls_operations_energy_test.sh [options]"
     echo "Options:"
-    echo "--use-custom-sys-state               Used to indicate that custom system state values should be set for the test instead of the default values"
-    echo "--use-custom-net-control-ports       Use custom network control ports for energy collector communication"
-    echo "--energy-baseline-duration=<TIME>    Baseline measurement duration in positive whole seconds (default: 60)"
-    echo "--help                               Display the help message"
+    echo "--use-custom-sys-state                 Used to indicate that custom system state values should be set for the test instead of the default values"
+    echo "--use-custom-net-control-ports         Use custom network control ports for energy collector communication"
+    echo "--energy-baseline-duration=<TIME>      Baseline measurement duration in positive whole seconds (default: 60)"
+    echo "--set-signing-message-length=<BYTES>   Set the length of the signing message in bytes (default: 50)"
+    echo "--help                                 Display the help message"
     
 }
 
@@ -40,10 +42,12 @@ function parse_args() {
     # set the relevant global flags that are used throughout the setup process.
 
     # Check if the help flag is passed at any position in the command line arguments
-    if [[ "$*" =~ --help ]]; then
-        output_help
-        exit 0
-    fi
+    for arg in "$@"; do
+        if [[ "$arg" == --help ]]; then
+            output_help
+            exit 0
+        fi
+    done
 
     # Loop through the passed command line arguments and check for the supported options
     while [[ $# -gt 0 ]]; do
@@ -76,6 +80,20 @@ function parse_args() {
 
                 # Set the flag to indicate that custom network control ports should be used for energy testing control signalling
                 use_custom_control_ports=1
+                shift
+                ;;
+
+            --set-signing-message-length=*)
+
+                # Extract the value after the '=' sign in the command line argument
+                signing_message_length="${1#*=}"
+
+                # Ensure that the signing message length is a positive integer
+                if [[ ! "$signing_message_length" =~ ^[1-9][0-9]*$ ]]; then
+                    echo "[ERROR] - Signing message length must be a positive integer in bytes." >&2
+                    exit 1
+                fi
+
                 shift
                 ;;
 
@@ -764,7 +782,11 @@ function create_common_files() {
         "$openssl_bin" pkey $provider_flags -in "$priv_key_path" -pubout -out "$pub_key_path"
 
         # Create the fixed random message for signing/verification testing
-        head -c 512 /dev/urandom > "$msg_path"
+        if ! head -c "$signing_message_length" /dev/urandom > "$msg_path"; then
+            echo "[ERROR] - Failed to generate the $signing_message_length-byte signing message for $testing_alg." >&2
+            "$control_sender" --end-testing "${communication_flags[@]}"
+            exit 1
+        fi
 
         # Precompute the signature for the verification testing
         "$openssl_bin" pkeyutl $provider_flags -sign -inkey "$priv_key_path" -in "$msg_path" -out "$sig_path"
@@ -794,7 +816,11 @@ function create_common_files() {
         "$openssl_bin" pkey $provider_flags -in "$priv_key_path" -pubout -out "$pub_key_path"
 
         # Create the fixed random message for signing/verification testing
-        head -c 512 /dev/urandom > "$msg_path"
+        if ! head -c "$signing_message_length" /dev/urandom > "$msg_path"; then
+            echo "[ERROR] - Failed to generate the $signing_message_length-byte signing message for $testing_alg." >&2
+            "$control_sender" --end-testing "${communication_flags[@]}"
+            exit 1
+        fi
 
         # Precompute the signature for the verification testing
         "$openssl_bin" pkeyutl \
