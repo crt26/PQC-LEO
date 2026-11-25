@@ -327,24 +327,26 @@ If the setup process sets that the energy tools should use the PQC-LEO OpenSSL b
 
 **Accepted Script Arguments:**
 
-| **Flag**                            | **Description**                                                                                           |
-|-------------------------------------|-----------------------------------------------------------------------------------------------------------|
-| `--use-custom-sys-state`            | Used to indicate that custom system state values should be set for the test instead of the default values |
-| `--use-custom-eng-control-ports`    | Enable the use of custom network control ports for energy testing control signalling                      |
-| `--energy-baseline-duration=<TIME>` | Set the energy baseline measurement duration in positive whole seconds (default: 60 seconds)              |
-| `--help`                            | Display the help message                                                                                  |
+| **Flag**                                | **Description**                                                                                           |
+|-----------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| `--use-custom-sys-state`                | Used to indicate that custom system state values should be set for the test instead of the default values |
+| `--use-custom-eng-control-ports`        | Enable the use of custom network control ports for energy testing control signalling                      |
+| `--energy-baseline-duration=<TIME>`     | Set the energy baseline measurement duration in positive whole seconds (default: 60 seconds)              |
+| `--set-signing-message-length=<BYTES>`  | Set the message length in bytes for signing and verification tests (default: 50 bytes)                    |
+| `--help`                                | Display the help message                                                                                  |
 
 ### tls_operations_energy_test.sh
 This controller script provides automation for TLS operations energy usage benchmarking. It measures the energy usage of PQC, Hybrid-PQC, and classical cryptographic operations performed directly through OpenSSL commands. The script tests key generation, encapsulation, and decapsulation for supported PQC/Hybrid-PQC KEMs; key generation, signing, and verification for PQC/Hybrid-PQC and classical signatures; and key generation and shared-secret derivation for classical key-exchange algorithms. It communicates with the collector device around each operation window, configures the system performance state through `system_state_configurer.sh`, and uses `oid_handler.sh` for PQC algorithms that require custom OID environment mappings. The script accepts command-line flags for custom system-state configuration and custom network control ports, and restores the system state on completion or interruption.
 
 **Accepted Script Arguments:**
 
-| **Flag**                            | **Description**                                                                                           |
-|-------------------------------------|-----------------------------------------------------------------------------------------------------------|
-| `--use-custom-sys-state`            | Used to indicate that custom system state values should be set for the test instead of the default values |
-| `--use-custom-net-control-ports`    | Enable the use of custom network control ports for energy collector communication.                        |
-| `--energy-baseline-duration=<TIME>` | Set the energy baseline measurement duration in positive whole seconds (default: 60 seconds)              |
-| `--help`                            | Display the help message                                                                                  |
+| **Flag**                                | **Description**                                                                                           |
+|-----------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| `--use-custom-sys-state`                | Used to indicate that custom system state values should be set for the test instead of the default values |
+| `--use-custom-net-control-ports`        | Enable the use of custom network control ports for energy collector communication.                        |
+| `--energy-baseline-duration=<TIME>`     | Set the energy baseline measurement duration in positive whole seconds (default: 60 seconds)              |
+| `--set-signing-message-length=<BYTES>`  | Set the message length in bytes for signing and verification tests (default: 50 bytes)                    |
+| `--help`                                | Display the help message                                                                                  |
 
 ## Performance Data Parsing Scripts
 The project includes several Python scripts that handle automatic parsing of benchmarking results:
