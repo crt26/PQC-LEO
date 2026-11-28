@@ -48,9 +48,10 @@ int serial_controller_init(SerialController *serial_controller);
  * @param serial_controller Pointer to the serial controller instance.
  * @param message Output buffer for the received message text.
  * @param message_size Size of message in bytes (must be greater than 0).
- * @return 0 on success, -1 if the controller is invalid or an error occurs during reading.
+ * @param timeout_ms Maximum wait in milliseconds. A value of 0 allows an indefinite wait.
+ * @return 0 on success or -1 on timeout or receive failure.
  */
-int serial_controller_receiver(SerialController *serial_controller, char *message, size_t message_size);
+int serial_controller_receiver(SerialController *serial_controller, char *message, size_t message_size, int timeout_ms);
 
 /**
  * Sends a control message through the configured serial port.

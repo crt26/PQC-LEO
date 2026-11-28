@@ -8,6 +8,9 @@ settings, receives newline-delimited control messages, sends outbound command
 messages, and closes/releases serial resources during shutdown.
 */
 
+#define _POSIX_C_SOURCE 200809L
+#include <stdint.h>
+#include <time.h>
 #include <serial_controller.h>
 
 //-------------------------------------------------------------------------------------------------------------------------------
@@ -39,13 +42,20 @@ int serial_controller_init(SerialController *serial_controller) {
 }
 
 //-------------------------------------------------------------------------------------------------------------------------------
-int serial_controller_receiver(SerialController *serial_controller, char *message, size_t message_size) {
-    /*  Function for receiving messages from the control port. It will read bytes until it encounters a newline or carriage 
-        return character, and then copy the received message into the provided buffer. */
+int serial_controller_receiver(SerialController *serial_controller, char *message, size_t message_size, int timeout_ms) {
+    /*  Function for receiving messages from the control port. It reads until a newline or carriage return is received,
+        using the supplied timeout for the full message when one is set. */
 
     // Ensure that the serial controller has been initialised properly
     if (serial_controller == NULL || serial_controller->control_port == NULL) {
         fprintf(stderr, "[ERROR] - The SerialController instance has not been initialised properly\n");
+        return -1;
+    }
+
+    // Record the start time for the reply deadline
+    struct timespec start_time;
+    if (timeout_ms > 0 && clock_gettime(CLOCK_MONOTONIC, &start_time) != 0) {
+        fprintf(stderr, "[ERROR] - Failed to start the serial control reply timer.\n");
         return -1;
     }
 
@@ -57,9 +67,42 @@ int serial_controller_receiver(SerialController *serial_controller, char *messag
     // Read loop that runs until a newline or carriage return character is encountered, indicating the end of the message
     while (1) {
 
-        // Clear the current byte and read in from the control port
+        // Define the timeout for the next single-byte read (if it stays at 0, receiver will wait indefinetty)
+        unsigned int read_timeout_ms = 0;
+
+        // Use the time remaining for the whole reply if a deadline was set
+        if (timeout_ms > 0) {
+
+            // Read the clock to check how long the reply has been pending
+            struct timespec current_time;
+            if (clock_gettime(CLOCK_MONOTONIC, &current_time) != 0) {
+                fprintf(stderr, "[ERROR] - Failed to check the serial control reply timer.\n");
+                return -1;
+            }
+
+            // Calculate the remaining reply time in milliseconds
+            int64_t elapsed_seconds = (int64_t)current_time.tv_sec - start_time.tv_sec;
+            int64_t elapsed_nanoseconds = elapsed_seconds * 1000000000 + current_time.tv_nsec - start_time.tv_nsec;
+            int64_t remaining_ms = timeout_ms - elapsed_nanoseconds / 1000000;
+
+            // Stop before reading again if the reply deadline has passed
+            if (remaining_ms <= 0) {
+                fprintf(stderr, "[ERROR] - Timed out waiting for a serial control message.\n");
+                return -1;
+            }
+
+            // Update the read_timeout with the current remaining time for when a reply is due
+            read_timeout_ms = (unsigned int)remaining_ms;
+
+        }
+
+        // Read the next byte from the control port using the selected timeout
         char current_byte;
-        read_result = sp_blocking_read(serial_controller->control_port, &current_byte, 1, 100);
+        read_result = sp_blocking_read(serial_controller->control_port, &current_byte, 1, read_timeout_ms);
+        if (read_result < 0) {
+            fprintf(stderr, "[ERROR] - Failed to read from the serial control port.\n");
+            return -1;
+        }
 
         // Ensure that the read was successful
         if (read_result > 0) {

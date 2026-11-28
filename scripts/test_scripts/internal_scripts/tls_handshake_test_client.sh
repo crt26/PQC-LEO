@@ -109,6 +109,67 @@ function setup_base_env() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
+function check_energy_controller_exit_code() {
+    # Helper function for checking the result of an energy control command. If the command fails, it ends testing and
+    # removes the temporary OpenSSL error file if one was supplied.
+
+    # Store the passed argument variables locally
+    local passed_exit_code=$1
+    local handshake_type=$2
+    local passed_s_time_error_file=$3
+
+    # Ensure that the passed handshake type is valid
+    if [[ "$handshake_type" != "START" && "$handshake_type" != "STOP" && "$handshake_type" != "END" ]]; then
+
+        # Output an error message to the terminal for the incorrect passed type
+        echo "[ERROR] - Invalid handshake type has been passed to the check_controller_exit_code helper function"
+
+        # Attempt to send the end command to the collector
+        "$control_sender" --end-testing "${communication_flags[@]}"
+
+        # Remove the temporary OpenSSL error file if it exists
+        if [[ -n "$passed_s_time_error_file" && -f "$passed_s_time_error_file" ]]; then
+            rm -f "$passed_s_time_error_file"
+        fi
+
+        exit 1
+
+    fi
+
+    # Handle a failed energy control command
+    if [ $passed_exit_code -ne 0 ]; then
+
+        # End collection and notify the TLS server after a failed start or stop
+        if [ "$handshake_type" != "END" ]; then
+
+            # Ask the collector to end the current session
+            "$control_sender" --end-testing "${communication_flags[@]}"
+            error_type="$handshake_type handshake"
+
+            # Notify the TLS server that the client is ending the test
+            control_signal "abort"
+
+        else
+
+            error_type="END command"
+
+        fi
+
+        # Report which energy control command failed
+        echo "[ERROR] - The controller $handshake_type handshake with the collector machine, exiting testing."
+
+        # Remove the temporary OpenSSL error file if it exists
+        if [[ -n "$passed_s_time_error_file" && -f "$passed_s_time_error_file" ]]; then
+            rm -f "$passed_s_time_error_file"
+        fi
+
+        exit 1
+
+    fi
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
 function get_baseline() {
     # Function for performing the baseline measurement for energy testing. It sends a control signal to the energy collector 
     # machine to indicate the start of the baseline measurement, then sleeps for a specified amount of time to allow the 
@@ -121,12 +182,16 @@ function get_baseline() {
         -R "1" \
         -P "$ENERGY_POLL_RATE" \
         "${communication_flags[@]}"
+    exit_code=$?
+    check_energy_controller_exit_code $exit_code "START"
 
     # Sleep for the specified baseline duration to measure the system's idle power consumption (default - 60 secs)
     sleep "${ENERGY_BASELINE_DURATION:-60}"
 
     # Send test stop message to the collector machine
     "$control_sender" -t "${communication_flags[@]}"
+    exit_code=$?
+    check_energy_controller_exit_code $exit_code "STOP"
     
 }
 
@@ -269,11 +334,14 @@ function check_control_port() {
 #-------------------------------------------------------------------------------------------------------------------------------
 function control_signal() {
     # Function for handling client-to-server control signalling during TLS handshake testing.
-    # Supports: control_send, control_wait, and iteration_handshake modes for coordination.
+    # Supports control_send, control_wait, iteration_handshake, and abort modes for coordination.
 
     # Declare the local variables for arguments passed to the function
     local type="$1"
     local message="$2"
+
+    # Define a local variable to track the number of control signal attempts
+    local control_attempt
 
     # Kill any lingering netcat processes
     pkill -f "nc -l -p $CLIENT_CONTROL_PORT"
@@ -335,6 +403,29 @@ function control_signal() {
                     break
                 fi
             done
+            ;;
+            
+        "abort")
+
+            # Define a local variable to track the number of abort attempts
+            local abort_attempt
+
+            # Try up to five times to give the server a chance to start listening
+            for abort_attempt in 1 2 3 4 5; do
+
+                # Limit each send to two seconds and return if it succeeds
+                if printf '%s\n' "abort" | timeout 2s nc -n -w 1 "$SERVER_IP" "$SERVER_CONTROL_PORT" > /dev/null 2>&1; then
+                    return 0
+                fi
+
+                # Pause briefly after a failed attempt
+                sleep 0.2
+
+            done
+
+            # Report the failure once all attempts have been used
+            echo "[ERROR] - Failed to send the abort signal to the TLS server."
+            return 1
             ;;
 
         *)
@@ -515,6 +606,8 @@ function pqc_tests() {
                                     -R "$run_num" \
                                     -P "$ENERGY_POLL_RATE" \
                                     "${communication_flags[@]}"
+                                exit_code=$?
+                                check_energy_controller_exit_code "$exit_code" "START" "$s_time_error_file"
 
                                 # Run the OpenSSL s_time process with the current test parameters and grab the exit code
                                 $openssl_cmd s_time \
@@ -534,8 +627,10 @@ function pqc_tests() {
                                     session_exit_code=1
                                 fi
 
-                                # Send energy test complete signal for the current session-ID test
+                                # Wait for the collector to save this measurement before continuing
                                 "$control_sender" -t "${communication_flags[@]}"
+                                exit_code=$?
+                                check_energy_controller_exit_code "$exit_code" "STOP" "$s_time_error_file"
 
                                 # If any session-ID test fails, mark attempt failed and retry entire combination
                                 if [ "$session_exit_code" -ne 0 ]; then
@@ -699,13 +794,15 @@ function classic_tests() {
                                     exit 1
                                 }
 
-                                # Send control signal to energy collector to get ready for a new test
+                                # Wait for READY before running OpenSSL s_time
                                 "$control_sender" -s \
                                     -T "tls_handshake_${session_id}" \
                                     -A "$classic_sig@$key_exchange_group@$ciphersuite" \
                                     -R "$run_num" \
                                     -P "$ENERGY_POLL_RATE" \
                                     "${communication_flags[@]}"
+                                exit_code=$?
+                                check_energy_controller_exit_code $exit_code "START" $s_time_error_file
 
                                 # Run the OpenSSL s_time process with the current test parameters and grab the exit code
                                 $openssl_cmd s_time \
@@ -723,8 +820,10 @@ function classic_tests() {
                                     session_exit_code=1
                                 fi
 
-                                # Send energy test complete signal for the current session-ID test
+                                # Wait for the collector to save this measurement before continuing
                                 "$control_sender" -t "${communication_flags[@]}"
+                                exit_code=$?
+                                check_energy_controller_exit_code $exit_code "STOP" $s_time_error_file
 
                                 # If any session-ID test fails, mark attempt failed and retry entire combination
                                 if [ "$session_exit_code" -ne 0 ]; then
@@ -868,6 +967,8 @@ function tls_client_test_entrypoint() {
     # Send test complete control signal if energy testing is enabled
     if [ "$ENABLE_ENERGY_TESTING" -eq 1 ]; then
         "$control_sender" --end-testing "${communication_flags[@]}"
+        exit_code=$?
+        check_energy_controller_exit_code $exit_code "END"
     fi
 
 }

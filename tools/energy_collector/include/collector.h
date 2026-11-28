@@ -10,6 +10,32 @@ SPDX-License-Identifier: MIT
 #include "controller_api.h"
 #include "controller_utils.h"
 
+#define METRICS_FILEPATH_SIZE 1024
+
+// Define the control commands passed from the control listener to the collection thread
+typedef enum {
+    CONTROL_GETREADY,
+    CONTROL_STOP,
+    CONTROL_END
+} ControlAction;
+
+// Store the command and the file and polling settings supplied by GETREADY
+typedef struct {
+    ControlAction action;
+    char output_filepath[METRICS_FILEPATH_SIZE];
+    useconds_t polling_rate;
+} ControlCommand;
+
+// Store the metrics file and the starting values for the current operation on the collection thread
+typedef struct {
+    FILE *metrics_file;
+    char output_filepath[METRICS_FILEPATH_SIZE];
+    useconds_t polling_rate;
+    unsigned int start_mAh;
+    unsigned int start_mWh;
+    struct timespec start_time;
+} EnergyCollection;
+
 // Struct for defining the format of the meter type options presented to the user during setup
 typedef struct {
     int option_number;
@@ -38,7 +64,7 @@ static MeterType prompt_meter_type(void);
 int setup_env(TestController *test_controller, MeterDevice *meter_device, int prompt_for_result_dir);
 
 // Handles parsing the incoming GETREADY message and preparing the metrics file
-int get_ready_parser(char *message);
+int get_ready_parser(char *message, ControlCommand *get_ready_command);
 
 // Control listener thread function for handling incoming control signals
 void *control_listener_thread(void *arg);

@@ -5,7 +5,7 @@ SPDX-License-Identifier: MIT
 This script implements the PQC-LEO energy metric collector. It configures control signalling
 (serial or network), initialises the connected meter device, manages results storage, and runs
 threaded listeners for test control commands and energy metric polling. During execution, it
-handles GETREADY/START/STOP/END commands, writes sampled power data to per-test output files,
+handles GETREADY/STOP/END commands, writes sampled power data to per-test output files,
 and coordinates clean shutdown of controller and collection resources.
 
 */
@@ -14,6 +14,7 @@ and coordinates clean shutdown of controller and collection resources.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <pthread.h>
@@ -21,19 +22,17 @@ and coordinates clean shutdown of controller and collection resources.
 #include <time.h>
 #include "collector.h"
 
-// Declare shared thread variables
-pthread_mutex_t control_lock = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t control_changed = PTHREAD_COND_INITIALIZER;
-int start_flag;
-int end_flag;
-pthread_mutex_t file_lock = PTHREAD_MUTEX_INITIALIZER;
-FILE *metrics_file;
-
 // Declare the global variables used throughout the collector script
 static char results_dir[256];
-int skip_poll_sleep = 0;
-useconds_t polling_rate;
 int custom_net_ports = 0;
+
+// Declare the shared thread variables used to pass one control command at a time
+static pthread_mutex_t control_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t control_changed = PTHREAD_COND_INITIALIZER;
+static ControlCommand pending_command;
+static int command_pending;
+static int command_exit_status;
+static int control_failed;
 
 //------------------------------------------------------------------------------------------------------------------------------ 
 void output_help() {
@@ -446,10 +445,16 @@ static void free_message_elements(char **message_elements, size_t element_count)
 }
 
 //-------------------------------------------------------------------------------------------------------------------------------
-int get_ready_parser(char *message) {
-    /*  Function for handling the GETREADY message received from the control port. It will parse the message and prepare the 
-        collector for energy testing. This includes extracting relevant parameters, and initialising the metrics file for 
-        writing within the collect_metrics thread. */
+int get_ready_parser(char *message, ControlCommand *get_ready_command) {
+    /*  Function for parsing the GETREADY message and passing the results filepath and polling interval to the collection
+        thread. The collection thread opens the file and records the baseline reading before returning the command result. */
+
+    // Reject empty fields before the parser skips consecutive delimiters
+    size_t message_length = message == NULL ? 0 : strlen(message);
+    if (message_length > 0 && (strstr(message, "::") != NULL || message[message_length - 1] == ':')) {
+        fprintf(stderr, "[ERROR] - GETREADY message contains an empty field.\n");
+        return -1;
+    }
 
     // Declare the message elements array and its size
     char *message_elements[4];
@@ -487,264 +492,419 @@ int get_ready_parser(char *message) {
         return -1;
     }
 
+    // Keep the result file inside the selected results directory
+    if (strchr(filename, '/') != NULL) {
+        fprintf(stderr, "[ERROR] - Energy result filename contains a path separator.\n");
+        free_message_elements(message_elements, element_count);
+        return -1;
+    }
+
     // Set the filepath based on the results directory and filename then store its length
-    char filepath[1024];
-    int filepath_length = snprintf(filepath, sizeof(filepath), "%s/%s", results_dir, filename);
+    int filepath_length = snprintf(get_ready_command->output_filepath, sizeof(get_ready_command->output_filepath), "%s/%s", results_dir, filename);
 
     // Ensure that the filepath length is valid and does not exceed the buffer size
-    if (filepath_length < 0 || (size_t)filepath_length >= sizeof(filepath)) {
+    if (filepath_length < 0 || (size_t)filepath_length >= sizeof(get_ready_command->output_filepath)) {
         fprintf(stderr, "[ERROR] - Energy result filepath is too long.\n");
         free_message_elements(message_elements, element_count);
         return -1;
     }
 
-    // Extract the polling rate from the message elements and store it in the global variable
-    float captured_polling_rate = strtof(message_elements[3], NULL);
+    // Read in the polling rate and convert from milliseconds to microseconds
+    char *polling_rate_end;
+    double captured_polling_rate = strtod(message_elements[3], &polling_rate_end) * 1000.0;
 
-    // Ensure that the captured polling rate is valid and not negative
-    if (captured_polling_rate < 0.0f) {
+    // Ensure that the polling rate is fully parsed and within the supported range
+    if (*polling_rate_end != '\0' || !(captured_polling_rate >= 0.0 && captured_polling_rate <= UINT_MAX)) {
         fprintf(stderr, "[ERROR] - Invalid polling rate received in GETREADY message: %s\n", message_elements[3]);
         free_message_elements(message_elements, element_count);
         return -1;
     }
 
-    // Determine if the polling rate is set to 0 indicating that the collector should skip sleeping between polls
-    if (captured_polling_rate == 0.0f) {
-        skip_poll_sleep = 1;
-    }
-    else {
-        skip_poll_sleep = 0;
-    }
-
-    // Convert the polling rate from milliseconds to microseconds and store it in the global variable
-    if (skip_poll_sleep == 0) {
-        polling_rate = (useconds_t)(captured_polling_rate * 1000.0f);
-    }
+    // Convert polling rate variable type and store in command record
+    get_ready_command->polling_rate = (useconds_t)captured_polling_rate;
 
     // Free the GETREADY message array elements
     free_message_elements(message_elements, element_count);
+    
+    return 0;
 
-    // Open the target results file for writing the energy metrics to
-    metrics_file = fopen(filepath, "w");
-    if (metrics_file == NULL) {
-        fprintf(stderr, "[ERROR] - Failed to open the metrics file: %s\n", filepath);
-        return -1;
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+static int submit_control_command(const ControlCommand *control_command) {
+    /*  Function for passing a control command to the collection thread and waiting for the result before the listener
+        receives another command. */
+
+    // Store the command and signal the collection thread
+    pthread_mutex_lock(&control_lock);
+    pending_command = *control_command;
+    command_pending = 1;
+    pthread_cond_signal(&control_changed);
+
+    // Wait for the collection thread to store the result and clear the pending command flag
+    while (command_pending) {
+        pthread_cond_wait(&control_changed, &control_lock);
     }
 
-    return 0;
+    // Capture the command exit status and release the thread lock
+    int command_result = command_exit_status;
+    pthread_mutex_unlock(&control_lock);
+
+    return command_result;
 
 }
 
 //------------------------------------------------------------------------------------------------------------------------------ 
 void *control_listener_thread(void *arg) {
-    /*  Function for handling the control listener thread that listens for control commands from the control port. It will 
-        detect GETREADY, START, STOP, and END commands and set the relevant shared thread flag values used by the energy 
-        collection thread depending on the received command. */
+    /*  Function for handling the control listener thread. It receives commands from the control port and waits for the
+        collection thread to complete GETREADY or STOP before sending READY or SAVED. */
 
     // Cast the argument to TestController type
     TestController *test_controller = (TestController *)arg;
-
-    // Declare the message buffer and ready message
-    char ready_message[] = "READY\n";
     printf("[NOTICE] - Waiting for first connection...\n");
 
     // Loop to handle control signalling until testing is complete
     while (1) {
 
-        // Reset the message buffer
+        // Wait for the next command from the testing machine
         char msg_buffer[512];
-
-        // Wait for the command signal from the controller
-        if (controller_receive(test_controller, msg_buffer, sizeof(msg_buffer)) != 0) {
+        if (controller_receive(test_controller, msg_buffer, sizeof(msg_buffer), 0) != 0) {
             fprintf(stderr, "[ERROR] - Failure in the controller receiver.\n");
-            pthread_exit(NULL);
+            control_failed = 1;
+            break;
         }
 
-        // Determine which command action to perform based on the received message
-        if (strstr(msg_buffer, "GETREADY") != NULL) {
+        // Define the command exit code and required reply variables
+        int command_exit_code = -1;
+        char *reply_message = NULL;
 
-            // Output the received GETREADY message
-            printf("[NOTICE] - Received GETREADY message: %s\n", msg_buffer);
+        // Determine which command to pass to the collection thread
+        if (strncmp(msg_buffer, "GETREADY:", 9) == 0 || strcmp(msg_buffer, "GETREADY") == 0) {
 
-            // Call the get_ready_parser to prepare for the energy metric collection
-            if (get_ready_parser(msg_buffer) != 0) {
-                fprintf(stderr, "[ERROR] - Failure in the get_ready_parser.\n");
-                pthread_exit(NULL);
+            // Create a GETREADY command record and set the action
+            ControlCommand get_ready_command;
+            get_ready_command.action = CONTROL_GETREADY;
+
+            // Define the reply message as READY
+            reply_message = "READY\n";
+
+            // Submit the GETREADY command only after all parameters have been parsed
+            if (get_ready_parser(msg_buffer, &get_ready_command) == 0) {
+                command_exit_code = submit_control_command(&get_ready_command);
             }
 
-            // Give the sender time to get ready for receiving the READY message
-            usleep(250000);
-            printf("[NOTICE] - Sending READY message back to the control port...\n");
+        }
+        else if (strcmp(msg_buffer, "STOP") == 0) {
 
-            // Send a confirmation message back to the testing device that collector is ready for testing
-            controller_send(test_controller, ready_message);
+            // Create the STOP command record and set the action
+            ControlCommand stop_command;
+            stop_command.action = CONTROL_STOP;
 
-        } else if (strcmp(msg_buffer, "START") == 0) {
-
-            // Lock the start flag mutex and set the start flag
-            pthread_mutex_lock(&control_lock);
-            start_flag = 1;
-            pthread_cond_signal(&control_changed);
-            pthread_mutex_unlock(&control_lock);
-
-            // Print that the start message was received
-            printf("[NOTICE] - Received START command, beginning energy metrics collection...\n");
-        
-        } else if (strcmp(msg_buffer, "STOP") == 0) {
-
-            // Lock the start flag mutex and clear the start flag
-            pthread_mutex_lock(&control_lock);
-            start_flag = 0;
-            pthread_mutex_unlock(&control_lock);
-
-            // Lock the file mutex and then close the current metrics file
-            pthread_mutex_lock(&file_lock);
-            if (metrics_file) {
-                fclose(metrics_file);
-                metrics_file = NULL;
-            }
-            pthread_mutex_unlock(&file_lock);
-
-            // Print that the stop message was received
+            // Submit the STOP command to the collection thread to and capture the command exit code
+            command_exit_code = submit_control_command(&stop_command);
             printf("[NOTICE] - Received STOP command, stopping energy metrics collection...\n\n");
 
-        } else if (strcmp(msg_buffer, "END") == 0) {
-            
-            // Lock the start and end flags mutexes and set the flags
-            pthread_mutex_lock(&control_lock);
-            start_flag = 0;
-            end_flag = 1;
-            pthread_cond_signal(&control_changed);
-            pthread_mutex_unlock(&control_lock);
+            // Define the reply message as SAVED
+            reply_message = "SAVED\n";
 
-            // Lock the file mutex and then close the current metrics file
-            pthread_mutex_lock(&file_lock);
-            if (metrics_file) {
-                fclose(metrics_file);
-                metrics_file = NULL;
-            }
-            pthread_mutex_unlock(&file_lock);
+        }
+        else if (strcmp(msg_buffer, "END") == 0) {
 
-            // Print that the end message was received
+            // Output the received message to the terminal and exit collection loop
             printf("[NOTICE] - Received END command, ending energy metrics collection...\n\n");
+            break;
 
-            // Exit the thread to stop further processing
-            pthread_exit(NULL);
-            
-        } else {
+        }
+        else {
 
-            // Output the error message to the terminal
+            // Output error to terminal for unknown command and set the control failed flag
             fprintf(stderr, "[ERROR] - Unknown command received: %s\n", msg_buffer);
-            exit(1);
+            control_failed = 1; // NOTE - check why and what this is used for 
+            break;
 
+        }
+        
+        // Send an ERROR code and end the session if GETREADY or STOP fails
+        if (command_exit_code != 0) {
+            fprintf(stderr, "[ERROR] - Failed to process %s.\n", msg_buffer);
+            control_failed = 1; // NOTE - check why and what this is used for
+            break;
+        }
+
+        // Send the control reply based on the received message and check for error
+        if (controller_send(test_controller, reply_message) != 0) {
+            fprintf(stderr, "[ERROR] - Failed to send the boundary reply.\n");
+            control_failed = 1;
+            break;
         }
 
     }
 
-    // Exit the thread to stop further processing
-    pthread_exit(NULL);
+    // Create the END command record
+    ControlCommand end_command;
+    end_command.action = CONTROL_END;
+
+    // Submit the END command to the collection thread
+    if (submit_control_command(&end_command) != 0) {
+        control_failed = 1;
+    }
+
+    // Send an ERROR message to the tester machine if a contorl action failed
+    if (control_failed == 1) {
+        controller_send(test_controller, "ERROR\n");
+    }
+
+    return NULL;
+
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+// NOTE - Consider renaming function
+static int write_energy_reading(MeterDevice *meter_device, EnergyCollection *energy_collection, int first_reading) {
+    /*  Function for polling the meter and writing the reading to the current metrics file. The first reading sets the
+        starting time and energy values for the operation. */
+
+    // Poll the meter and record the current time after a successful reading
+    MeterReading meter_reading;
+    struct timespec current_time;
+    if (meter_poll(meter_device, &meter_reading) != 0 || clock_gettime(CLOCK_MONOTONIC, &current_time) != 0) {
+        return -1;
+    }
+
+    // Store the initial values for the current operation
+    if (first_reading) {
+        energy_collection->start_mAh = meter_reading.mAh;
+        energy_collection->start_mWh = meter_reading.mWh;
+        energy_collection->start_time = current_time;
+    }
+
+    // Calculate elapsed time in milliseconds since the first reading (NOTE REVIEW)
+    double elapsed_time_ms = (double)(current_time.tv_sec - energy_collection->start_time.tv_sec) * 1000.0
+                           + (double)(current_time.tv_nsec - energy_collection->start_time.tv_nsec) / 1000000.0;
+
+    // Calculate energy usage relative to the starting meter values
+    unsigned int display_mWh = meter_reading.mWh - energy_collection->start_mWh;
+    unsigned int display_mAh = meter_reading.mAh - energy_collection->start_mAh;
+    float joules = (float)display_mWh * 3.6f;
+
+    // Write out the metrics gathered from the poll to the file
+    int write_exit_code = fprintf(
+        energy_collection->metrics_file,
+        "Voltage: %.2f V | Current: %.2f A | Power: %.2f W | mWh: %u | mAh: %u | Joules: %.2f | Elapsed Time: %f ms\n",
+        meter_reading.voltage, meter_reading.current, meter_reading.power, display_mWh, display_mAh, joules, elapsed_time_ms
+    );
+
+    // Set the function return code based on how the write went
+    int return_code = write_exit_code < 0 ? -1 : 0;
+
+    return return_code;
+
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+static int close_metrics_file(EnergyCollection *energy_collection, int discard) {
+    /*  Function for closing the current metrics file and removing it if the measurement is incomplete or if a write or
+        close operation failed. It returns 0 on success or -1 if a write, close, or removal failed. */
+
+    // Check if the file is already closed before proceeding
+    if (energy_collection->metrics_file == NULL) {
+        return 0;
+    }
+
+    // Check if there were any previous write errors and store the result
+    int write_failed = ferror(energy_collection->metrics_file);
+
+    // Close the metrics file and reset the file pointer in the energy collection struct
+    int close_file_exit_code = fclose(energy_collection->metrics_file);
+    energy_collection->metrics_file = NULL;
+
+    // Set the return code based on the write and close results
+    int return_code = write_failed || close_file_exit_code != 0 ? -1 : 0;
+
+    // Remove the metrics file if the measurement is incomplete or a file operation failed
+    if ((discard || return_code != 0) && unlink(energy_collection->output_filepath) != 0) {
+        fprintf(stderr, "[ERROR] - Failed to remove incomplete metrics file: %s\n", energy_collection->output_filepath);
+        return -1;
+    }
+
+    return return_code;
+
+}
+
+//------------------------------------------------------------------------------------------------------------------------------
+static int calculate_next_poll_time(useconds_t polling_rate, struct timespec *next_poll_time) {
+    /*  Helper function for calculating the time of the next meter poll. It adds the polling interval in microseconds to
+        the current time and stores the deadline in next_poll_time for pthread_cond_timedwait(). It returns 0 on success
+        or -1 if the current time could not be read. */
+
+    // Capture the current time so that it can be used to calculate what time the next poll should be
+    if (clock_gettime(CLOCK_REALTIME, next_poll_time) != 0) {
+        fprintf(stderr, "[ERROR] - Failed to get the clock when calculating time to wait till next poll\n");
+        return -1;
+    }
+
+    // Add the interval time to the current time to calculate the time of next poll (after converting seconds/nanoseconds)
+    next_poll_time->tv_sec += (time_t)(polling_rate / 1000000);
+    next_poll_time->tv_nsec += (long)((polling_rate % 1000000) * 1000);
+
+    // Carry any whole second from the nanoseconds field into the seconds field before returning
+    next_poll_time->tv_sec += next_poll_time->tv_nsec / 1000000000;
+    next_poll_time->tv_nsec %= 1000000000;
+
+    return 0;
 
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
 void *collect_energy_metrics_thread(void *arg) {
-    /*  Function for handling the energy metrics collection thread that polls the energy meter device for usage metrics and 
-        writes them to the metrics file. It will run until the end flag is set by the control listener thread. */
+    /*  Function for handling the energy metrics collection thread. This thread opens, writes, and closes the current
+        metrics file so a poll always finishes in the file for the operation that started it. */
 
-    // Cast the argument to MeterDevice type
+    // Cast the argument to MeterDevice type and initialise the collection state
     MeterDevice *meter_device = (MeterDevice *)arg;
+    EnergyCollection energy_collection = {0};
+    int poll_meter = 0;
 
-    // Declare the meter reading data struct
-    MeterReading meter_reading;
-
-    // Define the start value holding variables
-    int first_reading = 1;
-    unsigned int start_mAh = 0;
-    unsigned int start_mWh = 0;
-    struct timespec start_time = {0};
-    struct timespec current_time = {0};
-     
-    // Loop to handle energy metrics collection until testing is complete
+    // Loop to handle control commands and collect energy metrics until testing is complete
+    pthread_mutex_lock(&control_lock);
     while (1) {
 
-        // Lock the control mutex to check the start and end flags
-        pthread_mutex_lock(&control_lock);
-
-        // Wait until the start flag is set or the end flag is set, resetting the first reading flag
-        while (!start_flag && !end_flag) {
-            first_reading = 1;
+        // Wait for an incoming command when not polling
+        while (!command_pending && !poll_meter) {
             pthread_cond_wait(&control_changed, &control_lock);
         }
 
-        // Capture the current state of the start and end flags to use outside of the mutex lock
-        int local_start_flag = start_flag;
-        int local_end_flag = end_flag;
+        // Check if a command is pending and process it if there is
+        if (command_pending) {
 
-        // Release lock before polling device
+            // Create a copy of the command and release the variable back to the controller thread
+            ControlCommand control_command = pending_command;
+            pthread_mutex_unlock(&control_lock);
+
+            // Reset the command exit code to 0 before processing the command
+            int command_exit_code = 0;
+
+            // Determine which command was submitted and perform the relevant actions
+            switch (control_command.action) {
+
+                case CONTROL_GETREADY:
+
+                    // Stop polling and ensure the previous operation closed its file
+                    poll_meter = 0;
+                    if (energy_collection.metrics_file != NULL) {
+                        command_exit_code = -1;
+                        break;
+                    }
+
+                    // Open the metrics file for the current test being performed (NOTE - consider including in metrics file contorl function somehow)
+                    energy_collection.metrics_file = fopen(control_command.output_filepath, "w");
+
+                    // Ensure that the metrics file opened successfully
+                    if (energy_collection.metrics_file == NULL) {
+                        fprintf(stderr, "[ERROR] - Failed to open the metrics file: %s\n", control_command.output_filepath);
+                        command_exit_code = -1;
+                        break;
+                    }
+
+                    // Store the current filepath and polling interval
+                    strcpy(energy_collection.output_filepath, control_command.output_filepath);
+                    energy_collection.polling_rate = control_command.polling_rate;
+
+                    // Write the baseline before the listener sends READY
+                    if (write_energy_reading(meter_device, &energy_collection, 1) != 0 || fflush(energy_collection.metrics_file) != 0) {
+                        close_metrics_file(&energy_collection, 1);
+                        command_exit_code = -1;
+                        break;
+                    }
+
+                    // Begin polling once the baseline has been saved
+                    poll_meter = 1;
+                    break;
+
+                case CONTROL_STOP:
+
+                    // Set poll meter to stop polling
+                    poll_meter = 0;
+
+                    // Reject STOP when there is no active operation
+                    if (energy_collection.metrics_file == NULL) {
+                        command_exit_code = -1;
+                        break;
+                    }
+
+                    // Take a fresh final reading and close the file before the listener sends SAVED
+                    command_exit_code = write_energy_reading(meter_device, &energy_collection, 0);
+                    if (close_metrics_file(&energy_collection, command_exit_code != 0) != 0) {
+                        command_exit_code = -1;
+                    }
+
+                    break;
+
+                case CONTROL_END:
+
+                    // Discard any incomplete measurement and end the session
+                    command_exit_code = close_metrics_file(&energy_collection, 1);
+                    break;
+            
+            }
+
+            // Store the command result and wake the listener
+            pthread_mutex_lock(&control_lock);
+            command_exit_status = command_exit_code;
+            command_pending = 0;
+            pthread_cond_signal(&control_changed);
+
+            // If the control action is END, break out of the collection loop
+            if (control_command.action == CONTROL_END) {
+                break;
+            }
+
+            // Recheck whether polling is enabled before taking another reading
+            continue;
+
+        }
+
+        // Release the control lock and poll the energy meter, saving the results
         pthread_mutex_unlock(&control_lock);
+        if (write_energy_reading(meter_device, &energy_collection, 0) != 0) {
 
-        // If the end flag is set, exit the thread immediately
-        if (local_end_flag) {
-            break;
-        }
-
-        // Check if energy metric collection should begin
-        if (local_start_flag) {
-
-            // Poll the meter device for energy metrics
-            meter_poll(meter_device, &meter_reading);
-
-            // Set values for the first reading to be used in further calculations
-            if (first_reading) {
-
-                // Store the initial run values and set start time
-                start_mAh = meter_reading.mAh;
-                start_mWh = meter_reading.mWh;
-                clock_gettime(CLOCK_MONOTONIC, &start_time);
-
-                // Flip the first reading flag to indicate initial run values captured
-                first_reading = 0;
-
-            }
-
-            // Calculate elapsed time in milliseconds since the first sample
-            clock_gettime(CLOCK_MONOTONIC, &current_time);
-            double elapsed_time_ms = (double)(current_time.tv_sec - start_time.tv_sec) * 1000.0 + (double)(current_time.tv_nsec - start_time.tv_nsec) / 1000000.0;
-
-            // Calculate correct mah and mwh values based on the first reading
-            unsigned int display_mWh = meter_reading.mWh - start_mWh;
-            unsigned int display_mAh = meter_reading.mAh - start_mAh;
-
-            // Calculate the joules consumed based on the mWh value
-            float joules = (float)display_mWh * 3.6f;
-
-            // Lock the file mutex before writing to the file
-            pthread_mutex_lock(&file_lock);
-            if (metrics_file) {
-
-                // Write out the current metrics poll to the file
-                fprintf(
-                    metrics_file,
-                    "Voltage: %.2f V | Current: %.2f A | Power: %.2f W | mWh: %u | mAh: %u | Joules: %.2f | Elapsed Time: %f ms\n",
-                    meter_reading.voltage, meter_reading.current, meter_reading.power, display_mWh, display_mAh, joules, elapsed_time_ms
-                );
-
-            }
-
-            // Unlock the file mutex
-            pthread_mutex_unlock(&file_lock);
-
-            // Perform set sleep to control the polling rate if needed
-            if (skip_poll_sleep == 0) {
-                usleep(polling_rate);
-            }
+            // Discard the measurement and stop if a periodic reading could not be saved
+            fprintf(stderr, "[ERROR] - Failed to record a periodic energy reading.\n");
+            close_metrics_file(&energy_collection, 1);
+            exit(EXIT_FAILURE);
 
         }
+
+        // Lock the control lock so that shared control variables can be checked during poll wait
+        pthread_mutex_lock(&control_lock);
+
+        // Check if a polling interval has been set and if no command is pending, wait before next poll
+        if (energy_collection.polling_rate != 0 && command_pending != 1) {
+
+            // Calculate the clock time for the next poll
+            struct timespec next_poll_time;
+            if (calculate_next_poll_time(energy_collection.polling_rate, &next_poll_time) != 0) {
+
+                // Discard the measurement and stop if the polling interval cannot be maintained
+                close_metrics_file(&energy_collection, 1);
+                exit(EXIT_FAILURE);
+
+            }
+
+            // Wait until either the next poll time has been reached or command has been submitted (releasing the control lock as well)
+            int end_wait = 0;
+            while(command_pending != 1 && end_wait == 0){
+                end_wait = pthread_cond_timedwait(&control_changed, &control_lock, &next_poll_time);
+            }
         
+        }
+
     }
 
-    // Exit the thread to stop further processing
-    pthread_exit(NULL);
+    // Release the control lock before exiting the collection thread
+    pthread_mutex_unlock(&control_lock);
+
+    return NULL;
 
 }
 
@@ -806,6 +966,6 @@ int main(int argc, char *argv[]) {
 
     // Cleanup and exit
     controller_close(&test_controller);
-    return 0;
+    return control_failed ? EXIT_FAILURE : EXIT_SUCCESS; // NOTE - MAYBE CHANGE UP
 
 }

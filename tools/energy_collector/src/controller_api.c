@@ -59,17 +59,16 @@ int controller_send(TestController *controller, char *message) {
 }
 
 //-------------------------------------------------------------------------------------------------------------------------------
-int controller_receive(TestController *controller, char *message, size_t message_size) {
-    /*  Function for receiving control signal messages using the controller instance based on the specified control type. 
-        It will call the relevant receiving function for the specified control type and return any errors. */
+int controller_receive(TestController *controller, char *message, size_t message_size, int timeout_ms) {
+    /*  Function for receiving a control message using the selected controller backend. A positive timeout limits how long
+        the receive waits for the message. */
 
     // Determine which control type to use when receiving the message
     if (strcmp(controller->control_type, "serial") == 0) {
-        return serial_controller_receiver(&controller->serial_controller, message, message_size);
+        return serial_controller_receiver(&controller->serial_controller, message, message_size, timeout_ms);
     }
     else if (strcmp(controller->control_type, "network") == 0) {
-        return network_controller_receiver(&controller->network_controller, message, message_size);
-
+        return network_controller_receiver(&controller->network_controller, message, message_size, timeout_ms);
     }
     else {
         fprintf(stderr, "[ERROR] - Invalid control type specified: %s\n", controller->control_type);

@@ -10,6 +10,9 @@ handler that sends and receives messages using the configured controller backend
 
 #include "controller_utils.h"
 
+// Allow time for an in-flight meter poll and a fresh boundary reading
+#define CONTROL_REPLY_TIMEOUT_MS 10000
+
 //-------------------------------------------------------------------------------------------------------------------------------
 char* list_serial_ports() {
     /*  Helper function for listing the available serial ports that can be used for communication. The function will prompt the user
@@ -233,6 +236,18 @@ void get_port_number(int *port_number) {
 }
 
 //-------------------------------------------------------------------------------------------------------------------------------
+static void free_message_elements(char **message_elements, size_t element_count) {
+    /*  Internal helper function for freeing the message elements allocated before a parsing failure. */
+
+    // Free each allocated element and reset its pointer
+    for (size_t i = 0; i < element_count; i++) {
+        free(message_elements[i]);
+        message_elements[i] = NULL;
+    }
+
+}
+
+//-------------------------------------------------------------------------------------------------------------------------------
 int message_parser(char *message, char *command, char **message_elements, size_t message_elements_size) {
     /*  Function for parsing a provided message from the control port. It will extract any parameters from the message and store 
         them in the provided message_elements array. Primarily used for extracting the testing parameters from the GETREADY 
@@ -264,6 +279,7 @@ int message_parser(char *message, char *command, char **message_elements, size_t
         // Ensure that the max number of elements has not been exceeded
         if (token_index >= max_elements) {
             fprintf(stderr, "[ERROR] - Too many message elements, max allowed is %zu\n", max_elements);
+            free_message_elements(message_elements, token_index);
             return -1;
         }
 
@@ -272,15 +288,9 @@ int message_parser(char *message, char *command, char **message_elements, size_t
 
         // Ensure that the memory allocation was successful
         if (message_elements[token_index] == NULL) {
-
-            // Output a memory allocation error and free any previously allocated elements before returning
             fprintf(stderr, "[ERROR] - Memory allocation failed for message element %zu\n", token_index);
-
-            for (size_t i = 0; i < token_index; i++) {
-                free(message_elements[i]);
-            }
+            free_message_elements(message_elements, token_index);
             return -1;
-
         }
 
         // Copy the token into the current message element
@@ -317,16 +327,53 @@ int get_ready_formatter(TestParams *test_params, char *get_ready_message, size_t
 }
 
 //-------------------------------------------------------------------------------------------------------------------------------
+static int message_handler(TestController *test_controller, char *control_message, const char *expected_reply) {
+    /* Helper function..... NOTE - DO FUNCTION COMMENT*/
+
+    // Define a buffer to store the received reply from the collector
+    char received_reply[256];
+
+    // Send the control message to the collector machine
+    if (controller_send(test_controller, control_message) != 0) {
+        fprintf(stderr, "[ERROR] - Failed to send the %s command.\n", control_message);
+        return -1;
+    }
+
+    // Wait for the reply from collector and store the received message
+    if (controller_receive(test_controller, received_reply, sizeof(received_reply), CONTROL_REPLY_TIMEOUT_MS) != 0) {
+        fprintf(stderr, "[ERROR] - Failed to receive %s from the energy collector.\n", expected_reply);
+        return -1;
+    }
+
+    // If the message received was the ERROR flag, output a specific line to the terminal
+    if (strcmp(received_reply, "ERROR") == 0) {
+        fprintf(stderr, "[ERROR] - The collector reported a failed measurement command.\n");
+        return -1;
+    }
+
+    // Ensure that the received message was the one that was expected
+    if (strcmp(received_reply, expected_reply) != 0) {
+        fprintf(stderr, "[ERROR] - Expected %s from the energy collector, received %s.\n", expected_reply, received_reply);
+        return -1;
+    }
+
+    return 0;
+
+}
+
+//-------------------------------------------------------------------------------------------------------------------------------
 int control_handler(TestController *test_controller, TestParams *test_params) {
     /*  Function for handling the control actions based on the control type specified in the TestParams struct. It will send the
         appropriate command to the collector machine based on the control type and parameters. */
+
+    // NOTE - THE START AND STOP SIGNALS NEED PROPERLY OPTIMISED BEFORE PR MERGE
 
     // Determine which control action to perform based on the set control type
     switch (test_params->control_type) {
 
         case 1:
 
-            // Declare the GETREADY message and its size
+            // Declare the GETREADY message buffer and its size
             char get_ready_message[512];
             size_t message_size = sizeof(get_ready_message);
 
@@ -336,66 +383,38 @@ int control_handler(TestController *test_controller, TestParams *test_params) {
                 return -1;
             }
 
-            // Send the GETREADY message to the collector machine
-            if (controller_send(test_controller, get_ready_message) != 0) {
-                fprintf(stderr, "[ERROR] - Failed to send the GETREADY message.\n");
-                return -1;  
-            }
-
-            // Wait for the ready message to be received from the collector machine
-            char msg_buffer[256];
-            if (controller_receive(test_controller, msg_buffer, sizeof(msg_buffer)) != 0) {
-                fprintf(stderr, "[ERROR] - Failure in the controller receiver.\n");
+            // Send the GETREADY message and wait for the reply
+            if (message_handler(test_controller, get_ready_message, "READY") != 0) {
                 return -1;
             }
 
-            // Check if the received message is "READY"
-            if(strcmp(msg_buffer, "READY") == 0) {
-
-                // Send the start command and exit immediately to begin the test as quickly as possible
-                if (controller_send(test_controller, "START\n") != 0) {
-                    fprintf(stderr, "[ERROR] - Failed to send the start command.\n");
-                    return -1;
-                }
-                return 0;
-
-            }
-            else {
-                fprintf(stderr, "[ERROR] - Unexpected message received: %s\n", msg_buffer);
-                return -1;
-
-            }
-
-            break;
+            return 0;
 
         case 2:
-
-            // Send the STOP command to the collector machine
-            if (controller_send(test_controller, "STOP\n") != 0) {
-                fprintf(stderr, "[ERROR] - Failed to send the stop command.\n");
+            
+            // Send the STOP command and wait for the reply
+            if (message_handler(test_controller, "STOP\n", "SAVED") != 0){
                 return -1;
             }
 
-            break;
+            return 0;
 
         case 3:
 
-            // Send the END command to the collector machine
+            // Send the END command directly and exit out
             if (controller_send(test_controller, "END\n") != 0) {
                 fprintf(stderr, "[ERROR] - Failed to send the end command.\n");
                 return -1;
             }
 
-            break;
+            return 0;
 
         default:
 
             // Output an error message for an invalid control type and return failure
             fprintf(stderr, "[ERROR] - Invalid control type specified.\n");
             return -1;
-            
-    }
 
-    return 0;
+    }
 
 }

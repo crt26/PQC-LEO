@@ -462,7 +462,7 @@ void get_test_options(TestParams *test_params) {
 }
 
 //-------------------------------------------------------------------------------------------------------------------------------
-void get_baseline(TestController *test_controller, TestParams *test_params) {
+int get_baseline(TestController *test_controller, TestParams *test_params) {
     /*  Function for performing the baseline energy measurements. This function will initialise the test parameters and send 
         the necessary control messages to the collector so that a baseline measurement can be taken before the actual tests 
         begin. */
@@ -474,7 +474,7 @@ void get_baseline(TestController *test_controller, TestParams *test_params) {
     TestParams *baseline_params = malloc(sizeof(TestParams));
     if (baseline_params == NULL) {
         fprintf(stderr, "[ERROR] - Failed to allocate memory for baseline_params.\n");
-        return;
+        return -1;
     }
 
     // Prepare test_params for the baseline measurement
@@ -486,9 +486,9 @@ void get_baseline(TestController *test_controller, TestParams *test_params) {
 
     // Send the GETREADY message to the server
     if (control_handler(test_controller, baseline_params) != 0) {
-        fprintf(stderr, "[ERROR] - Failed to send GETREADY for baseline measurement.\n");
+        fprintf(stderr, "[ERROR] - Failed to exchange START control handshake with collector for baseline measurement.\n");
         free(baseline_params);
-        return;
+        return -1;
     }
 
     // Sleep to allow baseline measurement to be taken
@@ -496,13 +496,19 @@ void get_baseline(TestController *test_controller, TestParams *test_params) {
 
     // Send the stop command to end the baseline measurement
     baseline_params->control_type = 2;
-    control_handler(test_controller, baseline_params);
+    if (control_handler(test_controller, baseline_params) != 0) {
+        fprintf(stderr, "[ERROR] - Failed to exchange STOP control handshake with collector for baseline measurement.\n");
+        free(baseline_params);
+        return -1;
+    }
 
     // Free the baseline_params struct
     free(baseline_params);
 
     // Output the completion message to the terminal
     printf("Baseline energy measurements completed\n\n");
+
+    return 0;
 
 }
 
@@ -519,6 +525,12 @@ int test_kem(const char *method_name, TestController *test_controller, TestParam
 	uint8_t *shared_secret_e = NULL;
 	uint8_t *shared_secret_d = NULL;
 
+    // Initialise the variable for capturing exit codes
+    int ret = 0;
+
+    // Initialise the buffer for storing any error messages
+    char *error_message = NULL;
+
     // Initialise the KEM
 	kem = OQS_KEM_new(method_name);
 	if (kem == NULL) {
@@ -534,86 +546,147 @@ int test_kem(const char *method_name, TestController *test_controller, TestParam
 
     // Ensure that memory allocation was successful
 	if ((public_key == NULL) || (secret_key == NULL) || (ciphertext == NULL) || (shared_secret_e == NULL) || (shared_secret_d == NULL)) {
-		fprintf(stderr, "ERROR: OQS_MEM_malloc failed\n");
+        fprintf(stderr, "[ERROR] - Memory allocation failed for KEM %s\n", kem->method_name);
 		return -1;
 	}
 
     // Perform one time test of each operation to ensure no errors occur
     if (OQS_KEM_keypair(kem, public_key, secret_key) != OQS_SUCCESS) {
-        fprintf(stderr, "ERROR: OQS_KEM_keypair failed\n");
-        return -1;
+        fprintf(stderr, "ERROR: OQS_KEM_keypair initialisation test failed for KEM %s\n", kem->method_name);
+        ret = -1;
+        goto cleanup;
     }
 
     if (OQS_KEM_encaps(kem, ciphertext, shared_secret_e, public_key) != OQS_SUCCESS) {
-        fprintf(stderr, "ERROR: OQS_KEM_encaps failed\n");
-        return -1;
+        fprintf(stderr, "ERROR: OQS_KEM_encaps failed for KEM %s\n", kem->method_name);
+        ret = -1;
+        goto cleanup;
     }
 
     if (OQS_KEM_decaps(kem, shared_secret_d, ciphertext, secret_key) != OQS_SUCCESS) {
-        fprintf(stderr, "ERROR: OQS_KEM_decaps failed\n");
-        return -1;
+        fprintf(stderr, "ERROR: OQS_KEM_decaps failed for KEM %s\n", kem->method_name);
+        ret = -1;
+        goto cleanup;
     }
 
     // Assign the alg name to the test params struct
     test_params->test_algs = kem->method_name;
 
-    /*---Keygen testing---*/
-
     // Output the current algorithm/operation being tested to the terminal
     printf("Testing KEM %s - Keygen\n", kem->method_name);
 
-    // Get ready for the test
+    // Set the control signal type to GETREADY and define test type
     test_params->control_type = 1;
     test_params->test_type = "comp_kem_keygen";
-    control_handler(test_controller, test_params);
 
-    // Perform the keygen test for the specified iterations
-    for (int i = 0; i < test_params->iterations; i++) {
-        OQS_KEM_keypair(kem, public_key, secret_key);
+    // Perform the test start handshake with the collector machine
+    if (control_handler(test_controller, test_params) != 0) {
+        error_message = "Failed to exchange START control handshake with collector machine";
+        ret = -1;
+        goto cleanup;
     }
 
-    // Send stop command after keypair generation test
-    test_params->control_type = 2;
-    control_handler(test_controller, test_params);
+    // Perform the key generation test for the specified number of iterations
+    for (int i = 0; i < test_params->iterations; i++) {
+        if(OQS_KEM_keypair(kem, public_key, secret_key) != OQS_SUCCESS){
+            error_message = "OQS_KEM_keypair failed";
+            ret = -1;
+            goto cleanup;
+        }
+    }
 
-    /*---Encapsulation testing---*/
+    // Set the control signal type to STOP
+    test_params->control_type = 2;
+
+    // Perform the test stop handshake with the collector machine
+    if (control_handler(test_controller, test_params) != 0) {
+        error_message = "Failed to exchange STOP control handshake with collector machine";
+        ret = -1;
+        goto cleanup;
+    }
 
     // Output the current algorithm/operation being tested to the terminal
     printf("Testing KEM %s - Encaps\n", kem->method_name);
 
-    // Get ready for encaps test
+    // Set the control signal type to GETREADY and define the test type
     test_params->control_type = 1;
     test_params->test_type = "comp_kem_encaps";
-    control_handler(test_controller, test_params);
 
-    // Perform the encaps test for the specified iterations
-    for (int i = 0; i < test_params->iterations; i++) {
-        OQS_KEM_encaps(kem, ciphertext, shared_secret_e, public_key);
+    // Perform the test start handshake with the collector machine
+    if (control_handler(test_controller, test_params) != 0) {
+        error_message = "Failed to exchange START control handshake with collector machine";
+        ret = -1;
+        goto cleanup;
     }
 
-    // Send stop command after encaps
-    test_params->control_type = 2;
-    control_handler(test_controller, test_params);
+    // Perform the encapsulation test for the specified iterations
+    for (int i = 0; i < test_params->iterations; i++) {
+        if (OQS_KEM_encaps(kem, ciphertext, shared_secret_e, public_key) != OQS_SUCCESS) {
+            error_message = "OQS_KEM_encaps failed";
+            ret = -1;
+            goto cleanup;
+        }
+    }
 
-    /*---Decapsulation testing---*/
+    // Set the control signal type to STOP
+    test_params->control_type = 2;
+
+    // Perform the test stop handshake with the collector machine
+    if (control_handler(test_controller, test_params) != 0) {
+        error_message = "Failed to exchange STOP control handshake with collector machine";
+        ret = -1;
+        goto cleanup;
+    }
 
     // Output the current algorithm/operation being tested to the terminal
     printf("Testing KEM %s - Decaps\n", kem->method_name);
 
-    // Get ready for decaps test
+    // Set the control signal type to START  and define test type
     test_params->control_type = 1;
     test_params->test_type = "comp_kem_decaps";
-    control_handler(test_controller, test_params);
 
-    // Perform the decaps test for the specified iterations
-    for (int i = 0; i < test_params->iterations; i++) {
-        OQS_KEM_decaps(kem, shared_secret_d, ciphertext, secret_key);
+    // Perform the test start handshake with the collector machine
+    if (control_handler(test_controller, test_params) != 0) {
+        error_message = "Failed to exchange START control handshake with collector machine";
+        ret = -1;
+        goto cleanup;
     }
 
-    // Send the stop command after decaps
-    test_params->control_type = 2;
-    control_handler(test_controller, test_params);
+    // Perform the decapsulation test for the specified iterations
+    for (int i = 0; i < test_params->iterations; i++) {
+        if (OQS_KEM_decaps(kem, shared_secret_d, ciphertext, secret_key) != OQS_SUCCESS) {
+            error_message = "OQS_KEM_decaps failed";
+            ret = -1;
+            goto cleanup;
+        }
+    }
 
+    // Set the control signal type to STOP
+    test_params->control_type = 2;
+
+    // Perform the test stop handshake with the collector machine
+    if (control_handler(test_controller, test_params) != 0) {
+        error_message = "Failed to exchange STOP control handshake with collector machine";
+        ret = -1;
+        goto cleanup;
+    }
+
+cleanup:
+
+    // If an error occurred, attempt to send an END message to the collector
+    if (ret != 0) {
+
+        // Output the error message if it is not already been printed
+        if (error_message != NULL) {
+            fprintf(stderr, "[ERROR] - Failure in KEM testing: %s\n", error_message);
+        }
+
+        // Attempt to send the END message to the collector machine before doing final cleanup
+        test_params->control_type = 3;
+        control_handler(test_controller, test_params);
+
+    }
+    
     // Perform the clean up operations
     if (kem != NULL) {
         OQS_MEM_secure_free(secret_key, kem->length_secret_key);
@@ -624,7 +697,7 @@ int test_kem(const char *method_name, TestController *test_controller, TestParam
     OQS_MEM_insecure_free(ciphertext);
     OQS_KEM_free(kem);
 
-    return 0;
+    return ret;
     
 }
 
@@ -641,7 +714,12 @@ int test_sig(const char *method_name, TestController *test_controller, TestParam
 	uint8_t *signature = NULL;
 	size_t message_len = signing_message_length;
 	size_t signature_len = 0;
+
+    // Initialise the variable for capturing exit codes
     int ret = 0;
+
+    // Initialise the buffer for storing any error messages
+    char *error_message = NULL;
 
     // Initialise the signature
 	sig = OQS_SIG_new(method_name);
@@ -657,83 +735,111 @@ int test_sig(const char *method_name, TestController *test_controller, TestParam
 
     // Ensure that memory allocation was successful
 	if ((public_key == NULL) || (secret_key == NULL) || (message == NULL) || (signature == NULL)) {
-		fprintf(stderr, "ERROR: OQS_MEM_malloc failed\n");
+		fprintf(stderr, "[ERROR] - Memory allocation failed for SIG %s\n", sig->method_name);
 		return -1;
 	}
 
-    // Generate a random message to sign
+    // Generate a random message to sign using the define message length
 	OQS_randombytes(message, message_len);
 
     // Perform one time test of each operation to ensure no errors occur
     if (OQS_SIG_keypair(sig, public_key, secret_key) != OQS_SUCCESS) { 
-        fprintf(stderr, "ERROR: OQS_SIG_keypair failed\n");
+        fprintf(stderr, "ERROR: OQS_SIG_keypair initialisation test failed for SIG %s\n", sig->method_name);
         return -1;
     }
 
     if (OQS_SIG_sign(sig, signature, &signature_len, message, message_len, secret_key) != OQS_SUCCESS) {
-        fprintf(stderr, "ERROR: OQS_SIG_sign failed\n");
+        fprintf(stderr, "ERROR: OQS_SIG_sign initialisation test failed for SIG %s\n", sig->method_name);
         return -1;
     }
 
     if (OQS_SIG_verify(sig, message, message_len, signature, signature_len, public_key) != OQS_SUCCESS) {
-        fprintf(stderr, "ERROR: OQS_SIG_verify failed\n");
+        fprintf(stderr, "ERROR: OQS_SIG_verify initialisation test failed for SIG %s\n", sig->method_name);
         return -1;
     }
 
     // Assign the alg name to the test params struct
     test_params->test_algs = sig->method_name;
 
-    /*---Keygen testing---*/
-
     // Output the current algorithm/operation being tested to the terminal
     printf("Testing SIG %s - Keygen\n", sig->method_name);
 
-    // Get ready for the test
+    // Set the control signal type to GETREADY and define the test type
     test_params->control_type = 1;
     test_params->test_type = "comp_sig_keygen";
-    control_handler(test_controller, test_params);
+
+    // Perform the test start handshake with the collector machine
+    if (control_handler(test_controller, test_params) != 0) {
+        error_message = "Failed to exchange START control handshake with collector machine";
+        ret = -1;
+        goto cleanup;
+    }
 
     // Perform the keygen test for the specified iterations
     for (int i = 0; i < test_params->iterations; i++) {
-        OQS_SIG_keypair(sig, public_key, secret_key);
+        if (OQS_SIG_keypair(sig, public_key, secret_key) != OQS_SUCCESS) {
+            error_message = "OQS_SIG_keypari failed";
+            ret = -1;
+            goto cleanup;
+        }
     }
 
-    // Send stop command after keypair generation test
+    // Set the control signal type to STOP
     test_params->control_type = 2;
-    control_handler(test_controller, test_params);
 
-    /*---Signing testing---*/
+    // Perform the test stop handshake with the collector machine
+    if (control_handler(test_controller, test_params) != 0) {
+        error_message = "Failed to exchange STOP control handshake with collector machine";
+        ret = -1;
+        goto cleanup;
+    }
 
     // Output the current algorithm/operation being tested to the terminal
     printf("Testing SIG %s - Sign\n", sig->method_name);
 
-    // Get ready for sign test
+    // Set the control signal type to GETREADY and define the test type
     test_params->control_type = 1;
     test_params->test_type = "comp_sig_sign";
-    control_handler(test_controller, test_params);
+
+    // Perform the test start handshake with the collector machine
+    if (control_handler(test_controller, test_params) != 0) {
+        error_message = "Failed to exchange START control handshake with collector machine";
+        ret = -1;
+        goto cleanup;
+    }
 
     // Perform the sign test for the specified iterations
     for (int i = 0; i < test_params->iterations; i++) {
         if (OQS_SIG_sign(sig, signature, &signature_len, message, message_len, secret_key) != OQS_SUCCESS) {
-            fprintf(stderr, "ERROR: OQS_SIG_sign failed during measurement\n");
+            error_message = "OQS_SIG_sign failed";
             ret = -1;
-            goto stop_measurement;
+            goto cleanup;
         }
     }
 
-    // Send stop command after sign
+    // Set the control signal type to STOP
     test_params->control_type = 2;
-    control_handler(test_controller, test_params);
 
-    /*---Verification testing---*/
+    // Perform the test stop handshake with the collector machine
+    if (control_handler(test_controller, test_params) != 0) {
+        error_message = "Failed to exchange STOP control handshake with collector machine";
+        ret = -1;
+        goto cleanup;
+    }
 
     // Output the current algorithm/operation being tested to the terminal
     printf("Testing SIG %s - Verify\n", sig->method_name);
 
-    // Get ready for verify test
+    // Set the control signal type to GETREADY and define the test type
     test_params->control_type = 1;
     test_params->test_type = "comp_sig_verify";
-    control_handler(test_controller, test_params);
+
+    // Perform the test start handshake with the collector machine
+    if (control_handler(test_controller, test_params) != 0) {
+        error_message = "Failed to exchange START control handshake with collector machine";
+        ret = -1;
+        goto cleanup;
+    }
 
     // Perform the verify test for the specified iterations
     for (int i = 0; i < test_params->iterations; i++) {
@@ -744,10 +850,32 @@ int test_sig(const char *method_name, TestController *test_controller, TestParam
         }
     }
 
-stop_measurement:
-    // Send the stop command for the active measurement
+    // Set the control signal type to STOP
     test_params->control_type = 2;
-    control_handler(test_controller, test_params);
+
+    // Perform the test stop handshake with the collector machine
+    if (control_handler(test_controller, test_params) != 0) {
+        error_message = "Failed to exchange STOP control handshake with collector machine";
+        ret = -1;
+        goto cleanup;
+    }
+
+
+cleanup:
+
+    // If an error occurred, attempt to send an END message to the collector
+    if (ret != 0) {
+
+        // Output the error message if it is not already been printed
+        if (error_message != NULL) {
+            fprintf(stderr, "[ERROR] - Failure in KEM testing: %s\n", error_message);
+        }
+
+        // Attempt to send the END message to the collector machine before doing final cleanup
+        test_params->control_type = 3;
+        control_handler(test_controller, test_params);
+
+    }
 
     // Perform the cleanup operations
 	if (sig != NULL) {
@@ -788,8 +916,12 @@ int test_handler(TestController *test_controller) {
     printf("Performing Energy Testing\n");
     printf("-------------------------\n\n");
 
-    // Get the energy measurement baseline
-    get_baseline(test_controller, &test_params);
+    // End the session if the idle measurement could not be started or saved
+    if (get_baseline(test_controller, &test_params) != 0) {
+        test_params.control_type = 3;
+        control_handler(test_controller, &test_params);
+        return -1;
+    }
 
     // Initialise Liboqs
     int ret;
@@ -840,21 +972,18 @@ int test_handler(TestController *test_controller) {
 
     // Send the test END signal to the collector
     test_params.control_type = 3;
-    control_handler(test_controller, &test_params);
-
-    return 0;
+    return control_handler(test_controller, &test_params);
 
 failure:
-    // Output an error message for the failed test and close Liboqs
-    printf("[ERROR] - Test run %d failed, skipping remaining tests for this run\n", test_params.run_num);
-    OQS_destroy();
 
-    // Send the test END signal to the collector
+    // Output an error message for the failed test
+    printf("[ERROR] - Test run %d failed, stoping testing\n", test_params.run_num);
+
+    // Attempt to send the test END signal to the collector
     test_params.control_type = 3;
     control_handler(test_controller, &test_params);
 
-    // Exit the program with an error code
-    exit(1);
+    return -1;
 
 }
 
@@ -888,12 +1017,13 @@ int main(int argc, char *argv[]) {
     // Initialise the Liboqs library
     OQS_init();
 
-    // Run the test handler
-    test_handler(&test_controller);
+    // Run the test handler and pass its result back to the caller
+    int result = test_handler(&test_controller);
 
-    // Close the Liboqs library
+    // Close the controller and Liboqs library
+    controller_close(&test_controller);
     OQS_destroy();
 
-    return 0;
+    return result;
 
 }

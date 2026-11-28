@@ -46,9 +46,10 @@ int controller_send(TestController *controller, char *message);
  * @param controller Pointer to the test controller instance.
  * @param message Buffer to store the received message.
  * @param message_size Size of the message buffer.
- * @return 0 on success, -1 if the control type is unsupported or the backend reports a receive failure.
+ * @param timeout_ms Maximum wait in milliseconds. A value of 0 allows an indefinite wait.
+ * @return 0 on success or -1 on timeout or receive failure.
  */
-int controller_receive(TestController *controller, char *message, size_t message_size);
+int controller_receive(TestController *controller, char *message, size_t message_size, int timeout_ms);
 
 /**
  * Closes the active controller backend based on the control type set in passed `TestController` struct.

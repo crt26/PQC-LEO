@@ -25,7 +25,7 @@ int configure_controller(TestController *test_controller);
 void get_test_options(TestParams *test_params);
 
 // Function for performing baseline energy measurements for the configured duration (default: 60 seconds)
-void get_baseline(TestController *test_controller, TestParams *test_params);
+int get_baseline(TestController *test_controller, TestParams *test_params);
 
 // Function for testing a specific KEM algorithms energy usage by recording usage during keygen, encaps, and decaps operations
 int test_kem(const char *method_name, TestController *test_controller, TestParams *test_params);
