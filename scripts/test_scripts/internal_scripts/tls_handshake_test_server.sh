@@ -229,9 +229,35 @@ function check_control_port() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
+function check_client_abort() {
+    # Function for handling an abort from the TLS client. It stops the active OpenSSL server if one was started
+    # and exits the test script with an error.
+
+    # Store the PID of the OpenSSL server running for the current test
+    local active_server_pid="$1"
+
+    # Check whether the client aborted the session
+    if [[ "$signal_message" == "abort" ]]; then
+
+        # Stop the OpenSSL server and wait for it to exit if it was started
+        if [[ -n "$active_server_pid" ]]; then
+            kill "$active_server_pid" 2>/dev/null
+            wait "$active_server_pid" 2>/dev/null
+        fi
+
+        # Report why the test script is exiting
+        echo "[ERROR] - The client aborted TLS handshake testing."
+        exit 1
+
+    fi
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
 function control_signal() {
     # Function for handling server-to-client control signalling during TLS handshake testing.
     # Supports: control_send, control_wait, and iteration_handshake modes for coordination.
+    # In control_wait mode, the second argument can be the OpenSSL server PID to stop on abort.
 
     # Declare the local variables for arguments passed to the function
     local type="$1"
@@ -267,6 +293,9 @@ function control_signal() {
                 # Wait for a connection from the client and capture the request in a variable
                 signal_message=$(nc -l -p "$SERVER_CONTROL_PORT")
 
+                # Handle an abort before checking for the expected test status
+                check_client_abort "$message"
+
                 # Check if the received control signal message is valid
                 if [[ "$signal_message" == "ready" || "$signal_message" == "skip" || "$signal_message" == "complete" || "$signal_message" == "failed" ]]; then
                     break
@@ -279,10 +308,15 @@ function control_signal() {
 
             # Wait for the client to send the handshake-ready signal
             while true; do
+
+                # Receive the client signal and handle an abort during setup
                 signal_message=$(nc -l -p "$SERVER_CONTROL_PORT")
+                check_client_abort ""
+
                 if [[ "$signal_message" == "handshake_ready" ]]; then
                     break
                 fi
+
             done
 
             # Check if the control port is open on the client before sending the signal
@@ -374,8 +408,8 @@ function pqc_tests() {
                 # Send the ready signal to the client
                 control_signal "control_send" "ready"
 
-                # Wait for the test status signal from the client
-                control_signal "control_wait"
+                # Wait for the test result and pass the server PID so an abort can stop it
+                control_signal "control_wait" "$server_pid"
 
                 # Check if the test status signal received from the client is complete or failed
                 if [ $signal_message == "complete" ]; then
@@ -466,8 +500,8 @@ function classic_tests() {
                     # Send the ready signal to the client and wait for the test status signal
                     control_signal "control_send" "ready"
 
-                    # Wait for the final test status signal from the client
-                    control_signal "control_wait"
+                    # Wait for the test result and pass the server PID so an abort can stop it
+                    control_signal "control_wait" "$server_pid"
 
                     # Check if the test status signal received from the client is complete or failed
                     if [[ "$signal_message" == "complete" ]]; then

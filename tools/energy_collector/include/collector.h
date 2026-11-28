@@ -10,10 +10,11 @@ SPDX-License-Identifier: MIT
 #include "controller_api.h"
 #include "controller_utils.h"
 
+#define METRICS_FILEPATH_SIZE 1024
+
 // Define the control commands passed from the control listener to the collection thread
 typedef enum {
     CONTROL_GETREADY,
-    CONTROL_START,
     CONTROL_STOP,
     CONTROL_END
 } ControlAction;
@@ -21,13 +22,14 @@ typedef enum {
 // Store the command and the file and polling settings supplied by GETREADY
 typedef struct {
     ControlAction action;
-    char output_filepath[1024];
+    char output_filepath[METRICS_FILEPATH_SIZE];
     useconds_t polling_rate;
 } ControlCommand;
 
 // Store the metrics file and the starting values for the current operation on the collection thread
 typedef struct {
     FILE *metrics_file;
+    char output_filepath[METRICS_FILEPATH_SIZE];
     useconds_t polling_rate;
     unsigned int start_mAh;
     unsigned int start_mWh;

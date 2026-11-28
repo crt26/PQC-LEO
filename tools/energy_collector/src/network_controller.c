@@ -9,6 +9,7 @@ commands to the remote endpoint, and performs clean shutdown of socket
 resources when testing operations complete.
 */
 
+#include <poll.h>
 #include <network_controller.h>
 
 //-------------------------------------------------------------------------------------------------------------------------------
@@ -50,9 +51,9 @@ int network_controller_init(NetworkController *network_controller) {
 }
 
 //-------------------------------------------------------------------------------------------------------------------------------
-int network_controller_receiver(NetworkController *network_controller, char *message, size_t message_size) {
-    /*  Function for receiving messages from the UDP socket. It will receive a message from the socket and store it in the 
-        provided buffer. It will return any errors encountered during this process. */
+int network_controller_receiver(NetworkController *network_controller, char *message, size_t message_size, int timeout_ms) {
+    /*  Function for receiving a message from the UDP socket and storing it in the provided buffer. A positive timeout limits
+        how long the receive waits for a message. */
 
     // Ensure that the network controller struct is valid
     if (network_controller == NULL) {
@@ -60,8 +61,31 @@ int network_controller_receiver(NetworkController *network_controller, char *mes
         return -1;
     }
 
+    // Use a blocking receive by default so recvfrom() can wait indefinitely
+    int receive_flags = 0;
+
+    // Wait up to timeout_ms for a datagram if a reply deadline was set
+    if (timeout_ms > 0) {
+
+        // Watch the UDP socket for incoming data
+        struct pollfd network_socket = {
+            .fd = network_controller->udp_socket,
+            .events = POLLIN
+        };
+
+        // Return an error if poll() fails or the socket does not become readable in time
+        if (poll(&network_socket, 1, timeout_ms) <= 0 || !(network_socket.revents & POLLIN)) {
+            fprintf(stderr, "[ERROR] - Failed to receive a network control message within %d ms.\n", timeout_ms);
+            return -1;
+        }
+
+        // Use a non-blocking receive in case the datagram is no longer available
+        receive_flags = MSG_DONTWAIT;
+
+    }
+
     // Receive the message from the UDP socket
-    ssize_t bytes_received = recvfrom(network_controller->udp_socket, message, message_size - 1, 0, NULL, NULL);
+    ssize_t bytes_received = recvfrom(network_controller->udp_socket, message, message_size - 1, receive_flags, NULL, NULL);
     if (bytes_received < 0) {
         fprintf(stderr, "[ERROR] - Failed to receive message\n");
         return -1;

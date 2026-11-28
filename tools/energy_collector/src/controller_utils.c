@@ -10,6 +10,9 @@ handler that sends and receives messages using the configured controller backend
 
 #include "controller_utils.h"
 
+// Allow time for an in-flight meter poll and a fresh boundary reading
+#define CONTROL_REPLY_TIMEOUT_MS 10000
+
 //-------------------------------------------------------------------------------------------------------------------------------
 char* list_serial_ports() {
     /*  Helper function for listing the available serial ports that can be used for communication. The function will prompt the user
@@ -233,6 +236,18 @@ void get_port_number(int *port_number) {
 }
 
 //-------------------------------------------------------------------------------------------------------------------------------
+static void free_message_elements(char **message_elements, size_t element_count) {
+    /*  Internal helper function for freeing the message elements allocated before a parsing failure. */
+
+    // Free each allocated element and reset its pointer
+    for (size_t i = 0; i < element_count; i++) {
+        free(message_elements[i]);
+        message_elements[i] = NULL;
+    }
+
+}
+
+//-------------------------------------------------------------------------------------------------------------------------------
 int message_parser(char *message, char *command, char **message_elements, size_t message_elements_size) {
     /*  Function for parsing a provided message from the control port. It will extract any parameters from the message and store 
         them in the provided message_elements array. Primarily used for extracting the testing parameters from the GETREADY 
@@ -264,6 +279,7 @@ int message_parser(char *message, char *command, char **message_elements, size_t
         // Ensure that the max number of elements has not been exceeded
         if (token_index >= max_elements) {
             fprintf(stderr, "[ERROR] - Too many message elements, max allowed is %zu\n", max_elements);
+            free_message_elements(message_elements, token_index);
             return -1;
         }
 
@@ -272,15 +288,9 @@ int message_parser(char *message, char *command, char **message_elements, size_t
 
         // Ensure that the memory allocation was successful
         if (message_elements[token_index] == NULL) {
-
-            // Output a memory allocation error and free any previously allocated elements before returning
             fprintf(stderr, "[ERROR] - Memory allocation failed for message element %zu\n", token_index);
-
-            for (size_t i = 0; i < token_index; i++) {
-                free(message_elements[i]);
-            }
+            free_message_elements(message_elements, token_index);
             return -1;
-
         }
 
         // Copy the token into the current message element
@@ -330,14 +340,14 @@ static int message_handler(TestController *test_controller, char *control_messag
     }
 
     // Wait for the reply from collector and store the received message
-    if (controller_receive(test_controller, received_reply, sizeof(received_reply)) != 0) {
+    if (controller_receive(test_controller, received_reply, sizeof(received_reply), CONTROL_REPLY_TIMEOUT_MS) != 0) {
         fprintf(stderr, "[ERROR] - Failed to receive %s from the energy collector.\n", expected_reply);
         return -1;
     }
 
     // If the message received was the ERROR flag, output a specific line to the terminal
     if (strcmp(received_reply, "ERROR") == 0) {
-        fprintf(stderr, "[ERROR] - The collector machine has responded with an message, testing can no longer continue.\n");
+        fprintf(stderr, "[ERROR] - The collector reported a failed measurement command.\n");
         return -1;
     }
 
@@ -378,18 +388,12 @@ int control_handler(TestController *test_controller, TestParams *test_params) {
                 return -1;
             }
 
-            // Send the start command and exit immediately to begin the test as quickly as possible
-            if (controller_send(test_controller, "START\n") != 0) {
-                fprintf(stderr, "[ERROR] - Failed to send the start command.\n");
-                return -1;
-            }
-
             return 0;
 
         case 2:
             
             // Send the STOP command and wait for the reply
-            if (send_command_and_wait_for_reply(test_controller, "STOP\n", "SAVED") != 0){
+            if (message_handler(test_controller, "STOP\n", "SAVED") != 0){
                 return -1;
             }
 

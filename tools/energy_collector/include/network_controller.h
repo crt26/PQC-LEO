@@ -54,9 +54,10 @@ int network_controller_init(NetworkController *network_controller);
  * @param network_controller Pointer to the network controller instance.
  * @param message Output buffer for the received message.
  * @param message_size Size of `message` in bytes.
- * @return 0 on success, -1 if receive fails.
+ * @param timeout_ms Maximum wait in milliseconds. A value of 0 allows an indefinite wait.
+ * @return 0 on success or -1 on timeout or receive failure.
  */
-int network_controller_receiver(NetworkController *network_controller, char *message, size_t message_size);
+int network_controller_receiver(NetworkController *network_controller, char *message, size_t message_size, int timeout_ms);
 
 /**
  * Sends a control message to the configured remote device.
