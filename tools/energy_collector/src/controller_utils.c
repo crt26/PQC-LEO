@@ -317,16 +317,53 @@ int get_ready_formatter(TestParams *test_params, char *get_ready_message, size_t
 }
 
 //-------------------------------------------------------------------------------------------------------------------------------
+static int message_handler(TestController *test_controller, char *control_message, const char *expected_reply) {
+    /* Helper function..... NOTE - DO FUNCTION COMMENT*/
+
+    // Define a buffer to store the received reply from the collector
+    char received_reply[256];
+
+    // Send the control message to the collector machine
+    if (controller_send(test_controller, control_message) != 0) {
+        fprintf(stderr, "[ERROR] - Failed to send the %s command.\n", control_message);
+        return -1;
+    }
+
+    // Wait for the reply from collector and store the received message
+    if (controller_receive(test_controller, received_reply, sizeof(received_reply)) != 0) {
+        fprintf(stderr, "[ERROR] - Failed to receive %s from the energy collector.\n", expected_reply);
+        return -1;
+    }
+
+    // If the message received was the ERROR flag, output a specific line to the terminal
+    if (strcmp(received_reply, "ERROR") == 0) {
+        fprintf(stderr, "[ERROR] - The collector machine has responded with an message, testing can no longer continue.\n");
+        return -1;
+    }
+
+    // Ensure that the received message was the one that was expected
+    if (strcmp(received_reply, expected_reply) != 0) {
+        fprintf(stderr, "[ERROR] - Expected %s from the energy collector, received %s.\n", expected_reply, received_reply);
+        return -1;
+    }
+
+    return 0;
+
+}
+
+//-------------------------------------------------------------------------------------------------------------------------------
 int control_handler(TestController *test_controller, TestParams *test_params) {
     /*  Function for handling the control actions based on the control type specified in the TestParams struct. It will send the
         appropriate command to the collector machine based on the control type and parameters. */
+
+    // NOTE - THE START AND STOP SIGNALS NEED PROPERLY OPTIMISED BEFORE PR MERGE
 
     // Determine which control action to perform based on the set control type
     switch (test_params->control_type) {
 
         case 1:
 
-            // Declare the GETREADY message and its size
+            // Declare the GETREADY message buffer and its size
             char get_ready_message[512];
             size_t message_size = sizeof(get_ready_message);
 
@@ -336,66 +373,44 @@ int control_handler(TestController *test_controller, TestParams *test_params) {
                 return -1;
             }
 
-            // Send the GETREADY message to the collector machine
-            if (controller_send(test_controller, get_ready_message) != 0) {
-                fprintf(stderr, "[ERROR] - Failed to send the GETREADY message.\n");
-                return -1;  
-            }
-
-            // Wait for the ready message to be received from the collector machine
-            char msg_buffer[256];
-            if (controller_receive(test_controller, msg_buffer, sizeof(msg_buffer)) != 0) {
-                fprintf(stderr, "[ERROR] - Failure in the controller receiver.\n");
+            // Send the GETREADY message and wait for the reply
+            if (message_handler(test_controller, get_ready_message, "READY") != 0) {
                 return -1;
             }
 
-            // Check if the received message is "READY"
-            if(strcmp(msg_buffer, "READY") == 0) {
-
-                // Send the start command and exit immediately to begin the test as quickly as possible
-                if (controller_send(test_controller, "START\n") != 0) {
-                    fprintf(stderr, "[ERROR] - Failed to send the start command.\n");
-                    return -1;
-                }
-                return 0;
-
-            }
-            else {
-                fprintf(stderr, "[ERROR] - Unexpected message received: %s\n", msg_buffer);
+            // Send the start command and exit immediately to begin the test as quickly as possible
+            if (controller_send(test_controller, "START\n") != 0) {
+                fprintf(stderr, "[ERROR] - Failed to send the start command.\n");
                 return -1;
-
             }
 
-            break;
+            return 0;
 
         case 2:
-
-            // Send the STOP command to the collector machine
-            if (controller_send(test_controller, "STOP\n") != 0) {
-                fprintf(stderr, "[ERROR] - Failed to send the stop command.\n");
+            
+            // Send the STOP command and wait for the reply
+            if (send_command_and_wait_for_reply(test_controller, "STOP\n", "SAVED") != 0){
                 return -1;
             }
 
-            break;
+            return 0;
 
         case 3:
 
-            // Send the END command to the collector machine
+            // Send the END command directly and exit out
             if (controller_send(test_controller, "END\n") != 0) {
                 fprintf(stderr, "[ERROR] - Failed to send the end command.\n");
                 return -1;
             }
 
-            break;
+            return 0;
 
         default:
 
             // Output an error message for an invalid control type and return failure
             fprintf(stderr, "[ERROR] - Invalid control type specified.\n");
             return -1;
-            
-    }
 
-    return 0;
+    }
 
 }

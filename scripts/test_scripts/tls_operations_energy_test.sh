@@ -673,24 +673,69 @@ function get_test_options() {
 }
 
 #-------------------------------------------------------------------------------------------------------------------------------
+function check_controller_exit_code() {
+    # Helper function for ......
+
+    # Store the passed argument variables locally
+    local passed_exit_code=$1
+    local handshake_type=$2
+
+    # Ensure that the passed handshake type is valid
+    if [[ "$handshake_type" != "START"  && "$handshake_type" != "STOP" && "$handshake_type" != "END" ]]; then
+
+        # Output an error message to the terminal for the incorrect passed type
+        echo "[ERROR] - Invalid handshake type has been passed to the check_controller_exit_code helper function"
+
+        # Attempt to send the end command to the collector before exiting
+        "$control_sender" --end-testing "${communication_flags[@]}"
+        exit 1
+
+    fi
+
+    # Check if the passed exit code was successful
+    if [ $passed_exit_code -ne 0 ]; then
+
+        # Attempt to the send the END command if needed and set the error type
+        if [ "$handshake_type" != "END" ]; then
+            "$control_sender" --end-testing "${communication_flags[@]}"
+            error_type="$handshake_type handshake"
+
+        else
+            error_type="END command"
+            
+        fi
+
+        # Output the error message to the terminal and exit
+        echo "[ERROR] - The controller $handshake_type handshake with the collector machine, exiting testing."
+        exit 1
+        
+    fi
+
+}
+
+#-------------------------------------------------------------------------------------------------------------------------------
 function get_baseline() {
     # Function for getting the baseline energy consumption for the testing machine. The function communicates with the
     # energy collector to signal the start and end of the baseline measurement, and includes a configurable sleep period to allow for
     # the measurement to be taken.
 
-    # Send the GETREADY message to the collector for baseline measurement
+    # Send the GETREADY message to the collector
     "$control_sender" -s \
         -T "tls_operations_baseline" \
         -A "baseline" \
         -R "1" \
         -P "$energy_poll_rate" \
         "${communication_flags[@]}"
+    exit_code=$?
+    check_controller_exit_code $exit_code "START"
 
     # Sleep for the specified baseline duration to measure the system's idle power consumption (default - 60 secs)
     sleep "$energy_baseline_duration"
 
     # Send test stop message to the collector
     "$control_sender" -t "${communication_flags[@]}"
+    exit_code=$?
+    check_controller_exit_code $exit_code "STOP"
 
 }
 
@@ -759,7 +804,7 @@ function create_common_files() {
 
         # Ensure that all required files were created
         if [[ ! -f "$priv_key_path" || ! -f "$pub_key_path" || ! -f "$ct_path" ]]; then
-            echo -e "Error generating keys or ciphertext for $testing_alg, please check the OpenSSL installation and try again."
+            echo -e "[ERROR] -  Generating keys or ciphertext for $testing_alg failed, please check the OpenSSL installation and try again."
             exit 1
         fi
 
@@ -793,7 +838,7 @@ function create_common_files() {
 
         # Ensure that all required files were created
         if [[ ! -f "$priv_key_path" || ! -f "$pub_key_path" || ! -f "$sig_path" || ! -f "$msg_path" ]]; then
-            echo -e "Error generating keys, message, or signature for $testing_alg, please check the OpenSSL installation and try again."
+            echo -e "[ERROR] -  Generating keys, message, or signature for $testing_alg failed, please check the OpenSSL installation and try again."
             exit 1
         fi
 
@@ -833,7 +878,7 @@ function create_common_files() {
 
         # Ensure that all required files were created
         if [[ ! -f "$priv_key_path" || ! -f "$pub_key_path" || ! -f "$sig_path" || ! -f "$msg_path" ]]; then
-            echo -e "Error generating keys, message, or signature for $testing_alg, please check the OpenSSL installation and try again."
+            echo -e "[ERROR] - Generating keys, message, or signature for $testing_alg failed, please check the OpenSSL installation and try again."
             exit 1
         fi
 
@@ -877,7 +922,7 @@ function create_common_files() {
         # Ensure that all required files were created
         for file in "${file_vars[@]}"; do
             if [[ ! -f "$file" ]]; then
-                echo -e "Error generating keys or shared secrets for $testing_alg, please check the OpenSSL installation and try again."
+                echo -e "[ERROR] - Generating keys or shared secrets for $testing_alg failed, please check the OpenSSL installation and try again."
                 exit 1
             fi
         done
@@ -926,12 +971,7 @@ function pqc_kem_testing()  {
             -P "$energy_poll_rate" \
             "${communication_flags[@]}"
         exit_code=$?
-
-        # Ensure no issues with the command
-        if [ $exit_code -ne 0 ]; then
-            echo -e "[ERROR] - Error sending GETREADY message to energy collector, please check the connection and try again."
-            exit 1
-        fi
+        check_controller_exit_code $exit_code "START"
 
         # Perform the keygen test for the defined number of iterations
         for ((i=1; i<=operation_iterations; i++)); do
@@ -950,6 +990,8 @@ function pqc_kem_testing()  {
 
         # Send the testing complete message to the collector
         "$control_sender" -t "${communication_flags[@]}"
+        exit_code=$?
+        check_controller_exit_code $exit_code "STOP"
 
         # Output the current test being performed to the user
         echo "Testing KEM $kem_alg - Encaps"
@@ -962,12 +1004,7 @@ function pqc_kem_testing()  {
             -P "$energy_poll_rate" \
             "${communication_flags[@]}"
         exit_code=$?
-
-        # Ensure there was no issues with the command execution
-        if [ $exit_code -ne 0 ]; then
-            echo -e "[ERROR] - Error sending GETREADY message to energy collector, please check the connection and try again."
-            exit 1
-        fi
+        check_controller_exit_code $exit_code "START"
 
         # Perform the encapsulation test for the defined number of iterations
         for ((i=1; i<=operation_iterations; i++)); do
@@ -986,6 +1023,8 @@ function pqc_kem_testing()  {
 
         # Send the testing complete message to the collector
         "$control_sender" -t "${communication_flags[@]}"
+        exit_code=$?
+        check_controller_exit_code $exit_code "STOP"
 
         # Output the current test being performed to the user
         echo "Testing KEM $kem_alg - Decaps"
@@ -998,12 +1037,7 @@ function pqc_kem_testing()  {
             -P "$energy_poll_rate" \
             "${communication_flags[@]}"
         exit_code=$?
-
-        # Ensure there was no issues with the command execution
-        if [ $exit_code -ne 0 ]; then
-            echo -e "[ERROR] - Error sending GETREADY message to energy collector, please check the connection and try again."
-            exit 1
-        fi
+        check_controller_exit_code $exit_code "START"
 
         # Perform the decapsulation test for the defined number of iterations
         for ((i=1; i<=operation_iterations; i++)); do
@@ -1022,6 +1056,8 @@ function pqc_kem_testing()  {
 
         # Send the testing complete message to the collector
         "$control_sender" -t "${communication_flags[@]}"
+        exit_code=$?
+        check_controller_exit_code $exit_code "STOP"
 
     done
 
@@ -1066,12 +1102,7 @@ function pqc_sig_testing() {
             -P "$energy_poll_rate" \
             "${communication_flags[@]}"
         exit_code=$?
-
-        # Ensure no issues with the command
-        if [ $exit_code -ne 0 ]; then
-            echo -e "[ERROR] - Error sending GETREADY message to energy collector, please check the connection and try again."
-            exit 1
-        fi
+        check_controller_exit_code $exit_code "START"
 
         # Perform the keygen test for the defined number of iterations
         for ((i=1; i<=operation_iterations; i++)); do
@@ -1090,6 +1121,8 @@ function pqc_sig_testing() {
 
         # Send the testing complete message to the collector
         "$control_sender" -t "${communication_flags[@]}"
+        exit_code=$?
+        check_controller_exit_code $exit_code "STOP"
 
         # Output the current test being performed to the user
         echo "Testing SIG $sig_alg - Sign"
@@ -1102,12 +1135,7 @@ function pqc_sig_testing() {
             -P "$energy_poll_rate" \
             "${communication_flags[@]}"
         exit_code=$?
-
-        # Ensure no issues with the command
-        if [ $exit_code -ne 0 ]; then
-            echo -e "[ERROR] - Error sending GETREADY message to energy collector, please check the connection and try again."
-            exit 1
-        fi
+        check_controller_exit_code $exit_code "START"
 
         # Perform the signing test for the defined number of iterations
         for ((i=1; i<=operation_iterations; i++)); do
@@ -1126,6 +1154,8 @@ function pqc_sig_testing() {
 
         # Send the testing complete message to the collector
         "$control_sender" -t "${communication_flags[@]}"
+        exit_code=$?
+        check_controller_exit_code $exit_code "STOP"
 
         # Output the current test being performed to the user
         echo "Testing SIG $sig_alg - Verify"
@@ -1138,12 +1168,7 @@ function pqc_sig_testing() {
             -P "$energy_poll_rate" \
             "${communication_flags[@]}"
         exit_code=$?
-
-        # Ensure no issues with the command
-        if [ $exit_code -ne 0 ]; then
-            echo -e "[ERROR] - Error sending GETREADY message to energy collector, please check the connection and try again."
-            exit 1
-        fi
+        check_controller_exit_code $exit_code "START"
 
         # Perform the verification test for the defined number of iterations
         for ((i=1; i<=operation_iterations; i++)); do
@@ -1162,6 +1187,8 @@ function pqc_sig_testing() {
 
         # Send the testing complete message to the collector
         "$control_sender" -t "${communication_flags[@]}"
+        exit_code=$?
+        check_controller_exit_code $exit_code "STOP"
 
     done
 
@@ -1266,12 +1293,7 @@ function classic_sig_testing() {
             -P "$energy_poll_rate" \
             "${communication_flags[@]}"
         exit_code=$?
-
-        # Ensure there was no issues with the command execution
-        if [ $exit_code -ne 0 ]; then
-            echo -e "[ERROR] - Error sending GETREADY message to energy collector, please check the connection and try again."
-            exit 1
-        fi
+        check_controller_exit_code $exit_code "START"
 
         # Perform the keygen test for the defined number of iterations
         for ((i=1; i<=operation_iterations; i++)); do
@@ -1290,6 +1312,8 @@ function classic_sig_testing() {
 
         # Send the testing complete message to the collector
         "$control_sender" -t "${communication_flags[@]}"
+        exit_code=$?
+        check_controller_exit_code $exit_code "STOP"
 
         # Output the current test being performed to the user
         echo "Testing Classic SIG $sig_alg - Sign"
@@ -1302,12 +1326,7 @@ function classic_sig_testing() {
             -P "$energy_poll_rate" \
             "${communication_flags[@]}"
         exit_code=$?
-
-        # Ensure there was no issues with the command execution
-        if [ $exit_code -ne 0 ]; then
-            echo -e "[ERROR] - Error sending GETREADY message to energy collector, please check the connection and try again."
-            exit 1
-        fi
+        check_controller_exit_code $exit_code "START"
 
         # Perform the signing test for the defined number of iterations
         for ((i=1; i<=operation_iterations; i++)); do
@@ -1333,6 +1352,8 @@ function classic_sig_testing() {
 
         # Send the testing complete message to the collector
         "$control_sender" -t "${communication_flags[@]}"
+        exit_code=$?
+        check_controller_exit_code $exit_code "STOP"
 
         # Output the current test being performed to the user
         echo "Testing Classic SIG $sig_alg - Verify"
@@ -1345,12 +1366,7 @@ function classic_sig_testing() {
             -P "$energy_poll_rate" \
             "${communication_flags[@]}"
         exit_code=$?
-
-        # Ensure there was no issues with the command execution
-        if [ $exit_code -ne 0 ]; then
-            echo -e "[ERROR] - Error sending GETREADY message to energy collector, please check the connection and try again."
-            exit 1
-        fi
+        check_controller_exit_code $exit_code "START"
 
         # Perform the verification test for the defined number of iterations
         for ((i=1; i<=operation_iterations; i++)); do
@@ -1378,6 +1394,8 @@ function classic_sig_testing() {
 
         # Send the testing complete message to the collector
         "$control_sender" -t "${communication_flags[@]}"
+        exit_code=$?
+        check_controller_exit_code $exit_code "STOP"
 
     done
 
@@ -1431,12 +1449,7 @@ function classic_key_exchange_testing() {
             -P "$energy_poll_rate" \
             "${communication_flags[@]}"
         exit_code=$?
-
-        # Ensure there was no issues with the command execution
-        if [ $exit_code -ne 0 ]; then
-            echo -e "[ERROR] - Error sending GETREADY message to energy collector, please check the connection and try again."
-            exit 1
-        fi
+        check_controller_exit_code $exit_code "START"
 
         # Perform the keygen test for the defined number of iterations
         for ((i=1; i<=operation_iterations; i++)); do
@@ -1455,6 +1468,8 @@ function classic_key_exchange_testing() {
 
         # Send the keygen testing complete message to the collector
         "$control_sender" -t "${communication_flags[@]}"
+        exit_code=$?
+        check_controller_exit_code $exit_code "STOP"
 
         # Output the current test to the user
         echo "Testing Classic Key Exchange $key_exchange_alg - Derive"
@@ -1467,12 +1482,7 @@ function classic_key_exchange_testing() {
             -P "$energy_poll_rate" \
             "${communication_flags[@]}"
         exit_code=$?
-
-        # Ensure there was no issues with the command execution
-        if [ $exit_code -ne 0 ]; then
-            echo -e "[ERROR] - Error sending GETREADY message to energy collector, please check the connection and try again."
-            exit 1
-        fi
+        check_controller_exit_code $exit_code "START"
 
         # Perform the derivation test for the defined number of iterations
         for ((i=1; i<=operation_iterations; i++)); do
@@ -1497,6 +1507,8 @@ function classic_key_exchange_testing() {
 
         # Send the testing complete message to the collector
         "$control_sender" -t "${communication_flags[@]}"
+        exit_code=$?
+        check_controller_exit_code $exit_code "STOP"
 
     done
 
@@ -1565,6 +1577,8 @@ function main() {
 
     # Send END testing message to the collector
     "$control_sender" --end-testing "${communication_flags[@]}"
+    exit_code=$?
+    check_controller_exit_code $exit_code "END"
 
     # Output the test completion message to the terminal
     echo -e "\nAll testing runs completed"
